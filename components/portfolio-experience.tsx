@@ -195,6 +195,13 @@ const stackGroups = [
 
 const stackOrbitItems = stackGroups.flatMap((group) => group.items).map(([label, slug, color], index) => ({ label, slug, color, index }));
 
+const chapters = [
+  { id: "method", number: "01", label: "Method" },
+  { id: "work", number: "02", label: "Worlds" },
+  { id: "stack", number: "03", label: "Stack" },
+  { id: "proof", number: "04", label: "Proof" },
+] as const;
+
 const academicProjects = [
   { title: "RentalMobil.SG", tag: "OOP · Semester 2", body: "A car-rental web system with vehicle catalog, authentication, booking, payment confirmation, user area, and admin operations." },
   { title: "POS Z Shoes", tag: "APBDS · Semester 3", body: "A point-of-sale system with product, supplier, purchase, customer transaction, return, dashboard, and reporting flows." },
@@ -218,12 +225,14 @@ function PhaseBridge({ tone, motionOn }: { tone: "method" | "work" | "stack" | "
   const ref = useRef<HTMLDivElement>(null);
   const { scrollYProgress } = useScroll({ target: ref, offset: ["start end", "end start"] });
   const y = useTransform(scrollYProgress, [0, 1], [-24, 24]);
+  const labels = { method: "follow the signal", work: "select a world", stack: "read the instruments", academic: "keep learning", proof: "show the receipt" };
   return <div ref={ref} className={`phase-bridge phase-bridge--${tone}`} aria-hidden="true">
     <motion.img className="phase-bridge-atmosphere" src="/assets/background/cosmic-nebula.png" alt="" loading="lazy" style={{ y: motionOn ? y : 0 }} />
     <span className="phase-bridge-orbit" />
     <span className="phase-bridge-spark phase-bridge-spark--one" />
     <span className="phase-bridge-spark phase-bridge-spark--two" />
     <span className="phase-bridge-spark phase-bridge-spark--three" />
+    <span className="phase-bridge-caption">{labels[tone]} <ArrowDown size={13} /></span>
     {tone === "work" && <div className="phase-bridge-worlds">{projects.map((project) => <span className="phase-bridge-world" key={project.id}><img src={project.logo} alt="" /></span>)}</div>}
   </div>;
 }
@@ -234,6 +243,8 @@ export function PortfolioExperience() {
   const [introDone, setIntroDone] = useState(false);
   const [motionPreference, setMotionPreference] = useState(true);
   const [motionReady, setMotionReady] = useState(false);
+  const [activeChapter, setActiveChapter] = useState<(typeof chapters)[number]["id"]>("method");
+  const [methodStep, setMethodStep] = useState(0);
   const reducedMotion = useReducedMotion();
   const motionOn = motionReady && motionPreference && !reducedMotion;
   const [loadingStep, setLoadingStep] = useState(0);
@@ -243,7 +254,7 @@ export function PortfolioExperience() {
   const stackRef = useRef<HTMLElement>(null);
   const menuRef = useRef<HTMLDetailsElement>(null);
   const stackVisible = useInView(stackRef, { margin: "150px" });
-  const { scrollYProgress: methodProgress } = useScroll({ target: methodRef, offset: ["start end", "center center"] });
+  const { scrollYProgress: methodProgress } = useScroll({ target: methodRef, offset: ["start start", "end start"] });
   const methodY = useTransform(methodProgress, [0, 1], [42, 0]);
   const methodImageY = useTransform(methodProgress, [0, 1], [-36, 0]);
   const pointerX = useMotionValue(-100);
@@ -258,6 +269,10 @@ export function PortfolioExperience() {
   useMotionValueEvent(scrollYProgress, "change", (value) => {
     const phase = value < 0.28 ? "intro" : value < 0.5 ? "transition" : "worlds";
     setHeroPhase((previous) => previous === phase ? previous : phase);
+  });
+  useMotionValueEvent(methodProgress, "change", (value) => {
+    const nextStep = value < 0.34 ? 0 : value < 0.68 ? 1 : 2;
+    setMethodStep((previous) => previous === nextStep ? previous : nextStep);
   });
 
   const t = copy[language];
@@ -282,6 +297,16 @@ export function PortfolioExperience() {
   }, [motionOn]);
 
   useEffect(() => { document.documentElement.lang = language; }, [language]);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver((entries) => {
+      const visible = entries.filter((entry) => entry.isIntersecting).sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top);
+      const chapter = visible.at(-1)?.target.id as (typeof chapters)[number]["id"] | undefined;
+      if (chapter) setActiveChapter(chapter);
+    }, { rootMargin: "-42% 0px -45% 0px", threshold: 0 });
+    chapters.forEach(({ id }) => { const element = document.getElementById(id); if (element) observer.observe(element); });
+    return () => observer.disconnect();
+  }, []);
 
   useEffect(() => {
     if (!motionOn) return;
@@ -320,6 +345,13 @@ export function PortfolioExperience() {
       <motion.div className="cursor-guide" style={{ x: cursorX, y: cursorY }} aria-hidden="true">
         <span>Henry</span><Asterisk size={10} />
       </motion.div>
+
+      <nav className="chapter-rail" aria-label="Chapter navigation">
+        <span className="chapter-rail-caption">Navigate the field</span>
+        <div className="chapter-rail-track">
+          {chapters.map((chapter) => <a key={chapter.id} href={`#${chapter.id}`} className={activeChapter === chapter.id ? "chapter-rail-link--active" : undefined} aria-current={activeChapter === chapter.id ? "page" : undefined}><span>{chapter.number}</span><strong>{chapter.label}</strong></a>)}
+        </div>
+      </nav>
 
       <header className="site-header">
         <a className="brand" href="#top" aria-label="HenryLabs home"><span className="brand-mark"><Asterisk size={18} /></span><span>HenryLabs</span></a>
@@ -366,6 +398,7 @@ export function PortfolioExperience() {
 
       <section ref={methodRef}
         className="signal-chapter"
+        id="method"
         aria-labelledby="method-title"
       >
         <motion.img className="chapter-atmosphere" src="/assets/background/cosmic-nebula.png" alt="" loading="lazy" style={{ y: motionOn ? methodImageY : 0 }} />
@@ -375,7 +408,7 @@ export function PortfolioExperience() {
               <p className="section-kicker section-kicker-dark">{t.method.kicker}</p>
               <motion.h2 id="method-title" style={{ y: motionOn ? methodY : 0 }}>{t.method.title.split("\n").map((line) => <span key={line}>{line}</span>)}</motion.h2>
             </div>
-            <div className="signal-copy"><p>{t.method.body}</p><div className="signal-steps">{t.method.steps.map((step, index) => <span key={step}><i>{String(index + 1).padStart(2, "0")}</i>{step}</span>)}</div></div>
+            <div className="signal-copy"><p>{t.method.body}</p><div className="signal-steps"><motion.span className="signal-progress" aria-hidden="true" style={{ scaleX: motionOn ? methodProgress : 1 }} />{t.method.steps.map((step, index) => <span key={step} className={index === methodStep ? "signal-step--active" : undefined}><i>{String(index + 1).padStart(2, "0")}</i>{step}</span>)}</div></div>
           </div>
           <div className="signal-constellation" aria-hidden="true"><span className="signal-constellation-label">observe / shape / ship</span><span className="signal-constellation-dot dot-a" /><span className="signal-constellation-dot dot-b" /><span className="signal-constellation-dot dot-c" /><span className="signal-constellation-line line-a" /><span className="signal-constellation-line line-b" /><span className="signal-constellation-line line-c" /></div>
         </div>

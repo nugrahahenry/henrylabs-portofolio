@@ -18,6 +18,9 @@ test("portfolio surface keeps its core experience contracts", () => {
   assert.match(experience, /\["PHP", "php"/);
   assert.match(experience, /tech-icon-fallback/);
   assert.match(experience, /PhaseBridge tone="method"/);
+  assert.match(experience, /className="chapter-rail"/);
+  assert.match(experience, /id="method"/);
+  assert.match(experience, /signal-progress/);
   assert.match(experience, /phase-bridge-world/);
   assert.match(experience, /--project-color/);
   assert.match(experience, /className="mobile-nav"/);
@@ -34,6 +37,8 @@ test("portfolio surface keeps its core experience contracts", () => {
   assert.match(styles, /background: radial-gradient\(ellipse at 12% 15%/);
   assert.match(styles, /scroll-padding-top: 84px/);
   assert.match(styles, /html\[data-cursor="quiet"\] \.cursor-guide/);
+  assert.match(styles, /\.chapter-rail/);
+  assert.match(styles, /\.signal-progress/);
   assert.match(styles, /data-visible="true"/);
   assert.equal(existsSync(new URL("public/assets/background/cosmic-nebula.png", root)), true);
 });
