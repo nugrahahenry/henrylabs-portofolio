@@ -287,11 +287,16 @@ export function PortfolioExperience() {
     if (!motionOn) return;
     const onPointerMove = (event: PointerEvent) => {
       if (event.pointerType === "touch") return;
+      const target = event.target instanceof Element ? event.target : null;
+      document.documentElement.dataset.cursor = target?.closest(".site-header, h1, h2, h3, p, a, button, .signal-steps, .project-index") ? "quiet" : "visible";
       pointerX.set(event.clientX);
       pointerY.set(event.clientY);
     };
     window.addEventListener("pointermove", onPointerMove);
-    return () => window.removeEventListener("pointermove", onPointerMove);
+    return () => {
+      window.removeEventListener("pointermove", onPointerMove);
+      delete document.documentElement.dataset.cursor;
+    };
   }, [pointerX, pointerY, motionOn]);
 
   const selectProject = (id: ProjectId) => {
