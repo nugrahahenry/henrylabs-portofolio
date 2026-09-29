@@ -19,6 +19,7 @@ test("portfolio surface keeps its core experience contracts", () => {
   assert.match(experience, /tech-icon-fallback/);
   assert.match(experience, /PhaseBridge tone="method"/);
   assert.match(experience, /phase-bridge-world/);
+  assert.match(experience, /--project-color/);
   assert.match(experience, /className="mobile-nav"/);
   assert.match(experience, /MotionConfig/);
   assert.match(canvas, /WebGLRenderer/);
@@ -28,6 +29,8 @@ test("portfolio surface keeps its core experience contracts", () => {
   assert.match(styles, /html\[data-motion="off"\]/);
   assert.match(styles, /touch-action: pan-y/);
   assert.match(styles, /phase-bridge-atmosphere/);
+  assert.match(styles, /\.work-section \{/);
+  assert.match(styles, /background: radial-gradient\(ellipse at 12% 15%/);
   assert.match(styles, /data-visible="true"/);
   assert.equal(existsSync(new URL("public/assets/background/cosmic-nebula.png", root)), true);
 });

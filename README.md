@@ -7,6 +7,7 @@ Interactive personal portfolio for Henry Nugraha, now moving from a single-file 
 - Cosmic scroll opening with a project constellation.
 - A full-bleed orbit-to-method transition that explains how Henry turns friction into useful work.
 - Chapter bridges with a shared cosmic atmosphere, responsive parallax, and intentional light-to-dark transitions.
+- The `Selected Worlds` chapter continues that cosmic field, with project-color navigation and a focused dossier specimen.
 - Next.js component architecture with Motion-driven camera choreography.
 - Progressive Three.js depth layer with an accessible static fallback.
 - Real project marks for Catmoji, Nalira, Canox, Hengs, and Polara.
