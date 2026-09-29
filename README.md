@@ -6,11 +6,12 @@ Interactive personal portfolio for Henry Nugraha, now moving from a single-file 
 
 - Cosmic scroll opening with a project constellation.
 - A full-bleed orbit-to-method transition that explains how Henry turns friction into useful work.
+- Chapter bridges with a shared cosmic atmosphere, responsive parallax, and intentional light-to-dark transitions.
 - Next.js component architecture with Motion-driven camera choreography.
 - Progressive Three.js depth layer with an accessible static fallback.
 - Real project marks for Catmoji, Nalira, Canox, Hengs, and Polara.
 - Project evidence dossiers, academic projects, client work, technology stack orbit, and bilingual English/Indonesian copy.
-- Reduced-motion support and keyboard-accessible project selection.
+- Responsive portrait constellation layout, mobile navigation, immediate technology mark fallbacks, offscreen animation pausing, and reduced-motion support.
 
 ## Run locally
 

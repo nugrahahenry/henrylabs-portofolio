@@ -14,12 +14,13 @@ import {
   Globe2,
   Instagram,
   Mail,
+  Menu,
   MessageCircle,
   MousePointer2,
   Sparkles,
   Zap,
 } from "lucide-react";
-import { motion, useMotionValue, useScroll, useSpring, useTransform } from "motion/react";
+import { MotionConfig, motion, useInView, useMotionValue, useMotionValueEvent, useReducedMotion, useScroll, useSpring, useTransform } from "motion/react";
 import { CosmicCanvas, type ProjectId } from "./cosmic-canvas";
 
 type Language = "en" | "id";
@@ -205,32 +206,67 @@ function cx(...names: Array<string | false | null | undefined>) {
 }
 
 function TechIcon({ label, slug, color }: { label: string; slug: string; color: string }) {
-  const [failed, setFailed] = useState(false);
-  const mark = label === "JavaScript" ? "JS" : label === "Python" ? "PY" : label === "OpenAI" ? "AI" : label === "Next.js" ? "N" : label.slice(0, 2).toUpperCase();
-  if (failed) return <span className="tech-icon-fallback" aria-hidden="true">{mark}</span>;
-  return <img src={`https://cdn.simpleicons.org/${slug}/${color}`} alt="" onError={() => setFailed(true)} />;
+  const [status, setStatus] = useState("loading");
+  const mark = label === "JavaScript" ? "JS" : label === "Python" ? "PY" : label === "OpenAI" ? "AI" : label === "Next.js" ? "N" : label.slice(0, 3).toUpperCase();
+  return <span className="tech-icon" data-status={status} aria-hidden="true">
+    {status !== "ready" && <span className="tech-icon-fallback">{mark}</span>}
+    {status !== "failed" && <img src={`https://cdn.simpleicons.org/${slug}/${color}`} alt="" loading="lazy" onLoad={() => setStatus("ready")} onError={() => setStatus("failed")} />}
+  </span>;
+}
+
+function PhaseBridge({ tone, motionOn }: { tone: "method" | "work" | "stack" | "academic" | "proof"; motionOn: boolean }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const { scrollYProgress } = useScroll({ target: ref, offset: ["start end", "end start"] });
+  const y = useTransform(scrollYProgress, [0, 1], [-24, 24]);
+  return <div ref={ref} className={`phase-bridge phase-bridge--${tone}`} aria-hidden="true">
+    <motion.img className="phase-bridge-atmosphere" src="/assets/background/cosmic-nebula.png" alt="" loading="lazy" style={{ y: motionOn ? y : 0 }} />
+    <span className="phase-bridge-orbit" />
+    <span className="phase-bridge-spark phase-bridge-spark--one" />
+    <span className="phase-bridge-spark phase-bridge-spark--two" />
+    <span className="phase-bridge-spark phase-bridge-spark--three" />
+  </div>;
 }
 
 export function PortfolioExperience() {
   const [language, setLanguage] = useState<Language>("en");
   const [activeId, setActiveId] = useState<ProjectId>("catmoji");
   const [introDone, setIntroDone] = useState(false);
-  const [motionOn, setMotionOn] = useState(true);
+  const [motionPreference, setMotionPreference] = useState(true);
+  const [motionReady, setMotionReady] = useState(false);
+  const reducedMotion = useReducedMotion();
+  const motionOn = motionReady && motionPreference && !reducedMotion;
   const [loadingStep, setLoadingStep] = useState(0);
+  const [heroPhase, setHeroPhase] = useState("intro");
   const heroRef = useRef<HTMLElement>(null);
+  const methodRef = useRef<HTMLElement>(null);
+  const stackRef = useRef<HTMLElement>(null);
+  const menuRef = useRef<HTMLDetailsElement>(null);
+  const stackVisible = useInView(stackRef, { margin: "150px" });
+  const { scrollYProgress: methodProgress } = useScroll({ target: methodRef, offset: ["start end", "center center"] });
+  const methodY = useTransform(methodProgress, [0, 1], [42, 0]);
+  const methodImageY = useTransform(methodProgress, [0, 1], [-36, 0]);
   const pointerX = useMotionValue(-100);
   const pointerY = useMotionValue(-100);
   const cursorX = useSpring(pointerX, { stiffness: 240, damping: 28, mass: 0.28 });
   const cursorY = useSpring(pointerY, { stiffness: 240, damping: 28, mass: 0.28 });
-  const { scrollYProgress } = useScroll({ target: heroRef, offset: ["start start", "end start"] });
-  const heroCopyOpacity = useTransform(scrollYProgress, [0, 0.17, 0.31], [1, 1, 0]);
-  const heroCopyY = useTransform(scrollYProgress, [0, 0.31], [0, -84]);
-  const fieldScale = useTransform(scrollYProgress, [0.08, 0.42], [0.62, 1]);
-  const fieldOpacity = useTransform(scrollYProgress, [0.08, 0.22, 0.48], [0, 1, 1]);
-  const fieldY = useTransform(scrollYProgress, [0.08, 0.44], [110, 0]);
+  const { scrollYProgress } = useScroll({ target: heroRef, offset: ["start start", "end end"] });
+  const heroCopyOpacity = useTransform(scrollYProgress, [0, 0.08, 0.3], [1, 1, 0]);
+  const heroCopyY = useTransform(scrollYProgress, [0, 0.3], [0, -50]);
+  const fieldScale = useTransform(scrollYProgress, [0.24, 0.65], [0.84, 1]);
+  const fieldOpacity = useTransform(scrollYProgress, [0.24, 0.48], [0, 1]);
+  const fieldY = useTransform(scrollYProgress, [0.24, 0.65], [45, 0]);
+  const backdropScale = useTransform(scrollYProgress, [0, 1], [1, 1.12]);
+  useMotionValueEvent(scrollYProgress, "change", (value) => {
+    const phase = value < 0.3 ? "intro" : value < 0.48 ? "transition" : "worlds";
+    setHeroPhase((previous) => previous === phase ? previous : phase);
+  });
 
   const t = copy[language];
   const activeProject = projects.find((project) => project.id === activeId) ?? projects[0];
+
+  useEffect(() => {
+    setMotionReady(true);
+  }, []);
 
   useEffect(() => {
     const timer = window.setTimeout(() => setIntroDone(true), 1900);
@@ -243,9 +279,13 @@ export function PortfolioExperience() {
 
   useEffect(() => {
     document.documentElement.dataset.motion = motionOn ? "on" : "off";
+    return () => { delete document.documentElement.dataset.motion; };
   }, [motionOn]);
 
+  useEffect(() => { document.documentElement.lang = language; }, [language]);
+
   useEffect(() => {
+    if (!motionOn) return;
     const onPointerMove = (event: PointerEvent) => {
       if (event.pointerType === "touch") return;
       pointerX.set(event.clientX);
@@ -253,7 +293,7 @@ export function PortfolioExperience() {
     };
     window.addEventListener("pointermove", onPointerMove);
     return () => window.removeEventListener("pointermove", onPointerMove);
-  }, [pointerX, pointerY]);
+  }, [pointerX, pointerY, motionOn]);
 
   const selectProject = (id: ProjectId) => {
     setActiveId(id);
@@ -261,8 +301,9 @@ export function PortfolioExperience() {
   };
 
   return (
-    <main className="site-shell">
-      <motion.div className={cx("intro-loader", introDone && "intro-loader--done")} aria-hidden={introDone}>
+    <MotionConfig reducedMotion={motionOn ? "never" : "always"} transition={{ duration: motionOn ? 0.55 : 0, ease: [0.16, 1, 0.3, 1] }}>
+    <main className="site-shell" data-motion={motionOn ? "on" : "off"}>
+      <motion.div className={cx("intro-loader", (introDone || !motionOn) && "intro-loader--done")} aria-hidden={introDone || !motionOn}>
         <div className="loader-orbit" aria-hidden="true"><Asterisk size={30} strokeWidth={1.6} /></div>
         <div className="loader-content">
           <div className="loader-meta"><span>HENRYLABS / 2026</span><span>{String((loadingStep + 1) * 25).padStart(2, "0")} %</span></div>
@@ -282,15 +323,23 @@ export function PortfolioExperience() {
           <a href="#work">{t.nav.work}</a><a href="#stack">{t.nav.stack}</a><a href="#proof">{t.nav.proof}</a><a href="#contact">{t.nav.contact}</a>
         </nav>
         <div className="header-controls">
-          <button className="motion-toggle" type="button" onClick={() => setMotionOn((value) => !value)} aria-pressed={motionOn} title={motionOn ? "Turn motion off" : "Turn motion on"}><span className={cx("signal-dot", motionOn && "signal-dot--on")} />{motionOn ? "Motion" : "Still"}</button>
+          <button className="motion-toggle" type="button" onClick={() => setMotionPreference((value) => !value)} disabled={Boolean(reducedMotion)} aria-label={reducedMotion ? "Reduced motion follows device preference" : "Animation"} aria-pressed={motionOn} title={reducedMotion ? "Reduced motion follows device preference" : motionOn ? "Turn motion off" : "Turn motion on"}><span className={cx("signal-dot", motionOn && "signal-dot--on")} />{motionOn ? "Motion" : "Still"}</button>
           <button className="language-toggle" type="button" onClick={() => setLanguage((value) => value === "en" ? "id" : "en")} aria-label="Toggle language"><span className={language === "en" ? "is-active" : ""}>EN</span><span>/</span><span className={language === "id" ? "is-active" : ""}>ID</span></button>
+          <details className="mobile-nav" ref={menuRef} onKeyDown={(event) => { if (event.key === "Escape" && menuRef.current) { menuRef.current.open = false; menuRef.current.querySelector("summary")?.focus(); } }}>
+            <summary aria-label={language === "en" ? "Navigation" : "Navigasi"}><Menu size={18} /></summary>
+            <nav aria-label="Mobile navigation">{Object.entries(t.nav).map(([id, label]) => <a href={`#${id}`} key={id} onClick={() => { if (menuRef.current) menuRef.current.open = false; }}>{label}<ArrowUpRight size={16} /></a>)}</nav>
+          </details>
         </div>
       </header>
 
-      <section ref={heroRef} className="hero-stage" id="top" aria-labelledby="hero-title">
-        <div className="space-backdrop" aria-hidden="true"><img src="/assets/background/cosmic-nebula.png" alt="" /><span className="star star-1" /><span className="star star-2" /><span className="star star-3" /><span className="star star-4" /><span className="star star-5" /><div className="backdrop-arc arc-one" /><div className="backdrop-arc arc-two" /></div>
+      <section ref={heroRef} className="hero-stage" id="top" aria-labelledby="hero-title" data-phase={motionOn ? heroPhase : "all"}>
+        <div className="space-backdrop" aria-hidden="true">
+          <motion.img src="/assets/background/cosmic-nebula.png" alt="" style={{ scale: motionOn ? backdropScale : 1 }} />
+          <span className="star star-1" /><span className="star star-2" /><span className="star star-3" /><span className="star star-4" /><span className="star star-5" />
+          <div className="backdrop-arc arc-one" /><div className="backdrop-arc arc-two" />
+        </div>
         <div className="hero-sticky">
-          <motion.div className="hero-copy" style={{ opacity: heroCopyOpacity, y: heroCopyY }}>
+          <motion.div className="hero-copy" inert={motionOn && heroPhase !== "intro"} style={{ opacity: motionOn ? heroCopyOpacity : 1, y: motionOn ? heroCopyY : 0 }}>
             <p className="hero-kicker"><span className="live-pulse" /> product-minded developer / Indonesia</p>
             <h1 id="hero-title">{t.hero.title}</h1>
             <p className="hero-body">{t.hero.body}</p>
@@ -298,9 +347,9 @@ export function PortfolioExperience() {
             <p className="hero-note"><span className="status-light" />{t.hero.note}</p>
           </motion.div>
 
-          <motion.div className="cosmic-frame-wrap" style={{ opacity: fieldOpacity, scale: fieldScale, y: fieldY }}>
+          <motion.div className="cosmic-frame-wrap" inert={motionOn && heroPhase !== "worlds"} style={{ opacity: motionOn ? fieldOpacity : 1, scale: motionOn ? fieldScale : 1, y: motionOn ? fieldY : 0 }}>
             <div className="cosmic-frame">
-              <div className="frame-topline"><span>{t.field.label}</span><span>drag / select / explore</span></div>
+              <div className="frame-topline"><span>{t.field.label}</span><span>HenryLabs</span></div>
               <CosmicCanvas activeId={activeId} onSelect={selectProject} motionOn={motionOn} progress={scrollYProgress} />
               <div className="frame-bottomline"><span>05 worlds / 01 maker</span><span><MousePointer2 size={13} /> {t.field.hint}</span></div>
             </div>
@@ -309,37 +358,40 @@ export function PortfolioExperience() {
         <a href="#work" className="scroll-cue"><span>Scroll to enter</span><ArrowDown size={18} /></a>
       </section>
 
-      <motion.section
+      <PhaseBridge tone="method" motionOn={motionOn} />
+
+      <section ref={methodRef}
         className="signal-chapter"
         aria-labelledby="method-title"
-        initial={motionOn ? { opacity: 0, y: 45 } : false}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true, amount: 0.25 }}
-        transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
       >
-        <div className="signal-ticker" aria-hidden="true"><span>SEE THE FRICTION</span><Asterisk size={20} /><span>SHAPE THE USEFUL</span><Asterisk size={20} /><span>SHIP THE NEXT MOVE</span><Asterisk size={20} /></div>
+        <motion.img className="chapter-atmosphere" src="/assets/background/cosmic-nebula.png" alt="" loading="lazy" style={{ y: motionOn ? methodImageY : 0 }} />
         <div className="signal-inner">
-          <div className="signal-topline"><span>{t.method.marker}</span><span>HenryLabs / field notes</span></div>
           <div className="signal-layout">
-            <div><p className="section-kicker section-kicker-dark">{t.method.kicker}</p><h2 id="method-title">{t.method.title.split("\n").map((line) => <span key={line}>{line}</span>)}</h2></div>
+            <div className="signal-heading">
+              <p className="section-kicker section-kicker-dark">{t.method.kicker}</p>
+              <motion.h2 id="method-title" style={{ y: motionOn ? methodY : 0 }}>{t.method.title.split("\n").map((line) => <span key={line}>{line}</span>)}</motion.h2>
+            </div>
             <div className="signal-copy"><p>{t.method.body}</p><div className="signal-steps">{t.method.steps.map((step, index) => <span key={step}><i>{String(index + 1).padStart(2, "0")}</i>{step}</span>)}</div></div>
           </div>
-          <div className="signal-constellation" aria-hidden="true"><span className="signal-constellation-dot dot-a" /><span className="signal-constellation-dot dot-b" /><span className="signal-constellation-dot dot-c" /><span className="signal-constellation-line line-a" /><span className="signal-constellation-line line-b" /><span className="signal-constellation-line line-c" /></div>
         </div>
-      </motion.section>
+      </section>
+
+      <PhaseBridge tone="work" motionOn={motionOn} />
 
       <section className="content-section work-section" id="work" aria-labelledby="work-title">
         <div className="section-heading"><div><p className="section-kicker">Selected worlds</p><h2 id="work-title">{t.work.title}</h2></div><p>{t.work.body}</p></div>
         <div className="work-layout">
           <div className="project-index" role="list" aria-label="Project index">{projects.map((project, index) => <button key={project.id} className={cx("project-row", project.id === activeId && "project-row--active")} type="button" onClick={() => setActiveId(project.id)}><span className="project-number">0{index + 1}</span><span className="project-icon"><img src={project.logo} alt="" /></span><span className="project-row-copy"><strong>{project.name}</strong><small>{project.visibility[language]}</small></span><ArrowRight className="row-arrow" size={18} /></button>)}</div>
-          <motion.article className="dossier" key={activeProject.id} style={{ "--dossier-color": activeProject.color } as React.CSSProperties} initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}>
+          <motion.article className="dossier" key={activeProject.id} style={{ "--dossier-color": activeProject.color } as React.CSSProperties} initial={motionOn ? { opacity: 0, y: 18 } : false} animate={{ opacity: 1, y: 0 }} transition={{ duration: motionOn ? 0.5 : 0, ease: [0.16, 1, 0.3, 1] }}>
             <div className="dossier-art"><div className="dossier-art-ring dossier-art-ring--one" /><div className="dossier-art-ring dossier-art-ring--two" /><div className="dossier-art-readout"><span>WORLD / {String(projects.findIndex((project) => project.id === activeProject.id) + 1).padStart(2, "0")}</span><span>{activeProject.year}</span></div><span className="dossier-art-stamp">{activeProject.signal[language]}</span><img src={activeProject.logo} alt={`${activeProject.name} logo`} /></div>
             <div className="dossier-copy"><div className="dossier-meta"><span>{activeProject.status[language]}</span><span>{activeProject.visibility[language]}</span></div><h3>{activeProject.name}</h3><p>{activeProject.summary[language]}</p><div className="dossier-details"><span><small>Role</small><strong>{activeProject.role[language]}</strong></span><span><small>Signal</small><strong>{activeProject.signal[language]}</strong></span></div><div className="flow-line">{activeProject.flow[language].map((step, index) => <span key={step}><i>{String(index + 1).padStart(2, "0")}</i>{step}</span>)}</div><a className="inline-link" href={activeProject.link} target={activeProject.link.startsWith("http") ? "_blank" : undefined} rel={activeProject.link.startsWith("http") ? "noreferrer" : undefined}>{activeProject.linkLabel[language]}<ArrowUpRight size={17} /></a></div>
           </motion.article>
         </div>
       </section>
 
-      <section className="stack-section" id="stack" aria-labelledby="stack-title">
+      <PhaseBridge tone="stack" motionOn={motionOn} />
+
+      <section ref={stackRef} className="stack-section" id="stack" aria-labelledby="stack-title" data-visible={stackVisible}>
         <div className="content-section stack-intro"><div className="section-heading"><div><p className="section-kicker section-kicker-dark">Working stack</p><h2 id="stack-title">{t.stack.title}</h2></div><p>{t.stack.body}</p></div></div>
         <div className="stack-marquee" aria-label="Technology stack"><div className="stack-track">{[...stackGroups, ...stackGroups].map((group, groupIndex) => <div className="stack-group" key={`${group.label}-${groupIndex}`}><span className="stack-group-label">{group.label}</span>{group.items.map(([label, slug, color]) => <span className="stack-chip" key={`${label}-${groupIndex}`}><TechIcon label={label} slug={slug} color={color} />{label}</span>)}</div>)}</div></div>
         <div className="stack-constellation content-section" aria-label="Stack constellation">
@@ -349,9 +401,13 @@ export function PortfolioExperience() {
         <div className="stack-foot content-section"><span><Brackets size={19} /> from interface to systems</span><span><Zap size={19} /> motion with a reason</span><span><Code2 size={19} /> honest about the state</span></div>
       </section>
 
+      <PhaseBridge tone="academic" motionOn={motionOn} />
+
       <section className="content-section split-section" id="academic" aria-labelledby="academic-title"><div className="section-heading"><div><p className="section-kicker">University builds</p><h2 id="academic-title">{t.academic.title}</h2></div><p>{t.academic.body}</p></div><div className="academic-list">{academicProjects.map((project) => <article className="academic-row" key={project.title}><span className="academic-mark"><Command size={20} /></span><div><p>{project.tag}</p><h3>{project.title}</h3><span>{project.body}</span></div><ArrowUpRight size={20} /></article>)}</div></section>
 
       <section className="client-section" id="client-work" aria-labelledby="client-title"><div className="content-section"><div className="section-heading"><div><p className="section-kicker section-kicker-dark">Private evidence</p><h2 id="client-title">{t.client.title}</h2></div><p>{t.client.body}</p></div><div className="client-grid"><article><div className="client-topline"><span>01</span><MessageCircle size={21} /></div><h3>Y-Ventures chatbot</h3><p>n8n-based vendor-matching chatbot for event planning, grounded in researched vendor data with filtering, price sorting, and quote calculation.</p><span className="client-tag">Solo by Henry · private</span></article><article><div className="client-topline"><span>02</span><Instagram size={21} /></div><h3>Soreva Autonomous Content</h3><p>Social-media content automation for grounded discovery, editorial generation, branded media, review, scheduling, and controlled publishing.</p><span className="client-tag">Henry solo build + Vieri prototype account</span></article></div></div></section>
+
+      <PhaseBridge tone="proof" motionOn={motionOn} />
 
       <section className="content-section proof-section" id="proof" aria-labelledby="proof-title"><div className="section-heading"><div><p className="section-kicker">Credentials</p><h2 id="proof-title">{t.proof.title}</h2></div><p>{t.proof.body}</p></div><div className="proof-shelf"><div className="proof-card proof-card-one"><Sparkles size={22} /><span>Google / Gemini</span><strong>Learning record</strong></div><div className="proof-card proof-card-two"><Check size={22} /><span>Dicoding / Codelab</span><strong>Verified practice</strong></div><div className="proof-card proof-card-three"><Globe2 size={22} /><span>Skills / Cloud</span><strong>Curious by default</strong></div><div className="proof-note"><span>certificate shelf</span><p>Original certificate images will be curated here next, with their real issuer and date.</p></div></div></section>
 
@@ -359,5 +415,6 @@ export function PortfolioExperience() {
 
       <footer className="site-footer"><a className="brand" href="#top"><span className="brand-mark"><Asterisk size={18} /></span><span>HenryLabs</span></a><span>{t.footer}</span><span>© 2026</span></footer>
     </main>
+    </MotionConfig>
   );
 }

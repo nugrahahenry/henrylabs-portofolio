@@ -14,6 +14,8 @@ const worlds = [
   { id: "polara", name: "Polara", x: .85, y: -1.7, z: .6, color: "#d5a7c8", logo: "polara.png" },
 ] as const;
 
+const portraitPositions = [[-1.7, 1.9], [1.65, 1.55], [1.8, -.9], [-1.8, -.6], [.15, -2.1]];
+
 function planetTexture(color: string) {
   const surface = document.createElement("canvas");
   surface.width = 256;
@@ -137,17 +139,19 @@ export function CosmicCanvas({ activeId, onSelect, motionOn, progress }: {
       const dt = Math.min((time - lastTime) / 1000 || 0, .04);
       lastTime = time;
       if (state.current.motionOn) elapsed += dt;
-      const p = progress.get();
-      const zoom = THREE.MathUtils.smoothstep(p, .04, .5);
-      const mobile = host.clientWidth < 700;
-      camera.position.set(0, .05, (mobile ? 15.3 : 10.5) + (1 - zoom) * 9);
+      const zoom = state.current.motionOn ? THREE.MathUtils.smoothstep(progress.get(), .24, .65) : 1;
+      const portrait = camera.aspect < .9;
+      const halfWidth = portrait ? 3.1 : 4.7;
+      const fittedDistance = Math.max(10.5, halfWidth / (Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) * camera.aspect));
+      camera.position.set(0, .05, fittedDistance + (1 - zoom) * 5);
       system.rotation.y = angle + (state.current.motionOn ? Math.sin(elapsed * .12) * .08 : 0);
       core.rotation.y = elapsed * .075;
       planets.forEach(({ group, sphere }, index) => {
         const selected = worlds[index].id === state.current.activeId;
         const scale = selected ? 1.25 : .94;
         group.scale.setScalar(state.current.motionOn ? THREE.MathUtils.damp(group.scale.x, scale, 7, dt) : scale);
-        group.position.y = worlds[index].y + Math.sin(elapsed * .45 + index) * .06;
+        group.position.x = portrait ? portraitPositions[index][0] : worlds[index].x;
+        group.position.y = (portrait ? portraitPositions[index][1] : worlds[index].y) + Math.sin(elapsed * .45 + index) * .06;
         sphere.rotation.y = elapsed * .13;
       });
       renderer.render(scene, camera);
@@ -155,7 +159,8 @@ export function CosmicCanvas({ activeId, onSelect, motionOn, progress }: {
         group.getWorldPosition(projected);
         projected.project(camera);
         const label = labels.current[index];
-        if (label) label.style.transform = `translate(-50%, 0) translate(${(projected.x * .5 + .5) * host.clientWidth}px, ${(-projected.y * .5 + .5) * host.clientHeight + 42}px)`;
+        const radiusPixels = (.37 + index * .02) * group.scale.x * host.clientHeight / (2 * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) * camera.position.z);
+        if (label) label.style.transform = `translate(-50%, 0) translate(${(projected.x * .5 + .5) * host.clientWidth}px, ${(-projected.y * .5 + .5) * host.clientHeight + radiusPixels + 8}px)`;
       });
       host.dataset.ready = "true";
       host.dataset.time = elapsed.toFixed(2);
