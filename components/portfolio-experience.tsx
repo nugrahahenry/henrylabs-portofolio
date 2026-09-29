@@ -194,13 +194,6 @@ const stackGroups = [
 
 const stackOrbitItems = stackGroups.flatMap((group) => group.items).map(([label, slug, color], index) => ({ label, slug, color, index }));
 
-const chapters = [
-  { id: "method", number: "01", label: "Method" },
-  { id: "work", number: "02", label: "Worlds" },
-  { id: "stack", number: "03", label: "Stack" },
-  { id: "proof", number: "04", label: "Proof" },
-] as const;
-
 const academicProjects = [
   { title: "RentalMobil.SG", tag: "OOP · Semester 2", body: "A car-rental web system with vehicle catalog, authentication, booking, payment confirmation, user area, and admin operations." },
   { title: "POS Z Shoes", tag: "APBDS · Semester 3", body: "A point-of-sale system with product, supplier, purchase, customer transaction, return, dashboard, and reporting flows." },
@@ -231,22 +224,6 @@ function TechIcon({ label, slug, color }: { label: string; slug: string; color: 
   </span>;
 }
 
-function PhaseBridge({ tone, motionOn }: { tone: "method" | "work" | "stack" | "academic" | "proof"; motionOn: boolean }) {
-  const ref = useRef<HTMLDivElement>(null);
-  const { scrollYProgress } = useScroll({ target: ref, offset: ["start end", "end start"] });
-  const y = useTransform(scrollYProgress, [0, 1], [-24, 24]);
-  const labels = { method: "follow the signal", work: "select a world", stack: "read the instruments", academic: "keep learning", proof: "show the receipt" };
-  return <div ref={ref} className={`phase-bridge phase-bridge--${tone}`} aria-hidden="true">
-    <motion.img className="phase-bridge-atmosphere" src="/assets/background/cosmic-nebula.png" alt="" loading="lazy" style={{ y: motionOn ? y : 0 }} />
-    <span className="phase-bridge-orbit" />
-    <span className="phase-bridge-spark phase-bridge-spark--one" />
-    <span className="phase-bridge-spark phase-bridge-spark--two" />
-    <span className="phase-bridge-spark phase-bridge-spark--three" />
-    <span className="phase-bridge-caption">{labels[tone]} <ArrowDown size={13} /></span>
-    {tone === "work" && <div className="phase-bridge-worlds">{projects.map((project) => <span className="phase-bridge-world" key={project.id}><img src={project.logo} alt="" /></span>)}</div>}
-  </div>;
-}
-
 export function PortfolioExperience() {
   const [language, setLanguage] = useState<Language>("en");
   const [activeId, setActiveId] = useState<ProjectId>("catmoji");
@@ -254,7 +231,6 @@ export function PortfolioExperience() {
   const [introDone, setIntroDone] = useState(false);
   const [motionPreference, setMotionPreference] = useState(true);
   const [motionReady, setMotionReady] = useState(false);
-  const [activeChapter, setActiveChapter] = useState<(typeof chapters)[number]["id"]>("method");
   const [methodStep, setMethodStep] = useState(0);
   const reducedMotion = useReducedMotion();
   const motionOn = motionReady && motionPreference && !reducedMotion;
@@ -322,16 +298,6 @@ export function PortfolioExperience() {
   }, [activeCertificate]);
 
   useEffect(() => {
-    const observer = new IntersectionObserver((entries) => {
-      const visible = entries.filter((entry) => entry.isIntersecting).sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top);
-      const chapter = visible.at(-1)?.target.id as (typeof chapters)[number]["id"] | undefined;
-      if (chapter) setActiveChapter(chapter);
-    }, { rootMargin: "-42% 0px -45% 0px", threshold: 0 });
-    chapters.forEach(({ id }) => { const element = document.getElementById(id); if (element) observer.observe(element); });
-    return () => observer.disconnect();
-  }, []);
-
-  useEffect(() => {
     if (!motionOn) return;
     const onPointerMove = (event: PointerEvent) => {
       if (event.pointerType === "touch") return;
@@ -356,25 +322,20 @@ export function PortfolioExperience() {
     <MotionConfig reducedMotion={motionOn ? "never" : "always"} transition={{ duration: motionOn ? 0.55 : 0, ease: [0.16, 1, 0.3, 1] }}>
     <main className="site-shell" data-motion={motionOn ? "on" : "off"}>
       <motion.div className={cx("intro-loader", introDone && "intro-loader--done")} aria-hidden={introDone}>
-        <div className="loader-orbit" aria-hidden="true"><Asterisk size={30} strokeWidth={1.6} /></div>
+        <div className="loader-stars" aria-hidden="true"><span /><span /><span /><span /><span /><span /></div>
+        <div className="loader-system" aria-hidden="true"><span className="loader-system-orbit loader-system-orbit--one"><i /></span><span className="loader-system-orbit loader-system-orbit--two"><i /></span><span className="loader-system-core"><Asterisk size={27} strokeWidth={1.5} /><small>HENRY</small></span></div>
         <div className="loader-content">
-          <div className="loader-meta"><span>HENRYLABS / 2026</span><span>{String((loadingStep + 1) * 25).padStart(2, "0")} %</span></div>
-          <h2>Entering<br /><em>the orbit.</em></h2>
+          <div className="loader-meta"><span>HENRYLABS / USEFUL WORLDS</span><span>{String((loadingStep + 1) * 25).padStart(2, "0")} %</span></div>
+          <p className="loader-eyebrow">a portfolio in motion</p>
+          <h2><span>Entering</span><em>the orbit.</em></h2>
           <div className="loader-line"><span style={{ transform: `scaleX(${(loadingStep + 1) / 4})` }} /></div>
-          <p>{t.loading[loadingStep]}</p>
+          <div className="loader-status"><p>{t.loading[loadingStep]}</p><span className="loader-status-dots"><i className={loadingStep >= 0 ? "is-on" : undefined} /><i className={loadingStep >= 1 ? "is-on" : undefined} /><i className={loadingStep >= 2 ? "is-on" : undefined} /><i className={loadingStep >= 3 ? "is-on" : undefined} /></span></div>
         </div>
       </motion.div>
 
       <motion.div className="cursor-guide" style={{ x: cursorX, y: cursorY }} aria-hidden="true">
         <span>Henry</span><Asterisk size={10} />
       </motion.div>
-
-      <nav className="chapter-rail" aria-label="Chapter navigation">
-        <span className="chapter-rail-caption">Navigate the field</span>
-        <div className="chapter-rail-track">
-          {chapters.map((chapter) => <a key={chapter.id} href={`#${chapter.id}`} className={activeChapter === chapter.id ? "chapter-rail-link--active" : undefined} aria-current={activeChapter === chapter.id ? "page" : undefined}><span>{chapter.number}</span><strong>{chapter.label}</strong></a>)}
-        </div>
-      </nav>
 
       <header className="site-header">
         <a className="brand" href="#top" aria-label="HenryLabs home"><span className="brand-mark"><Asterisk size={18} /></span><span>HenryLabs</span></a>
@@ -417,8 +378,6 @@ export function PortfolioExperience() {
         <a href="#work" className="scroll-cue"><span>Scroll to enter</span><ArrowDown size={18} /></a>
       </section>
 
-      <PhaseBridge tone="method" motionOn={motionOn} />
-
       <section ref={methodRef}
         className="signal-chapter"
         id="method"
@@ -437,8 +396,6 @@ export function PortfolioExperience() {
         </div>
       </section>
 
-      <PhaseBridge tone="work" motionOn={motionOn} />
-
       <section className="content-section work-section" id="work" aria-labelledby="work-title">
         <div className="section-heading"><div><p className="section-kicker">Selected worlds</p><h2 id="work-title">{t.work.title}</h2></div><p>{t.work.body}</p></div>
         <div className="work-layout">
@@ -450,11 +407,8 @@ export function PortfolioExperience() {
         </div>
       </section>
 
-      <PhaseBridge tone="stack" motionOn={motionOn} />
-
       <section ref={stackRef} className="stack-section" id="stack" aria-labelledby="stack-title" data-visible={stackVisible}>
         <div className="content-section stack-intro"><div className="section-heading"><div><p className="section-kicker section-kicker-dark">Working stack</p><h2 id="stack-title">{t.stack.title}</h2></div><p>{t.stack.body}</p></div></div>
-        <div className="stack-marquee" aria-label="Technology stack"><div className="stack-track">{[...stackGroups, ...stackGroups].map((group, groupIndex) => <div className="stack-group" key={`${group.label}-${groupIndex}`}><span className="stack-group-label">{group.label}</span>{group.items.map(([label, slug, color]) => <span className="stack-chip" key={`${label}-${groupIndex}`}><TechIcon label={label} slug={slug} color={color} />{label}</span>)}</div>)}</div></div>
         <div className="stack-constellation content-section" aria-label="Stack constellation">
           <div className="stack-orbit-copy"><p className="section-kicker section-kicker-dark">Tools in orbit</p><h3>Different tools.<br /><em>One point of view.</em></h3><p>Technology changes. The instinct stays: make the next action clearer, lighter, and worth returning to.</p></div>
           <div className="stack-orbit" aria-hidden="true"><div className="stack-orbit-core"><Asterisk size={29} /><span>HENRY</span></div><span className="stack-orbit-ring stack-orbit-ring--one" /><span className="stack-orbit-ring stack-orbit-ring--two" />{stackOrbitItems.map((item) => <span className="stack-orbit-node" key={item.label} style={{ "--orbit-index": item.index, "--orbit-count": stackOrbitItems.length } as React.CSSProperties}><span><TechIcon label={item.label} slug={item.slug} color={item.color} /></span><strong>{item.label}</strong></span>)}</div>
@@ -462,13 +416,9 @@ export function PortfolioExperience() {
         <div className="stack-foot content-section"><span><Brackets size={19} /> from interface to systems</span><span><Zap size={19} /> motion with a reason</span><span><Code2 size={19} /> honest about the state</span></div>
       </section>
 
-      <PhaseBridge tone="academic" motionOn={motionOn} />
-
       <section className="content-section split-section" id="academic" aria-labelledby="academic-title"><div className="section-heading"><div><p className="section-kicker">University builds</p><h2 id="academic-title">{t.academic.title}</h2></div><p>{t.academic.body}</p></div><div className="academic-list">{academicProjects.map((project) => <article className="academic-row" key={project.title}><span className="academic-mark"><Command size={20} /></span><div><p>{project.tag}</p><h3>{project.title}</h3><span>{project.body}</span></div><ArrowUpRight size={20} /></article>)}</div></section>
 
       <section className="client-section" id="client-work" aria-labelledby="client-title"><div className="content-section"><div className="section-heading"><div><p className="section-kicker section-kicker-dark">Private evidence</p><h2 id="client-title">{t.client.title}</h2></div><p>{t.client.body}</p></div><div className="client-grid"><article><div className="client-topline"><span>01</span><MessageCircle size={21} /></div><h3>Y-Ventures chatbot</h3><p>n8n-based vendor-matching chatbot for event planning, grounded in researched vendor data with filtering, price sorting, and quote calculation.</p><span className="client-tag">Solo by Henry · private</span></article><article><div className="client-topline"><span>02</span><Instagram size={21} /></div><h3>Soreva Autonomous Content</h3><p>Social-media content automation for grounded discovery, editorial generation, branded media, review, scheduling, and controlled publishing.</p><span className="client-tag">Henry solo build + Vieri prototype account</span></article></div></div></section>
-
-      <PhaseBridge tone="proof" motionOn={motionOn} />
 
       <section className="content-section proof-section" id="proof" aria-labelledby="proof-title"><div className="section-heading"><div><p className="section-kicker">Credentials</p><h2 id="proof-title">{t.proof.title}</h2></div><p>{t.proof.body}</p></div><div className="certificate-shelf">{certificates.map((certificate, index) => <motion.article className="certificate-card" key={certificate.title} initial={motionOn ? { opacity: 0, y: 26 } : undefined} whileInView={motionOn ? { opacity: 1, y: 0 } : undefined} viewport={{ once: true, margin: "-70px" }} transition={{ duration: .55, delay: (index % 3) * .07, ease: [0.22, 1, .36, 1] }}><button type="button" className="certificate-preview" onClick={() => setActiveCertificate(certificate)} aria-label={`Inspect ${certificate.title} certificate`}><img src={certificate.image} alt={certificate.alt} loading={index < 3 ? "eager" : "lazy"} /><span className="certificate-index">{String(index + 1).padStart(2, "0")}</span><span className="certificate-view">inspect full <ArrowUpRight size={13} /></span></button><div className="certificate-copy"><div className="certificate-meta"><span>{certificate.issuer}</span><span>{certificate.kind}</span></div><h3>{certificate.title}</h3><div className="certificate-foot"><span>{certificate.date}</span>{certificate.source ? <a href={certificate.source} target="_blank" rel="noreferrer">Source PDF <ArrowUpRight size={13} /></a> : <span className="certificate-muted">Original image</span>}</div></div></motion.article>)}<div className="certificate-archive"><span>certificate shelf</span><p>Original assets, issuer names, and dates stay visible so the proof feels specific, not ornamental.</p><Sparkles size={19} /></div></div></section>
 

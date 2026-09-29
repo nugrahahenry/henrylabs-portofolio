@@ -20,12 +20,18 @@ try {
       planets: document.querySelectorAll(".planet-label").length,
       certificates: document.querySelectorAll(".certificate-card").length,
       sourceLinks: document.querySelectorAll(".certificate-foot a").length,
+      chapterRails: document.querySelectorAll(".chapter-rail").length,
+      phaseBridges: document.querySelectorAll(".phase-bridge").length,
+      stackMarquees: document.querySelectorAll(".stack-marquee").length,
     }));
     assert.equal(result.viewport, viewport.width);
     assert.equal(result.scrollWidth, viewport.width);
     assert.equal(result.planets, 5);
     assert.equal(result.certificates, 8);
     assert.equal(result.sourceLinks, 6);
+    assert.equal(result.chapterRails, 0);
+    assert.equal(result.phaseBridges, 0);
+    assert.equal(result.stackMarquees, 0);
     await page.locator(".certificate-card").first().getByRole("button").click();
     await page.locator('[role="dialog"]').waitFor();
     assert.match(await page.locator('[role="dialog"]').innerText(), /Gemini Certified Educator/);

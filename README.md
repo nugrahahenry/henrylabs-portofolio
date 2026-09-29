@@ -6,15 +6,15 @@ Interactive personal portfolio for Henry Nugraha, now moving from a single-file 
 
 - Cosmic scroll opening with a project constellation.
 - A full-bleed orbit-to-method transition that explains how Henry turns friction into useful work.
-- A chapter rail and scroll-reactive method signal that turn the page itself into a navigable orbit.
-- Chapter bridges with a shared cosmic atmosphere, responsive parallax, and intentional light-to-dark transitions.
+- A single header navigation and scroll-reactive method signal keep the page navigable without duplicated controls.
+- Continuous cosmic surfaces replace decorative transition strips, so each chapter enters with clearer rhythm and contrast.
 - The `Selected Worlds` chapter continues that cosmic field, with project-color navigation and a focused dossier specimen.
 - Next.js component architecture with Motion-driven camera choreography.
 - Progressive Three.js depth layer with an accessible static fallback.
 - Real project marks for Catmoji, Nalira, Canox, Hengs, and Polara.
-- Local project marks are used as dimensional 3D badges on the constellation planets and chapter bridge.
-- Project evidence dossiers, academic projects, client work, technology stack orbit, and bilingual English/Indonesian copy.
-- Original certificate previews open in an accessible detail viewer, with source PDFs linked where available.
+- Local project marks are used as dimensional 3D badges on the constellation planets, which rotate through a full orbit and remain draggable.
+- Project evidence dossiers, academic projects, client work, one technology stack constellation, and bilingual English/Indonesian copy.
+- Original certificate previews stay fully visible in an accessible detail viewer, with source PDFs linked where available.
 - Responsive portrait constellation layout, mobile navigation, immediate technology mark fallbacks, offscreen animation pausing, and reduced-motion support.
 
 ## Run locally

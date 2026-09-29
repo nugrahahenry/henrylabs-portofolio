@@ -148,10 +148,10 @@ export function CosmicCanvas({ activeId, onSelect, motionOn, progress }: {
       const sphere = new THREE.Mesh(new THREE.SphereGeometry(.37 + index * .02, 40, 24), new THREE.MeshStandardMaterial({ map: texture, roughness: .8 }));
       group.add(sphere);
       const logoPlate = new THREE.Mesh(
-        new THREE.CylinderGeometry(.255, .255, .065, 48),
-        new THREE.MeshStandardMaterial({ color: world.color, metalness: .28, roughness: .48 }),
+        new THREE.SphereGeometry(.27, 32, 16),
+        new THREE.MeshStandardMaterial({ color: world.color, metalness: .2, roughness: .48 }),
       );
-      logoPlate.rotation.x = Math.PI / 2;
+      logoPlate.scale.z = .2;
       logoPlate.position.set(0, .03, .41);
       const logoHalo = new THREE.Mesh(
         new THREE.RingGeometry(.22, .27, 48),
@@ -201,7 +201,8 @@ export function CosmicCanvas({ activeId, onSelect, motionOn, progress }: {
       const halfWidth = portrait ? 3.1 : 4.7;
       const fittedDistance = Math.max(10.5, halfWidth / (Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) * camera.aspect));
       camera.position.set(0, .05, fittedDistance + (1 - zoom) * 5);
-      system.rotation.y = angle + (state.current.motionOn ? Math.sin(elapsed * .12) * .08 : 0);
+      if (state.current.motionOn) angle += dt * .055;
+      system.rotation.y = angle + (state.current.motionOn ? Math.sin(elapsed * .12) * .04 : 0);
       core.rotation.y = elapsed * .075;
       planets.forEach(({ group, sphere, logoHalo, logoFace }, index) => {
         const selected = worlds[index].id === state.current.activeId;
@@ -243,7 +244,7 @@ export function CosmicCanvas({ activeId, onSelect, motionOn, progress }: {
     };
     const move = (event: PointerEvent) => {
       if (!dragging) return;
-      angle = THREE.MathUtils.clamp(angle + (event.clientX - lastX) * .003, -.5, .5);
+      angle += (event.clientX - lastX) * .006;
       lastX = event.clientX;
       wake();
     };
