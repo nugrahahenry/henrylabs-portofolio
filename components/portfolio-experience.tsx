@@ -35,6 +35,9 @@ const projects: Array<{
   flow: Record<Language, string[]>;
   link: string;
   linkLabel: Record<Language, string>;
+  role: Record<Language, string>;
+  signal: Record<Language, string>;
+  year: string;
 }> = [
   {
     id: "catmoji",
@@ -50,6 +53,9 @@ const projects: Array<{
     flow: { en: ["Hand gesture", "Emotion", "Cat sticker + voice"], id: ["Gesture tangan", "Emosi", "Stiker kucing + suara"] },
     link: "https://catmoji.vercel.app/",
     linkLabel: { en: "Open live product", id: "Buka produk live" },
+    role: { en: "Product / interaction", id: "Produk / interaksi" },
+    signal: { en: "Playful input", id: "Input playful" },
+    year: "2026",
   },
   {
     id: "nalira",
@@ -65,6 +71,9 @@ const projects: Array<{
     flow: { en: ["Audio", "Structured knowledge", "Contextual chat"], id: ["Audio", "Knowledge terstruktur", "Chat kontekstual"] },
     link: "https://nalira-hengs.vercel.app/dashboard",
     linkLabel: { en: "Open MVP", id: "Buka MVP" },
+    role: { en: "Product / AI workflow", id: "Produk / workflow AI" },
+    signal: { en: "Make knowledge usable", id: "Bikin knowledge berguna" },
+    year: "2026",
   },
   {
     id: "canox",
@@ -80,6 +89,9 @@ const projects: Array<{
     flow: { en: ["Personal context", "AI tools", "Next action"], id: ["Konteks personal", "Tools AI", "Aksi berikutnya"] },
     link: "https://wa.me/6289513559554",
     linkLabel: { en: "Request a demo", id: "Minta demo" },
+    role: { en: "System / personal AI", id: "Sistem / AI personal" },
+    signal: { en: "Context is the interface", id: "Konteks adalah interface" },
+    year: "2026",
   },
   {
     id: "hengs",
@@ -95,6 +107,9 @@ const projects: Array<{
     flow: { en: ["Message", "Context", "Useful handoff"], id: ["Pesan", "Konteks", "Handoff berguna"] },
     link: "mailto:henrynugraha1210@gmail.com",
     linkLabel: { en: "Discuss this build", id: "Bahas build ini" },
+    role: { en: "Automation / safety", id: "Automation / safety" },
+    signal: { en: "Calmer communication", id: "Komunikasi lebih tenang" },
+    year: "2026",
   },
   {
     id: "polara",
@@ -110,6 +125,9 @@ const projects: Array<{
     flow: { en: ["Frame", "Play", "Keep the moment"], id: ["Frame", "Bermain", "Simpan momen"] },
     link: "mailto:henrynugraha1210@gmail.com",
     linkLabel: { en: "Discuss the experience", id: "Bahas experience ini" },
+    role: { en: "Creative web / camera", id: "Web kreatif / kamera" },
+    signal: { en: "Interface as memory", id: "Interface jadi memori" },
+    year: "2026",
   },
 ];
 
@@ -125,6 +143,13 @@ const copy = {
       note: "Open to thoughtful freelance work and the right team.",
     },
     field: { label: "A living map of HenryLabs", hint: "Drag the field · select a world" },
+    method: {
+      kicker: "The Henry method",
+      title: "Notice the friction.\nShape the useful.",
+      body: "The best interface starts before the interface. I look for the awkward handoff, the missing context, and the tiny moment that should feel easier.",
+      steps: ["See the friction", "Make the system legible", "Ship the next useful move"],
+      marker: "SIGNAL / 01",
+    },
     work: { title: "The work, in context.", body: "Every world starts with a real friction. Select a planet to see the problem, the flow, and the honest state of the build." },
     stack: { title: "The instruments behind the worlds.", body: "A flexible stack for moving from interface to workflow, from a classroom idea to a system people can actually use." },
     academic: { title: "Built while learning.", body: "University projects where I owned the system end to end: business flows, mobile and web interfaces, and the logic underneath." },
@@ -144,6 +169,13 @@ const copy = {
       note: "Terbuka untuk project freelance dan tim yang tepat.",
     },
     field: { label: "Peta hidup HenryLabs", hint: "Geser field · pilih sebuah dunia" },
+    method: {
+      kicker: "Cara kerja Henry",
+      title: "Lihat friksinya.\nBentuk yang berguna.",
+      body: "Interface yang baik dimulai sebelum interface. Aku mencari handoff yang canggung, konteks yang hilang, dan momen kecil yang seharusnya terasa lebih mudah.",
+      steps: ["Lihat friksinya", "Buat sistemnya terbaca", "Kirim langkah berguna berikutnya"],
+      marker: "SIGNAL / 01",
+    },
     work: { title: "Karya, dengan konteks.", body: "Setiap dunia dimulai dari masalah nyata. Pilih planet untuk melihat masalah, alur, dan status build secara jujur." },
     stack: { title: "Instrumen di balik semua dunia.", body: "Stack yang fleksibel untuk bergerak dari interface ke workflow, dari ide kuliah menjadi sistem yang benar-benar bisa dipakai." },
     academic: { title: "Dibuat sambil belajar.", body: "Project kuliah yang kubangun sendiri dari awal sampai akhir: alur bisnis, interface mobile dan web, serta logika di baliknya." },
@@ -155,10 +187,12 @@ const copy = {
 } as const;
 
 const stackGroups = [
-  { label: "Build", items: [["JavaScript", "javascript", "f7df1e"], ["Python", "python", "3776ab"], ["Java", "openjdk", "437291"], ["C#", "csharp", "512bd4"]] },
+  { label: "Build", items: [["JavaScript", "javascript", "f7df1e"], ["Python", "python", "3776ab"], ["Java", "openjdk", "437291"], ["C#", "csharp", "512bd4"], ["PHP", "php", "777bb4"]] },
   { label: "Interface", items: [["React", "react", "61dafb"], ["Next.js", "nextdotjs", "ffffff"], ["HTML", "html5", "e34f26"], ["CSS", "css3", "1572b6"]] },
   { label: "Systems", items: [["Node.js", "nodedotjs", "339933"], ["n8n", "n8n", "ea4b71"], ["OpenAI", "openai", "ffffff"], ["Laravel", "laravel", "ff2d20"]] },
 ];
+
+const stackOrbitItems = stackGroups.flatMap((group) => group.items).map(([label, slug, color], index) => ({ label, slug, color, index }));
 
 const academicProjects = [
   { title: "RentalMobil.SG", tag: "OOP · Semester 2", body: "A car-rental web system with vehicle catalog, authentication, booking, payment confirmation, user area, and admin operations." },
@@ -168,6 +202,13 @@ const academicProjects = [
 
 function cx(...names: Array<string | false | null | undefined>) {
   return names.filter(Boolean).join(" ");
+}
+
+function TechIcon({ label, slug, color }: { label: string; slug: string; color: string }) {
+  const [failed, setFailed] = useState(false);
+  const mark = label === "JavaScript" ? "JS" : label === "Python" ? "PY" : label === "OpenAI" ? "AI" : label === "Next.js" ? "N" : label.slice(0, 2).toUpperCase();
+  if (failed) return <span className="tech-icon-fallback" aria-hidden="true">{mark}</span>;
+  return <img src={`https://cdn.simpleicons.org/${slug}/${color}`} alt="" onError={() => setFailed(true)} />;
 }
 
 export function PortfolioExperience() {
@@ -268,20 +309,43 @@ export function PortfolioExperience() {
         <a href="#work" className="scroll-cue"><span>Scroll to enter</span><ArrowDown size={18} /></a>
       </section>
 
+      <motion.section
+        className="signal-chapter"
+        aria-labelledby="method-title"
+        initial={motionOn ? { opacity: 0, y: 45 } : false}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, amount: 0.25 }}
+        transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+      >
+        <div className="signal-ticker" aria-hidden="true"><span>SEE THE FRICTION</span><Asterisk size={20} /><span>SHAPE THE USEFUL</span><Asterisk size={20} /><span>SHIP THE NEXT MOVE</span><Asterisk size={20} /></div>
+        <div className="signal-inner">
+          <div className="signal-topline"><span>{t.method.marker}</span><span>HenryLabs / field notes</span></div>
+          <div className="signal-layout">
+            <div><p className="section-kicker section-kicker-dark">{t.method.kicker}</p><h2 id="method-title">{t.method.title.split("\n").map((line) => <span key={line}>{line}</span>)}</h2></div>
+            <div className="signal-copy"><p>{t.method.body}</p><div className="signal-steps">{t.method.steps.map((step, index) => <span key={step}><i>{String(index + 1).padStart(2, "0")}</i>{step}</span>)}</div></div>
+          </div>
+          <div className="signal-constellation" aria-hidden="true"><span className="signal-constellation-dot dot-a" /><span className="signal-constellation-dot dot-b" /><span className="signal-constellation-dot dot-c" /><span className="signal-constellation-line line-a" /><span className="signal-constellation-line line-b" /><span className="signal-constellation-line line-c" /></div>
+        </div>
+      </motion.section>
+
       <section className="content-section work-section" id="work" aria-labelledby="work-title">
         <div className="section-heading"><div><p className="section-kicker">Selected worlds</p><h2 id="work-title">{t.work.title}</h2></div><p>{t.work.body}</p></div>
         <div className="work-layout">
-          <div className="project-index" role="list" aria-label="Project index">{projects.map((project, index) => <button key={project.id} className={cx("project-row", project.id === activeId && "project-row--active")} type="button" role="listitem" onClick={() => setActiveId(project.id)}><span className="project-number">0{index + 1}</span><span className="project-icon"><img src={project.logo} alt="" /></span><span className="project-row-copy"><strong>{project.name}</strong><small>{project.visibility[language]}</small></span><ArrowRight className="row-arrow" size={18} /></button>)}</div>
+          <div className="project-index" role="list" aria-label="Project index">{projects.map((project, index) => <button key={project.id} className={cx("project-row", project.id === activeId && "project-row--active")} type="button" onClick={() => setActiveId(project.id)}><span className="project-number">0{index + 1}</span><span className="project-icon"><img src={project.logo} alt="" /></span><span className="project-row-copy"><strong>{project.name}</strong><small>{project.visibility[language]}</small></span><ArrowRight className="row-arrow" size={18} /></button>)}</div>
           <motion.article className="dossier" key={activeProject.id} style={{ "--dossier-color": activeProject.color } as React.CSSProperties} initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}>
-            <div className="dossier-art"><div className="dossier-art-ring" /><img src={activeProject.logo} alt={`${activeProject.name} logo`} /></div>
-            <div className="dossier-copy"><div className="dossier-meta"><span>{activeProject.status[language]}</span><span>{activeProject.visibility[language]}</span></div><h3>{activeProject.name}</h3><p>{activeProject.summary[language]}</p><div className="flow-line">{activeProject.flow[language].map((step, index) => <span key={step}><i>{String(index + 1).padStart(2, "0")}</i>{step}</span>)}</div><a className="inline-link" href={activeProject.link} target={activeProject.link.startsWith("http") ? "_blank" : undefined} rel={activeProject.link.startsWith("http") ? "noreferrer" : undefined}>{activeProject.linkLabel[language]}<ArrowUpRight size={17} /></a></div>
+            <div className="dossier-art"><div className="dossier-art-ring dossier-art-ring--one" /><div className="dossier-art-ring dossier-art-ring--two" /><div className="dossier-art-readout"><span>WORLD / {String(projects.findIndex((project) => project.id === activeProject.id) + 1).padStart(2, "0")}</span><span>{activeProject.year}</span></div><span className="dossier-art-stamp">{activeProject.signal[language]}</span><img src={activeProject.logo} alt={`${activeProject.name} logo`} /></div>
+            <div className="dossier-copy"><div className="dossier-meta"><span>{activeProject.status[language]}</span><span>{activeProject.visibility[language]}</span></div><h3>{activeProject.name}</h3><p>{activeProject.summary[language]}</p><div className="dossier-details"><span><small>Role</small><strong>{activeProject.role[language]}</strong></span><span><small>Signal</small><strong>{activeProject.signal[language]}</strong></span></div><div className="flow-line">{activeProject.flow[language].map((step, index) => <span key={step}><i>{String(index + 1).padStart(2, "0")}</i>{step}</span>)}</div><a className="inline-link" href={activeProject.link} target={activeProject.link.startsWith("http") ? "_blank" : undefined} rel={activeProject.link.startsWith("http") ? "noreferrer" : undefined}>{activeProject.linkLabel[language]}<ArrowUpRight size={17} /></a></div>
           </motion.article>
         </div>
       </section>
 
       <section className="stack-section" id="stack" aria-labelledby="stack-title">
         <div className="content-section stack-intro"><div className="section-heading"><div><p className="section-kicker section-kicker-dark">Working stack</p><h2 id="stack-title">{t.stack.title}</h2></div><p>{t.stack.body}</p></div></div>
-        <div className="stack-marquee" aria-label="Technology stack"><div className="stack-track">{[...stackGroups, ...stackGroups].map((group, groupIndex) => <div className="stack-group" key={`${group.label}-${groupIndex}`}><span className="stack-group-label">{group.label}</span>{group.items.map(([label, slug, color]) => <span className="stack-chip" key={`${label}-${groupIndex}`}><img src={`https://cdn.simpleicons.org/${slug}/${color}`} alt="" />{label}</span>)}</div>)}</div></div>
+        <div className="stack-marquee" aria-label="Technology stack"><div className="stack-track">{[...stackGroups, ...stackGroups].map((group, groupIndex) => <div className="stack-group" key={`${group.label}-${groupIndex}`}><span className="stack-group-label">{group.label}</span>{group.items.map(([label, slug, color]) => <span className="stack-chip" key={`${label}-${groupIndex}`}><TechIcon label={label} slug={slug} color={color} />{label}</span>)}</div>)}</div></div>
+        <div className="stack-constellation content-section" aria-label="Stack constellation">
+          <div className="stack-orbit-copy"><p className="section-kicker section-kicker-dark">Tools in orbit</p><h3>Different tools.<br /><em>One point of view.</em></h3><p>Technology changes. The instinct stays: make the next action clearer, lighter, and worth returning to.</p></div>
+          <div className="stack-orbit" aria-hidden="true"><div className="stack-orbit-core"><Asterisk size={29} /><span>HENRY</span></div><span className="stack-orbit-ring stack-orbit-ring--one" /><span className="stack-orbit-ring stack-orbit-ring--two" />{stackOrbitItems.map((item) => <span className="stack-orbit-node" key={item.label} style={{ "--orbit-index": item.index, "--orbit-count": stackOrbitItems.length } as React.CSSProperties}><span><TechIcon label={item.label} slug={item.slug} color={item.color} /></span><strong>{item.label}</strong></span>)}</div>
+        </div>
         <div className="stack-foot content-section"><span><Brackets size={19} /> from interface to systems</span><span><Zap size={19} /> motion with a reason</span><span><Code2 size={19} /> honest about the state</span></div>
       </section>
 

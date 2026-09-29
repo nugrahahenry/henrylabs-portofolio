@@ -13,6 +13,10 @@ test("portfolio surface keeps its core experience contracts", () => {
   assert.match(experience, /I build things I actually see\./);
   assert.match(experience, /Aku membangun hal yang benar-benar kulihat\./);
   assert.match(experience, /certificate shelf/);
+  assert.match(experience, /The Henry method/);
+  assert.match(experience, /Stack constellation/);
+  assert.match(experience, /\["PHP", "php"/);
+  assert.match(experience, /tech-icon-fallback/);
   assert.match(canvas, /WebGLRenderer/);
   assert.match(styles, /prefers-reduced-motion/);
   assert.match(styles, /html\[data-motion="off"\]/);
