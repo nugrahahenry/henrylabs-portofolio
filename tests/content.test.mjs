@@ -18,10 +18,12 @@ test("portfolio surface keeps its core experience contracts", () => {
   assert.match(experience, /\["PHP", "php"/);
   assert.match(experience, /tech-icon-fallback/);
   assert.match(experience, /PhaseBridge tone="method"/);
+  assert.match(experience, /phase-bridge-world/);
   assert.match(experience, /className="mobile-nav"/);
   assert.match(experience, /MotionConfig/);
   assert.match(canvas, /WebGLRenderer/);
   assert.match(canvas, /portraitPositions/);
+  assert.match(canvas, /logoPlate/);
   assert.match(styles, /prefers-reduced-motion/);
   assert.match(styles, /html\[data-motion="off"\]/);
   assert.match(styles, /touch-action: pan-y/);

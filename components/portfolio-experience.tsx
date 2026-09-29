@@ -224,6 +224,7 @@ function PhaseBridge({ tone, motionOn }: { tone: "method" | "work" | "stack" | "
     <span className="phase-bridge-spark phase-bridge-spark--one" />
     <span className="phase-bridge-spark phase-bridge-spark--two" />
     <span className="phase-bridge-spark phase-bridge-spark--three" />
+    {tone === "work" && <div className="phase-bridge-worlds">{projects.map((project) => <span className="phase-bridge-world" key={project.id}><img src={project.logo} alt="" /></span>)}</div>}
   </div>;
 }
 
@@ -250,14 +251,12 @@ export function PortfolioExperience() {
   const cursorX = useSpring(pointerX, { stiffness: 240, damping: 28, mass: 0.28 });
   const cursorY = useSpring(pointerY, { stiffness: 240, damping: 28, mass: 0.28 });
   const { scrollYProgress } = useScroll({ target: heroRef, offset: ["start start", "end end"] });
-  const heroCopyOpacity = useTransform(scrollYProgress, [0, 0.08, 0.3], [1, 1, 0]);
-  const heroCopyY = useTransform(scrollYProgress, [0, 0.3], [0, -50]);
-  const fieldScale = useTransform(scrollYProgress, [0.24, 0.65], [0.84, 1]);
-  const fieldOpacity = useTransform(scrollYProgress, [0.24, 0.48], [0, 1]);
-  const fieldY = useTransform(scrollYProgress, [0.24, 0.65], [45, 0]);
+  const heroCopyY = useTransform(scrollYProgress, [0, 0.28], [0, -58]);
+  const fieldScale = useTransform(scrollYProgress, [0.32, 0.65], [0.8, 1]);
+  const fieldY = useTransform(scrollYProgress, [0.32, 0.65], [52, 0]);
   const backdropScale = useTransform(scrollYProgress, [0, 1], [1, 1.12]);
   useMotionValueEvent(scrollYProgress, "change", (value) => {
-    const phase = value < 0.3 ? "intro" : value < 0.48 ? "transition" : "worlds";
+    const phase = value < 0.28 ? "intro" : value < 0.5 ? "transition" : "worlds";
     setHeroPhase((previous) => previous === phase ? previous : phase);
   });
 
@@ -303,7 +302,7 @@ export function PortfolioExperience() {
   return (
     <MotionConfig reducedMotion={motionOn ? "never" : "always"} transition={{ duration: motionOn ? 0.55 : 0, ease: [0.16, 1, 0.3, 1] }}>
     <main className="site-shell" data-motion={motionOn ? "on" : "off"}>
-      <motion.div className={cx("intro-loader", (introDone || !motionOn) && "intro-loader--done")} aria-hidden={introDone || !motionOn}>
+      <motion.div className={cx("intro-loader", introDone && "intro-loader--done")} aria-hidden={introDone}>
         <div className="loader-orbit" aria-hidden="true"><Asterisk size={30} strokeWidth={1.6} /></div>
         <div className="loader-content">
           <div className="loader-meta"><span>HENRYLABS / 2026</span><span>{String((loadingStep + 1) * 25).padStart(2, "0")} %</span></div>
@@ -339,7 +338,7 @@ export function PortfolioExperience() {
           <div className="backdrop-arc arc-one" /><div className="backdrop-arc arc-two" />
         </div>
         <div className="hero-sticky">
-          <motion.div className="hero-copy" inert={motionOn && heroPhase !== "intro"} style={{ opacity: motionOn ? heroCopyOpacity : 1, y: motionOn ? heroCopyY : 0 }}>
+          <motion.div className="hero-copy" inert={motionOn && heroPhase !== "intro"} style={{ y: motionOn ? heroCopyY : 0 }}>
             <p className="hero-kicker"><span className="live-pulse" /> product-minded developer / Indonesia</p>
             <h1 id="hero-title">{t.hero.title}</h1>
             <p className="hero-body">{t.hero.body}</p>
@@ -347,7 +346,7 @@ export function PortfolioExperience() {
             <p className="hero-note"><span className="status-light" />{t.hero.note}</p>
           </motion.div>
 
-          <motion.div className="cosmic-frame-wrap" inert={motionOn && heroPhase !== "worlds"} style={{ opacity: motionOn ? fieldOpacity : 1, scale: motionOn ? fieldScale : 1, y: motionOn ? fieldY : 0 }}>
+          <motion.div className="cosmic-frame-wrap" inert={motionOn && heroPhase !== "worlds"} style={{ scale: motionOn ? fieldScale : 1, y: motionOn ? fieldY : 0 }}>
             <div className="cosmic-frame">
               <div className="frame-topline"><span>{t.field.label}</span><span>HenryLabs</span></div>
               <CosmicCanvas activeId={activeId} onSelect={selectProject} motionOn={motionOn} progress={scrollYProgress} />
@@ -373,6 +372,7 @@ export function PortfolioExperience() {
             </div>
             <div className="signal-copy"><p>{t.method.body}</p><div className="signal-steps">{t.method.steps.map((step, index) => <span key={step}><i>{String(index + 1).padStart(2, "0")}</i>{step}</span>)}</div></div>
           </div>
+          <div className="signal-constellation" aria-hidden="true"><span className="signal-constellation-label">observe / shape / ship</span><span className="signal-constellation-dot dot-a" /><span className="signal-constellation-dot dot-b" /><span className="signal-constellation-dot dot-c" /><span className="signal-constellation-line line-a" /><span className="signal-constellation-line line-b" /><span className="signal-constellation-line line-c" /></div>
         </div>
       </section>
 

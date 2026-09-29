@@ -117,12 +117,25 @@ export function CosmicCanvas({ activeId, onSelect, motionOn, progress }: {
       });
       logoTexture.colorSpace = THREE.SRGBColorSpace;
       textures.push(logoTexture);
-      const logo = new THREE.Sprite(new THREE.SpriteMaterial({ map: logoTexture, depthTest: false }));
-      logo.scale.set(.35, .35, 1);
-      logo.position.set(0, .03, .5);
-      group.add(logo);
+      const logoPlate = new THREE.Mesh(
+        new THREE.CylinderGeometry(.255, .255, .065, 48),
+        new THREE.MeshStandardMaterial({ color: world.color, metalness: .28, roughness: .48 }),
+      );
+      logoPlate.rotation.x = Math.PI / 2;
+      logoPlate.position.set(0, .03, .41);
+      const logoHalo = new THREE.Mesh(
+        new THREE.RingGeometry(.22, .27, 48),
+        new THREE.MeshBasicMaterial({ color: world.color, transparent: true, opacity: .48, side: THREE.DoubleSide, depthTest: false, depthWrite: false }),
+      );
+      logoHalo.position.set(0, .03, .43);
+      const logoFace = new THREE.Mesh(
+        new THREE.PlaneGeometry(.36, .36),
+        new THREE.MeshBasicMaterial({ map: logoTexture, transparent: true, alphaTest: .04, side: THREE.DoubleSide, depthTest: false, depthWrite: false }),
+      );
+      logoFace.position.set(0, .03, .45);
+      group.add(logoPlate, logoHalo, logoFace);
       system.add(group);
-      return { group, sphere };
+      return { group, sphere, logoHalo, logoFace };
     });
 
     let visible = true;
@@ -146,13 +159,15 @@ export function CosmicCanvas({ activeId, onSelect, motionOn, progress }: {
       camera.position.set(0, .05, fittedDistance + (1 - zoom) * 5);
       system.rotation.y = angle + (state.current.motionOn ? Math.sin(elapsed * .12) * .08 : 0);
       core.rotation.y = elapsed * .075;
-      planets.forEach(({ group, sphere }, index) => {
+      planets.forEach(({ group, sphere, logoHalo, logoFace }, index) => {
         const selected = worlds[index].id === state.current.activeId;
         const scale = selected ? 1.25 : .94;
         group.scale.setScalar(state.current.motionOn ? THREE.MathUtils.damp(group.scale.x, scale, 7, dt) : scale);
         group.position.x = portrait ? portraitPositions[index][0] : worlds[index].x;
         group.position.y = (portrait ? portraitPositions[index][1] : worlds[index].y) + Math.sin(elapsed * .45 + index) * .06;
         sphere.rotation.y = elapsed * .13;
+        logoHalo.rotation.z = elapsed * (state.current.motionOn ? .08 : 0);
+        logoFace.rotation.z = Math.sin(elapsed * .35 + index) * (state.current.motionOn ? .035 : 0);
       });
       renderer.render(scene, camera);
       planets.forEach(({ group }, index) => {
