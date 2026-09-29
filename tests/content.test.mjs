@@ -14,6 +14,8 @@ test("portfolio surface keeps its core experience contracts", () => {
   assert.match(experience, /Aku membangun hal yang benar-benar kulihat\./);
   assert.match(experience, /certificate shelf/);
   assert.match(experience, /certificate-shelf/);
+  assert.match(experience, /certificate-modal/);
+  assert.match(experience, /AnimatePresence/);
   assert.match(experience, /gemini-certified-educator\.png/);
   assert.match(experience, /google-student-ambassador\.png/);
   assert.match(experience, /The Henry method/);

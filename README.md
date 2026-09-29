@@ -14,6 +14,7 @@ Interactive personal portfolio for Henry Nugraha, now moving from a single-file 
 - Real project marks for Catmoji, Nalira, Canox, Hengs, and Polara.
 - Local project marks are used as dimensional 3D badges on the constellation planets and chapter bridge.
 - Project evidence dossiers, academic projects, client work, technology stack orbit, and bilingual English/Indonesian copy.
+- Original certificate previews open in an accessible detail viewer, with source PDFs linked where available.
 - Responsive portrait constellation layout, mobile navigation, immediate technology mark fallbacks, offscreen animation pausing, and reduced-motion support.
 
 ## Run locally

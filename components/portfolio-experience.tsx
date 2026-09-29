@@ -16,9 +16,10 @@ import {
   MessageCircle,
   MousePointer2,
   Sparkles,
+  X,
   Zap,
 } from "lucide-react";
-import { MotionConfig, motion, useInView, useMotionValue, useMotionValueEvent, useReducedMotion, useScroll, useSpring, useTransform } from "motion/react";
+import { AnimatePresence, MotionConfig, motion, useInView, useMotionValue, useMotionValueEvent, useReducedMotion, useScroll, useSpring, useTransform } from "motion/react";
 import { CosmicCanvas, type ProjectId } from "./cosmic-canvas";
 
 type Language = "en" | "id";
@@ -249,6 +250,7 @@ function PhaseBridge({ tone, motionOn }: { tone: "method" | "work" | "stack" | "
 export function PortfolioExperience() {
   const [language, setLanguage] = useState<Language>("en");
   const [activeId, setActiveId] = useState<ProjectId>("catmoji");
+  const [activeCertificate, setActiveCertificate] = useState<(typeof certificates)[number] | null>(null);
   const [introDone, setIntroDone] = useState(false);
   const [motionPreference, setMotionPreference] = useState(true);
   const [motionReady, setMotionReady] = useState(false);
@@ -306,6 +308,18 @@ export function PortfolioExperience() {
   }, [motionOn]);
 
   useEffect(() => { document.documentElement.lang = language; }, [language]);
+
+  useEffect(() => {
+    if (!activeCertificate) return;
+    const closeOnEscape = (event: KeyboardEvent) => { if (event.key === "Escape") setActiveCertificate(null); };
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    window.addEventListener("keydown", closeOnEscape);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", closeOnEscape);
+    };
+  }, [activeCertificate]);
 
   useEffect(() => {
     const observer = new IntersectionObserver((entries) => {
@@ -456,7 +470,9 @@ export function PortfolioExperience() {
 
       <PhaseBridge tone="proof" motionOn={motionOn} />
 
-      <section className="content-section proof-section" id="proof" aria-labelledby="proof-title"><div className="section-heading"><div><p className="section-kicker">Credentials</p><h2 id="proof-title">{t.proof.title}</h2></div><p>{t.proof.body}</p></div><div className="certificate-shelf">{certificates.map((certificate, index) => <motion.article className="certificate-card" key={certificate.title} initial={motionOn ? { opacity: 0, y: 26 } : undefined} whileInView={motionOn ? { opacity: 1, y: 0 } : undefined} viewport={{ once: true, margin: "-70px" }} transition={{ duration: .55, delay: (index % 3) * .07, ease: [0.22, 1, .36, 1] }}><div className="certificate-preview">{certificate.source ? <a href={certificate.source} target="_blank" rel="noreferrer" aria-label={`Open original ${certificate.title} certificate`}><img src={certificate.image} alt={certificate.alt} loading={index < 3 ? "eager" : "lazy"} /></a> : <img src={certificate.image} alt={certificate.alt} loading="lazy" />}<span className="certificate-index">{String(index + 1).padStart(2, "0")}</span><span className="certificate-view">{certificate.source ? "open original" : "image record"} <ArrowUpRight size={13} /></span></div><div className="certificate-copy"><div className="certificate-meta"><span>{certificate.issuer}</span><span>{certificate.kind}</span></div><h3>{certificate.title}</h3><div className="certificate-foot"><span>{certificate.date}</span>{certificate.source ? <a href={certificate.source} target="_blank" rel="noreferrer">Source PDF <ArrowUpRight size={13} /></a> : <span className="certificate-muted">Original image</span>}</div></div></motion.article>)}<div className="certificate-archive"><span>certificate shelf</span><p>Original assets, issuer names, and dates stay visible so the proof feels specific, not ornamental.</p><Sparkles size={19} /></div></div></section>
+      <section className="content-section proof-section" id="proof" aria-labelledby="proof-title"><div className="section-heading"><div><p className="section-kicker">Credentials</p><h2 id="proof-title">{t.proof.title}</h2></div><p>{t.proof.body}</p></div><div className="certificate-shelf">{certificates.map((certificate, index) => <motion.article className="certificate-card" key={certificate.title} initial={motionOn ? { opacity: 0, y: 26 } : undefined} whileInView={motionOn ? { opacity: 1, y: 0 } : undefined} viewport={{ once: true, margin: "-70px" }} transition={{ duration: .55, delay: (index % 3) * .07, ease: [0.22, 1, .36, 1] }}><button type="button" className="certificate-preview" onClick={() => setActiveCertificate(certificate)} aria-label={`Inspect ${certificate.title} certificate`}><img src={certificate.image} alt={certificate.alt} loading={index < 3 ? "eager" : "lazy"} /><span className="certificate-index">{String(index + 1).padStart(2, "0")}</span><span className="certificate-view">inspect full <ArrowUpRight size={13} /></span></button><div className="certificate-copy"><div className="certificate-meta"><span>{certificate.issuer}</span><span>{certificate.kind}</span></div><h3>{certificate.title}</h3><div className="certificate-foot"><span>{certificate.date}</span>{certificate.source ? <a href={certificate.source} target="_blank" rel="noreferrer">Source PDF <ArrowUpRight size={13} /></a> : <span className="certificate-muted">Original image</span>}</div></div></motion.article>)}<div className="certificate-archive"><span>certificate shelf</span><p>Original assets, issuer names, and dates stay visible so the proof feels specific, not ornamental.</p><Sparkles size={19} /></div></div></section>
+
+      <AnimatePresence>{activeCertificate && <motion.div className="certificate-modal-backdrop" role="presentation" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={(event) => { if (event.target === event.currentTarget) setActiveCertificate(null); }}><motion.div className="certificate-modal" role="dialog" aria-modal="true" aria-labelledby="certificate-modal-title" initial={motionOn ? { opacity: 0, y: 26, scale: .97 } : false} animate={{ opacity: 1, y: 0, scale: 1 }} exit={motionOn ? { opacity: 0, y: 18, scale: .98 } : undefined} transition={{ duration: .35, ease: [0.22, 1, .36, 1] }}><button type="button" className="certificate-modal-close" onClick={() => setActiveCertificate(null)} aria-label="Close certificate viewer"><X size={19} /></button><div className="certificate-modal-image"><img src={activeCertificate.image} alt={activeCertificate.alt} /></div><div className="certificate-modal-copy"><p className="section-kicker">Certificate detail</p><div className="certificate-meta"><span>{activeCertificate.issuer}</span><span>{activeCertificate.kind}</span></div><h2 id="certificate-modal-title">{activeCertificate.title}</h2><p>{activeCertificate.date}</p>{activeCertificate.source && <a className="button button-bright" href={activeCertificate.source} target="_blank" rel="noreferrer">Open source PDF <ArrowUpRight size={16} /></a>}</div></motion.div></motion.div>}</AnimatePresence>
 
       <section className="contact-section" id="contact" aria-labelledby="contact-title"><div className="content-section contact-content"><div><p className="section-kicker section-kicker-dark">Make the next useful thing</p><h2 id="contact-title">{t.contact.title}</h2></div><div className="contact-copy"><p>{t.contact.body}</p><div className="contact-actions"><a className="button button-bright" href="https://wa.me/6289513559554" target="_blank" rel="noreferrer"><MessageCircle size={18} /> WhatsApp <ArrowUpRight size={16} /></a><a className="button button-outline" href="mailto:henrynugraha1210@gmail.com"><Mail size={18} /> Email <ArrowUpRight size={16} /></a></div><div className="social-links"><a href="https://github.com/nugrahahenry" target="_blank" rel="noreferrer"><Github size={19} /> GitHub</a><a href="https://instagram.com/hnry.dev" target="_blank" rel="noreferrer"><Instagram size={19} /> @hnry.dev</a></div></div></div></section>
 
