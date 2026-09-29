@@ -13,6 +13,9 @@ test("portfolio surface keeps its core experience contracts", () => {
   assert.match(experience, /I build things I actually see\./);
   assert.match(experience, /Aku membangun hal yang benar-benar kulihat\./);
   assert.match(experience, /certificate shelf/);
+  assert.match(experience, /certificate-shelf/);
+  assert.match(experience, /gemini-certified-educator\.png/);
+  assert.match(experience, /google-student-ambassador\.png/);
   assert.match(experience, /The Henry method/);
   assert.match(experience, /Stack constellation/);
   assert.match(experience, /\["PHP", "php"/);
@@ -29,6 +32,7 @@ test("portfolio surface keeps its core experience contracts", () => {
   assert.match(canvas, /WebGLRenderer/);
   assert.match(canvas, /portraitPositions/);
   assert.match(canvas, /logoPlate/);
+  assert.match(canvas, /CircleGeometry/);
   assert.match(styles, /prefers-reduced-motion/);
   assert.match(styles, /html\[data-motion="off"\]/);
   assert.match(styles, /touch-action: pan-y/);
@@ -41,4 +45,7 @@ test("portfolio surface keeps its core experience contracts", () => {
   assert.match(styles, /\.signal-progress/);
   assert.match(styles, /data-visible="true"/);
   assert.equal(existsSync(new URL("public/assets/background/cosmic-nebula.png", root)), true);
+  assert.equal(existsSync(new URL("public/assets/certificates/previews/gemini-certified-educator.png", root)), true);
+  assert.equal(existsSync(new URL("public/assets/certificates/previews/google-student-ambassador.png", root)), true);
+  assert.equal(existsSync(new URL("public/assets/certificates/source/gemini-certified-educator.pdf", root)), true);
 });

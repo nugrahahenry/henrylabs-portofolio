@@ -22,4 +22,4 @@ Run `npm install`, then `npm run dev` and open the local URL shown in the termin
 
 ## Privacy
 
-Private projects are presented as sanitized portfolio evidence. Internal research, planning documents, certificates, credentials, and runtime data are excluded from this public repository. Technology marks currently use pinned Simple Icons CDN URLs; project identity assets are served locally from `public/assets`.
+Private projects are presented as sanitized portfolio evidence. Internal research, planning documents, and runtime data stay excluded from this public repository. Selected original certificate previews and source PDFs live under `public/assets/certificates`; technology marks currently use pinned Simple Icons CDN URLs, while project identity assets are served locally from `public/assets`.

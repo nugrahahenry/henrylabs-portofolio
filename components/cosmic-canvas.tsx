@@ -32,6 +32,42 @@ function planetTexture(color: string) {
   return texture;
 }
 
+function logoFaceTexture(image: HTMLImageElement, color: string) {
+  const surface = document.createElement("canvas");
+  surface.width = 256;
+  surface.height = 256;
+  const context = surface.getContext("2d")!;
+  const center = 128;
+  const radius = 113;
+  const glow = context.createRadialGradient(88, 78, 12, center, center, radius);
+  glow.addColorStop(0, "#ffffff");
+  glow.addColorStop(.42, color);
+  glow.addColorStop(1, "#11162e");
+  context.fillStyle = glow;
+  context.beginPath();
+  context.arc(center, center, radius, 0, Math.PI * 2);
+  context.fill();
+  context.save();
+  context.beginPath();
+  context.arc(center, center, radius - 8, 0, Math.PI * 2);
+  context.clip();
+  const imageWidth = image.naturalWidth || image.width;
+  const imageHeight = image.naturalHeight || image.height;
+  const scale = Math.min(170 / imageWidth, 170 / imageHeight);
+  const width = imageWidth * scale;
+  const height = imageHeight * scale;
+  context.drawImage(image, center - width / 2, center - height / 2, width, height);
+  context.restore();
+  context.strokeStyle = "rgba(244,245,239,.82)";
+  context.lineWidth = 3;
+  context.beginPath();
+  context.arc(center, center, radius - 2, 0, Math.PI * 2);
+  context.stroke();
+  const texture = new THREE.CanvasTexture(surface);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  return texture;
+}
+
 export function CosmicCanvas({ activeId, onSelect, motionOn, progress }: {
   activeId: ProjectId;
   onSelect: (id: ProjectId) => void;
@@ -111,12 +147,6 @@ export function CosmicCanvas({ activeId, onSelect, motionOn, progress }: {
       textures.push(texture);
       const sphere = new THREE.Mesh(new THREE.SphereGeometry(.37 + index * .02, 40, 24), new THREE.MeshStandardMaterial({ map: texture, roughness: .8 }));
       group.add(sphere);
-      const logoTexture = loader.load(`/assets/brand/${world.logo}`, (loaded) => {
-        if (disposed) loaded.dispose();
-        else wakeRef.current();
-      });
-      logoTexture.colorSpace = THREE.SRGBColorSpace;
-      textures.push(logoTexture);
       const logoPlate = new THREE.Mesh(
         new THREE.CylinderGeometry(.255, .255, .065, 48),
         new THREE.MeshStandardMaterial({ color: world.color, metalness: .28, roughness: .48 }),
@@ -128,12 +158,26 @@ export function CosmicCanvas({ activeId, onSelect, motionOn, progress }: {
         new THREE.MeshBasicMaterial({ color: world.color, transparent: true, opacity: .48, side: THREE.DoubleSide, depthTest: false, depthWrite: false }),
       );
       logoHalo.position.set(0, .03, .43);
+      const logoFaceMaterial = new THREE.MeshBasicMaterial({ color: world.color, transparent: true, side: THREE.DoubleSide, depthTest: false, depthWrite: false });
       const logoFace = new THREE.Mesh(
-        new THREE.PlaneGeometry(.36, .36),
-        new THREE.MeshBasicMaterial({ map: logoTexture, transparent: true, alphaTest: .04, side: THREE.DoubleSide, depthTest: false, depthWrite: false }),
+        new THREE.CircleGeometry(.265, 64),
+        logoFaceMaterial,
       );
       logoFace.position.set(0, .03, .45);
       group.add(logoPlate, logoHalo, logoFace);
+      const logoTexture = loader.load(`/assets/brand/${world.logo}`, (loaded) => {
+        const faceTexture = logoFaceTexture(loaded.image, world.color);
+        if (disposed) faceTexture.dispose();
+        else {
+          textures.push(faceTexture);
+          logoFaceMaterial.map = faceTexture;
+          logoFaceMaterial.color.set("#ffffff");
+          logoFaceMaterial.needsUpdate = true;
+          wakeRef.current();
+        }
+      });
+      logoTexture.colorSpace = THREE.SRGBColorSpace;
+      textures.push(logoTexture);
       system.add(group);
       return { group, sphere, logoHalo, logoFace };
     });
