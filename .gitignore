@@ -5,3 +5,15 @@ PRODUCT.md
 !.env.example
 .DS_Store
 Thumbs.db
+.next/
+node_modules/
+out/
+.npm-cache/
+*.tsbuildinfo
+.impeccable/
+DESIGN.md
+test-results/
+playwright-report/
+*.log
+AGENTS.md
+CLAUDE.md
