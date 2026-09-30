@@ -22,7 +22,7 @@ try {
       scrollWidth: document.documentElement.scrollWidth,
       planets: document.querySelectorAll(".planet-label").length,
       certificates: document.querySelectorAll(".certificate-card").length,
-      sourceLinks: document.querySelectorAll(".certificate-foot a").length,
+      sourceLinks: document.querySelectorAll("a[href*='/assets/certificates/source/']").length,
       chapterRails: document.querySelectorAll(".chapter-rail").length,
       phaseBridges: document.querySelectorAll(".phase-bridge").length,
       stackMarquees: document.querySelectorAll(".stack-marquee").length,
@@ -32,13 +32,17 @@ try {
     assert.equal(result.viewport, viewport.width);
     assert.equal(result.scrollWidth, viewport.width);
     assert.equal(result.planets, 5);
-    assert.equal(result.certificates, 8);
-    assert.equal(result.sourceLinks, 6);
+    assert.equal(result.certificates, 26);
+    assert.equal(result.sourceLinks, 8);
     assert.equal(result.chapterRails, 0);
     assert.equal(result.phaseBridges, 0);
     assert.equal(result.stackMarquees, 0);
     assert.equal(result.stackOrbits, 0);
     assert.equal(result.stackGroups, 3);
+    await page.getByRole("tab", { name: "Completion badge", exact: true }).click();
+    await expect(page.locator(".certificate-card")).toHaveCount(17);
+    await page.getByRole("tab", { name: "All", exact: true }).click();
+    await expect(page.locator(".certificate-card")).toHaveCount(26);
 
     await page.evaluate(() => window.scrollTo({ top: innerHeight, behavior: "instant" }));
     await expect(page.locator(".hero-stage")).toHaveAttribute("data-phase", "worlds");
@@ -75,7 +79,7 @@ try {
     await page.locator(".project-row").first().click();
     assert.match(await page.locator(".dossier").innerText(), /Read source/);
     assert.equal(await page.locator(".dossier-art-preview").count(), 1);
-    await page.locator(".certificate-card").first().getByRole("button").click();
+    await page.locator(".certificate-feature-preview").click();
     await page.locator('[role="dialog"]').waitFor();
     assert.match(await page.locator('[role="dialog"]').innerText(), /Gemini Certified Educator/);
     await page.keyboard.press("Escape");

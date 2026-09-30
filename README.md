@@ -12,11 +12,11 @@ Interactive personal portfolio for Henry Nugraha, now moving from a single-file 
 - Next.js component architecture with Motion-driven camera choreography.
 - Progressive Three.js depth layer with an accessible static fallback.
 - Real project marks for Catmoji, Nalira, Canox, Hengs, and Polara.
-- Local project marks are used as dimensional 3D badges on the constellation planets, which rotate through a full orbit and remain draggable.
+- Local project marks are used as authored, dimensional 3D project sculptures with an all-surface logo skin; the constellation rotates through a full orbit and remains draggable.
 - Project evidence dossiers now expose stack, ownership, evidence, next move, and a public source link when verified; private work stays sanitized.
-- Academic projects, client work, one technology stack constellation, and bilingual English/Indonesian copy.
+- Academic projects, client work, one grouped technology stack manifest, and bilingual English/Indonesian copy.
 - Catmoji and Polara carry real project artwork into the dossier; private worlds use authored system maps instead of protected screenshots.
-- Original certificate previews stay fully visible in an accessible detail viewer, with source PDFs linked where available.
+- A 26-record certificate and badge archive uses a signature record, kind filters, accessible detail viewing, and source PDFs where available.
 - Responsive portrait constellation layout, mobile navigation, immediate technology mark fallbacks, offscreen animation pausing, reduced-motion support, HenryLabs favicon, and generated Open Graph artwork.
 
 ## Run locally

@@ -40,6 +40,8 @@ test("portfolio surface keeps its core experience contracts", () => {
   assert.match(canvas, /orbitPhases/);
   assert.match(canvas, /planetSurfaceTexture/);
   assert.match(canvas, /TorusGeometry/);
+  assert.match(canvas, /createProjectSculpture/);
+  assert.match(read("components/project-sculptures.ts"), /ExtrudeGeometry/);
   assert.match(styles, /prefers-reduced-motion/);
   assert.match(styles, /html\[data-motion="off"\]/);
   assert.match(styles, /touch-action: pan-y/);
@@ -57,6 +59,9 @@ test("portfolio surface keeps its core experience contracts", () => {
   assert.equal(existsSync(new URL("public/assets/certificates/previews/gemini-certified-educator.png", root)), true);
   assert.equal(existsSync(new URL("public/assets/certificates/previews/google-student-ambassador.png", root)), true);
   assert.equal(existsSync(new URL("public/assets/certificates/source/gemini-certified-educator.pdf", root)), true);
+  assert.equal(existsSync(new URL("public/assets/certificates/previews/gdg-spec-driven-development-antigravity-cli.png", root)), true);
+  assert.equal(existsSync(new URL("public/assets/certificates/source/gdg-code-quality-security-antigravity-cli.pdf", root)), true);
+  assert.equal(existsSync(new URL("public/assets/certificates/previews/google-skills-arcade-voyage.png", root)), true);
   assert.equal(existsSync(new URL("public/assets/projects/catmoji-hero.png", root)), true);
   assert.equal(existsSync(new URL("public/assets/projects/polara-og.png", root)), true);
   assert.equal(existsSync(new URL("app/icon.svg", root)), true);
