@@ -227,8 +227,6 @@ const stackGroups = [
   { label: "Systems", items: [["Node.js", "nodedotjs", "339933"], ["n8n", "n8n", "ea4b71"], ["OpenAI", "openai", "ffffff"], ["Laravel", "laravel", "ff2d20"]] },
 ];
 
-const stackOrbitItems = stackGroups.flatMap((group) => group.items).map(([label, slug, color], index) => ({ label, slug, color, index }));
-
 const academicProjects = [
   { title: "RentalMobil.SG", tag: "OOP · Semester 2", body: "A car-rental web system with vehicle catalog, authentication, booking, payment confirmation, user area, and admin operations." },
   { title: "POS Z Shoes", tag: "APBDS · Semester 3", body: "A point-of-sale system with product, supplier, purchase, customer transaction, return, dashboard, and reporting flows." },
@@ -305,7 +303,18 @@ export function PortfolioExperience() {
   }, []);
 
   useEffect(() => {
-    const timer = window.setTimeout(() => setIntroDone(true), 1900);
+    const introSeen = window.sessionStorage.getItem("henrylabs-intro-seen") === "1";
+    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (introSeen || reduced) {
+      setLoadingStep(3);
+      setIntroDone(true);
+      return;
+    }
+    if (window.scrollY > 0) window.scrollTo({ top: 0, behavior: "auto" });
+    const timer = window.setTimeout(() => {
+      setIntroDone(true);
+      window.sessionStorage.setItem("henrylabs-intro-seen", "1");
+    }, 1900);
     const interval = window.setInterval(() => setLoadingStep((step) => Math.min(step + 1, 3)), 460);
     return () => {
       window.clearTimeout(timer);
@@ -444,9 +453,9 @@ export function PortfolioExperience() {
 
       <section ref={stackRef} className="stack-section" id="stack" aria-labelledby="stack-title" data-visible={stackVisible}>
         <div className="content-section stack-intro"><div className="section-heading"><div><p className="section-kicker section-kicker-dark">Working stack</p><h2 id="stack-title">{t.stack.title}</h2></div><p>{t.stack.body}</p></div></div>
-        <div className="stack-constellation content-section" aria-label="Stack constellation">
-          <div className="stack-orbit-copy"><p className="section-kicker section-kicker-dark">Tools in orbit</p><h3>Different tools.<br /><em>One point of view.</em></h3><p>Technology changes. The instinct stays: make the next action clearer, lighter, and worth returning to.</p></div>
-          <div className="stack-orbit" aria-hidden="true"><div className="stack-orbit-core"><Asterisk size={29} /><span>HENRY</span></div><span className="stack-orbit-ring stack-orbit-ring--one" /><span className="stack-orbit-ring stack-orbit-ring--two" />{stackOrbitItems.map((item) => <span className="stack-orbit-node" key={item.label} style={{ "--orbit-index": item.index, "--orbit-count": stackOrbitItems.length } as React.CSSProperties}><span><TechIcon label={item.label} slug={item.slug} color={item.color} /></span><strong>{item.label}</strong></span>)}</div>
+        <div className="stack-field content-section" aria-label="Technology stack manifest">
+          <div className="stack-field-copy"><p className="section-kicker section-kicker-dark">The tools in the room</p><h3>Different tools.<br /><em>One point of view.</em></h3><p>Technology changes. The instinct stays: make the next action clearer, lighter, and worth returning to.</p><span className="stack-field-signal"><Asterisk size={15} /> selected for useful work</span></div>
+          <div className="stack-manifest">{stackGroups.map((group, groupIndex) => <div className="stack-manifest-row" key={group.label}><div className="stack-manifest-label"><span>{String(groupIndex + 1).padStart(2, "0")}</span><strong>{group.label}</strong></div><div className="stack-manifest-items">{group.items.map(([label, slug, color]) => <span className="stack-manifest-item" key={label}><span className="stack-manifest-icon"><TechIcon label={label} slug={slug} color={color} /></span>{label}</span>)}</div></div>)}</div>
         </div>
         <div className="stack-foot content-section"><span><Brackets size={19} /> from interface to systems</span><span><Zap size={19} /> motion with a reason</span><span><Code2 size={19} /> honest about the state</span></div>
       </section>

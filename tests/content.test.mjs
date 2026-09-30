@@ -19,7 +19,8 @@ test("portfolio surface keeps its core experience contracts", () => {
   assert.match(experience, /gemini-certified-educator\.png/);
   assert.match(experience, /google-student-ambassador\.png/);
   assert.match(experience, /The Henry method/);
-  assert.match(experience, /Stack constellation/);
+  assert.match(experience, /Technology stack manifest/);
+  assert.match(experience, /stack-manifest/);
   assert.match(experience, /case-facts/);
   assert.match(experience, /AI-Gesture-Cat/);
   assert.match(experience, /catmoji-hero\.png/);
@@ -36,9 +37,9 @@ test("portfolio surface keeps its core experience contracts", () => {
   assert.match(experience, /document\.documentElement\.dataset\.cursor/);
   assert.match(experience, /MotionConfig/);
   assert.match(canvas, /WebGLRenderer/);
-  assert.match(canvas, /portraitPositions/);
-  assert.match(canvas, /logoPlate/);
-  assert.match(canvas, /CircleGeometry/);
+  assert.match(canvas, /orbitPhases/);
+  assert.match(canvas, /planetSurfaceTexture/);
+  assert.match(canvas, /TorusGeometry/);
   assert.match(styles, /prefers-reduced-motion/);
   assert.match(styles, /html\[data-motion="off"\]/);
   assert.match(styles, /touch-action: pan-y/);

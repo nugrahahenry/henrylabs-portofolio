@@ -14,7 +14,7 @@ const worlds = [
   { id: "polara", name: "Polara", x: .85, y: -1.7, z: .6, color: "#d5a7c8", logo: "polara.png" },
 ] as const;
 
-const portraitPositions = [[-1.7, 1.9], [1.65, 1.55], [1.8, -.9], [-1.8, -.6], [.15, -2.1]];
+const orbitPhases = [145, 73, 1, 217, 289].map(THREE.MathUtils.degToRad);
 
 function planetTexture(color: string) {
   const surface = document.createElement("canvas");
@@ -32,37 +32,54 @@ function planetTexture(color: string) {
   return texture;
 }
 
-function logoFaceTexture(image: HTMLImageElement, color: string) {
+function planetSurfaceTexture(image: HTMLImageElement, color: string) {
   const surface = document.createElement("canvas");
-  surface.width = 256;
+  surface.width = 512;
   surface.height = 256;
   const context = surface.getContext("2d")!;
-  const center = 128;
-  const radius = 113;
-  const glow = context.createRadialGradient(88, 78, 12, center, center, radius);
-  glow.addColorStop(0, "#ffffff");
-  glow.addColorStop(.42, color);
-  glow.addColorStop(1, "#11162e");
-  context.fillStyle = glow;
-  context.beginPath();
-  context.arc(center, center, radius, 0, Math.PI * 2);
-  context.fill();
-  context.save();
-  context.beginPath();
-  context.arc(center, center, radius - 8, 0, Math.PI * 2);
-  context.clip();
+  const gradient = context.createLinearGradient(0, 0, 512, 256);
+  gradient.addColorStop(0, color);
+  gradient.addColorStop(.5, "#151a3a");
+  gradient.addColorStop(1, color);
+  context.fillStyle = gradient;
+  context.fillRect(0, 0, 512, 256);
+  for (let y = 22; y < 256; y += 20) {
+    context.fillStyle = `rgba(255,255,255,${.035 + Math.sin(y * .11) * .02})`;
+    context.fillRect(0, y, 512, 5);
+  }
+
   const imageWidth = image.naturalWidth || image.width;
   const imageHeight = image.naturalHeight || image.height;
-  const scale = Math.min(170 / imageWidth, 170 / imageHeight);
-  const width = imageWidth * scale;
-  const height = imageHeight * scale;
-  context.drawImage(image, center - width / 2, center - height / 2, width, height);
-  context.restore();
-  context.strokeStyle = "rgba(244,245,239,.82)";
-  context.lineWidth = 3;
-  context.beginPath();
-  context.arc(center, center, radius - 2, 0, Math.PI * 2);
-  context.stroke();
+  const drawLogo = (centerX: number) => {
+    const centerY = 128;
+    const radius = 56;
+    const glow = context.createRadialGradient(centerX - 19, centerY - 23, 8, centerX, centerY, radius);
+    glow.addColorStop(0, "rgba(255,255,255,.96)");
+    glow.addColorStop(.35, color);
+    glow.addColorStop(1, "rgba(7,9,27,.96)");
+    context.fillStyle = glow;
+    context.beginPath();
+    context.arc(centerX, centerY, radius, 0, Math.PI * 2);
+    context.fill();
+    context.save();
+    context.beginPath();
+    context.arc(centerX, centerY, radius - 8, 0, Math.PI * 2);
+    context.clip();
+    const scale = Math.min(78 / imageWidth, 78 / imageHeight);
+    const width = imageWidth * scale;
+    const height = imageHeight * scale;
+    context.drawImage(image, centerX - width / 2, centerY - height / 2, width, height);
+    context.restore();
+    context.strokeStyle = "rgba(244,245,239,.78)";
+    context.lineWidth = 2;
+    context.beginPath();
+    context.arc(centerX, centerY, radius - 2, 0, Math.PI * 2);
+    context.stroke();
+  };
+
+  // Duplicate the mark on opposing longitudes so the identity survives a slow tumble.
+  drawLogo(128);
+  drawLogo(384);
   const texture = new THREE.CanvasTexture(surface);
   texture.colorSpace = THREE.SRGBColorSpace;
   return texture;
@@ -145,41 +162,32 @@ export function CosmicCanvas({ activeId, onSelect, motionOn, progress }: {
       group.position.set(world.x, world.y, world.z);
       const texture = planetTexture(world.color);
       textures.push(texture);
-      const sphere = new THREE.Mesh(new THREE.SphereGeometry(.37 + index * .02, 40, 24), new THREE.MeshStandardMaterial({ map: texture, roughness: .8 }));
-      group.add(sphere);
-      const logoPlate = new THREE.Mesh(
-        new THREE.SphereGeometry(.27, 32, 16),
-        new THREE.MeshStandardMaterial({ color: world.color, metalness: .2, roughness: .48 }),
+      const radius = .37 + index * .02;
+      const sphereMaterial = new THREE.MeshStandardMaterial({ map: texture, color: "#ffffff", metalness: .08, roughness: .72 });
+      const sphere = new THREE.Mesh(new THREE.SphereGeometry(radius, 48, 32), sphereMaterial);
+      const atmosphere = new THREE.Mesh(
+        new THREE.SphereGeometry(radius * 1.08, 32, 20),
+        new THREE.MeshBasicMaterial({ color: world.color, transparent: true, opacity: .14, side: THREE.BackSide, blending: THREE.AdditiveBlending }),
       );
-      logoPlate.scale.z = .2;
-      logoPlate.position.set(0, .03, .41);
       const logoHalo = new THREE.Mesh(
-        new THREE.RingGeometry(.22, .27, 48),
-        new THREE.MeshBasicMaterial({ color: world.color, transparent: true, opacity: .48, side: THREE.DoubleSide, depthTest: false, depthWrite: false }),
+        new THREE.TorusGeometry(radius * 1.18, .012, 8, 72),
+        new THREE.MeshBasicMaterial({ color: world.color, transparent: true, opacity: .3, depthWrite: false }),
       );
-      logoHalo.position.set(0, .03, .43);
-      const logoFaceMaterial = new THREE.MeshBasicMaterial({ color: world.color, transparent: true, side: THREE.DoubleSide, depthTest: false, depthWrite: false });
-      const logoFace = new THREE.Mesh(
-        new THREE.CircleGeometry(.265, 64),
-        logoFaceMaterial,
-      );
-      logoFace.position.set(0, .03, .45);
-      group.add(logoPlate, logoHalo, logoFace);
+      logoHalo.rotation.x = .35;
+      group.add(sphere, atmosphere, logoHalo);
       const logoTexture = loader.load(`/assets/brand/${world.logo}`, (loaded) => {
-        const faceTexture = logoFaceTexture(loaded.image, world.color);
-        if (disposed) faceTexture.dispose();
+        const surfaceTexture = planetSurfaceTexture(loaded.image, world.color);
+        logoTexture.dispose();
+        if (disposed) surfaceTexture.dispose();
         else {
-          textures.push(faceTexture);
-          logoFaceMaterial.map = faceTexture;
-          logoFaceMaterial.color.set("#ffffff");
-          logoFaceMaterial.needsUpdate = true;
+          textures.push(surfaceTexture);
+          sphereMaterial.map = surfaceTexture;
+          sphereMaterial.needsUpdate = true;
           wakeRef.current();
         }
       });
-      logoTexture.colorSpace = THREE.SRGBColorSpace;
-      textures.push(logoTexture);
       system.add(group);
-      return { group, sphere, logoHalo, logoFace };
+      return { group, sphere, atmosphere, logoHalo };
     });
 
     let visible = true;
@@ -201,18 +209,25 @@ export function CosmicCanvas({ activeId, onSelect, motionOn, progress }: {
       const halfWidth = portrait ? 3.1 : 4.7;
       const fittedDistance = Math.max(10.5, halfWidth / (Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) * camera.aspect));
       camera.position.set(0, .05, fittedDistance + (1 - zoom) * 5);
-      if (state.current.motionOn) angle += dt * .055;
-      system.rotation.y = angle + (state.current.motionOn ? Math.sin(elapsed * .12) * .04 : 0);
+      if (state.current.motionOn && !dragging) angle += dt * .055;
+      // Orbit positions in a shallow ellipse, keeping the field readable at every angle.
+      system.rotation.y = Math.sin(elapsed * .12) * .08;
       core.rotation.y = elapsed * .075;
-      planets.forEach(({ group, sphere, logoHalo, logoFace }, index) => {
+      planets.forEach(({ group, sphere, atmosphere, logoHalo }, index) => {
         const selected = worlds[index].id === state.current.activeId;
         const scale = selected ? 1.25 : .94;
         group.scale.setScalar(state.current.motionOn ? THREE.MathUtils.damp(group.scale.x, scale, 7, dt) : scale);
-        group.position.x = portrait ? portraitPositions[index][0] : worlds[index].x;
-        group.position.y = (portrait ? portraitPositions[index][1] : worlds[index].y) + Math.sin(elapsed * .45 + index) * .06;
-        sphere.rotation.y = elapsed * .13;
+        const phase = orbitPhases[index] + angle;
+        group.position.set(
+          Math.cos(phase) * (portrait ? 1.95 : 3.35),
+          Math.sin(phase) * 2.15,
+          Math.sin(phase) * .55,
+        );
+        sphere.rotation.y = -system.rotation.y + index * .12 + elapsed * .08;
+        sphere.rotation.x = Math.sin(elapsed * .18 + index) * .035;
+        atmosphere.rotation.y = -elapsed * .05;
+        atmosphere.material.opacity = selected ? .2 : .12;
         logoHalo.rotation.z = elapsed * (state.current.motionOn ? .08 : 0);
-        logoFace.rotation.z = Math.sin(elapsed * .35 + index) * (state.current.motionOn ? .035 : 0);
       });
       renderer.render(scene, camera);
       planets.forEach(({ group }, index) => {
