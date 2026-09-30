@@ -11,6 +11,7 @@ import {
   Command,
   Github,
   Instagram,
+  LockKeyhole,
   Mail,
   Menu,
   MessageCircle,
@@ -38,6 +39,13 @@ const projects: Array<{
   role: Record<Language, string>;
   signal: Record<Language, string>;
   year: string;
+  stack: string[];
+  ownership: Record<Language, string>;
+  evidence: Record<Language, string>;
+  next: Record<Language, string>;
+  media?: string;
+  mediaAlt?: string;
+  source?: string;
 }> = [
   {
     id: "catmoji",
@@ -56,6 +64,13 @@ const projects: Array<{
     role: { en: "Product / interaction", id: "Produk / interaksi" },
     signal: { en: "Playful input", id: "Input playful" },
     year: "2026",
+    stack: ["JavaScript", "MediaPipe", "kNN", "PWA"],
+    ownership: { en: "Solo build", id: "Dibangun sendiri" },
+    evidence: { en: "Live product and open source repository", id: "Produk live dan repository open source" },
+    next: { en: "Inspect the live interaction or read the source", id: "Coba interaksi live atau baca source" },
+    media: "/assets/projects/catmoji-hero.png",
+    mediaAlt: "Catmoji product preview showing gesture recognition and the Moji cat interface",
+    source: "https://github.com/nugrahahenry/AI-Gesture-Cat",
   },
   {
     id: "nalira",
@@ -74,6 +89,10 @@ const projects: Array<{
     role: { en: "Product / AI workflow", id: "Produk / workflow AI" },
     signal: { en: "Make knowledge usable", id: "Bikin knowledge berguna" },
     year: "2026",
+    stack: ["Next.js", "Supabase", "Groq", "TypeScript"],
+    ownership: { en: "Solo product build", id: "Dibangun sendiri" },
+    evidence: { en: "Public MVP with a grounded learning workflow", id: "MVP publik dengan workflow belajar yang grounded" },
+    next: { en: "Open the MVP and follow the capture journey", id: "Buka MVP dan ikuti capture journey" },
   },
   {
     id: "canox",
@@ -92,6 +111,10 @@ const projects: Array<{
     role: { en: "System / personal AI", id: "Sistem / AI personal" },
     signal: { en: "Context is the interface", id: "Konteks adalah interface" },
     year: "2026",
+    stack: ["Python", "FastAPI", "JavaScript", "Local-first"],
+    ownership: { en: "Solo system build", id: "Dibangun sendiri" },
+    evidence: { en: "Private system shown through sanitized architecture evidence", id: "Sistem privat ditampilkan lewat bukti arsitektur yang disanitasi" },
+    next: { en: "Request a focused walkthrough", id: "Minta walkthrough terarah" },
   },
   {
     id: "hengs",
@@ -110,6 +133,10 @@ const projects: Array<{
     role: { en: "Automation / safety", id: "Automation / safety" },
     signal: { en: "Calmer communication", id: "Komunikasi lebih tenang" },
     year: "2026",
+    stack: ["Node.js", "WhatsApp", "Discord", "AI safety"],
+    ownership: { en: "Solo runtime and safety work", id: "Runtime dan safety dikerjakan sendiri" },
+    evidence: { en: "Live private runtime with privacy-safe proof", id: "Runtime privat live dengan bukti yang menjaga privasi" },
+    next: { en: "Discuss the system boundary", id: "Bahas batas sistemnya" },
   },
   {
     id: "polara",
@@ -128,6 +155,12 @@ const projects: Array<{
     role: { en: "Creative web / camera", id: "Web kreatif / kamera" },
     signal: { en: "Interface as memory", id: "Interface jadi memori" },
     year: "2026",
+    stack: ["JavaScript", "HTML", "CSS", "PWA"],
+    ownership: { en: "Solo creative web build", id: "Dibangun sendiri sebagai web kreatif" },
+    evidence: { en: "Live creative experience with authored visual assets", id: "Experience kreatif live dengan aset visual yang dibuat khusus" },
+    next: { en: "Open the experience and see the proof desk", id: "Buka experience dan lihat proof desk" },
+    media: "/assets/projects/polara-og.png",
+    mediaAlt: "Polara product preview showing a playful digital photobooth interface",
   },
 ];
 
@@ -151,6 +184,7 @@ const copy = {
       marker: "SIGNAL / 01",
     },
     work: { title: "The work, in context.", body: "Every world starts with a real friction. Select a planet to see the problem, the flow, and the honest state of the build." },
+    caseStudy: { stack: "Stack", ownership: "Ownership", evidence: "Evidence", next: "Next move", source: "Read source", private: "Private details stay protected" },
     stack: { title: "The instruments behind the worlds.", body: "A flexible stack for moving from interface to workflow, from a classroom idea to a system people can actually use." },
     academic: { title: "Built while learning.", body: "University projects where I owned the system end to end: business flows, mobile and web interfaces, and the logic underneath." },
     client: { title: "Work with real stakes.", body: "Private client work is represented as sanitized evidence: what I owned, what I shipped, and where collaboration mattered." },
@@ -177,6 +211,7 @@ const copy = {
       marker: "SIGNAL / 01",
     },
     work: { title: "Karya, dengan konteks.", body: "Setiap dunia dimulai dari masalah nyata. Pilih planet untuk melihat masalah, alur, dan status build secara jujur." },
+    caseStudy: { stack: "Stack", ownership: "Kepemilikan", evidence: "Bukti", next: "Langkah berikutnya", source: "Baca source", private: "Detail privat tetap dilindungi" },
     stack: { title: "Instrumen di balik semua dunia.", body: "Stack yang fleksibel untuk bergerak dari interface ke workflow, dari ide kuliah menjadi sistem yang benar-benar bisa dipakai." },
     academic: { title: "Dibuat sambil belajar.", body: "Project kuliah yang kubangun sendiri dari awal sampai akhir: alur bisnis, interface mobile dan web, serta logika di baliknya." },
     client: { title: "Project dengan konsekuensi nyata.", body: "Client work privat ditampilkan sebagai bukti yang sudah disanitasi: bagian yang kupegang, yang kubuat, dan kapan kolaborasi diperlukan." },
@@ -401,8 +436,8 @@ export function PortfolioExperience() {
         <div className="work-layout">
           <div className="project-index" role="list" aria-label="Project index">{projects.map((project, index) => <button key={project.id} className={cx("project-row", project.id === activeId && "project-row--active")} style={{ "--project-color": project.color } as React.CSSProperties} type="button" onClick={() => setActiveId(project.id)}><span className="project-number">0{index + 1}</span><span className="project-icon"><img src={project.logo} alt="" /></span><span className="project-row-copy"><strong>{project.name}</strong><small>{project.visibility[language]}</small></span><ArrowRight className="row-arrow" size={18} /></button>)}</div>
           <motion.article className="dossier" key={activeProject.id} style={{ "--dossier-color": activeProject.color } as React.CSSProperties} initial={motionOn ? { opacity: 0, y: 18 } : false} animate={{ opacity: 1, y: 0 }} transition={{ duration: motionOn ? 0.5 : 0, ease: [0.16, 1, 0.3, 1] }}>
-            <div className="dossier-art"><div className="dossier-art-ring dossier-art-ring--one" /><div className="dossier-art-ring dossier-art-ring--two" /><div className="dossier-art-readout"><span>WORLD / {String(projects.findIndex((project) => project.id === activeProject.id) + 1).padStart(2, "0")}</span><span>{activeProject.year}</span></div><span className="dossier-art-stamp">{activeProject.signal[language]}</span><img src={activeProject.logo} alt={`${activeProject.name} logo`} /></div>
-            <div className="dossier-copy"><div className="dossier-meta"><span>{activeProject.status[language]}</span><span>{activeProject.visibility[language]}</span></div><h3>{activeProject.name}</h3><p>{activeProject.summary[language]}</p><div className="dossier-details"><span><small>Role</small><strong>{activeProject.role[language]}</strong></span><span><small>Signal</small><strong>{activeProject.signal[language]}</strong></span></div><div className="flow-line">{activeProject.flow[language].map((step, index) => <span key={step}><i>{String(index + 1).padStart(2, "0")}</i>{step}</span>)}</div><a className="inline-link" href={activeProject.link} target={activeProject.link.startsWith("http") ? "_blank" : undefined} rel={activeProject.link.startsWith("http") ? "noreferrer" : undefined}>{activeProject.linkLabel[language]}<ArrowUpRight size={17} /></a></div>
+            <div className="dossier-art"><div className="dossier-art-ring dossier-art-ring--one" /><div className="dossier-art-ring dossier-art-ring--two" /><div className="dossier-art-readout"><span>WORLD / {String(projects.findIndex((project) => project.id === activeProject.id) + 1).padStart(2, "0")}</span><span>{activeProject.year}</span></div><span className="dossier-art-stamp">{activeProject.signal[language]}</span>{activeProject.media ? <img className="dossier-art-preview" src={activeProject.media} alt={activeProject.mediaAlt} /> : <div className="dossier-art-map" aria-label={`${activeProject.name} system map`}>{activeProject.flow[language].map((step, index) => <span key={step}><i>{String(index + 1).padStart(2, "0")}</i>{step}</span>)}</div>}<img className="dossier-art-logo" src={activeProject.logo} alt={`${activeProject.name} logo`} /></div>
+            <div className="dossier-copy"><div className="dossier-meta"><span>{activeProject.status[language]}</span><span>{activeProject.visibility[language]}</span></div><h3>{activeProject.name}</h3><p>{activeProject.summary[language]}</p><div className="dossier-details"><span><small>Role</small><strong>{activeProject.role[language]}</strong></span><span><small>Signal</small><strong>{activeProject.signal[language]}</strong></span></div><div className="flow-line">{activeProject.flow[language].map((step, index) => <span key={step}><i>{String(index + 1).padStart(2, "0")}</i>{step}</span>)}</div><div className="case-facts"><span><small>{t.caseStudy.stack}</small><strong>{activeProject.stack.join(" · ")}</strong></span><span><small>{t.caseStudy.ownership}</small><strong>{activeProject.ownership[language]}</strong></span><span><small>{t.caseStudy.evidence}</small><strong>{activeProject.evidence[language]}</strong></span></div><div className="dossier-next"><span>{t.caseStudy.next}</span><p>{activeProject.next[language]}</p></div><div className="dossier-actions"><a className="inline-link" href={activeProject.link} target={activeProject.link.startsWith("http") ? "_blank" : undefined} rel={activeProject.link.startsWith("http") ? "noreferrer" : undefined}>{activeProject.linkLabel[language]}<ArrowUpRight size={17} /></a>{activeProject.source && <a className="inline-link inline-link--source" href={activeProject.source} target="_blank" rel="noreferrer"><Github size={16} />{t.caseStudy.source}<ArrowUpRight size={15} /></a>}</div>{!activeProject.source && <p className="dossier-private"><LockKeyhole size={14} />{t.caseStudy.private}</p>}</div>
           </motion.article>
         </div>
       </section>

@@ -8,14 +8,16 @@ Interactive personal portfolio for Henry Nugraha, now moving from a single-file 
 - A full-bleed orbit-to-method transition that explains how Henry turns friction into useful work.
 - A single header navigation and scroll-reactive method signal keep the page navigable without duplicated controls.
 - Continuous cosmic surfaces replace decorative transition strips, so each chapter enters with clearer rhythm and contrast.
-- The `Selected Worlds` chapter continues that cosmic field, with project-color navigation and a focused dossier specimen.
+- The `Selected Worlds` chapter continues that cosmic field, with project-color navigation and a case-study dossier that changes with each world.
 - Next.js component architecture with Motion-driven camera choreography.
 - Progressive Three.js depth layer with an accessible static fallback.
 - Real project marks for Catmoji, Nalira, Canox, Hengs, and Polara.
 - Local project marks are used as dimensional 3D badges on the constellation planets, which rotate through a full orbit and remain draggable.
-- Project evidence dossiers, academic projects, client work, one technology stack constellation, and bilingual English/Indonesian copy.
+- Project evidence dossiers now expose stack, ownership, evidence, next move, and a public source link when verified; private work stays sanitized.
+- Academic projects, client work, one technology stack constellation, and bilingual English/Indonesian copy.
+- Catmoji and Polara carry real project artwork into the dossier; private worlds use authored system maps instead of protected screenshots.
 - Original certificate previews stay fully visible in an accessible detail viewer, with source PDFs linked where available.
-- Responsive portrait constellation layout, mobile navigation, immediate technology mark fallbacks, offscreen animation pausing, and reduced-motion support.
+- Responsive portrait constellation layout, mobile navigation, immediate technology mark fallbacks, offscreen animation pausing, reduced-motion support, HenryLabs favicon, and generated Open Graph artwork.
 
 ## Run locally
 
@@ -23,4 +25,4 @@ Run `npm install`, then `npm run dev` and open the local URL shown in the termin
 
 ## Privacy
 
-Private projects are presented as sanitized portfolio evidence. Internal research, planning documents, and runtime data stay excluded from this public repository. Selected original certificate previews and source PDFs live under `public/assets/certificates`; technology marks currently use pinned Simple Icons CDN URLs, while project identity assets are served locally from `public/assets`.
+Private projects are presented as sanitized portfolio evidence. Internal research, planning documents, and runtime data stay excluded from this public repository. Selected original certificate previews and source PDFs live under `public/assets/certificates`; verified project artwork lives under `public/assets/projects`; technology marks currently use pinned Simple Icons CDN URLs, while project identity assets are served locally from `public/assets`. Set `NEXT_PUBLIC_SITE_URL` when hosting to make Open Graph URLs canonical; the local fallback is intentionally used until the final domain is chosen.
