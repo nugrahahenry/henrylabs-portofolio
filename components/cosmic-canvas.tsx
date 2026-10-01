@@ -181,9 +181,14 @@ export function CosmicCanvas({ activeId, onSelect, motionOn, progress }: {
         new THREE.MeshBasicMaterial({ color: world.color, transparent: true, opacity: .3, depthWrite: false }),
       );
       logoHalo.rotation.x = .35;
+      const focusRing = new THREE.Mesh(
+        new THREE.TorusGeometry(radius * 1.42, .018, 8, 72),
+        new THREE.MeshBasicMaterial({ color: world.color, transparent: true, opacity: 0, depthWrite: false }),
+      );
+      focusRing.rotation.set(.72, -.18, .25);
       const sculpture = createProjectSculpture(world.id);
       sculpture.scale.multiplyScalar(radius * 1.05);
-      group.add(sphere, atmosphere, logoHalo, sculpture);
+      group.add(sphere, atmosphere, logoHalo, focusRing, sculpture);
       const logoTexture = loader.load(`/assets/brand/${world.logo}`, (loaded) => {
         const surfaceTexture = planetSurfaceTexture(loaded.image, world.color);
         logoTexture.dispose();
@@ -197,7 +202,7 @@ export function CosmicCanvas({ activeId, onSelect, motionOn, progress }: {
         }
       });
       system.add(group);
-      return { group, sphere, atmosphere, logoHalo, sculpture };
+      return { group, sphere, atmosphere, logoHalo, focusRing, sculpture };
     });
 
     let visible = true;
@@ -223,7 +228,7 @@ export function CosmicCanvas({ activeId, onSelect, motionOn, progress }: {
       // Orbit positions in a shallow ellipse, keeping the field readable at every angle.
       system.rotation.y = Math.sin(elapsed * .12) * .08;
       core.rotation.y = elapsed * .075;
-      planets.forEach(({ group, sphere, atmosphere, logoHalo, sculpture }, index) => {
+      planets.forEach(({ group, sphere, atmosphere, logoHalo, focusRing, sculpture }, index) => {
         const selected = worlds[index].id === state.current.activeId;
         const scale = selected ? 1.25 : .94;
         group.scale.setScalar(state.current.motionOn ? THREE.MathUtils.damp(group.scale.x, scale, 7, dt) : scale);
@@ -240,6 +245,11 @@ export function CosmicCanvas({ activeId, onSelect, motionOn, progress }: {
         atmosphere.rotation.y = -elapsed * .05;
         atmosphere.material.opacity = selected ? .2 : .12;
         logoHalo.rotation.z = elapsed * (state.current.motionOn ? .08 : 0);
+        const focusMaterial = focusRing.material as THREE.MeshBasicMaterial;
+        const targetOpacity = selected ? .76 : .035;
+        focusMaterial.opacity = state.current.motionOn ? THREE.MathUtils.damp(focusMaterial.opacity, targetOpacity, 8, dt) : targetOpacity;
+        focusRing.rotation.z = elapsed * (state.current.motionOn ? (selected ? .18 : -.035) : 0);
+        focusRing.scale.setScalar(state.current.motionOn && selected ? 1 + Math.sin(elapsed * 2.4 + index) * .045 : 1);
       });
       renderer.render(scene, camera);
       planets.forEach(({ group }, index) => {

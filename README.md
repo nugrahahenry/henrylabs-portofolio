@@ -16,6 +16,7 @@ Interactive personal portfolio for Henry Nugraha, now moving from a single-file 
 - Real project marks for Catmoji, Nalira, Canox, Hengs, and Polara.
 - Local project marks are used as authored, dimensional 3D project sculptures with an all-surface logo skin; the constellation rotates through a full orbit and remains draggable.
 - Project evidence dossiers now expose stack, ownership, evidence, next move, and a public source link when verified; private work stays sanitized.
+- Selected Worlds now transitions as an evidence lens: the active constellation world gets a colored focus ring, the dossier swaps with an interruptible Motion transition, and each case study reads as Friction / System / Proof.
 - Academic projects, client work, one grouped technology stack manifest, and bilingual English/Indonesian copy.
 - Catmoji and Polara carry real project artwork into the dossier; private worlds use authored system maps instead of protected screenshots.
 - A 26-record certificate and badge archive uses a signature record, kind filters, accessible detail viewing, and source PDFs where available.

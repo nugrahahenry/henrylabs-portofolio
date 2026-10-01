@@ -78,10 +78,11 @@ try {
     await page.screenshot({ path: `test-results/${viewport.width}-orbit-drag.png` });
     await page.locator(".project-row").nth(2).click();
     await page.locator(".dossier").waitFor();
-    assert.match(await page.locator(".dossier").innerText(), /Context is the interface/);
+    await expect.poll(async () => page.locator(".dossier").innerText()).toMatch(/Context is the interface/);
     assert.match(await page.locator(".dossier").innerText(), /PRIVATE DETAILS STAY PROTECTED/);
+    assert.equal(await page.locator(".dossier-sequence span").count(), 3);
     await page.locator(".project-row").first().click();
-    assert.match(await page.locator(".dossier").innerText(), /Read source/);
+    await expect.poll(async () => page.locator(".dossier").innerText()).toMatch(/Read source/);
     assert.equal(await page.locator(".dossier-art-preview").count(), 1);
     await page.locator(".certificate-feature-preview").click();
     await page.locator('[role="dialog"]').waitFor();
