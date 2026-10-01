@@ -168,7 +168,7 @@ const copy = {
   en: {
     nav: { work: "Work", stack: "Stack", proof: "Proof", contact: "Contact" },
     loading: ["Calibrating the field", "Waking project identities", "Mapping useful worlds", "Almost ready"],
-    loader: { eyebrow: "A portfolio in motion", title: "Entering", accent: "the orbit.", body: "Five worlds. One point of view.", phases: ["Identity", "Project field", "Proof archive"] },
+    loader: { eyebrow: "A portfolio in motion", title: "Entering", accent: "the orbit.", body: "Five worlds. One point of view.", phases: ["Identity", "Project field", "Proof archive"], telemetry: ["Identity signal", "Project field", "Proof archive", "Field ready"] },
     hero: {
       title: "I build things I actually see.",
       body: "Product-minded developer turning everyday friction into useful systems, playful interfaces, and honest experiments.",
@@ -177,6 +177,7 @@ const copy = {
       note: "Open to thoughtful freelance work and the right team.",
     },
     field: { label: "A living map of HenryLabs", hint: "Drag the field · select a world" },
+    transition: { eyebrow: "02 / Project field", title: "The signal is live.", body: "Scroll into the systems behind the marks." },
     method: {
       kicker: "The Henry method",
       title: "Notice the friction.\nShape the useful.",
@@ -196,7 +197,7 @@ const copy = {
   id: {
     nav: { work: "Karya", stack: "Stack", proof: "Bukti", contact: "Kontak" },
     loading: ["Mengkalibrasi ruang", "Membangunkan identitas project", "Memetakan useful worlds", "Hampir siap"],
-    loader: { eyebrow: "Portfolio yang bergerak", title: "Memasuki", accent: "orbit.", body: "Lima dunia. Satu sudut pandang.", phases: ["Identitas", "Project field", "Arsip bukti"] },
+    loader: { eyebrow: "Portfolio yang bergerak", title: "Memasuki", accent: "orbit.", body: "Lima dunia. Satu sudut pandang.", phases: ["Identitas", "Project field", "Arsip bukti"], telemetry: ["Sinyal identitas", "Project field", "Arsip bukti", "Field siap"] },
     hero: {
       title: "Aku membangun hal yang benar-benar kulihat.",
       body: "Developer product-minded yang mengubah rasa penasaran sehari-hari menjadi sistem berguna, interface playful, dan eksperimen jujur.",
@@ -205,6 +206,7 @@ const copy = {
       note: "Terbuka untuk project freelance dan tim yang tepat.",
     },
     field: { label: "Peta hidup HenryLabs", hint: "Geser field · pilih sebuah dunia" },
+    transition: { eyebrow: "02 / Project field", title: "Sinyalnya hidup.", body: "Masuk lebih dalam ke sistem di balik setiap mark." },
     method: {
       kicker: "Cara kerja Henry",
       title: "Lihat friksinya.\nBentuk yang berguna.",
@@ -393,14 +395,15 @@ export function PortfolioExperience() {
     <main className="site-shell" data-motion={motionOn ? "on" : "off"}>
       <motion.div className={cx("intro-loader", introDone && "intro-loader--done")} aria-hidden={introDone}>
         <div className="loader-stars" aria-hidden="true"><span /><span /><span /><span /><span /><span /></div>
-        <div className="loader-system" aria-hidden="true"><span className="loader-system-orbit loader-system-orbit--one"><i><img src="/assets/brand/catmoji.png" alt="" /></i></span><span className="loader-system-orbit loader-system-orbit--two"><i><img src="/assets/brand/nalira.svg" alt="" /></i></span><span className="loader-system-node loader-system-node--canox"><img src="/assets/brand/canox.png" alt="" /></span><span className="loader-system-node loader-system-node--hengs"><img src="/assets/brand/hengs.png" alt="" /></span><span className="loader-system-node loader-system-node--polara"><img src="/assets/brand/polara.png" alt="" /></span><span className="loader-system-core"><Asterisk size={27} strokeWidth={1.5} /><small>HENRY</small></span></div>
+        <div className="loader-system" aria-hidden="true"><span className="loader-system-axis loader-system-axis--one" /><span className="loader-system-axis loader-system-axis--two" /><span className="loader-system-orbit loader-system-orbit--one"><i><img src="/assets/brand/catmoji.png" alt="" /></i></span><span className="loader-system-orbit loader-system-orbit--two"><i><img src="/assets/brand/nalira.svg" alt="" /></i></span><span className="loader-system-node loader-system-node--canox"><img src="/assets/brand/canox.png" alt="" /></span><span className="loader-system-node loader-system-node--hengs"><img src="/assets/brand/hengs.png" alt="" /></span><span className="loader-system-node loader-system-node--polara"><img src="/assets/brand/polara.png" alt="" /></span><span className="loader-system-core"><span className="loader-core-pulse" /><Asterisk size={27} strokeWidth={1.5} /><small>HENRY</small></span></div>
         <div className="loader-content">
-          <div className="loader-meta"><span>HENRYLABS / USEFUL WORLDS</span><span>{String((loadingStep + 1) * 25).padStart(2, "0")} %</span></div>
+          <div className="loader-meta"><span>HENRYLABS / USEFUL WORLDS</span><span>0{Math.min(loadingStep + 1, 4)} / 04</span></div>
           <p className="loader-eyebrow">{t.loader.eyebrow}</p>
           <h2><span>{t.loader.title}</span><em>{t.loader.accent}</em></h2>
           <p className="loader-intro">{t.loader.body}</p>
           <div className="loader-line"><span style={{ transform: `scaleX(${(loadingStep + 1) / 4})` }} /></div>
           <div className="loader-status"><p>{t.loading[loadingStep]}</p><span className="loader-status-dots"><i className={loadingStep >= 0 ? "is-on" : undefined} /><i className={loadingStep >= 1 ? "is-on" : undefined} /><i className={loadingStep >= 2 ? "is-on" : undefined} /><i className={loadingStep >= 3 ? "is-on" : undefined} /></span></div>
+          <div className="loader-telemetry"><span>{t.loader.telemetry[loadingStep]}</span><span>MARKS / 05</span><span>MAKER / 01</span></div>
           <div className="loader-phases" aria-label="Portfolio loading phases">{t.loader.phases.map((phase, index) => <span className={cx(index <= loadingStep - 1 && "is-complete", index === loadingStep && "is-active")} key={phase}><i>{String(index + 1).padStart(2, "0")}</i><strong>{phase}</strong></span>)}</div>
         </div>
       </motion.div>
@@ -441,12 +444,16 @@ export function PortfolioExperience() {
 
           <motion.div className="cosmic-frame-wrap" inert={motionOn && heroPhase !== "worlds"} style={{ scale: motionOn ? fieldScale : 1, y: motionOn ? fieldY : 0 }}>
             <div className="cosmic-frame">
-              <div className="frame-topline"><span>{t.field.label}</span><span>HenryLabs</span></div>
+              <div className="frame-topline"><span>{t.field.label}</span><span>{activeProject.name} / {activeProject.status[language]}</span></div>
               <CosmicCanvas activeId={activeId} onSelect={selectProject} motionOn={motionOn} progress={scrollYProgress} />
               <div className="frame-bottomline"><span>05 worlds / 01 maker</span><span><MousePointer2 size={13} /> {t.field.hint}</span></div>
             </div>
           </motion.div>
+          <div className="hero-transition" aria-hidden={heroPhase !== "transition"}>
+            <div className="hero-transition-card"><span>{t.transition.eyebrow}</span><strong>{t.transition.title}</strong><small>{t.transition.body}</small><i><b /><b /><b /></i></div>
+          </div>
         </div>
+        <div className="hero-telemetry" aria-hidden="true"><span>FIELD STATUS <b>LIVE</b></span><span>WORLD COUNT <b>05</b></span><span>MAKER <b>01</b></span></div>
         <a href="#work" className="scroll-cue"><span>Scroll to enter</span><ArrowDown size={18} /></a>
       </section>
 
@@ -466,6 +473,7 @@ export function PortfolioExperience() {
           </div>
           <div className="signal-constellation" aria-hidden="true"><span className="signal-constellation-label">observe / shape / ship</span><span className="signal-constellation-dot dot-a" /><span className="signal-constellation-dot dot-b" /><span className="signal-constellation-dot dot-c" /><span className="signal-constellation-line line-a" /><span className="signal-constellation-line line-b" /><span className="signal-constellation-line line-c" /></div>
         </div>
+        <div className="world-chain" aria-hidden="true"><span className="world-chain-label">05 worlds / 01 maker</span><div className="world-chain-track">{projects.map((project, index) => <span className="world-chain-node" style={{ "--world-color": project.color } as React.CSSProperties} key={project.id}><i><img src={project.logo} alt="" /></i><b>0{index + 1}</b></span>)}</div><span className="world-chain-note">different friction / same instinct</span></div>
       </section>
 
       <section className="content-section work-section" id="work" aria-labelledby="work-title">

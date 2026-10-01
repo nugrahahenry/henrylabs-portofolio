@@ -28,6 +28,9 @@ test("portfolio surface keeps its core experience contracts", () => {
   assert.match(experience, /\["PHP", "php"/);
   assert.match(experience, /tech-icon-fallback/);
   assert.match(experience, /loader-system/);
+  assert.match(experience, /loader-telemetry/);
+  assert.match(experience, /hero-transition/);
+  assert.match(experience, /world-chain/);
   assert.doesNotMatch(experience, /className="chapter-rail"/);
   assert.match(experience, /id="method"/);
   assert.match(experience, /signal-progress/);
@@ -46,6 +49,9 @@ test("portfolio surface keeps its core experience contracts", () => {
   assert.match(styles, /html\[data-motion="off"\]/);
   assert.match(styles, /touch-action: pan-y/);
   assert.match(styles, /loader-orbit-one/);
+  assert.match(styles, /loader-scan/);
+  assert.match(styles, /hero-transition-card/);
+  assert.match(styles, /chain-float/);
   assert.match(styles, /\.work-section \{/);
   assert.match(styles, /background: radial-gradient\(ellipse at 12% 15%/);
   assert.match(styles, /scroll-padding-top: 84px/);

@@ -5,7 +5,9 @@ Interactive personal portfolio for Henry Nugraha, now moving from a single-file 
 ## What is inside
 
 - Cosmic scroll opening with a project constellation.
+- A launch-sequence intro with live telemetry, local project marks, and a signal-lock transition into the field.
 - A full-bleed orbit-to-method transition that explains how Henry turns friction into useful work.
+- A five-world signal chain carries the method chapter into Selected Worlds without adding another navigation system.
 - A single header navigation and scroll-reactive method signal keep the page navigable without duplicated controls.
 - Continuous cosmic surfaces replace decorative transition strips, so each chapter enters with clearer rhythm and contrast.
 - The `Selected Worlds` chapter continues that cosmic field, with project-color navigation and a case-study dossier that changes with each world.

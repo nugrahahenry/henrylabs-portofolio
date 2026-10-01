@@ -28,6 +28,8 @@ try {
       stackMarquees: document.querySelectorAll(".stack-marquee").length,
       stackOrbits: document.querySelectorAll(".stack-orbit").length,
       stackGroups: document.querySelectorAll(".stack-manifest-row").length,
+      worldChainNodes: document.querySelectorAll(".world-chain-node").length,
+      heroTelemetry: document.querySelectorAll(".hero-telemetry span").length,
     }));
     assert.equal(result.viewport, viewport.width);
     assert.equal(result.scrollWidth, viewport.width);
@@ -39,6 +41,8 @@ try {
     assert.equal(result.stackMarquees, 0);
     assert.equal(result.stackOrbits, 0);
     assert.equal(result.stackGroups, 3);
+    assert.equal(result.worldChainNodes, 5);
+    assert.equal(result.heroTelemetry, 3);
     await page.getByRole("tab", { name: "Completion badge", exact: true }).click();
     await expect(page.locator(".certificate-card")).toHaveCount(17);
     await page.getByRole("tab", { name: "All", exact: true }).click();
