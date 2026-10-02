@@ -230,16 +230,27 @@ export function CosmicCanvas({ activeId, onSelect, onPrevious, onNext, motionOn,
       // Orbit positions in a shallow ellipse, keeping the field readable at every angle.
       system.rotation.y = Math.sin(elapsed * .12) * .08;
       core.rotation.y = elapsed * .075;
+      const coreScale = state.current.motionOn ? THREE.MathUtils.damp(core.scale.x, .24, 6, dt) : .24;
+      core.scale.setScalar(coreScale);
+      rings.scale.setScalar(coreScale);
       planets.forEach(({ group, sphere, atmosphere, logoHalo, focusRing, sculpture }, index) => {
         const selected = worlds[index].id === state.current.activeId;
-        const scale = selected ? 1.25 : .94;
+        const scale = selected ? 2 : .94;
         group.scale.setScalar(state.current.motionOn ? THREE.MathUtils.damp(group.scale.x, scale, 7, dt) : scale);
         const phase = orbitPhases[index] + angle;
-        group.position.set(
-          Math.cos(phase) * (portrait ? 1.95 : 3.35),
-          Math.sin(phase) * 1.45,
-          Math.sin(phase) * .55,
-        );
+        const orbitX = Math.cos(phase) * (portrait ? 1.95 : 3.35);
+        const orbitY = Math.sin(phase) * 1.45;
+        const orbitZ = Math.sin(phase) * .55;
+        const targetX = selected ? 0 : orbitX;
+        const targetY = selected ? .2 : orbitY;
+        const targetZ = selected ? 1.85 : orbitZ;
+        if (state.current.motionOn) {
+          group.position.x = THREE.MathUtils.damp(group.position.x, targetX, 6, dt);
+          group.position.y = THREE.MathUtils.damp(group.position.y, targetY, 6, dt);
+          group.position.z = THREE.MathUtils.damp(group.position.z, targetZ, 6, dt);
+        } else {
+          group.position.set(targetX, targetY, targetZ);
+        }
         sphere.rotation.y = -system.rotation.y + index * .12 + elapsed * .08;
         sphere.rotation.x = Math.sin(elapsed * .18 + index) * .035;
         sculpture.rotation.y = elapsed * (.11 + index * .008) + angle * .22;

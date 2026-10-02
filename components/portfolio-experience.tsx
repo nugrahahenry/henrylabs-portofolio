@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import type { CSSProperties } from "react";
 import {
   ArrowDown,
   ArrowUpRight,
@@ -462,15 +463,15 @@ export function PortfolioExperience() {
               <div className="frame-topline"><span>{t.field.label}</span><span>{activeProject.name} / {activeProject.status[language]}</span></div>
               <CosmicCanvas activeId={activeId} onSelect={focusProject} onPrevious={() => cycleProject(-1)} onNext={() => cycleProject(1)} motionOn={motionOn} progress={scrollYProgress} />
               <AnimatePresence mode="wait" initial={false}>
-                <motion.aside className="orbit-focus" key={activeProject.id} aria-label={`Active project: ${activeProject.name}`} initial={motionOn ? { opacity: 0, y: 13 } : false} animate={{ opacity: 1, y: 0 }} exit={motionOn ? { opacity: 0, y: -9 } : undefined} transition={{ duration: motionOn ? .35 : 0, ease: [0.16, 1, 0.3, 1] }}>
-                  <div className="orbit-focus-topline"><span>ACTIVE WORLD / {String(projects.findIndex((project) => project.id === activeProject.id) + 1).padStart(2, "0")}</span><span>{activeProject.status[language]}</span></div>
-                  <h2>{activeProject.name}</h2>
-                  <p>{activeProject.summary[language]}</p>
-                  <div className="orbit-focus-stack">{activeProject.stack.slice(0, 3).map((item) => <span key={item}>{item}</span>)}</div>
-                  <div className="orbit-focus-actions"><button type="button" onClick={openProjectDossier}>{t.field.inspect}<ArrowDown size={14} /></button><a href={activeProject.link} target={activeProject.link.startsWith("http") ? "_blank" : undefined} rel={activeProject.link.startsWith("http") ? "noreferrer" : undefined}>{t.field.open}<ArrowUpRight size={13} /></a></div>
-                </motion.aside>
+                <motion.section className="project-showcase" key={activeProject.id} aria-label={`Active project: ${activeProject.name}`} style={{ "--project-showcase-color": activeProject.color } as CSSProperties} initial={motionOn ? { opacity: 0, x: 22 } : false} animate={{ opacity: 1, x: 0 }} exit={motionOn ? { opacity: 0, x: -16 } : undefined} transition={{ duration: motionOn ? .4 : 0, ease: [0.16, 1, 0.3, 1] }}>
+                  <div className="project-showcase-topline"><span>ACTIVE WORLD / {String(projects.findIndex((project) => project.id === activeProject.id) + 1).padStart(2, "0")}</span><div className="project-showcase-nav"><button type="button" onClick={() => cycleProject(-1)} aria-label="Previous project"><ChevronLeft size={13} /></button><button type="button" onClick={() => cycleProject(1)} aria-label="Next project"><ChevronRight size={13} /></button></div></div>
+                  <div className="project-showcase-identity"><span className="project-showcase-mark"><img src={activeProject.logo} alt="" /></span><div><span>{activeProject.status[language]} · {activeProject.visibility[language]}</span><h2>{activeProject.name}</h2></div></div>
+                  <p className="project-showcase-summary">{activeProject.summary[language]}</p>
+                  <div className="project-showcase-stack">{activeProject.stack.slice(0, 3).map((item) => <span key={item}>{item}</span>)}</div>
+                  <div className="project-showcase-actions"><button type="button" onClick={openProjectDossier}>{t.field.inspect}<ArrowDown size={14} /></button><a href={activeProject.link} target={activeProject.link.startsWith("http") ? "_blank" : undefined} rel={activeProject.link.startsWith("http") ? "noreferrer" : undefined}>{t.field.open}<ArrowUpRight size={13} /></a></div>
+                </motion.section>
               </AnimatePresence>
-              <div className="frame-bottomline"><span>05 worlds / 01 maker</span><div className="frame-project-nav" aria-label="Project orbit controls"><button type="button" onClick={() => cycleProject(-1)} aria-label="Previous project"><ChevronLeft size={14} /></button><strong>{String(projects.findIndex((project) => project.id === activeProject.id) + 1).padStart(2, "0")} / {activeProject.name}</strong><button type="button" onClick={() => cycleProject(1)} aria-label="Next project"><ChevronRight size={14} /></button></div><span><MousePointer2 size={13} /> {t.field.hint}</span></div>
+              <div className="frame-bottomline"><span>05 worlds / 01 maker</span><span><MousePointer2 size={13} /> {t.field.hint}</span></div>
             </div>
           </motion.div>
           <div className="hero-transition" aria-hidden={heroPhase !== "transition"}>

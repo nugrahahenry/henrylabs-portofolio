@@ -84,10 +84,12 @@ try {
     await page.screenshot({ path: `test-results/${viewport.width}-orbit-drag.png` });
     await page.locator(".planet-label").nth(2).evaluate((button) => button.click());
     await page.locator(".dossier").waitFor();
+    await expect(page.locator(".project-showcase")).toContainText("Canox");
     await expect.poll(async () => page.locator(".dossier").innerText()).toMatch(/Context is the interface/);
     assert.match(await page.locator(".dossier").innerText(), /PRIVATE DETAILS STAY PROTECTED/);
     assert.equal(await page.locator(".dossier-sequence span").count(), 3);
     await page.locator(".planet-label").first().evaluate((button) => button.click());
+    await expect(page.locator(".project-showcase")).toContainText("Catmoji");
     await expect.poll(async () => page.locator(".dossier").innerText()).toMatch(/Read source/);
     assert.equal(await page.locator(".dossier-art-preview").count(), 1);
     await page.locator(".certificate-feature-preview").click();
