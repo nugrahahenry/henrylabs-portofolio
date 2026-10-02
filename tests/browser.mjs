@@ -29,6 +29,9 @@ try {
       stackMarquees: document.querySelectorAll(".stack-marquee").length,
       stackOrbits: document.querySelectorAll(".stack-orbit").length,
       stackGroups: document.querySelectorAll(".maker-orbit-track").length,
+      techNodes: document.querySelectorAll(".maker-tech").length,
+      stackInspector: document.querySelectorAll(".maker-orbit-inspector").length,
+      academicSourceLinks: document.querySelectorAll(".academic-card-foot a[href*='github.com']").length,
       showcaseWorlds: document.querySelectorAll(".project-showcase-index [role='tab']").length,
       worldChainNodes: document.querySelectorAll(".world-chain-node").length,
       heroTelemetry: document.querySelectorAll(".hero-telemetry span").length,
@@ -43,6 +46,9 @@ try {
     assert.equal(result.stackMarquees, 0);
     assert.equal(result.stackOrbits, 0);
     assert.equal(result.stackGroups, 3);
+    assert.equal(result.techNodes, 21);
+    assert.equal(result.stackInspector, 1);
+    assert.equal(result.academicSourceLinks, 2);
     assert.equal(result.showcaseWorlds, 5);
     assert.equal(result.worldChainNodes, 5);
     assert.equal(result.heroTelemetry, 3);
@@ -62,6 +68,11 @@ try {
     await page.getByRole("button", { name: "Previous featured credential" }).click();
     await expect.poll(async () => page.locator(".certificate-feature-copy h3").innerText()).toBe(featuredTitle);
     await expect(page.locator('a[href="https://www.linkedin.com/in/nugrahahenry/"]')).toHaveCount(1);
+
+    await page.locator("#stack").scrollIntoViewIfNeeded();
+    await page.getByRole("button", { name: /Focus Nalira through Supabase/ }).click({ force: true });
+    await expect(page.locator(".maker-orbit-inspector")).toContainText("Nalira");
+    assert.equal(await page.locator(".maker-tech.is-linked").count(), 4);
 
     await page.evaluate(() => window.scrollTo({ top: innerHeight, behavior: "instant" }));
     await expect(page.locator(".hero-stage")).toHaveAttribute("data-phase", "worlds");

@@ -22,6 +22,8 @@ Interactive personal portfolio for Henry Nugraha, now moving from a single-file 
 - Working stack and tools are consolidated into one Maker Orbit around Henry, while University Builds and private client evidence use richer ownership, signal, and output cards.
 - Credentials open with five featured records first, with a deliberate full archive toggle for the complete 26-record proof set.
 - The Maker Orbit has three breathing technology paths, floating icon nodes, signal pulses, and atmospheric section backgrounds that carry the cosmic language through the full reading path.
+- Maker Orbit now acts as a live project-to-stack map: selecting a technology focuses the world that uses it, while the active world's tools brighten and the rest recede.
+- University Builds expose verified GitHub links for POS Z Shoes and LabQ, while RentalMobil.SG stays honestly marked as a local class build.
 - The orbit now carries one connected active-world stage: selecting a planet or using the stage arrows moves its real project mark into the hero position, updates the explanation and stack in place, and keeps the other worlds orbiting around it.
 - Direct WebGL planet clicks now use the same active-world state as labels, arrows, and keyboard navigation; a small click-versus-drag threshold keeps orbit exploration from triggering accidental selections.
 - The project field no longer uses a decorative central planet: five worlds form a connected constellation with animated network lines and a travelling signal that follows the active orbit.

@@ -39,6 +39,10 @@ test("portfolio surface keeps its core experience contracts", () => {
   assert.match(experience, /signal-progress/);
   assert.doesNotMatch(experience, /PhaseBridge/);
   assert.match(experience, /--node-color/);
+  assert.match(experience, /maker-orbit-inspector/);
+  assert.match(experience, /Focus \$\{linkedProject.name\} through \$\{label\}/);
+  assert.match(experience, /POS_APBDS/);
+  assert.match(experience, /labQ-Android/);
   assert.match(experience, /className="mobile-nav"/);
   assert.match(experience, /document\.documentElement\.dataset\.cursor/);
   assert.match(experience, /MotionConfig/);
@@ -67,6 +71,8 @@ test("portfolio surface keeps its core experience contracts", () => {
   assert.match(styles, /dossier-private/);
   assert.match(styles, /\.signal-progress/);
   assert.match(styles, /data-visible="true"/);
+  assert.match(styles, /\.maker-tech\.is-linked/);
+  assert.match(styles, /\.maker-orbit-inspector/);
   assert.equal(existsSync(new URL("public/assets/background/cosmic-nebula.png", root)), true);
   assert.equal(existsSync(new URL("public/assets/certificates/previews/gemini-certified-educator.png", root)), true);
   assert.equal(existsSync(new URL("public/assets/certificates/previews/google-student-ambassador.png", root)), true);
