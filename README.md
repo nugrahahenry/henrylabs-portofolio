@@ -22,8 +22,11 @@ Interactive personal portfolio for Henry Nugraha, now moving from a single-file 
 - Working stack and tools are consolidated into one Maker Orbit around Henry, while University Builds and private client evidence use richer ownership, signal, and output cards.
 - Credentials open with five featured records first, with a deliberate full archive toggle for the complete 26-record proof set.
 - The orbit now carries one connected active-world stage: selecting a planet or using the stage arrows moves its real project mark into the hero position, updates the explanation and stack in place, and keeps the other worlds orbiting around it.
+- Direct WebGL planet clicks now use the same active-world state as labels, arrows, and keyboard navigation; a small click-versus-drag threshold keeps orbit exploration from triggering accidental selections.
 - The project reading path now places `The Henry method` after the project dossier, so the method explains the examples instead of interrupting them.
 - Google Student Ambassador leads the credential feature; archive opening and closing use Motion enter/exit transitions.
+- The credential feature is now a five-record editorial deck with ghosted adjacent previews, directional Motion transitions, a focus-trapped detail modal, and a separate archive for the full 26-record proof set.
+- Contact routes include WhatsApp, email, GitHub, LinkedIn, and Instagram; the LinkedIn destination is `linkedin.com/in/nugrahahenry`.
 - Catmoji and Polara carry real project artwork into the dossier; private worlds use authored system maps instead of protected screenshots.
 - A 26-record certificate and badge archive uses a signature record, kind filters, accessible detail viewing, and source PDFs where available.
 - Responsive portrait constellation layout, mobile navigation, immediate technology mark fallbacks, offscreen animation pausing, reduced-motion support, HenryLabs favicon, and generated Open Graph artwork.

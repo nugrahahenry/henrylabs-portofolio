@@ -14,6 +14,7 @@ import {
   Command,
   Github,
   Instagram,
+  Linkedin,
   LockKeyhole,
   Mail,
   Menu,
@@ -171,7 +172,7 @@ const copy = {
   en: {
     nav: { work: "Work", stack: "Stack", proof: "Proof", contact: "Contact" },
     loading: ["Calibrating the field", "Waking project identities", "Mapping useful worlds", "Almost ready"],
-    loader: { eyebrow: "A portfolio in motion", title: "Entering", accent: "the orbit.", body: "Five worlds. One point of view.", phases: ["Identity", "Project field", "Proof archive"], telemetry: ["Identity signal", "Project field", "Proof archive", "Field ready"] },
+    loader: { eyebrow: "HenryLabs / useful worlds", title: "I build things", accent: "I actually see.", body: "Loading the worlds, tools, and proof behind the work.", phases: ["Identity", "Project field", "Proof archive"], telemetry: ["Identity signal", "Project field", "Proof archive", "Field ready"] },
     hero: {
       title: "I build things I actually see.",
       body: "Product-minded developer turning everyday friction into useful systems, playful interfaces, and honest experiments.",
@@ -200,7 +201,7 @@ const copy = {
   id: {
     nav: { work: "Karya", stack: "Stack", proof: "Bukti", contact: "Kontak" },
     loading: ["Mengkalibrasi ruang", "Membangunkan identitas project", "Memetakan useful worlds", "Hampir siap"],
-    loader: { eyebrow: "Portfolio yang bergerak", title: "Memasuki", accent: "orbit.", body: "Lima dunia. Satu sudut pandang.", phases: ["Identitas", "Project field", "Arsip bukti"], telemetry: ["Sinyal identitas", "Project field", "Arsip bukti", "Field siap"] },
+    loader: { eyebrow: "HenryLabs / useful worlds", title: "Aku membangun hal", accent: "yang benar-benar kulihat.", body: "Memuat dunia, tools, dan bukti di balik karya ini.", phases: ["Identitas", "Project field", "Arsip bukti"], telemetry: ["Sinyal identitas", "Project field", "Arsip bukti", "Field siap"] },
     hero: {
       title: "Aku membangun hal yang benar-benar kulihat.",
       body: "Developer product-minded yang mengubah rasa penasaran sehari-hari menjadi sistem berguna, interface playful, dan eksperimen jujur.",
@@ -294,6 +295,7 @@ export function PortfolioExperience() {
   const [activeId, setActiveId] = useState<ProjectId>("catmoji");
   const [activeCertificate, setActiveCertificate] = useState<(typeof certificates)[number] | null>(null);
   const [certificateFilter, setCertificateFilter] = useState<(typeof certificateFilters)[number]>("All");
+  const [spotlightIndex, setSpotlightIndex] = useState(0);
   const [showCertificateArchive, setShowCertificateArchive] = useState(false);
   const [introDone, setIntroDone] = useState(false);
   const [motionPreference, setMotionPreference] = useState(true);
@@ -307,6 +309,8 @@ export function PortfolioExperience() {
   const methodRef = useRef<HTMLElement>(null);
   const stackRef = useRef<HTMLElement>(null);
   const menuRef = useRef<HTMLDetailsElement>(null);
+  const certificateModalRef = useRef<HTMLDivElement>(null);
+  const certificateTriggerRef = useRef<HTMLButtonElement | null>(null);
   const stackVisible = useInView(stackRef, { margin: "150px" });
   const { scrollYProgress: methodProgress } = useScroll({ target: methodRef, offset: ["start start", "end start"] });
   const methodY = useTransform(methodProgress, [0, 1], [42, 0]);
@@ -333,8 +337,9 @@ export function PortfolioExperience() {
   const activeProject = projects.find((project) => project.id === activeId) ?? projects[0];
   const filteredCertificates = certificateFilter === "All" ? certificates : certificates.filter((certificate) => certificate.kind === certificateFilter);
   const visibleCertificates = showCertificateArchive ? filteredCertificates : filteredCertificates.slice(0, 5);
-  const spotlightCertificate = visibleCertificates[0] ?? certificates[0];
-  const shelfCertificates = visibleCertificates.slice(1);
+  const spotlightPool = visibleCertificates.slice(0, Math.min(5, visibleCertificates.length));
+  const spotlightCertificate = spotlightPool[spotlightIndex % Math.max(spotlightPool.length, 1)] ?? certificates[0];
+  const shelfCertificates = visibleCertificates.filter((certificate) => certificate.title !== spotlightCertificate.title);
 
   useEffect(() => {
     setMotionReady(true);
@@ -368,14 +373,39 @@ export function PortfolioExperience() {
   useEffect(() => { document.documentElement.lang = language; }, [language]);
 
   useEffect(() => {
+    setSpotlightIndex(0);
+  }, [certificateFilter, showCertificateArchive]);
+
+  useEffect(() => {
     if (!activeCertificate) return;
-    const closeOnEscape = (event: KeyboardEvent) => { if (event.key === "Escape") setActiveCertificate(null); };
+    const restoreTarget = certificateTriggerRef.current;
+    const modal = certificateModalRef.current;
+    const focusable = modal ? Array.from(modal.querySelectorAll<HTMLElement>("button, a[href], [tabindex]:not([tabindex='-1'])")) : [];
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        setActiveCertificate(null);
+        return;
+      }
+      if (event.key !== "Tab" || focusable.length < 2) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     window.addEventListener("keydown", closeOnEscape);
+    window.requestAnimationFrame(() => focusable[0]?.focus());
     return () => {
       document.body.style.overflow = previousOverflow;
       window.removeEventListener("keydown", closeOnEscape);
+      restoreTarget?.focus();
     };
   }, [activeCertificate]);
 
@@ -404,6 +434,11 @@ export function PortfolioExperience() {
   const cycleProject = (direction: -1 | 1) => {
     const index = projects.findIndex((project) => project.id === activeId);
     setActiveId(projects[(index + direction + projects.length) % projects.length].id);
+  };
+
+  const cycleSpotlight = (direction: -1 | 1) => {
+    if (spotlightPool.length < 2) return;
+    setSpotlightIndex((index) => (index + direction + spotlightPool.length) % spotlightPool.length);
   };
 
   return (
@@ -542,16 +577,20 @@ export function PortfolioExperience() {
         <div className="section-heading"><div><p className="section-kicker">Credentials / 05 featured</p><h2 id="proof-title">{t.proof.title}</h2></div><p>{t.proof.body}</p></div>
         <div className="proof-toolbar"><div className="proof-count"><strong>{String(visibleCertificates.length).padStart(2, "0")}</strong><span>{showCertificateArchive ? "archive records" : "featured records"}</span></div><div className="certificate-filters" role="tablist" aria-label="Filter credentials">{certificateFilters.map((filter) => <button key={filter} type="button" role="tab" aria-selected={certificateFilter === filter} className={cx(certificateFilter === filter && "is-active")} onClick={() => setCertificateFilter(filter)}>{filter}</button>)}</div></div>
         <div className="certificate-feature certificate-card">
-          <button type="button" className="certificate-feature-preview" onClick={() => setActiveCertificate(spotlightCertificate)} aria-label={`Inspect ${spotlightCertificate.title} certificate`}><img src={spotlightCertificate.image} alt={spotlightCertificate.alt} /><span className="certificate-index">01 / SIGNATURE RECORD</span><span className="certificate-view">inspect full <ArrowUpRight size={13} /></span></button>
-          <div className="certificate-feature-copy"><div className="certificate-meta"><span>{spotlightCertificate.issuer}</span><span>{spotlightCertificate.kind}</span></div><h3>{spotlightCertificate.title}</h3><p>One original record from the shelf, kept large enough to read and specific enough to trust.</p><div className="certificate-feature-specs"><span><small>Issued</small><strong>{spotlightCertificate.date}</strong></span><span><small>{showCertificateArchive ? "Archive" : "Featured"}</small><strong>{String(visibleCertificates.length).padStart(2, "0")} visible</strong></span></div><button type="button" className="certificate-feature-open" onClick={() => setActiveCertificate(spotlightCertificate)}>Open the record <ArrowUpRight size={15} /></button>{spotlightCertificate.source && <a className="certificate-feature-source" href={spotlightCertificate.source} target="_blank" rel="noreferrer">Source PDF <ArrowUpRight size={13} /></a>}</div>
+          <button type="button" className="certificate-feature-preview" onClick={(event) => { certificateTriggerRef.current = event.currentTarget; setActiveCertificate(spotlightCertificate); }} aria-label={`Inspect ${spotlightCertificate.title} certificate`}>
+            {spotlightPool.slice(1, 4).map((certificate, index) => <span className={cx("certificate-feature-ghost", `certificate-feature-ghost--${index + 1}`)} key={certificate.title} aria-hidden="true"><img src={certificate.image} alt="" /></span>)}
+            <AnimatePresence mode="wait" initial={false}><motion.img key={spotlightCertificate.title} src={spotlightCertificate.image} alt={spotlightCertificate.alt} initial={motionOn ? { opacity: 0, x: 28, rotate: 3 } : false} animate={{ opacity: 1, x: 0, rotate: 0 }} exit={motionOn ? { opacity: 0, x: -22, rotate: -3 } : undefined} transition={{ duration: motionOn ? .42 : 0, ease: [0.22, 1, .36, 1] }} /></AnimatePresence>
+            <span className="certificate-index">{String((spotlightPool.indexOf(spotlightCertificate) + 1).toString().padStart(2, "0"))} / FEATURED RECORD</span><span className="certificate-view">inspect full <ArrowUpRight size={13} /></span>
+          </button>
+          <div className="certificate-feature-copy"><div className="certificate-meta"><span>{spotlightCertificate.issuer}</span><span>{spotlightCertificate.kind}</span></div><div className="certificate-feature-title"><h3>{spotlightCertificate.title}</h3><div className="certificate-feature-switcher"><span>{String(spotlightPool.indexOf(spotlightCertificate) + 1).padStart(2, "0")} / {String(spotlightPool.length).padStart(2, "0")}</span><button type="button" onClick={() => cycleSpotlight(-1)} aria-label="Previous featured credential"><ChevronLeft size={15} /></button><button type="button" onClick={() => cycleSpotlight(1)} aria-label="Next featured credential"><ChevronRight size={15} /></button></div></div><p>One original record from the shelf, kept large enough to read and specific enough to trust.</p><div className="certificate-feature-specs"><span><small>Issued</small><strong>{spotlightCertificate.date}</strong></span><span><small>{showCertificateArchive ? "Archive" : "Featured"}</small><strong>{String(visibleCertificates.length).padStart(2, "0")} visible</strong></span></div><button type="button" className="certificate-feature-open" onClick={(event) => { certificateTriggerRef.current = event.currentTarget; setActiveCertificate(spotlightCertificate); }}>Open the record <ArrowUpRight size={15} /></button>{spotlightCertificate.source && <a className="certificate-feature-source" href={spotlightCertificate.source} target="_blank" rel="noreferrer">Source PDF <ArrowUpRight size={13} /></a>}</div>
         </div>
-        <div className="certificate-shelf certificate-shelf--compact"><AnimatePresence initial={false} mode="popLayout">{shelfCertificates.map((certificate, index) => <motion.article layout className="certificate-card" key={certificate.title} initial={motionOn ? { opacity: 0, y: 26, scale: .98 } : false} animate={{ opacity: 1, y: 0, scale: 1 }} exit={motionOn ? { opacity: 0, y: -14, scale: .96 } : undefined} transition={{ duration: motionOn ? .42 : 0, delay: motionOn ? (index % 3) * .045 : 0, ease: [0.22, 1, .36, 1] }}><button type="button" className="certificate-preview" onClick={() => setActiveCertificate(certificate)} aria-label={`Inspect ${certificate.title} certificate`}><img src={certificate.image} alt={certificate.alt} loading="lazy" /><span className="certificate-index">{String(index + 2).padStart(2, "0")}</span><span className="certificate-view">inspect full <ArrowUpRight size={13} /></span></button><div className="certificate-copy"><div className="certificate-meta"><span>{certificate.issuer}</span><span>{certificate.kind}</span></div><h3>{certificate.title}</h3><div className="certificate-foot"><span>{certificate.date}</span>{certificate.source ? <a href={certificate.source} target="_blank" rel="noreferrer">Source PDF <ArrowUpRight size={13} /></a> : <span className="certificate-muted">Original image</span>}</div></div></motion.article>)}</AnimatePresence></div>
+        <div className="certificate-shelf certificate-shelf--compact"><AnimatePresence initial={false} mode="popLayout">{shelfCertificates.map((certificate, index) => <motion.article layout className="certificate-card" key={certificate.title} initial={motionOn ? { opacity: 0, y: 26, scale: .98 } : false} animate={{ opacity: 1, y: 0, scale: 1 }} exit={motionOn ? { opacity: 0, y: -14, scale: .96 } : undefined} transition={{ duration: motionOn ? .42 : 0, delay: motionOn ? (index % 3) * .045 : 0, ease: [0.22, 1, .36, 1] }}><button type="button" className="certificate-preview" onClick={(event) => { certificateTriggerRef.current = event.currentTarget; setActiveCertificate(certificate); }} aria-label={`Inspect ${certificate.title} certificate`}><img src={certificate.image} alt={certificate.alt} loading="lazy" /><span className="certificate-index">{String(index + 2).padStart(2, "0")}</span><span className="certificate-view">inspect full <ArrowUpRight size={13} /></span></button><div className="certificate-copy"><div className="certificate-meta"><span>{certificate.issuer}</span><span>{certificate.kind}</span></div><h3>{certificate.title}</h3><div className="certificate-foot"><span>{certificate.date}</span>{certificate.source ? <a href={certificate.source} target="_blank" rel="noreferrer">Source PDF <ArrowUpRight size={13} /></a> : <span className="certificate-muted">Original image</span>}</div></div></motion.article>)}</AnimatePresence></div>
         <div className="certificate-archive"><span>certificate shelf</span><p>Original assets, issuer names, and dates stay visible so the proof feels specific, not ornamental.</p><button type="button" className="certificate-archive-toggle" aria-expanded={showCertificateArchive} onClick={() => setShowCertificateArchive((value) => !value)}>{showCertificateArchive ? "Show featured five" : `Open full archive (${filteredCertificates.length})`}<motion.span animate={{ rotate: showCertificateArchive ? 180 : 0 }} transition={{ duration: .3 }}><ChevronDown size={14} /></motion.span></button><Sparkles size={19} /></div>
       </section>
 
-      <AnimatePresence>{activeCertificate && <motion.div className="certificate-modal-backdrop" role="presentation" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={(event) => { if (event.target === event.currentTarget) setActiveCertificate(null); }}><motion.div className="certificate-modal" role="dialog" aria-modal="true" aria-labelledby="certificate-modal-title" initial={motionOn ? { opacity: 0, y: 26, scale: .97 } : false} animate={{ opacity: 1, y: 0, scale: 1 }} exit={motionOn ? { opacity: 0, y: 18, scale: .98 } : undefined} transition={{ duration: .35, ease: [0.22, 1, .36, 1] }}><button type="button" className="certificate-modal-close" onClick={() => setActiveCertificate(null)} aria-label="Close certificate viewer"><X size={19} /></button><div className="certificate-modal-image"><img src={activeCertificate.image} alt={activeCertificate.alt} /></div><div className="certificate-modal-copy"><p className="section-kicker">Certificate detail</p><div className="certificate-meta"><span>{activeCertificate.issuer}</span><span>{activeCertificate.kind}</span></div><h2 id="certificate-modal-title">{activeCertificate.title}</h2><p>{activeCertificate.date}</p>{activeCertificate.source && <a className="button button-bright" href={activeCertificate.source} target="_blank" rel="noreferrer">Open source PDF <ArrowUpRight size={16} /></a>}</div></motion.div></motion.div>}</AnimatePresence>
+      <AnimatePresence>{activeCertificate && <motion.div className="certificate-modal-backdrop" role="presentation" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={(event) => { if (event.target === event.currentTarget) setActiveCertificate(null); }}><motion.div ref={certificateModalRef} className="certificate-modal" role="dialog" aria-modal="true" aria-labelledby="certificate-modal-title" initial={motionOn ? { opacity: 0, y: 26, scale: .97 } : false} animate={{ opacity: 1, y: 0, scale: 1 }} exit={motionOn ? { opacity: 0, y: 18, scale: .98 } : undefined} transition={{ duration: .35, ease: [0.22, 1, .36, 1] }}><button type="button" className="certificate-modal-close" onClick={() => setActiveCertificate(null)} aria-label="Close certificate viewer"><X size={19} /></button><div className="certificate-modal-image"><img src={activeCertificate.image} alt={activeCertificate.alt} /></div><div className="certificate-modal-copy"><p className="section-kicker">Certificate detail</p><div className="certificate-meta"><span>{activeCertificate.issuer}</span><span>{activeCertificate.kind}</span></div><h2 id="certificate-modal-title">{activeCertificate.title}</h2><p>{activeCertificate.date}</p>{activeCertificate.source && <a className="button button-bright" href={activeCertificate.source} target="_blank" rel="noreferrer">Open source PDF <ArrowUpRight size={16} /></a>}</div></motion.div></motion.div>}</AnimatePresence>
 
-      <section className="contact-section" id="contact" aria-labelledby="contact-title"><div className="content-section contact-content"><div><p className="section-kicker section-kicker-dark">Make the next useful thing</p><h2 id="contact-title">{t.contact.title}</h2></div><div className="contact-copy"><p>{t.contact.body}</p><div className="contact-actions"><a className="button button-bright" href="https://wa.me/6289513559554" target="_blank" rel="noreferrer"><MessageCircle size={18} /> WhatsApp <ArrowUpRight size={16} /></a><a className="button button-outline" href="mailto:henrynugraha1210@gmail.com"><Mail size={18} /> Email <ArrowUpRight size={16} /></a></div><div className="social-links"><a href="https://github.com/nugrahahenry" target="_blank" rel="noreferrer"><Github size={19} /> GitHub</a><a href="https://instagram.com/hnry.dev" target="_blank" rel="noreferrer"><Instagram size={19} /> @hnry.dev</a></div></div></div></section>
+      <section className="contact-section" id="contact" aria-labelledby="contact-title"><div className="content-section contact-content"><div><p className="section-kicker section-kicker-dark">Make the next useful thing</p><h2 id="contact-title">{t.contact.title}</h2></div><div className="contact-copy"><p>{t.contact.body}</p><div className="contact-actions"><a className="button button-bright" href="https://wa.me/6289513559554" target="_blank" rel="noreferrer"><MessageCircle size={18} /> WhatsApp <ArrowUpRight size={16} /></a><a className="button button-outline" href="mailto:henrynugraha1210@gmail.com"><Mail size={18} /> Email <ArrowUpRight size={16} /></a></div><div className="social-links"><a href="https://github.com/nugrahahenry" target="_blank" rel="noreferrer"><Github size={19} /> GitHub</a><a href="https://www.linkedin.com/in/nugrahahenry/" target="_blank" rel="noreferrer"><Linkedin size={19} /> LinkedIn</a><a href="https://instagram.com/hnry.dev" target="_blank" rel="noreferrer"><Instagram size={19} /> @hnry.dev</a></div></div></div></section>
 
       <footer className="site-footer"><a className="brand" href="#top"><span className="brand-mark"><Asterisk size={18} /></span><span>HenryLabs</span></a><span>{t.footer}</span><span>© 2026</span></footer>
     </main>

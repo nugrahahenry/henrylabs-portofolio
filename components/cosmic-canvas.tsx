@@ -102,6 +102,7 @@ export function CosmicCanvas({ activeId, onSelect, onPrevious, onNext, motionOn,
 }) {
   const hostRef = useRef<HTMLDivElement>(null);
   const labels = useRef<Array<HTMLButtonElement | null>>([]);
+  const selectRef = useRef(onSelect);
   const state = useRef({ activeId, motionOn });
   const wakeRef = useRef<() => void>(() => {});
   const [fallback, setFallback] = useState(false);
@@ -110,6 +111,10 @@ export function CosmicCanvas({ activeId, onSelect, onPrevious, onNext, motionOn,
     state.current = { activeId, motionOn };
     wakeRef.current();
   }, [activeId, motionOn]);
+
+  useEffect(() => {
+    selectRef.current = onSelect;
+  }, [onSelect]);
 
   useEffect(() => {
     const host = hostRef.current!;
@@ -206,15 +211,36 @@ export function CosmicCanvas({ activeId, onSelect, onPrevious, onNext, motionOn,
       system.add(group);
       return { group, sphere, atmosphere, logoHalo, focusRing, sculpture };
     });
+    const planetGroups: THREE.Object3D[] = planets.map(({ group }) => group);
 
     let visible = true;
     let frame = 0;
     let lastTime = 0;
     let elapsed = 0;
     let dragging = false;
+    let pointerMoved = false;
+    let pressedPlanet = -1;
     let lastX = 0;
+    let startX = 0;
+    let startY = 0;
     let angle = 0;
     const projected = new THREE.Vector3();
+    const pointer = new THREE.Vector2();
+    const raycaster = new THREE.Raycaster();
+    const findPlanetAt = (event: PointerEvent) => {
+      const rect = canvas.getBoundingClientRect();
+      pointer.set(((event.clientX - rect.left) / rect.width) * 2 - 1, -((event.clientY - rect.top) / rect.height) * 2 + 1);
+      raycaster.setFromCamera(pointer, camera);
+      const hit = raycaster.intersectObjects(planetGroups, true)[0];
+      if (!hit) return -1;
+      let object: THREE.Object3D | null = hit.object;
+      while (object) {
+        const index = planetGroups.indexOf(object);
+        if (index >= 0) return index;
+        object = object.parent;
+      }
+      return -1;
+    };
     const render = (time: number) => {
       frame = 0;
       if (disposed || !visible || document.hidden) return;
@@ -287,22 +313,36 @@ export function CosmicCanvas({ activeId, onSelect, onPrevious, onNext, motionOn,
       wake();
     };
     const down = (event: PointerEvent) => {
+      if (event.button !== 0) return;
       if ((event.target as HTMLElement).closest("button")) return;
       dragging = true;
+      pointerMoved = false;
+      pressedPlanet = findPlanetAt(event);
       lastX = event.clientX;
+      startX = event.clientX;
+      startY = event.clientY;
       canvas.setPointerCapture(event.pointerId);
     };
     const move = (event: PointerEvent) => {
       if (!dragging) return;
+      if (Math.hypot(event.clientX - startX, event.clientY - startY) > 6) pointerMoved = true;
       angle += (event.clientX - lastX) * .006;
       lastX = event.clientX;
       wake();
     };
-    const up = () => { dragging = false; };
+    const up = (event: PointerEvent) => {
+      if (!dragging) return;
+      if (!pointerMoved && pressedPlanet >= 0) selectRef.current(worlds[pressedPlanet].id);
+      dragging = false;
+      pointerMoved = false;
+      pressedPlanet = -1;
+      if (canvas.hasPointerCapture(event.pointerId)) canvas.releasePointerCapture(event.pointerId);
+    };
+    const cancel = () => { dragging = false; pointerMoved = false; pressedPlanet = -1; };
     canvas.addEventListener("pointerdown", down);
     canvas.addEventListener("pointermove", move);
     canvas.addEventListener("pointerup", up);
-    canvas.addEventListener("pointercancel", up);
+    canvas.addEventListener("pointercancel", cancel);
     const contextLost = (event: Event) => { event.preventDefault(); setFallback(true); cancelAnimationFrame(frame); };
     canvas.addEventListener("webglcontextlost", contextLost);
     const observer = new ResizeObserver(resize);
@@ -322,7 +362,7 @@ export function CosmicCanvas({ activeId, onSelect, onPrevious, onNext, motionOn,
       canvas.removeEventListener("pointerdown", down);
       canvas.removeEventListener("pointermove", move);
       canvas.removeEventListener("pointerup", up);
-      canvas.removeEventListener("pointercancel", up);
+      canvas.removeEventListener("pointercancel", cancel);
       canvas.removeEventListener("webglcontextlost", contextLost);
       scene.traverse((object) => {
         const mesh = object as THREE.Mesh;

@@ -43,7 +43,7 @@ try {
     assert.equal(result.stackGroups, 3);
     assert.equal(result.worldChainNodes, 5);
     assert.equal(result.heroTelemetry, 3);
-    assert.equal(await page.locator(".certificate-feature-preview img").getAttribute("src"), "/assets/certificates/previews/google-student-ambassador.png");
+    assert.equal(await page.locator(".certificate-feature-preview > img").getAttribute("src"), "/assets/certificates/previews/google-student-ambassador.png");
     await page.getByRole("button", { name: /Open full archive/ }).click();
     await expect(page.locator(".certificate-card")).toHaveCount(26);
     assert.equal(await page.locator("a[href*='/assets/certificates/source/']").count(), 8);
@@ -53,6 +53,12 @@ try {
     await expect(page.locator(".certificate-card")).toHaveCount(26);
     await page.getByRole("button", { name: /Show featured five/ }).click();
     await expect(page.locator(".certificate-card")).toHaveCount(5);
+    const featuredTitle = await page.locator(".certificate-feature-copy h3").innerText();
+    await page.getByRole("button", { name: "Next featured credential" }).click();
+    await expect.poll(async () => page.locator(".certificate-feature-copy h3").innerText()).not.toBe(featuredTitle);
+    await page.getByRole("button", { name: "Previous featured credential" }).click();
+    await expect.poll(async () => page.locator(".certificate-feature-copy h3").innerText()).toBe(featuredTitle);
+    await expect(page.locator('a[href="https://www.linkedin.com/in/nugrahahenry/"]')).toHaveCount(1);
 
     await page.evaluate(() => window.scrollTo({ top: innerHeight, behavior: "instant" }));
     await expect(page.locator(".hero-stage")).toHaveAttribute("data-phase", "worlds");
@@ -82,6 +88,11 @@ try {
     await page.mouse.up();
     await expect.poll(async () => Number(await scene.getAttribute("data-angle"))).toBeGreaterThan(beforeDrag + .4);
     await page.screenshot({ path: `test-results/${viewport.width}-orbit-drag.png` });
+    const directPlanetLabel = page.locator(".planet-label").nth(1);
+    const directPlanetBounds = await directPlanetLabel.boundingBox();
+    assert.ok(directPlanetBounds, "Nalira label should be projected for direct canvas click");
+    await page.mouse.click(directPlanetBounds.x + directPlanetBounds.width / 2, directPlanetBounds.y - 30);
+    await expect(page.locator(".project-showcase")).toContainText("Nalira");
     await page.locator(".planet-label").nth(2).evaluate((button) => button.click());
     await page.locator(".dossier").waitFor();
     await expect(page.locator(".project-showcase")).toContainText("Canox");
@@ -97,6 +108,7 @@ try {
     assert.match(await page.locator('[role="dialog"]').innerText(), /Google Student Ambassador/i);
     await page.keyboard.press("Escape");
     await page.locator('[role="dialog"]').waitFor({ state: "detached" });
+    await expect(page.locator(".certificate-feature-preview")).toBeFocused();
     assert.deepEqual(errors, []);
     await page.reload({ waitUntil: "domcontentloaded" });
     await expect(page.locator(".intro-loader")).toHaveClass(/intro-loader--done/);
