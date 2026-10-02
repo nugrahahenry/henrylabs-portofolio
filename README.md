@@ -27,6 +27,7 @@ Interactive personal portfolio for Henry Nugraha, now moving from a single-file 
 - The project field no longer uses a decorative central planet: five worlds form a connected constellation with animated network lines and a travelling signal that follows the active orbit.
 - The active-world showcase now doubles as a direct five-world index, using the real project marks to focus a world without leaving the constellation stage.
 - Project dossiers now expose a compact evidence telemetry layer for surface, access, and build state, with restrained hover depth on the authored visual or system map.
+- On mobile, the project field now becomes a real stage-then-dossier sequence so the orbit remains visible before its active-world explanation enters; access labels also distinguish public demos, open source, and private walkthroughs.
 - The project reading path now places `The Henry method` after the project dossier, so the method explains the examples instead of interrupting them.
 - Google Student Ambassador leads the credential feature; archive opening and closing use Motion enter/exit transitions.
 - The credential feature is now a five-record editorial deck with ghosted adjacent previews, directional Motion transitions, a focus-trapped detail modal, and a separate archive for the full 26-record proof set.

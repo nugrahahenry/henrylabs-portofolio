@@ -98,6 +98,8 @@ try {
     await expect(page.locator(".project-showcase")).toContainText("Nalira");
     await page.getByRole("tab", { name: "Focus Canox" }).click();
     await expect(page.locator(".project-showcase")).toContainText("Canox");
+    await expect(page.locator(".dossier")).toContainText("Canox");
+    assert.match(await page.locator(".dossier-art-evidence").innerText(), /PRIVATE WALKTHROUGH/);
     await page.locator(".planet-label").nth(2).evaluate((button) => button.click());
     await page.locator(".dossier").waitFor();
     assert.equal(await page.locator(".dossier-art-evidence span").count(), 3);

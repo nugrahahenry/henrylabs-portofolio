@@ -36,6 +36,7 @@ const projects: Array<{
   color: string;
   status: Record<Language, string>;
   visibility: Record<Language, string>;
+  access: Record<Language, string>;
   summary: Record<Language, string>;
   flow: Record<Language, string[]>;
   link: string;
@@ -58,6 +59,7 @@ const projects: Array<{
     color: "#ee674f",
     status: { en: "Live", id: "Live" },
     visibility: { en: "Public product", id: "Produk publik" },
+    access: { en: "Open source", id: "Open source" },
     summary: {
       en: "A playful browser product that turns a hand gesture into emotion, a cat sticker, and a voice.",
       id: "Produk browser playful yang mengubah gesture tangan menjadi emosi, stiker kucing, dan suara.",
@@ -83,6 +85,7 @@ const projects: Array<{
     color: "#60c9b0",
     status: { en: "MVP", id: "MVP" },
     visibility: { en: "Public MVP", id: "MVP publik" },
+    access: { en: "Public demo", id: "Demo publik" },
     summary: {
       en: "An audio-to-knowledge workflow for turning lectures, meetings, and ideas into material you can revisit.",
       id: "Workflow audio-to-knowledge untuk mengubah kuliah, meeting, dan ide menjadi materi yang bisa dipelajari ulang.",
@@ -105,6 +108,7 @@ const projects: Array<{
     color: "#657be8",
     status: { en: "Private build", id: "Build privat" },
     visibility: { en: "Private system", id: "Sistem privat" },
+    access: { en: "Private walkthrough", id: "Walkthrough privat" },
     summary: {
       en: "A personal AI cockpit connecting Henry’s tools, context, and everyday workflows.",
       id: "Cockpit AI personal yang menghubungkan tools, konteks, dan workflow sehari-hari Henry.",
@@ -127,6 +131,7 @@ const projects: Array<{
     color: "#efc95f",
     status: { en: "Live system", id: "Sistem live" },
     visibility: { en: "Private evidence", id: "Bukti privat" },
+    access: { en: "Private evidence", id: "Bukti privat" },
     summary: {
       en: "A WhatsApp focus assistant and Discord community bot designed around calmer communication and useful handoffs.",
       id: "Asisten fokus WhatsApp dan bot komunitas Discord untuk komunikasi lebih tenang dan handoff yang berguna.",
@@ -149,6 +154,7 @@ const projects: Array<{
     color: "#a96ba9",
     status: { en: "In progress", id: "Dalam proses" },
     visibility: { en: "Creative web experience", id: "Pengalaman web kreatif" },
+    access: { en: "Preview on request", id: "Preview lewat permintaan" },
     summary: {
       en: "A browser-based digital photobooth where the interface becomes part of the memory.",
       id: "Photobooth digital berbasis browser ketika interface-nya sendiri menjadi bagian dari kenangan.",
@@ -524,7 +530,7 @@ export function PortfolioExperience() {
         <div className="work-layout">
           <AnimatePresence mode="wait" initial={false}>
             <motion.article className="dossier" key={activeProject.id} style={{ "--dossier-color": activeProject.color } as React.CSSProperties} initial={motionOn ? { opacity: 0, y: 18, scale: .985 } : false} animate={{ opacity: 1, y: 0, scale: 1 }} exit={motionOn ? { opacity: 0, y: -10, scale: .99 } : undefined} transition={{ duration: motionOn ? 0.45 : 0, ease: [0.16, 1, 0.3, 1] }}>
-              <div className="dossier-art"><div className="dossier-art-ring dossier-art-ring--one" /><div className="dossier-art-ring dossier-art-ring--two" /><span className="dossier-art-scan" aria-hidden="true" /><div className="dossier-art-readout"><span>WORLD / {String(projects.findIndex((project) => project.id === activeProject.id) + 1).padStart(2, "0")}</span><span>{activeProject.year}</span></div><span className="dossier-art-stamp">{activeProject.signal[language]}</span><div className="dossier-art-evidence" aria-label="Project evidence signals"><span><small>Surface</small><strong>{activeProject.media ? "Visual" : "System map"}</strong></span><span><small>Access</small><strong>{activeProject.source ? "Open source" : "Private"}</strong></span><span><small>State</small><strong>{activeProject.status.en}</strong></span></div>{activeProject.media ? <img className="dossier-art-preview" src={activeProject.media} alt={activeProject.mediaAlt} /> : <div className="dossier-art-map" aria-label={`${activeProject.name} system map`}>{activeProject.flow[language].map((step, index) => <span key={step}><i>{String(index + 1).padStart(2, "0")}</i>{step}</span>)}</div>}<img className="dossier-art-logo" src={activeProject.logo} alt={`${activeProject.name} logo`} /></div>
+              <div className="dossier-art"><div className="dossier-art-ring dossier-art-ring--one" /><div className="dossier-art-ring dossier-art-ring--two" /><span className="dossier-art-scan" aria-hidden="true" /><div className="dossier-art-readout"><span>WORLD / {String(projects.findIndex((project) => project.id === activeProject.id) + 1).padStart(2, "0")}</span><span>{activeProject.year}</span></div><span className="dossier-art-stamp">{activeProject.signal[language]}</span><div className="dossier-art-evidence" aria-label="Project evidence signals"><span><small>Surface</small><strong>{activeProject.media ? "Visual" : "System map"}</strong></span><span><small>Access</small><strong>{activeProject.access[language]}</strong></span><span><small>State</small><strong>{activeProject.status[language]}</strong></span></div>{activeProject.media ? <img className="dossier-art-preview" src={activeProject.media} alt={activeProject.mediaAlt} /> : <div className="dossier-art-map" aria-label={`${activeProject.name} system map`}>{activeProject.flow[language].map((step, index) => <span key={step}><i>{String(index + 1).padStart(2, "0")}</i>{step}</span>)}</div>}<img className="dossier-art-logo" src={activeProject.logo} alt={`${activeProject.name} logo`} /></div>
               <div className="dossier-copy"><div className="dossier-meta"><span>{activeProject.status[language]}</span><span>{activeProject.visibility[language]}</span></div><h3>{activeProject.name}</h3><p>{activeProject.summary[language]}</p><div className="dossier-details"><span><small>Role</small><strong>{activeProject.role[language]}</strong></span><span><small>Signal</small><strong>{activeProject.signal[language]}</strong></span></div><div className="dossier-sequence" aria-label="Case study sequence">{activeProject.flow[language].map((step, index) => <span key={step}><small>0{index + 1} / {t.caseStudy.sequence[index]}</small><strong>{step}</strong></span>)}</div><div className="case-facts"><span><small>{t.caseStudy.stack}</small><strong>{activeProject.stack.join(" · ")}</strong></span><span><small>{t.caseStudy.ownership}</small><strong>{activeProject.ownership[language]}</strong></span><span><small>{t.caseStudy.evidence}</small><strong>{activeProject.evidence[language]}</strong></span></div><div className="dossier-next"><span>{t.caseStudy.next}</span><p>{activeProject.next[language]}</p></div><div className="dossier-actions"><a className="inline-link" href={activeProject.link} target={activeProject.link.startsWith("http") ? "_blank" : undefined} rel={activeProject.link.startsWith("http") ? "noreferrer" : undefined}>{activeProject.linkLabel[language]}<ArrowUpRight size={17} /></a>{activeProject.source && <a className="inline-link inline-link--source" href={activeProject.source} target="_blank" rel="noreferrer"><Github size={16} />{t.caseStudy.source}<ArrowUpRight size={15} /></a>}</div>{!activeProject.source && <p className="dossier-private"><LockKeyhole size={14} />{t.caseStudy.private}</p>}</div>
             </motion.article>
           </AnimatePresence>

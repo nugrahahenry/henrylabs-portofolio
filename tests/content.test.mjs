@@ -33,6 +33,7 @@ test("portfolio surface keeps its core experience contracts", () => {
   assert.match(experience, /world-chain/);
   assert.match(experience, /project-showcase-index/);
   assert.match(experience, /dossier-art-evidence/);
+  assert.match(experience, /access: Record<Language, string>/);
   assert.doesNotMatch(experience, /className="chapter-rail"/);
   assert.match(experience, /id="method"/);
   assert.match(experience, /signal-progress/);
