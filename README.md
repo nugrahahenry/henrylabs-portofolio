@@ -21,8 +21,10 @@ Interactive personal portfolio for Henry Nugraha, now moving from a single-file 
 - The project orbit is the primary selector: planet labels, keyboard arrows, and previous/next controls all feed one active-world inspector instead of duplicating navigation.
 - Working stack and tools are consolidated into one Maker Orbit around Henry, while University Builds and private client evidence use richer ownership, signal, and output cards.
 - Credentials open with five featured records first, with a deliberate full archive toggle for the complete 26-record proof set.
+- The Maker Orbit has three breathing technology paths, floating icon nodes, signal pulses, and atmospheric section backgrounds that carry the cosmic language through the full reading path.
 - The orbit now carries one connected active-world stage: selecting a planet or using the stage arrows moves its real project mark into the hero position, updates the explanation and stack in place, and keeps the other worlds orbiting around it.
 - Direct WebGL planet clicks now use the same active-world state as labels, arrows, and keyboard navigation; a small click-versus-drag threshold keeps orbit exploration from triggering accidental selections.
+- The project field no longer uses a decorative central planet: five worlds form a connected constellation with animated network lines and a travelling signal that follows the active orbit.
 - The project reading path now places `The Henry method` after the project dossier, so the method explains the examples instead of interrupting them.
 - Google Student Ambassador leads the credential feature; archive opening and closing use Motion enter/exit transitions.
 - The credential feature is now a five-record editorial deck with ghosted adjacent previews, directional Motion transitions, a focus-trapped detail modal, and a separate archive for the full 26-record proof set.

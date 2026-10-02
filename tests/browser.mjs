@@ -3,6 +3,7 @@ import { existsSync, mkdirSync } from "node:fs";
 import { chromium, expect } from "@playwright/test";
 
 const executablePath = process.env.CHROME_PATH ?? "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe";
+const baseUrl = process.env.PORTFOLIO_URL ?? "http://localhost:3001/";
 const browser = await chromium.launch({
   headless: true,
   ...(existsSync(executablePath) ? { executablePath } : {}),
@@ -14,7 +15,7 @@ try {
     const page = await browser.newPage({ viewport, reducedMotion: "no-preference" });
     const errors = [];
     page.on("pageerror", (error) => errors.push(error.message));
-    await page.goto("http://localhost:3001/", { waitUntil: "domcontentloaded" });
+    await page.goto(baseUrl, { waitUntil: "domcontentloaded" });
     await page.locator(".certificate-shelf").waitFor();
     await page.locator(".intro-loader").waitFor({ state: "hidden" });
     const result = await page.evaluate(() => ({
@@ -115,7 +116,7 @@ try {
     await page.close();
 
     const reducedPage = await browser.newPage({ viewport, reducedMotion: "reduce" });
-    await reducedPage.goto("http://localhost:3001/", { waitUntil: "domcontentloaded" });
+    await reducedPage.goto(baseUrl, { waitUntil: "domcontentloaded" });
     await expect(reducedPage.locator(".intro-loader")).toHaveClass(/intro-loader--done/);
     await expect(reducedPage.locator(".site-shell")).toHaveAttribute("data-motion", "off");
     await expect(reducedPage.locator(".hero-stage")).toHaveAttribute("data-phase", "all");

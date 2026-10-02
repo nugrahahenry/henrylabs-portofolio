@@ -44,6 +44,9 @@ test("portfolio surface keeps its core experience contracts", () => {
   assert.match(canvas, /planetSurfaceTexture/);
   assert.match(canvas, /TorusGeometry/);
   assert.match(canvas, /createProjectSculpture/);
+  assert.match(canvas, /networkPairs/);
+  assert.match(canvas, /LineSegments/);
+  assert.doesNotMatch(canvas, /SphereGeometry\(\.87/);
   assert.match(read("components/project-sculptures.ts"), /ExtrudeGeometry/);
   assert.match(styles, /prefers-reduced-motion/);
   assert.match(styles, /html\[data-motion="off"\]/);

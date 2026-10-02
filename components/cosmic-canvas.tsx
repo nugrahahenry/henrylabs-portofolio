@@ -140,18 +140,6 @@ export function CosmicCanvas({ activeId, onSelect, onPrevious, onNext, motionOn,
     fill.position.set(3, -1, 3);
     scene.add(fill);
 
-    const coreTexture = planetTexture("#d9c7ac");
-    const core = new THREE.Mesh(new THREE.SphereGeometry(.87, 64, 32), new THREE.MeshStandardMaterial({ map: coreTexture, roughness: .85 }));
-    core.rotation.z = -.35;
-    system.add(core);
-    const rings = new THREE.Group();
-    rings.rotation.set(1.15, -.12, -.3);
-    [1.15, 1.27, 1.39, 1.46].forEach((r, i) => {
-      const ring = new THREE.Mesh(new THREE.RingGeometry(r, r + .055, 120), new THREE.MeshBasicMaterial({ color: i % 2 ? 0xc4b6a2 : 0xdbe6dc, side: THREE.DoubleSide, transparent: true, opacity: .55 - i * .08 }));
-      rings.add(ring);
-    });
-    system.add(rings);
-
     const starPositions = new Float32Array(900 * 3);
     for (let i = 0; i < 900; i++) {
       starPositions[i * 3] = Math.sin(i * 127.1) * 14;
@@ -169,7 +157,7 @@ export function CosmicCanvas({ activeId, onSelect, onPrevious, onNext, motionOn,
     });
 
     const loader = new THREE.TextureLoader();
-    const textures: THREE.Texture[] = [coreTexture];
+    const textures: THREE.Texture[] = [];
     let disposed = false;
     const planets = worlds.map((world, index) => {
       const group = new THREE.Group();
@@ -212,6 +200,28 @@ export function CosmicCanvas({ activeId, onSelect, onPrevious, onNext, motionOn,
       return { group, sphere, atmosphere, logoHalo, focusRing, sculpture };
     });
     const planetGroups: THREE.Object3D[] = planets.map(({ group }) => group);
+    const networkPairs = [[0, 1], [1, 2], [2, 3], [3, 4], [4, 0]] as const;
+    const networkPositions = new Float32Array(networkPairs.length * 6);
+    const networkGeometry = new THREE.BufferGeometry();
+    networkGeometry.setAttribute("position", new THREE.BufferAttribute(networkPositions, 3));
+    const networkMaterial = new THREE.LineBasicMaterial({ color: 0x74dfe2, transparent: true, opacity: .22, depthWrite: false });
+    const network = new THREE.LineSegments(networkGeometry, networkMaterial);
+    network.renderOrder = 1;
+    system.add(network);
+    const signalMaterial = new THREE.MeshBasicMaterial({ color: 0xffd46d, transparent: true, opacity: .9 });
+    const signal = new THREE.Mesh(new THREE.SphereGeometry(.045, 16, 10), signalMaterial);
+    signal.renderOrder = 2;
+    system.add(signal);
+    const networkStart = new THREE.Vector3();
+    const networkEnd = new THREE.Vector3();
+    const updateNetwork = () => {
+      networkPairs.forEach(([start, end], index) => {
+        const from = planets[start].group.position;
+        const to = planets[end].group.position;
+        networkPositions.set([from.x, from.y, from.z, to.x, to.y, to.z], index * 6);
+      });
+      networkGeometry.attributes.position.needsUpdate = true;
+    };
 
     let visible = true;
     let frame = 0;
@@ -255,10 +265,6 @@ export function CosmicCanvas({ activeId, onSelect, onPrevious, onNext, motionOn,
       if (state.current.motionOn && !dragging) angle += dt * .055;
       // Orbit positions in a shallow ellipse, keeping the field readable at every angle.
       system.rotation.y = Math.sin(elapsed * .12) * .08;
-      core.rotation.y = elapsed * .075;
-      const coreScale = state.current.motionOn ? THREE.MathUtils.damp(core.scale.x, .24, 6, dt) : .24;
-      core.scale.setScalar(coreScale);
-      rings.scale.setScalar(coreScale);
       planets.forEach(({ group, sphere, atmosphere, logoHalo, focusRing, sculpture }, index) => {
         const selected = worlds[index].id === state.current.activeId;
         const scale = selected ? 2 : .94;
@@ -290,6 +296,15 @@ export function CosmicCanvas({ activeId, onSelect, onPrevious, onNext, motionOn,
         focusRing.rotation.z = elapsed * (state.current.motionOn ? (selected ? .18 : -.035) : 0);
         focusRing.scale.setScalar(state.current.motionOn && selected ? 1 + Math.sin(elapsed * 2.4 + index) * .045 : 1);
       });
+      updateNetwork();
+      const signalProgress = (elapsed * .42) % networkPairs.length;
+      const signalPair = Math.floor(signalProgress);
+      const signalT = signalProgress - signalPair;
+      const [signalStart, signalEnd] = networkPairs[signalPair];
+      networkStart.copy(planets[signalStart].group.position);
+      networkEnd.copy(planets[signalEnd].group.position);
+      signal.position.lerpVectors(networkStart, networkEnd, signalT);
+      signalMaterial.opacity = state.current.motionOn ? .78 + Math.sin(elapsed * 3.2) * .16 : .78;
       renderer.render(scene, camera);
       planets.forEach(({ group }, index) => {
         group.getWorldPosition(projected);
@@ -370,6 +385,10 @@ export function CosmicCanvas({ activeId, onSelect, onPrevious, onNext, motionOn,
         if (mesh.material) (Array.isArray(mesh.material) ? mesh.material : [mesh.material]).forEach((material) => material.dispose());
       });
       textures.forEach((texture) => texture.dispose());
+      networkGeometry.dispose();
+      networkMaterial.dispose();
+      signal.geometry.dispose();
+      signalMaterial.dispose();
       renderer.dispose();
       wakeRef.current = () => {};
     };
