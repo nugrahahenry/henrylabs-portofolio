@@ -21,6 +21,9 @@ Interactive personal portfolio for Henry Nugraha, now moving from a single-file 
 - The project orbit is the primary selector: planet labels, keyboard arrows, and previous/next controls all feed one active-world inspector instead of duplicating navigation.
 - Working stack and tools are consolidated into one Maker Orbit around Henry, while University Builds and private client evidence use richer ownership, signal, and output cards.
 - Credentials open with five featured records first, with a deliberate full archive toggle for the complete 26-record proof set.
+- The orbit now carries an active-world focus card; selecting a planet updates the card in place, while its dossier action opens the full project explanation below.
+- The project reading path now places `The Henry method` after the project dossier, so the method explains the examples instead of interrupting them.
+- Google Student Ambassador leads the credential feature; archive opening and closing use Motion enter/exit transitions.
 - Catmoji and Polara carry real project artwork into the dossier; private worlds use authored system maps instead of protected screenshots.
 - A 26-record certificate and badge archive uses a signature record, kind filters, accessible detail viewing, and source PDFs where available.
 - Responsive portrait constellation layout, mobile navigation, immediate technology mark fallbacks, offscreen animation pausing, reduced-motion support, HenryLabs favicon, and generated Open Graph artwork.

@@ -43,6 +43,7 @@ try {
     assert.equal(result.stackGroups, 3);
     assert.equal(result.worldChainNodes, 5);
     assert.equal(result.heroTelemetry, 3);
+    assert.equal(await page.locator(".certificate-feature-preview img").getAttribute("src"), "/assets/certificates/previews/google-student-ambassador.png");
     await page.getByRole("button", { name: /Open full archive/ }).click();
     await expect(page.locator(".certificate-card")).toHaveCount(26);
     assert.equal(await page.locator("a[href*='/assets/certificates/source/']").count(), 8);
@@ -50,6 +51,8 @@ try {
     await expect(page.locator(".certificate-card")).toHaveCount(17);
     await page.getByRole("tab", { name: "All", exact: true }).click();
     await expect(page.locator(".certificate-card")).toHaveCount(26);
+    await page.getByRole("button", { name: /Show featured five/ }).click();
+    await expect(page.locator(".certificate-card")).toHaveCount(5);
 
     await page.evaluate(() => window.scrollTo({ top: innerHeight, behavior: "instant" }));
     await expect(page.locator(".hero-stage")).toHaveAttribute("data-phase", "worlds");
@@ -79,17 +82,17 @@ try {
     await page.mouse.up();
     await expect.poll(async () => Number(await scene.getAttribute("data-angle"))).toBeGreaterThan(beforeDrag + .4);
     await page.screenshot({ path: `test-results/${viewport.width}-orbit-drag.png` });
-    await page.locator(".planet-label").nth(2).click({ force: true });
+    await page.locator(".planet-label").nth(2).evaluate((button) => button.click());
     await page.locator(".dossier").waitFor();
     await expect.poll(async () => page.locator(".dossier").innerText()).toMatch(/Context is the interface/);
     assert.match(await page.locator(".dossier").innerText(), /PRIVATE DETAILS STAY PROTECTED/);
     assert.equal(await page.locator(".dossier-sequence span").count(), 3);
-    await page.locator(".planet-label").first().click({ force: true });
+    await page.locator(".planet-label").first().evaluate((button) => button.click());
     await expect.poll(async () => page.locator(".dossier").innerText()).toMatch(/Read source/);
     assert.equal(await page.locator(".dossier-art-preview").count(), 1);
     await page.locator(".certificate-feature-preview").click();
     await page.locator('[role="dialog"]').waitFor();
-    assert.match(await page.locator('[role="dialog"]').innerText(), /Gemini Certified Educator/);
+    assert.match(await page.locator('[role="dialog"]').innerText(), /Google Student Ambassador/i);
     await page.keyboard.press("Escape");
     await page.locator('[role="dialog"]').waitFor({ state: "detached" });
     assert.deepEqual(errors, []);
