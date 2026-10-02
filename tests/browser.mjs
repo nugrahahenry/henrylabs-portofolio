@@ -100,6 +100,7 @@ try {
     await expect(page.locator(".project-showcase")).toContainText("Canox");
     await page.locator(".planet-label").nth(2).evaluate((button) => button.click());
     await page.locator(".dossier").waitFor();
+    assert.equal(await page.locator(".dossier-art-evidence span").count(), 3);
     await expect(page.locator(".project-showcase")).toContainText("Canox");
     await expect.poll(async () => page.locator(".dossier").innerText()).toMatch(/Context is the interface/);
     assert.match(await page.locator(".dossier").innerText(), /PRIVATE DETAILS STAY PROTECTED/);
