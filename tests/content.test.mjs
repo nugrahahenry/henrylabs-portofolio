@@ -19,8 +19,8 @@ test("portfolio surface keeps its core experience contracts", () => {
   assert.match(experience, /gemini-certified-educator\.png/);
   assert.match(experience, /google-student-ambassador\.png/);
   assert.match(experience, /The Henry method/);
-  assert.match(experience, /Technology stack manifest/);
-  assert.match(experience, /stack-manifest/);
+  assert.match(experience, /Technology stack orbit/);
+  assert.match(experience, /maker-orbit/);
   assert.match(experience, /case-facts/);
   assert.match(experience, /AI-Gesture-Cat/);
   assert.match(experience, /catmoji-hero\.png/);
@@ -35,7 +35,7 @@ test("portfolio surface keeps its core experience contracts", () => {
   assert.match(experience, /id="method"/);
   assert.match(experience, /signal-progress/);
   assert.doesNotMatch(experience, /PhaseBridge/);
-  assert.match(experience, /--project-color/);
+  assert.match(experience, /--node-color/);
   assert.match(experience, /className="mobile-nav"/);
   assert.match(experience, /document\.documentElement\.dataset\.cursor/);
   assert.match(experience, /MotionConfig/);

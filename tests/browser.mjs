@@ -27,15 +27,15 @@ try {
       phaseBridges: document.querySelectorAll(".phase-bridge").length,
       stackMarquees: document.querySelectorAll(".stack-marquee").length,
       stackOrbits: document.querySelectorAll(".stack-orbit").length,
-      stackGroups: document.querySelectorAll(".stack-manifest-row").length,
+      stackGroups: document.querySelectorAll(".maker-orbit-track").length,
       worldChainNodes: document.querySelectorAll(".world-chain-node").length,
       heroTelemetry: document.querySelectorAll(".hero-telemetry span").length,
     }));
     assert.equal(result.viewport, viewport.width);
     assert.equal(result.scrollWidth, viewport.width);
     assert.equal(result.planets, 5);
-    assert.equal(result.certificates, 26);
-    assert.equal(result.sourceLinks, 8);
+    assert.equal(result.certificates, 5);
+    assert.equal(result.sourceLinks, 5);
     assert.equal(result.chapterRails, 0);
     assert.equal(result.phaseBridges, 0);
     assert.equal(result.stackMarquees, 0);
@@ -43,6 +43,9 @@ try {
     assert.equal(result.stackGroups, 3);
     assert.equal(result.worldChainNodes, 5);
     assert.equal(result.heroTelemetry, 3);
+    await page.getByRole("button", { name: /Open full archive/ }).click();
+    await expect(page.locator(".certificate-card")).toHaveCount(26);
+    assert.equal(await page.locator("a[href*='/assets/certificates/source/']").count(), 8);
     await page.getByRole("tab", { name: "Completion badge", exact: true }).click();
     await expect(page.locator(".certificate-card")).toHaveCount(17);
     await page.getByRole("tab", { name: "All", exact: true }).click();
@@ -76,12 +79,12 @@ try {
     await page.mouse.up();
     await expect.poll(async () => Number(await scene.getAttribute("data-angle"))).toBeGreaterThan(beforeDrag + .4);
     await page.screenshot({ path: `test-results/${viewport.width}-orbit-drag.png` });
-    await page.locator(".project-row").nth(2).click();
+    await page.locator(".planet-label").nth(2).click({ force: true });
     await page.locator(".dossier").waitFor();
     await expect.poll(async () => page.locator(".dossier").innerText()).toMatch(/Context is the interface/);
     assert.match(await page.locator(".dossier").innerText(), /PRIVATE DETAILS STAY PROTECTED/);
     assert.equal(await page.locator(".dossier-sequence span").count(), 3);
-    await page.locator(".project-row").first().click();
+    await page.locator(".planet-label").first().click({ force: true });
     await expect.poll(async () => page.locator(".dossier").innerText()).toMatch(/Read source/);
     assert.equal(await page.locator(".dossier-art-preview").count(), 1);
     await page.locator(".certificate-feature-preview").click();

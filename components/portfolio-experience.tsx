@@ -3,10 +3,11 @@
 import { useEffect, useRef, useState } from "react";
 import {
   ArrowDown,
-  ArrowRight,
   ArrowUpRight,
   Asterisk,
   Brackets,
+  ChevronLeft,
+  ChevronRight,
   Code2,
   Command,
   Github,
@@ -190,7 +191,7 @@ const copy = {
     stack: { title: "The instruments behind the worlds.", body: "A flexible stack for moving from interface to workflow, from a classroom idea to a system people can actually use." },
     academic: { title: "Built while learning.", body: "University projects where I owned the system end to end: business flows, mobile and web interfaces, and the logic underneath." },
     client: { title: "Work with real stakes.", body: "Private client work is represented as sanitized evidence: what I owned, what I shipped, and where collaboration mattered." },
-    proof: { title: "Proof, kept human.", body: "A curated shelf of real learning records, competition results, and community work. Open the original whenever the detail matters." },
+    proof: { title: "Proof, kept human.", body: "Five records lead the story. Open the full archive when you want the wider learning trail." },
     contact: { title: "Have something useful in mind?", body: "Tell me what is unclear, slow, or still waiting to be built. I am open to thoughtful freelance projects and teams that care about details." },
     footer: "built by Henry",
   },
@@ -219,7 +220,7 @@ const copy = {
     stack: { title: "Instrumen di balik semua dunia.", body: "Stack yang fleksibel untuk bergerak dari interface ke workflow, dari ide kuliah menjadi sistem yang benar-benar bisa dipakai." },
     academic: { title: "Dibuat sambil belajar.", body: "Project kuliah yang kubangun sendiri dari awal sampai akhir: alur bisnis, interface mobile dan web, serta logika di baliknya." },
     client: { title: "Project dengan konsekuensi nyata.", body: "Client work privat ditampilkan sebagai bukti yang sudah disanitasi: bagian yang kupegang, yang kubuat, dan kapan kolaborasi diperlukan." },
-    proof: { title: "Bukti, tetap manusiawi.", body: "Rak pilihan berisi sertifikat, hasil kompetisi, dan kontribusi komunitas yang asli. Buka dokumen sumber saat detailnya penting." },
+    proof: { title: "Bukti, tetap manusiawi.", body: "Lima record memimpin ceritanya. Buka arsip penuh saat ingin melihat perjalanan belajar yang lebih lengkap." },
     contact: { title: "Ada sesuatu yang ingin dibuat berguna?", body: "Ceritakan hal yang masih membingungkan, lambat, atau belum sempat dibangun. Aku terbuka untuk project freelance dan tim yang peduli pada detail." },
     footer: "dibuat oleh Henry",
   },
@@ -232,9 +233,14 @@ const stackGroups = [
 ];
 
 const academicProjects = [
-  { title: "RentalMobil.SG", tag: "OOP · Semester 2", body: "A car-rental web system with vehicle catalog, authentication, booking, payment confirmation, user area, and admin operations." },
-  { title: "POS Z Shoes", tag: "APBDS · Semester 3", body: "A point-of-sale system with product, supplier, purchase, customer transaction, return, dashboard, and reporting flows." },
-  { title: "LabQ", tag: "Mobile & Web · Semester 4", body: "A digital health laboratory platform connecting patients, lab staff, and admins from registration to test results." },
+  { title: "RentalMobil.SG", tag: "OOP · Semester 2", body: "A car-rental web system with vehicle catalog, authentication, booking, payment confirmation, user area, and admin operations.", output: "Booking flow", stack: ["Java", "OOP", "Rental"], color: "#efc95f" },
+  { title: "POS Z Shoes", tag: "APBDS · Semester 3", body: "A point-of-sale system with product, supplier, purchase, customer transaction, return, dashboard, and reporting flows.", output: "Business flow", stack: ["Analysis", "POS", "Reporting"], color: "#ef8e73" },
+  { title: "LabQ", tag: "Mobile & Web · Semester 4", body: "A digital health laboratory platform connecting patients, lab staff, and admins from registration to test results.", output: "Health workflow", stack: ["React", "Web", "Mobile"], color: "#60c9b0" },
+];
+
+const clientProjects = [
+  { title: "Y-Ventures chatbot", icon: MessageCircle, body: "n8n-based vendor-matching chatbot for event planning, grounded in researched vendor data with filtering, price sorting, and quote calculation.", ownership: "Solo by Henry · private", signal: "Research → match → quote", color: "#6ee7f4" },
+  { title: "Soreva Autonomous Content", icon: Instagram, body: "Social-media content automation for grounded discovery, editorial generation, branded media, review, scheduling, and controlled publishing.", ownership: "Henry solo build + Vieri prototype account", signal: "Discover → review → publish", color: "#ff82c8" },
 ];
 
 const certificates = [
@@ -286,6 +292,7 @@ export function PortfolioExperience() {
   const [activeId, setActiveId] = useState<ProjectId>("catmoji");
   const [activeCertificate, setActiveCertificate] = useState<(typeof certificates)[number] | null>(null);
   const [certificateFilter, setCertificateFilter] = useState<(typeof certificateFilters)[number]>("All");
+  const [showCertificateArchive, setShowCertificateArchive] = useState(false);
   const [introDone, setIntroDone] = useState(false);
   const [motionPreference, setMotionPreference] = useState(true);
   const [motionReady, setMotionReady] = useState(false);
@@ -322,7 +329,8 @@ export function PortfolioExperience() {
 
   const t = copy[language];
   const activeProject = projects.find((project) => project.id === activeId) ?? projects[0];
-  const visibleCertificates = certificateFilter === "All" ? certificates : certificates.filter((certificate) => certificate.kind === certificateFilter);
+  const filteredCertificates = certificateFilter === "All" ? certificates : certificates.filter((certificate) => certificate.kind === certificateFilter);
+  const visibleCertificates = showCertificateArchive ? filteredCertificates : filteredCertificates.slice(0, 5);
   const spotlightCertificate = visibleCertificates[0] ?? certificates[0];
   const shelfCertificates = visibleCertificates.slice(1);
 
@@ -390,6 +398,11 @@ export function PortfolioExperience() {
     window.requestAnimationFrame(() => document.getElementById("work")?.scrollIntoView({ behavior: motionOn ? "smooth" : "auto" }));
   };
 
+  const cycleProject = (direction: -1 | 1) => {
+    const index = projects.findIndex((project) => project.id === activeId);
+    selectProject(projects[(index + direction + projects.length) % projects.length].id);
+  };
+
   return (
     <MotionConfig reducedMotion={motionOn ? "never" : "always"} transition={{ duration: motionOn ? 0.55 : 0, ease: [0.16, 1, 0.3, 1] }}>
     <main className="site-shell" data-motion={motionOn ? "on" : "off"}>
@@ -445,8 +458,8 @@ export function PortfolioExperience() {
           <motion.div className="cosmic-frame-wrap" inert={motionOn && heroPhase !== "worlds"} style={{ scale: motionOn ? fieldScale : 1, y: motionOn ? fieldY : 0 }}>
             <div className="cosmic-frame">
               <div className="frame-topline"><span>{t.field.label}</span><span>{activeProject.name} / {activeProject.status[language]}</span></div>
-              <CosmicCanvas activeId={activeId} onSelect={selectProject} motionOn={motionOn} progress={scrollYProgress} />
-              <div className="frame-bottomline"><span>05 worlds / 01 maker</span><span><MousePointer2 size={13} /> {t.field.hint}</span></div>
+              <CosmicCanvas activeId={activeId} onSelect={selectProject} onPrevious={() => cycleProject(-1)} onNext={() => cycleProject(1)} motionOn={motionOn} progress={scrollYProgress} />
+              <div className="frame-bottomline"><span>05 worlds / 01 maker</span><div className="frame-project-nav" aria-label="Project orbit controls"><button type="button" onClick={() => cycleProject(-1)} aria-label="Previous project"><ChevronLeft size={14} /></button><strong>{String(projects.findIndex((project) => project.id === activeProject.id) + 1).padStart(2, "0")} / {activeProject.name}</strong><button type="button" onClick={() => cycleProject(1)} aria-label="Next project"><ChevronRight size={14} /></button></div><span><MousePointer2 size={13} /> {t.field.hint}</span></div>
             </div>
           </motion.div>
           <div className="hero-transition" aria-hidden={heroPhase !== "transition"}>
@@ -478,8 +491,8 @@ export function PortfolioExperience() {
 
       <section className="content-section work-section" id="work" aria-labelledby="work-title">
         <div className="section-heading"><div><p className="section-kicker">Selected worlds</p><h2 id="work-title">{t.work.title}</h2></div><p>{t.work.body}</p></div>
+        <div className="work-world-context"><div><span>ACTIVE WORLD / {String(projects.findIndex((project) => project.id === activeProject.id) + 1).padStart(2, "0")}</span><strong>{activeProject.name}</strong><small>Selected from the orbit above</small></div><div className="work-world-controls"><button type="button" onClick={() => cycleProject(-1)} aria-label="Previous project"><ChevronLeft size={17} /></button><button type="button" onClick={() => cycleProject(1)} aria-label="Next project"><ChevronRight size={17} /></button></div></div>
         <div className="work-layout">
-          <div className="project-index" role="list" aria-label="Project index">{projects.map((project, index) => <button key={project.id} className={cx("project-row", project.id === activeId && "project-row--active")} style={{ "--project-color": project.color } as React.CSSProperties} type="button" aria-pressed={project.id === activeId} onClick={() => setActiveId(project.id)}><span className="project-number">0{index + 1}</span><span className="project-icon"><img src={project.logo} alt="" /></span><span className="project-row-copy"><strong>{project.name}</strong><small>{project.visibility[language]}</small></span><ArrowRight className="row-arrow" size={18} /></button>)}</div>
           <AnimatePresence mode="wait" initial={false}>
             <motion.article className="dossier" key={activeProject.id} style={{ "--dossier-color": activeProject.color } as React.CSSProperties} initial={motionOn ? { opacity: 0, y: 18, scale: .985 } : false} animate={{ opacity: 1, y: 0, scale: 1 }} exit={motionOn ? { opacity: 0, y: -10, scale: .99 } : undefined} transition={{ duration: motionOn ? 0.45 : 0, ease: [0.16, 1, 0.3, 1] }}>
               <div className="dossier-art"><div className="dossier-art-ring dossier-art-ring--one" /><div className="dossier-art-ring dossier-art-ring--two" /><span className="dossier-art-scan" aria-hidden="true" /><div className="dossier-art-readout"><span>WORLD / {String(projects.findIndex((project) => project.id === activeProject.id) + 1).padStart(2, "0")}</span><span>{activeProject.year}</span></div><span className="dossier-art-stamp">{activeProject.signal[language]}</span>{activeProject.media ? <img className="dossier-art-preview" src={activeProject.media} alt={activeProject.mediaAlt} /> : <div className="dossier-art-map" aria-label={`${activeProject.name} system map`}>{activeProject.flow[language].map((step, index) => <span key={step}><i>{String(index + 1).padStart(2, "0")}</i>{step}</span>)}</div>}<img className="dossier-art-logo" src={activeProject.logo} alt={`${activeProject.name} logo`} /></div>
@@ -490,27 +503,38 @@ export function PortfolioExperience() {
       </section>
 
       <section ref={stackRef} className="stack-section" id="stack" aria-labelledby="stack-title" data-visible={stackVisible}>
-        <div className="content-section stack-intro"><div className="section-heading"><div><p className="section-kicker section-kicker-dark">Working stack</p><h2 id="stack-title">{t.stack.title}</h2></div><p>{t.stack.body}</p></div></div>
-        <div className="stack-field content-section" aria-label="Technology stack manifest">
-          <div className="stack-field-copy"><p className="section-kicker section-kicker-dark">The tools in the room</p><h3>Different tools.<br /><em>One point of view.</em></h3><p>Technology changes. The instinct stays: make the next action clearer, lighter, and worth returning to.</p><span className="stack-field-signal"><Asterisk size={15} /> selected for useful work</span></div>
-          <div className="stack-manifest">{stackGroups.map((group, groupIndex) => <div className="stack-manifest-row" key={group.label}><div className="stack-manifest-label"><span>{String(groupIndex + 1).padStart(2, "0")}</span><strong>{group.label}</strong></div><div className="stack-manifest-items">{group.items.map(([label, slug, color]) => <span className="stack-manifest-item" key={label}><span className="stack-manifest-icon"><TechIcon label={label} slug={slug} color={color} /></span>{label}</span>)}</div></div>)}</div>
+        <div className="content-section stack-intro"><div className="section-heading"><div><p className="section-kicker section-kicker-dark">Tech orbit</p><h2 id="stack-title">{t.stack.title}</h2></div><p>{t.stack.body}</p></div></div>
+        <div className="maker-orbit content-section" aria-label="Technology stack orbit">
+          <div className="maker-orbit-stage">
+            <span className="maker-orbit-path maker-orbit-path--build" aria-hidden="true" />
+            <span className="maker-orbit-path maker-orbit-path--interface" aria-hidden="true" />
+            <span className="maker-orbit-path maker-orbit-path--systems" aria-hidden="true" />
+            <motion.div className="maker-core" whileHover={motionOn ? { scale: 1.04, rotate: -2 } : undefined} transition={{ type: "spring", stiffness: 230, damping: 18 }}>
+              <span className="maker-core-mark"><Asterisk size={25} /></span>
+              <span className="maker-core-meta">HENRY / MAKER</span>
+              <strong>one point<br /><em>of view.</em></strong>
+              <small>products · systems · playful interfaces</small>
+            </motion.div>
+            {stackGroups.map((group, groupIndex) => <div className={cx("maker-orbit-track", `maker-orbit-track--${groupIndex + 1}`)} key={group.label}>{group.items.map(([label, slug, color], itemIndex) => <span className="maker-tech" style={{ "--node-angle": `${itemIndex * (360 / group.items.length)}deg`, "--node-color": `#${color}` } as React.CSSProperties} key={label} title={label}><span className="maker-tech-icon"><TechIcon label={label} slug={slug} color={color} /></span><b>{label}</b></span>)}</div>)}
+          </div>
+          <div className="maker-orbit-legend">{stackGroups.map((group, groupIndex) => <span key={group.label}><i>{String(groupIndex + 1).padStart(2, "0")}</i>{group.label}</span>)}<p>One orbit. Three ways to make.</p></div>
         </div>
         <div className="stack-foot content-section"><span><Brackets size={19} /> from interface to systems</span><span><Zap size={19} /> motion with a reason</span><span><Code2 size={19} /> honest about the state</span></div>
       </section>
 
-      <section className="content-section split-section" id="academic" aria-labelledby="academic-title"><div className="section-heading"><div><p className="section-kicker">University builds</p><h2 id="academic-title">{t.academic.title}</h2></div><p>{t.academic.body}</p></div><div className="academic-list">{academicProjects.map((project) => <article className="academic-row" key={project.title}><span className="academic-mark"><Command size={20} /></span><div><p>{project.tag}</p><h3>{project.title}</h3><span>{project.body}</span></div><ArrowUpRight size={20} /></article>)}</div></section>
+      <section className="content-section split-section academic-section" id="academic" aria-labelledby="academic-title"><div className="section-heading"><div><p className="section-kicker">University builds</p><h2 id="academic-title">{t.academic.title}</h2></div><p>{t.academic.body}</p></div><div className="academic-grid">{academicProjects.map((project, index) => <article className="academic-card" style={{ "--academic-color": project.color } as React.CSSProperties} key={project.title}><div className="academic-card-top"><span>0{index + 1}</span><small>solo system</small></div><span className="academic-mark"><Command size={20} /></span><p>{project.tag}</p><h3>{project.title}</h3><span className="academic-card-body">{project.body}</span><div className="academic-card-foot"><strong>{project.output}</strong><span>{project.stack.join(" · ")}</span><ArrowUpRight size={18} /></div></article>)}</div></section>
 
-      <section className="client-section" id="client-work" aria-labelledby="client-title"><div className="content-section"><div className="section-heading"><div><p className="section-kicker section-kicker-dark">Private evidence</p><h2 id="client-title">{t.client.title}</h2></div><p>{t.client.body}</p></div><div className="client-grid"><article><div className="client-topline"><span>01</span><MessageCircle size={21} /></div><h3>Y-Ventures chatbot</h3><p>n8n-based vendor-matching chatbot for event planning, grounded in researched vendor data with filtering, price sorting, and quote calculation.</p><span className="client-tag">Solo by Henry · private</span></article><article><div className="client-topline"><span>02</span><Instagram size={21} /></div><h3>Soreva Autonomous Content</h3><p>Social-media content automation for grounded discovery, editorial generation, branded media, review, scheduling, and controlled publishing.</p><span className="client-tag">Henry solo build + Vieri prototype account</span></article></div></div></section>
+      <section className="client-section" id="client-work" aria-labelledby="client-title"><div className="content-section"><div className="section-heading"><div><p className="section-kicker section-kicker-dark">Private evidence</p><h2 id="client-title">{t.client.title}</h2></div><p>{t.client.body}</p></div><div className="client-grid">{clientProjects.map(({ title, icon: Icon, body, ownership, signal, color }, index) => <article className="client-card" style={{ "--client-color": color } as React.CSSProperties} key={title}><div className="client-topline"><span>0{index + 1}</span><Icon size={21} /></div><h3>{title}</h3><p>{body}</p><div className="client-proof"><span><small>Signal</small><strong>{signal}</strong></span><span><small>Ownership</small><strong>{ownership}</strong></span></div><a className="client-card-action" href="#contact">Request a private walkthrough <ArrowUpRight size={15} /></a></article>)}</div></div></section>
 
       <section className="content-section proof-section" id="proof" aria-labelledby="proof-title">
-        <div className="section-heading"><div><p className="section-kicker">Credentials / {String(certificates.length).padStart(2, "0")} records</p><h2 id="proof-title">{t.proof.title}</h2></div><p>{t.proof.body}</p></div>
-        <div className="proof-toolbar"><div className="proof-count"><strong>{String(visibleCertificates.length).padStart(2, "0")}</strong><span>visible records</span></div><div className="certificate-filters" role="tablist" aria-label="Filter credentials">{certificateFilters.map((filter) => <button key={filter} type="button" role="tab" aria-selected={certificateFilter === filter} className={cx(certificateFilter === filter && "is-active")} onClick={() => setCertificateFilter(filter)}>{filter}</button>)}</div></div>
+        <div className="section-heading"><div><p className="section-kicker">Credentials / 05 featured</p><h2 id="proof-title">{t.proof.title}</h2></div><p>{t.proof.body}</p></div>
+        <div className="proof-toolbar"><div className="proof-count"><strong>{String(visibleCertificates.length).padStart(2, "0")}</strong><span>{showCertificateArchive ? "archive records" : "featured records"}</span></div><div className="certificate-filters" role="tablist" aria-label="Filter credentials">{certificateFilters.map((filter) => <button key={filter} type="button" role="tab" aria-selected={certificateFilter === filter} className={cx(certificateFilter === filter && "is-active")} onClick={() => setCertificateFilter(filter)}>{filter}</button>)}</div></div>
         <div className="certificate-feature certificate-card">
           <button type="button" className="certificate-feature-preview" onClick={() => setActiveCertificate(spotlightCertificate)} aria-label={`Inspect ${spotlightCertificate.title} certificate`}><img src={spotlightCertificate.image} alt={spotlightCertificate.alt} /><span className="certificate-index">01 / SIGNATURE RECORD</span><span className="certificate-view">inspect full <ArrowUpRight size={13} /></span></button>
-          <div className="certificate-feature-copy"><div className="certificate-meta"><span>{spotlightCertificate.issuer}</span><span>{spotlightCertificate.kind}</span></div><h3>{spotlightCertificate.title}</h3><p>One original record from the shelf, kept large enough to read and specific enough to trust.</p><div className="certificate-feature-specs"><span><small>Issued</small><strong>{spotlightCertificate.date}</strong></span><span><small>Archive</small><strong>{String(visibleCertificates.length).padStart(2, "0")} visible</strong></span></div><button type="button" className="certificate-feature-open" onClick={() => setActiveCertificate(spotlightCertificate)}>Open the record <ArrowUpRight size={15} /></button>{spotlightCertificate.source && <a className="certificate-feature-source" href={spotlightCertificate.source} target="_blank" rel="noreferrer">Source PDF <ArrowUpRight size={13} /></a>}</div>
+          <div className="certificate-feature-copy"><div className="certificate-meta"><span>{spotlightCertificate.issuer}</span><span>{spotlightCertificate.kind}</span></div><h3>{spotlightCertificate.title}</h3><p>One original record from the shelf, kept large enough to read and specific enough to trust.</p><div className="certificate-feature-specs"><span><small>Issued</small><strong>{spotlightCertificate.date}</strong></span><span><small>{showCertificateArchive ? "Archive" : "Featured"}</small><strong>{String(visibleCertificates.length).padStart(2, "0")} visible</strong></span></div><button type="button" className="certificate-feature-open" onClick={() => setActiveCertificate(spotlightCertificate)}>Open the record <ArrowUpRight size={15} /></button>{spotlightCertificate.source && <a className="certificate-feature-source" href={spotlightCertificate.source} target="_blank" rel="noreferrer">Source PDF <ArrowUpRight size={13} /></a>}</div>
         </div>
         <div className="certificate-shelf certificate-shelf--compact">{shelfCertificates.map((certificate, index) => <motion.article className="certificate-card" key={certificate.title} initial={motionOn ? { opacity: 0, y: 26 } : undefined} whileInView={motionOn ? { opacity: 1, y: 0 } : undefined} viewport={{ once: true, margin: "-70px" }} transition={{ duration: .55, delay: (index % 3) * .07, ease: [0.22, 1, .36, 1] }}><button type="button" className="certificate-preview" onClick={() => setActiveCertificate(certificate)} aria-label={`Inspect ${certificate.title} certificate`}><img src={certificate.image} alt={certificate.alt} loading="lazy" /><span className="certificate-index">{String(index + 2).padStart(2, "0")}</span><span className="certificate-view">inspect full <ArrowUpRight size={13} /></span></button><div className="certificate-copy"><div className="certificate-meta"><span>{certificate.issuer}</span><span>{certificate.kind}</span></div><h3>{certificate.title}</h3><div className="certificate-foot"><span>{certificate.date}</span>{certificate.source ? <a href={certificate.source} target="_blank" rel="noreferrer">Source PDF <ArrowUpRight size={13} /></a> : <span className="certificate-muted">Original image</span>}</div></div></motion.article>)}</div>
-        <div className="certificate-archive"><span>certificate shelf</span><p>Original assets, issuer names, and dates stay visible so the proof feels specific, not ornamental.</p><Sparkles size={19} /></div>
+        <div className="certificate-archive"><span>certificate shelf</span><p>Original assets, issuer names, and dates stay visible so the proof feels specific, not ornamental.</p><button type="button" className="certificate-archive-toggle" aria-expanded={showCertificateArchive} onClick={() => setShowCertificateArchive((value) => !value)}>{showCertificateArchive ? "Show featured five" : `Open full archive (${filteredCertificates.length})`}<ArrowUpRight size={14} /></button><Sparkles size={19} /></div>
       </section>
 
       <AnimatePresence>{activeCertificate && <motion.div className="certificate-modal-backdrop" role="presentation" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={(event) => { if (event.target === event.currentTarget) setActiveCertificate(null); }}><motion.div className="certificate-modal" role="dialog" aria-modal="true" aria-labelledby="certificate-modal-title" initial={motionOn ? { opacity: 0, y: 26, scale: .97 } : false} animate={{ opacity: 1, y: 0, scale: 1 }} exit={motionOn ? { opacity: 0, y: 18, scale: .98 } : undefined} transition={{ duration: .35, ease: [0.22, 1, .36, 1] }}><button type="button" className="certificate-modal-close" onClick={() => setActiveCertificate(null)} aria-label="Close certificate viewer"><X size={19} /></button><div className="certificate-modal-image"><img src={activeCertificate.image} alt={activeCertificate.alt} /></div><div className="certificate-modal-copy"><p className="section-kicker">Certificate detail</p><div className="certificate-meta"><span>{activeCertificate.issuer}</span><span>{activeCertificate.kind}</span></div><h2 id="certificate-modal-title">{activeCertificate.title}</h2><p>{activeCertificate.date}</p>{activeCertificate.source && <a className="button button-bright" href={activeCertificate.source} target="_blank" rel="noreferrer">Open source PDF <ArrowUpRight size={16} /></a>}</div></motion.div></motion.div>}</AnimatePresence>

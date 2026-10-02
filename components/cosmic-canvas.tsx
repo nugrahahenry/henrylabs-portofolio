@@ -92,9 +92,11 @@ function planetSurfaceTexture(image: HTMLImageElement, color: string) {
   return texture;
 }
 
-export function CosmicCanvas({ activeId, onSelect, motionOn, progress }: {
+export function CosmicCanvas({ activeId, onSelect, onPrevious, onNext, motionOn, progress }: {
   activeId: ProjectId;
   onSelect: (id: ProjectId) => void;
+  onPrevious: () => void;
+  onNext: () => void;
   motionOn: boolean;
   progress: MotionValue<number>;
 }) {
@@ -322,7 +324,10 @@ export function CosmicCanvas({ activeId, onSelect, motionOn, progress }: {
     };
   }, [progress]);
 
-  return <div ref={hostRef} className={`cosmic-canvas${fallback ? " canvas-fallback" : ""}`}>
+  return <div ref={hostRef} className={`cosmic-canvas${fallback ? " canvas-fallback" : ""}`} role="group" tabIndex={0} aria-label="Project orbit" onKeyDown={(event) => {
+    if (event.key === "ArrowLeft") { event.preventDefault(); onPrevious(); }
+    if (event.key === "ArrowRight") { event.preventDefault(); onNext(); }
+  }}>
     <canvas aria-hidden="true" />
     {worlds.map((world, index) => <button
       ref={(element) => { labels.current[index] = element; }}
