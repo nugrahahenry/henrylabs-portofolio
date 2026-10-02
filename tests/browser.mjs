@@ -29,6 +29,7 @@ try {
       stackMarquees: document.querySelectorAll(".stack-marquee").length,
       stackOrbits: document.querySelectorAll(".stack-orbit").length,
       stackGroups: document.querySelectorAll(".maker-orbit-track").length,
+      showcaseWorlds: document.querySelectorAll(".project-showcase-index [role='tab']").length,
       worldChainNodes: document.querySelectorAll(".world-chain-node").length,
       heroTelemetry: document.querySelectorAll(".hero-telemetry span").length,
     }));
@@ -42,6 +43,7 @@ try {
     assert.equal(result.stackMarquees, 0);
     assert.equal(result.stackOrbits, 0);
     assert.equal(result.stackGroups, 3);
+    assert.equal(result.showcaseWorlds, 5);
     assert.equal(result.worldChainNodes, 5);
     assert.equal(result.heroTelemetry, 3);
     assert.equal(await page.locator(".certificate-feature-preview > img").getAttribute("src"), "/assets/certificates/previews/google-student-ambassador.png");
@@ -94,6 +96,8 @@ try {
     assert.ok(directPlanetBounds, "Nalira label should be projected for direct canvas click");
     await page.mouse.click(directPlanetBounds.x + directPlanetBounds.width / 2, directPlanetBounds.y - 30);
     await expect(page.locator(".project-showcase")).toContainText("Nalira");
+    await page.getByRole("tab", { name: "Focus Canox" }).click();
+    await expect(page.locator(".project-showcase")).toContainText("Canox");
     await page.locator(".planet-label").nth(2).evaluate((button) => button.click());
     await page.locator(".dossier").waitFor();
     await expect(page.locator(".project-showcase")).toContainText("Canox");

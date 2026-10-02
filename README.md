@@ -25,6 +25,7 @@ Interactive personal portfolio for Henry Nugraha, now moving from a single-file 
 - The orbit now carries one connected active-world stage: selecting a planet or using the stage arrows moves its real project mark into the hero position, updates the explanation and stack in place, and keeps the other worlds orbiting around it.
 - Direct WebGL planet clicks now use the same active-world state as labels, arrows, and keyboard navigation; a small click-versus-drag threshold keeps orbit exploration from triggering accidental selections.
 - The project field no longer uses a decorative central planet: five worlds form a connected constellation with animated network lines and a travelling signal that follows the active orbit.
+- The active-world showcase now doubles as a direct five-world index, using the real project marks to focus a world without leaving the constellation stage.
 - The project reading path now places `The Henry method` after the project dossier, so the method explains the examples instead of interrupting them.
 - Google Student Ambassador leads the credential feature; archive opening and closing use Motion enter/exit transitions.
 - The credential feature is now a five-record editorial deck with ghosted adjacent previews, directional Motion transitions, a focus-trapped detail modal, and a separate archive for the full 26-record proof set.
