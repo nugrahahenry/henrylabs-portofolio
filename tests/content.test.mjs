@@ -40,6 +40,9 @@ test("portfolio surface keeps its core experience contracts", () => {
   assert.doesNotMatch(experience, /PhaseBridge/);
   assert.match(experience, /--node-color/);
   assert.match(experience, /maker-orbit-inspector/);
+  assert.match(experience, /client-signal-rail/);
+  assert.match(experience, /client-owner-stamp/);
+  assert.match(experience, /current signal/);
   assert.match(experience, /Focus \$\{linkedProject.name\} through \$\{label\}/);
   assert.match(experience, /POS_APBDS/);
   assert.match(experience, /labQ-Android/);
@@ -79,6 +82,8 @@ test("portfolio surface keeps its core experience contracts", () => {
   assert.match(styles, /\.project-showcase \{[^}]*pointer-events: none/);
   assert.match(styles, /\.project-showcase button, \.project-showcase a \{ pointer-events: auto; \}/);
   assert.match(styles, /\.certificate-feature-switcher button \{ width: 44px; height: 44px; \}/);
+  assert.match(styles, /\.client-signal-rail/);
+  assert.match(styles, /@keyframes section-atmosphere/);
   assert.equal(existsSync(new URL("public/assets/background/cosmic-nebula.png", root)), true);
   assert.equal(existsSync(new URL("public/assets/certificates/previews/gemini-certified-educator.png", root)), true);
   assert.equal(existsSync(new URL("public/assets/certificates/previews/google-student-ambassador.png", root)), true);

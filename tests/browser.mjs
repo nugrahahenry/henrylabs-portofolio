@@ -129,7 +129,7 @@ try {
     await page.locator(".certificate-feature-preview").click();
     await page.locator('[role="dialog"]').waitFor();
     assert.match(await page.locator('[role="dialog"]').innerText(), /Google Student Ambassador/i);
-    assert.ok((await page.locator(".certificate-modal-close").boundingBox()).height >= 44, "certificate modal close must remain touchable");
+    await expect.poll(async () => (await page.locator(".certificate-modal-close").boundingBox())?.height ?? 0).toBeGreaterThanOrEqual(44);
     await page.keyboard.press("Escape");
     await page.locator('[role="dialog"]').waitFor({ state: "detached" });
     await expect(page.locator(".certificate-feature-preview")).toBeFocused();

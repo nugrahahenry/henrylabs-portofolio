@@ -196,10 +196,10 @@ const copy = {
       marker: "SIGNAL / 01",
     },
     work: { title: "The work, in context.", body: "The orbit is the index. Select a world to see its friction, flow, and honest build state." },
-    caseStudy: { stack: "Stack", ownership: "Ownership", evidence: "Evidence", next: "Next move", source: "Read source", private: "Private details stay protected", sequence: ["Friction", "System", "Proof"] },
+    caseStudy: { stack: "Stack", signal: "Signal", ownership: "Ownership", evidence: "Evidence", next: "Next move", source: "Read source", private: "Private details stay protected", sequence: ["Friction", "System", "Proof"] },
     stack: { title: "The instruments behind the worlds.", body: "A flexible stack for moving from interface to workflow, from a classroom idea to a system people can actually use." },
     academic: { title: "Built while learning.", body: "University projects where I owned the system end to end: business flows, mobile and web interfaces, and the logic underneath." },
-    client: { title: "Work with real stakes.", body: "Private client work is represented as sanitized evidence: what I owned, what I shipped, and where collaboration mattered." },
+    client: { title: "Work with real stakes.", body: "Private client work is represented as sanitized evidence: what I owned, what I shipped, and where collaboration mattered.", request: "Request a private walkthrough" },
     proof: { title: "Proof, kept human.", body: "Five records lead the story. Open the full archive when you want the wider learning trail." },
     contact: { title: "Have something useful in mind?", body: "Tell me what is unclear, slow, or still waiting to be built. I am open to thoughtful freelance projects and teams that care about details." },
     footer: "built by Henry",
@@ -225,10 +225,10 @@ const copy = {
       marker: "SIGNAL / 01",
     },
     work: { title: "Karya, dengan konteks.", body: "Orbit ini adalah index-nya. Pilih sebuah dunia untuk melihat friksi, alur, dan status build secara jujur." },
-    caseStudy: { stack: "Stack", ownership: "Kepemilikan", evidence: "Bukti", next: "Langkah berikutnya", source: "Baca source", private: "Detail privat tetap dilindungi", sequence: ["Friksi", "Sistem", "Bukti"] },
+    caseStudy: { stack: "Stack", signal: "Sinyal", ownership: "Kepemilikan", evidence: "Bukti", next: "Langkah berikutnya", source: "Baca source", private: "Detail privat tetap dilindungi", sequence: ["Friksi", "Sistem", "Bukti"] },
     stack: { title: "Instrumen di balik semua dunia.", body: "Stack yang fleksibel untuk bergerak dari interface ke workflow, dari ide kuliah menjadi sistem yang benar-benar bisa dipakai." },
     academic: { title: "Dibuat sambil belajar.", body: "Project kuliah yang kubangun sendiri dari awal sampai akhir: alur bisnis, interface mobile dan web, serta logika di baliknya." },
-    client: { title: "Project dengan konsekuensi nyata.", body: "Client work privat ditampilkan sebagai bukti yang sudah disanitasi: bagian yang kupegang, yang kubuat, dan kapan kolaborasi diperlukan." },
+    client: { title: "Project dengan konsekuensi nyata.", body: "Client work privat ditampilkan sebagai bukti yang sudah disanitasi: bagian yang kupegang, yang kubuat, dan kapan kolaborasi diperlukan.", request: "Minta walkthrough privat" },
     proof: { title: "Bukti, tetap manusiawi.", body: "Lima record memimpin ceritanya. Buka arsip penuh saat ingin melihat perjalanan belajar yang lebih lengkap." },
     contact: { title: "Ada sesuatu yang ingin dibuat berguna?", body: "Ceritakan hal yang masih membingungkan, lambat, atau belum sempat dibangun. Aku terbuka untuk project freelance dan tim yang peduli pada detail." },
     footer: "dibuat oleh Henry",
@@ -248,8 +248,8 @@ const academicProjects = [
 ];
 
 const clientProjects = [
-  { title: "Y-Ventures chatbot", icon: MessageCircle, body: "n8n-based vendor-matching chatbot for event planning, grounded in researched vendor data with filtering, price sorting, and quote calculation.", ownership: "Solo by Henry · private", signal: "Research → match → quote", color: "#6ee7f4" },
-  { title: "Soreva Autonomous Content", icon: Instagram, body: "Social-media content automation for grounded discovery, editorial generation, branded media, review, scheduling, and controlled publishing.", ownership: "Henry solo build + Vieri prototype account", signal: "Discover → review → publish", color: "#ff82c8" },
+  { title: "Y-Ventures chatbot", icon: MessageCircle, body: "n8n-based vendor-matching chatbot for event planning, grounded in researched vendor data with filtering, price sorting, and quote calculation.", ownership: { en: "Solo by Henry · private", id: "Dibangun sendiri Henry · privat" }, signal: { en: "Research → match → quote", id: "Riset → cocokkan → quote" }, color: "#6ee7f4" },
+  { title: "Soreva Autonomous Content", icon: Instagram, body: "Social-media content automation for grounded discovery, editorial generation, branded media, review, scheduling, and controlled publishing.", ownership: { en: "Henry solo build + Vieri prototype account", id: "Build Henry + akun prototype Vieri" }, signal: { en: "Discover → review → publish", id: "Temukan → review → publish" }, color: "#ff82c8" },
 ];
 
 const certificates = [
@@ -321,6 +321,8 @@ export function PortfolioExperience() {
   const { scrollYProgress: methodProgress } = useScroll({ target: methodRef, offset: ["start start", "end start"] });
   const methodY = useTransform(methodProgress, [0, 1], [42, 0]);
   const methodImageY = useTransform(methodProgress, [0, 1], [-36, 0]);
+  const methodConstellationX = useTransform(methodProgress, [0, 1], [58, -72]);
+  const methodConstellationRotate = useTransform(methodProgress, [0, 1], [-4, 7]);
   const pointerX = useMotionValue(-100);
   const pointerY = useMotionValue(-100);
   const cursorX = useSpring(pointerX, { stiffness: 240, damping: 28, mass: 0.28 });
@@ -555,9 +557,9 @@ export function PortfolioExperience() {
               <p className="section-kicker section-kicker-dark">{t.method.kicker}</p>
               <motion.h2 id="method-title" style={{ y: motionOn ? methodY : 0 }}>{t.method.title.split("\n").map((line) => <span key={line}>{line}</span>)}</motion.h2>
             </div>
-            <div className="signal-copy"><p>{t.method.body}</p><div className="signal-steps"><motion.span className="signal-progress" aria-hidden="true" style={{ scaleX: motionOn ? methodProgress : 1 }} />{t.method.steps.map((step, index) => <span key={step} className={index === methodStep ? "signal-step--active" : undefined}><i>{String(index + 1).padStart(2, "0")}</i>{step}</span>)}</div></div>
+            <div className="signal-copy"><p>{t.method.body}</p><div className="signal-steps" aria-label="The Henry method steps"><motion.span className="signal-progress" aria-hidden="true" style={{ scaleX: motionOn ? methodProgress : 1 }} />{t.method.steps.map((step, index) => <span key={step} className={index === methodStep ? "signal-step--active" : undefined}><i>{String(index + 1).padStart(2, "0")}</i><strong>{step}</strong><small>{index === methodStep ? "current signal" : "next useful move"}</small></span>)}</div></div>
           </div>
-          <div className="signal-constellation" aria-hidden="true"><span className="signal-constellation-label">observe / shape / ship</span><span className="signal-constellation-dot dot-a" /><span className="signal-constellation-dot dot-b" /><span className="signal-constellation-dot dot-c" /><span className="signal-constellation-line line-a" /><span className="signal-constellation-line line-b" /><span className="signal-constellation-line line-c" /></div>
+          <motion.div className="signal-constellation" aria-hidden="true" style={{ x: motionOn ? methodConstellationX : 0, rotate: motionOn ? methodConstellationRotate : 0 }}><span className="signal-constellation-label">observe / shape / ship</span><span className="signal-constellation-dot dot-a" /><span className="signal-constellation-dot dot-b" /><span className="signal-constellation-dot dot-c" /><span className="signal-constellation-line line-a" /><span className="signal-constellation-line line-b" /><span className="signal-constellation-line line-c" /></motion.div>
         </div>
         <div className="world-chain" aria-hidden="true"><span className="world-chain-label">05 worlds / 01 maker</span><div className="world-chain-track">{projects.map((project, index) => <span className="world-chain-node" style={{ "--world-color": project.color } as React.CSSProperties} key={project.id}><i><img src={project.logo} alt="" /></i><b>0{index + 1}</b></span>)}</div><span className="world-chain-note">different friction / same instinct</span></div>
       </section>
@@ -585,7 +587,7 @@ export function PortfolioExperience() {
 
       <section className="content-section split-section academic-section" id="academic" aria-labelledby="academic-title"><div className="section-heading"><div><p className="section-kicker">University builds</p><h2 id="academic-title">{t.academic.title}</h2></div><p>{t.academic.body}</p></div><div className="academic-grid">{academicProjects.map((project, index) => <article className="academic-card" style={{ "--academic-color": project.color } as React.CSSProperties} key={project.title}><div className="academic-card-top"><span>0{index + 1}</span><small>solo system</small></div><span className="academic-mark"><Command size={20} /></span><p>{project.tag}</p><h3>{project.title}</h3><span className="academic-card-body">{project.body}</span><div className="academic-card-foot"><strong>{project.output}</strong><span>{project.stack.join(" · ")}</span>{project.link ? <a href={project.link} target="_blank" rel="noreferrer" aria-label={`${project.linkLabel} for ${project.title}`}>{project.linkLabel}<ArrowUpRight size={18} /></a> : <span className="academic-card-local">class build</span>}</div></article>)}</div></section>
 
-      <section className="client-section" id="client-work" aria-labelledby="client-title"><div className="content-section"><div className="section-heading"><div><p className="section-kicker section-kicker-dark">Private evidence</p><h2 id="client-title">{t.client.title}</h2></div><p>{t.client.body}</p></div><div className="client-grid">{clientProjects.map(({ title, icon: Icon, body, ownership, signal, color }, index) => <article className="client-card" style={{ "--client-color": color } as React.CSSProperties} key={title}><div className="client-topline"><span>0{index + 1}</span><Icon size={21} /></div><h3>{title}</h3><p>{body}</p><div className="client-proof"><span><small>Signal</small><strong>{signal}</strong></span><span><small>Ownership</small><strong>{ownership}</strong></span></div><a className="client-card-action" href="#contact">Request a private walkthrough <ArrowUpRight size={15} /></a></article>)}</div></div></section>
+      <section className="client-section" id="client-work" aria-labelledby="client-title"><div className="content-section"><div className="section-heading"><div><p className="section-kicker section-kicker-dark">Private evidence</p><h2 id="client-title">{t.client.title}</h2></div><p>{t.client.body}</p></div><div className="client-signal-rail" aria-hidden="true"><span>PRIVATE / SANITIZED EVIDENCE</span><i /><span>02 CASES / OWNER SIGNAL</span></div><div className="client-grid">{clientProjects.map(({ title, icon: Icon, body, ownership, signal, color }, index) => <motion.article className="client-card" style={{ "--client-color": color } as React.CSSProperties} key={title} initial={motionOn ? { opacity: 0, x: index === 0 ? -36 : 36, rotate: index === 0 ? -1.2 : 1.2 } : false} whileInView={motionOn ? { opacity: 1, x: 0, rotate: 0 } : undefined} viewport={{ once: false, amount: .3 }} transition={{ duration: .7, delay: index * .08, ease: [0.16, 1, 0.3, 1] }}><div className="client-card-orbit" aria-hidden="true"><span /><span /><span /></div><div className="client-topline"><span>0{index + 1} / PRIVATE EVIDENCE</span><Icon size={21} /></div><div className="client-card-titleline"><h3>{title}</h3><span className="client-owner-stamp">OWNER / HENRY</span></div><p>{body}</p><div className="client-proof"><span><small>{t.caseStudy.signal}</small><strong>{signal[language]}</strong></span><span><small>{t.caseStudy.ownership}</small><strong>{ownership[language]}</strong></span></div><a className="client-card-action" href="#contact">{t.client.request} <ArrowUpRight size={15} /></a></motion.article>)}</div></div></section>
 
       <section className="content-section proof-section" id="proof" aria-labelledby="proof-title">
         <div className="section-heading"><div><p className="section-kicker">Credentials / 05 featured</p><h2 id="proof-title">{t.proof.title}</h2></div><p>{t.proof.body}</p></div>
