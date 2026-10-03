@@ -492,6 +492,7 @@ export function PortfolioExperience() {
       <section ref={heroRef} className="hero-stage" id="top" aria-labelledby="hero-title" data-phase={motionOn ? heroPhase : "all"}>
         <div className="space-backdrop" aria-hidden="true">
           <motion.img src="/assets/background/cosmic-nebula.png" alt="" style={{ scale: motionOn ? backdropScale : 1 }} />
+          <span className="star-field star-field--far" /><span className="star-field star-field--near" />
           <span className="star star-1" /><span className="star star-2" /><span className="star star-3" /><span className="star star-4" /><span className="star star-5" />
           <div className="backdrop-arc arc-one" /><div className="backdrop-arc arc-two" />
         </div>

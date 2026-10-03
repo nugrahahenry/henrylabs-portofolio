@@ -20,14 +20,16 @@ Interactive personal portfolio for Henry Nugraha, now moving from a single-file 
 - Academic projects, client work, one grouped technology stack orbit, and bilingual English/Indonesian copy.
 - The project orbit is the primary selector: planet labels, keyboard arrows, and previous/next controls all feed one active-world inspector instead of duplicating navigation.
 - Working stack and tools are consolidated into one Maker Orbit around Henry, while University Builds and private client evidence use richer ownership, signal, and output cards.
-- Credentials open with five featured records first, with a deliberate full archive toggle for the complete 26-record proof set.
+- Credentials open with five featured records first, with a deliberate full archive toggle for the complete 26-record proof set. Navigation, archive, and close controls retain 44px touch targets across desktop and mobile.
 - The Maker Orbit has three breathing technology paths, floating icon nodes, signal pulses, and atmospheric section backgrounds that carry the cosmic language through the full reading path.
 - Maker Orbit now acts as a live project-to-stack map: selecting a technology focuses the world that uses it, while the active world's tools brighten and the rest recede.
 - University Builds expose verified GitHub links for POS Z Shoes and LabQ, while RentalMobil.SG stays honestly marked as a local class build.
 - The orbit now carries one connected active-world stage: selecting a planet or using the stage arrows moves its real project mark into the hero position, updates the explanation and stack in place, and keeps the other worlds orbiting around it.
 - Direct WebGL planet clicks now use the same active-world state as labels, arrows, and keyboard navigation; a small click-versus-drag threshold keeps orbit exploration from triggering accidental selections.
 - The project field no longer uses a decorative central planet: five worlds form a connected constellation with animated network lines and a travelling signal that follows the active orbit.
+- The constellation connection is intentionally a minimal spanning path rather than a web of crossing lines, while a masked two-layer starfield adds depth without framing the viewport.
 - The active-world showcase now doubles as a direct five-world index, using the real project marks to focus a world without leaving the constellation stage.
+- The showcase is pointer-transparent outside its own controls, so the right-side copy cannot block planet selection underneath it.
 - Project dossiers now expose a compact evidence telemetry layer for surface, access, and build state, with restrained hover depth on the authored visual or system map.
 - On mobile, the project field now becomes a real stage-then-dossier sequence so the orbit remains visible before its active-world explanation enters; access labels also distinguish public demos, open source, and private walkthroughs.
 - The project reading path now places `The Henry method` after the project dossier, so the method explains the examples instead of interrupting them.

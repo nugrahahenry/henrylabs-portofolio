@@ -35,6 +35,8 @@ try {
       showcaseWorlds: document.querySelectorAll(".project-showcase-index [role='tab']").length,
       worldChainNodes: document.querySelectorAll(".world-chain-node").length,
       heroTelemetry: document.querySelectorAll(".hero-telemetry span").length,
+      starFields: document.querySelectorAll(".star-field").length,
+      credentialControlHeights: [...document.querySelectorAll(".certificate-feature-switcher button, .certificate-archive-toggle")].map((control) => Math.round(control.getBoundingClientRect().height)),
     }));
     assert.equal(result.viewport, viewport.width);
     assert.equal(result.scrollWidth, viewport.width);
@@ -52,6 +54,8 @@ try {
     assert.equal(result.showcaseWorlds, 5);
     assert.equal(result.worldChainNodes, 5);
     assert.equal(result.heroTelemetry, 3);
+    assert.equal(result.starFields, 2);
+    assert.ok(result.credentialControlHeights.every((height) => height >= 44), `credential controls must remain touchable: ${result.credentialControlHeights}`);
     assert.equal(await page.locator(".certificate-feature-preview > img").getAttribute("src"), "/assets/certificates/previews/google-student-ambassador.png");
     await page.getByRole("button", { name: /Open full archive/ }).click();
     await expect(page.locator(".certificate-card")).toHaveCount(26);
@@ -125,6 +129,7 @@ try {
     await page.locator(".certificate-feature-preview").click();
     await page.locator('[role="dialog"]').waitFor();
     assert.match(await page.locator('[role="dialog"]').innerText(), /Google Student Ambassador/i);
+    assert.ok((await page.locator(".certificate-modal-close").boundingBox()).height >= 44, "certificate modal close must remain touchable");
     await page.keyboard.press("Escape");
     await page.locator('[role="dialog"]').waitFor({ state: "detached" });
     await expect(page.locator(".certificate-feature-preview")).toBeFocused();

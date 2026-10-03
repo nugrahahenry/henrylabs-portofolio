@@ -200,11 +200,12 @@ export function CosmicCanvas({ activeId, onSelect, onPrevious, onNext, motionOn,
       return { group, sphere, atmosphere, logoHalo, focusRing, sculpture };
     });
     const planetGroups: THREE.Object3D[] = planets.map(({ group }) => group);
-    const networkPairs = [[0, 1], [1, 2], [2, 3], [3, 4], [4, 0]] as const;
+    // A spanning path keeps every world connected without turning the field into a wireframe.
+    const networkPairs = [[0, 1], [1, 2], [2, 4], [4, 3]] as const;
     const networkPositions = new Float32Array(networkPairs.length * 6);
     const networkGeometry = new THREE.BufferGeometry();
     networkGeometry.setAttribute("position", new THREE.BufferAttribute(networkPositions, 3));
-    const networkMaterial = new THREE.LineBasicMaterial({ color: 0x74dfe2, transparent: true, opacity: .22, depthWrite: false });
+    const networkMaterial = new THREE.LineBasicMaterial({ color: 0x74dfe2, transparent: true, opacity: .15, depthWrite: false });
     const network = new THREE.LineSegments(networkGeometry, networkMaterial);
     network.renderOrder = 1;
     system.add(network);

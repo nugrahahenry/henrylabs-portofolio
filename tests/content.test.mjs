@@ -52,6 +52,8 @@ test("portfolio surface keeps its core experience contracts", () => {
   assert.match(canvas, /TorusGeometry/);
   assert.match(canvas, /createProjectSculpture/);
   assert.match(canvas, /networkPairs/);
+  assert.match(canvas, /A spanning path keeps every world connected/);
+  assert.match(canvas, /\[\[0, 1\], \[1, 2\], \[2, 4\], \[4, 3\]\]/);
   assert.match(canvas, /LineSegments/);
   assert.doesNotMatch(canvas, /SphereGeometry\(\.87/);
   assert.match(read("components/project-sculptures.ts"), /ExtrudeGeometry/);
@@ -73,6 +75,10 @@ test("portfolio surface keeps its core experience contracts", () => {
   assert.match(styles, /data-visible="true"/);
   assert.match(styles, /\.maker-tech\.is-linked/);
   assert.match(styles, /\.maker-orbit-inspector/);
+  assert.match(styles, /\.star-field--far/);
+  assert.match(styles, /\.project-showcase \{[^}]*pointer-events: none/);
+  assert.match(styles, /\.project-showcase button, \.project-showcase a \{ pointer-events: auto; \}/);
+  assert.match(styles, /\.certificate-feature-switcher button \{ width: 44px; height: 44px; \}/);
   assert.equal(existsSync(new URL("public/assets/background/cosmic-nebula.png", root)), true);
   assert.equal(existsSync(new URL("public/assets/certificates/previews/gemini-certified-educator.png", root)), true);
   assert.equal(existsSync(new URL("public/assets/certificates/previews/google-student-ambassador.png", root)), true);
