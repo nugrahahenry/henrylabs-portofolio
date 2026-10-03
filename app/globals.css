@@ -498,3 +498,32 @@ html[data-motion="off"] *, html[data-motion="off"] *::before, html[data-motion="
   .client-signal-rail span:last-child { text-align: right; }
   .client-card-orbit { right: 17px; width: 122px; }
 }
+
+/* Authored signal assets: the method and client cards draw their own system maps from live copy. */
+.method-scene { position: relative; z-index: 1; display: grid; gap: 13px; margin-top: 72px; padding-top: 16px; border-top: 1px solid rgba(244,245,239,.16); transform-origin: center left; }
+.method-scene-label { color: rgba(244,245,239,.38); font-family: var(--mono); font-size: .54rem; letter-spacing: .1em; text-transform: uppercase; }
+.method-scene-stage { position: relative; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; min-height: 78px; }
+.method-scene-stage::before { content: ""; position: absolute; top: 17px; right: 5%; left: 5%; height: 1px; background: linear-gradient(90deg, var(--cyan), var(--yellow), var(--pink)); opacity: .56; }
+.method-scene-step { position: relative; z-index: 1; display: grid; grid-template-columns: auto 1fr; gap: 8px; align-items: start; padding: 0 8px 0 0; color: rgba(244,245,239,.38); transition: color .35s ease, transform .45s var(--ease); }
+.method-scene-step i { display: grid; place-items: center; width: 35px; height: 35px; border: 1px solid rgba(244,245,239,.28); border-radius: 50%; background: rgba(7,9,27,.76); color: var(--cyan); font-family: var(--mono); font-size: .54rem; font-style: normal; }
+.method-scene-step strong { padding-top: 8px; font-size: .72rem; line-height: 1.2; }
+.method-scene-step.is-active { color: var(--paper); transform: translateY(-5px); }
+.method-scene-step.is-active i { border-color: var(--yellow); color: var(--yellow); box-shadow: 0 0 20px rgba(239,201,95,.18); }
+.client-flow { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-top: 20px; padding: 11px 0 10px; border-top: 1px solid rgba(244,245,239,.12); border-bottom: 1px solid rgba(244,245,239,.12); }
+.client-flow span { position: relative; display: grid; gap: 6px; min-width: 0; padding-right: 8px; }
+.client-flow span:not(:last-child)::after { content: "→"; position: absolute; top: 1px; right: -3px; color: var(--client-color); font-family: var(--mono); font-size: .7rem; opacity: .8; }
+.client-flow i { color: var(--client-color); font-family: var(--mono); font-size: .5rem; font-style: normal; letter-spacing: .08em; }
+.client-flow b { overflow-wrap: anywhere; color: rgba(244,245,239,.76); font-family: var(--mono); font-size: .56rem; font-weight: 500; line-height: 1.25; text-transform: uppercase; }
+.client-card:hover .client-flow b { color: var(--paper); }
+
+@media (max-width: 700px) {
+  .method-scene { margin-top: 52px; }
+  .method-scene-stage { gap: 7px; }
+  .method-scene-step { grid-template-columns: 30px 1fr; gap: 6px; }
+  .method-scene-step i { width: 30px; height: 30px; }
+  .method-scene-step strong { padding-top: 5px; font-size: .58rem; }
+  .client-flow { gap: 5px; }
+  .client-flow span { padding-right: 4px; }
+  .client-flow span:not(:last-child)::after { right: -5px; }
+  .client-flow b { font-size: .49rem; }
+}
