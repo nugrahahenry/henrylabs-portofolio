@@ -9,6 +9,9 @@ test("portfolio surface keeps its core experience contracts", () => {
   const experience = read("components/portfolio-experience.tsx");
   const canvas = read("components/cosmic-canvas.tsx");
   const styles = read("app/globals.css");
+  const layout = read("app/layout.tsx");
+  const robots = read("app/robots.ts");
+  const sitemap = read("app/sitemap.ts");
 
   assert.match(experience, /I build things I actually see\./);
   assert.match(experience, /Aku membangun hal yang benar-benar kulihat\./);
@@ -56,6 +59,10 @@ test("portfolio surface keeps its core experience contracts", () => {
   assert.match(experience, /className="mobile-nav"/);
   assert.match(experience, /document\.documentElement\.dataset\.cursor/);
   assert.match(experience, /MotionConfig/);
+  assert.match(layout, /alternates: \{ canonical: "\/" \}/);
+  assert.match(layout, /url: "\/"/);
+  assert.match(robots, /sitemap\.xml/);
+  assert.match(sitemap, /changeFrequency: "monthly"/);
   assert.match(canvas, /WebGLRenderer/);
   assert.match(canvas, /orbitPhases/);
   assert.match(canvas, /planetSurfaceTexture/);
