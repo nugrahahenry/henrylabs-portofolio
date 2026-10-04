@@ -39,6 +39,7 @@ try {
       credentialControlHeights: [...document.querySelectorAll(".certificate-feature-switcher button, .certificate-archive-toggle")].map((control) => Math.round(control.getBoundingClientRect().height)),
       clientFlows: document.querySelectorAll(".client-flow").length,
       methodScenes: document.querySelectorAll(".method-scene").length,
+      projectSignatures: document.querySelectorAll(".project-signature").length,
     }));
     assert.equal(result.viewport, viewport.width);
     assert.equal(result.scrollWidth, viewport.width);
@@ -60,6 +61,7 @@ try {
     assert.ok(result.credentialControlHeights.every((height) => height >= 44), `credential controls must remain touchable: ${result.credentialControlHeights}`);
     assert.equal(result.clientFlows, 2);
     assert.equal(result.methodScenes, 1);
+    assert.ok(result.projectSignatures >= 1);
     assert.equal(await page.locator(".certificate-feature-preview > img").getAttribute("src"), "/assets/certificates/previews/google-student-ambassador.png");
     await page.getByRole("button", { name: /Open full archive/ }).click();
     await expect(page.locator(".certificate-card")).toHaveCount(26);

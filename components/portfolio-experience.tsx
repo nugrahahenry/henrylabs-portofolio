@@ -39,6 +39,7 @@ const projects: Array<{
   access: Record<Language, string>;
   summary: Record<Language, string>;
   flow: Record<Language, string[]>;
+  signature: Record<Language, string[]>;
   link: string;
   linkLabel: Record<Language, string>;
   role: Record<Language, string>;
@@ -65,6 +66,7 @@ const projects: Array<{
       id: "Produk browser playful yang mengubah gesture tangan menjadi emosi, stiker kucing, dan suara.",
     },
     flow: { en: ["Hand gesture", "Emotion", "Cat sticker + voice"], id: ["Gesture tangan", "Emosi", "Stiker kucing + suara"] },
+    signature: { en: ["gesture", "emotion", "voice"], id: ["gesture", "emosi", "suara"] },
     link: "https://catmoji.vercel.app/",
     linkLabel: { en: "Open live product", id: "Buka produk live" },
     role: { en: "Product / interaction", id: "Produk / interaksi" },
@@ -91,6 +93,7 @@ const projects: Array<{
       id: "Workflow audio-to-knowledge untuk mengubah kuliah, meeting, dan ide menjadi materi yang bisa dipelajari ulang.",
     },
     flow: { en: ["Audio", "Structured knowledge", "Contextual chat"], id: ["Audio", "Knowledge terstruktur", "Chat kontekstual"] },
+    signature: { en: ["capture", "structure", "revisit"], id: ["capture", "struktur", "pelajari ulang"] },
     link: "https://nalira-hengs.vercel.app/dashboard",
     linkLabel: { en: "Open MVP", id: "Buka MVP" },
     role: { en: "Product / AI workflow", id: "Produk / workflow AI" },
@@ -114,6 +117,7 @@ const projects: Array<{
       id: "Cockpit AI personal yang menghubungkan tools, konteks, dan workflow sehari-hari Henry.",
     },
     flow: { en: ["Personal context", "AI tools", "Next action"], id: ["Konteks personal", "Tools AI", "Aksi berikutnya"] },
+    signature: { en: ["context", "assist", "handoff"], id: ["konteks", "bantu", "handoff"] },
     link: "https://wa.me/6289513559554",
     linkLabel: { en: "Request a demo", id: "Minta demo" },
     role: { en: "System / personal AI", id: "Sistem / AI personal" },
@@ -137,6 +141,7 @@ const projects: Array<{
       id: "Asisten fokus WhatsApp dan bot komunitas Discord untuk komunikasi lebih tenang dan handoff yang berguna.",
     },
     flow: { en: ["Message", "Context", "Useful handoff"], id: ["Pesan", "Konteks", "Handoff berguna"] },
+    signature: { en: ["message", "guard", "handoff"], id: ["pesan", "jaga", "handoff"] },
     link: "mailto:henrynugraha1210@gmail.com",
     linkLabel: { en: "Discuss this build", id: "Bahas build ini" },
     role: { en: "Automation / safety", id: "Automation / safety" },
@@ -160,6 +165,7 @@ const projects: Array<{
       id: "Photobooth digital berbasis browser ketika interface-nya sendiri menjadi bagian dari kenangan.",
     },
     flow: { en: ["Frame", "Play", "Keep the moment"], id: ["Frame", "Bermain", "Simpan momen"] },
+    signature: { en: ["camera", "play", "memory"], id: ["kamera", "bermain", "memori"] },
     link: "mailto:henrynugraha1210@gmail.com",
     linkLabel: { en: "Discuss the experience", id: "Bahas experience ini" },
     role: { en: "Creative web / camera", id: "Web kreatif / kamera" },
@@ -294,6 +300,18 @@ function TechIcon({ label, slug, color }: { label: string; slug: string; color: 
     {status !== "ready" && <span className="tech-icon-fallback">{mark}</span>}
     {status !== "failed" && <img src={`https://cdn.simpleicons.org/${slug}/${color}`} alt="" loading="lazy" onLoad={() => setStatus("ready")} onError={() => setStatus("failed")} />}
   </span>;
+}
+
+function ProjectSignature({ project, language, compact = false }: { project: (typeof projects)[number]; language: Language; compact?: boolean }) {
+  return <div className={cx("project-signature", compact && "project-signature--compact")} aria-label={`${project.name} project signature`}>
+    <span className="project-signature-label">project signature</span>
+    <div className="project-signature-track">
+      {project.signature[language].map((step, index) => <span key={step} className="project-signature-node">
+        <i>{String(index + 1).padStart(2, "0")}</i>
+        <b>{step}</b>
+      </span>)}
+    </div>
+  </div>;
 }
 
 export function PortfolioExperience() {
@@ -519,6 +537,7 @@ export function PortfolioExperience() {
                   <div className="project-showcase-index" role="tablist" aria-label="Project worlds">{projects.map((project, index) => <button type="button" role="tab" aria-selected={activeId === project.id} className={cx(activeId === project.id && "is-active")} style={{ "--world-color": project.color } as CSSProperties} onClick={() => focusProject(project.id)} aria-label={`Focus ${project.name}`} title={project.name} key={project.id}><span className="project-showcase-index-mark"><img src={project.logo} alt="" /></span><span>{String(index + 1).padStart(2, "0")}</span></button>)}</div>
                   <div className="project-showcase-identity"><span className="project-showcase-mark"><img src={activeProject.logo} alt="" /></span><div><span>{activeProject.status[language]} · {activeProject.visibility[language]}</span><h2>{activeProject.name}</h2></div></div>
                   <p className="project-showcase-summary">{activeProject.summary[language]}</p>
+                  <ProjectSignature project={activeProject} language={language} />
                   <div className="project-showcase-stack">{activeProject.stack.slice(0, 4).map((item) => <span key={item}>{item}</span>)}</div>
                   <div className="project-showcase-actions"><button type="button" onClick={openProjectDossier}>{t.field.inspect}<ArrowDown size={14} /></button><a href={activeProject.link} target={activeProject.link.startsWith("http") ? "_blank" : undefined} rel={activeProject.link.startsWith("http") ? "noreferrer" : undefined}>{t.field.open}<ArrowUpRight size={13} /></a></div>
                 </motion.section>
