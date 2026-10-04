@@ -46,6 +46,9 @@ test("portfolio surface keeps its core experience contracts", () => {
   assert.match(experience, /method-scene/);
   assert.match(experience, /ProjectSignature/);
   assert.match(experience, /project signature/);
+  assert.match(experience, /filter: "blur\(8px\)"/);
+  assert.match(experience, /rotateY: -10/);
+  assert.match(experience, /className="dossier-copy"/);
   assert.match(experience, /current signal/);
   assert.match(experience, /Focus \$\{linkedProject.name\} through \$\{label\}/);
   assert.match(experience, /POS_APBDS/);

@@ -41,6 +41,7 @@ Interactive personal portfolio for Henry Nugraha, now moving from a single-file 
 - The credential feature is now a five-record editorial deck with ghosted adjacent previews, directional Motion transitions, a focus-trapped detail modal, and a separate archive for the full 26-record proof set.
 - Contact routes include WhatsApp, email, GitHub, LinkedIn, and Instagram; the LinkedIn destination is `linkedin.com/in/nugrahahenry`.
 - Catmoji, Nalira, and Polara carry real project artwork into the dossier; private worlds use authored system maps instead of protected screenshots.
+- Selecting a world now choreographs one evidence reveal: artwork settles first, the project mark locks in second, and the written dossier follows with an interruptible entrance that respects reduced motion.
 - A 26-record certificate and badge archive uses a signature record, kind filters, accessible detail viewing, and source PDFs where available.
 - Responsive portrait constellation layout, mobile navigation, immediate technology mark fallbacks, offscreen animation pausing, reduced-motion support, HenryLabs favicon, and generated Open Graph artwork.
 
