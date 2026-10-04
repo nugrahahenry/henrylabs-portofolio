@@ -100,6 +100,7 @@ test("portfolio surface keeps its core experience contracts", () => {
   assert.equal(existsSync(new URL("public/assets/certificates/source/gdg-code-quality-security-antigravity-cli.pdf", root)), true);
   assert.equal(existsSync(new URL("public/assets/certificates/previews/google-skills-arcade-voyage.png", root)), true);
   assert.equal(existsSync(new URL("public/assets/projects/catmoji-hero.png", root)), true);
+  assert.equal(existsSync(new URL("public/assets/projects/nalira-ambient.svg", root)), true);
   assert.equal(existsSync(new URL("public/assets/projects/polara-og.png", root)), true);
   assert.equal(existsSync(new URL("app/icon.svg", root)), true);
 });

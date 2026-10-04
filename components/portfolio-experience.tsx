@@ -103,6 +103,8 @@ const projects: Array<{
     ownership: { en: "Solo product build", id: "Dibangun sendiri" },
     evidence: { en: "Public MVP with a grounded learning workflow", id: "MVP publik dengan workflow belajar yang grounded" },
     next: { en: "Open the MVP and follow the capture journey", id: "Buka MVP dan ikuti capture journey" },
+    media: "/assets/projects/nalira-ambient.svg",
+    mediaAlt: "Nalira folded-light ambient artwork showing source fragments opening into a structured learning surface",
   },
   {
     id: "canox",
