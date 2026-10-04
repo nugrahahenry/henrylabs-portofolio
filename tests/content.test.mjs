@@ -49,6 +49,10 @@ test("portfolio surface keeps its core experience contracts", () => {
   assert.match(experience, /method-scene/);
   assert.match(experience, /ProjectSignature/);
   assert.match(experience, /project signature/);
+  assert.match(experience, /work-scroll-track/);
+  assert.match(experience, /workProgress/);
+  assert.match(experience, /stackStageRotate/);
+  assert.match(experience, /whileInView=\{motionOn \? \{ opacity: 1, y: 0, scale: 1 \} : undefined\}/);
   assert.match(experience, /filter: "blur\(8px\)"/);
   assert.match(experience, /rotateY: -10/);
   assert.match(experience, /className="dossier-copy"/);
@@ -102,6 +106,10 @@ test("portfolio surface keeps its core experience contracts", () => {
   assert.match(styles, /\.method-scene-stage/);
   assert.match(styles, /\.project-signature/);
   assert.match(styles, /@keyframes signature-pulse/);
+  assert.match(styles, /\.work-scroll-track/);
+  assert.match(styles, /@media \(min-width: 641px\) and \(max-width: 900px\)/);
+  assert.match(styles, /@media \(max-width: 420px\)/);
+  assert.match(styles, /orientation: landscape/);
   assert.equal(existsSync(new URL("public/assets/background/cosmic-nebula.png", root)), true);
   assert.equal(existsSync(new URL("public/assets/certificates/previews/gemini-certified-educator.png", root)), true);
   assert.equal(existsSync(new URL("public/assets/certificates/previews/google-student-ambassador.png", root)), true);

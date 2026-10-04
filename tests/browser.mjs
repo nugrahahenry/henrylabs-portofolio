@@ -11,7 +11,7 @@ const browser = await chromium.launch({
 
 try {
   mkdirSync("test-results", { recursive: true });
-  for (const viewport of [{ width: 1280, height: 800 }, { width: 768, height: 1024 }, { width: 390, height: 844 }]) {
+  for (const viewport of [{ width: 1440, height: 900 }, { width: 1024, height: 768 }, { width: 768, height: 1024 }, { width: 390, height: 844 }, { width: 360, height: 800 }]) {
     const page = await browser.newPage({ viewport, reducedMotion: "no-preference" });
     const errors = [];
     page.on("pageerror", (error) => errors.push(error.message));

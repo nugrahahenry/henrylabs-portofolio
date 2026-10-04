@@ -43,6 +43,8 @@ Interactive personal portfolio for Henry Nugraha, now moving from a single-file 
 - Catmoji, Nalira, and Polara carry real project artwork into the dossier; private worlds use authored system maps instead of protected screenshots.
 - Selecting a world now choreographs one evidence reveal: artwork settles first, the project mark locks in second, and the written dossier follows with an interruptible entrance that respects reduced motion.
 - The public route now exposes an environment-aware canonical URL, Open Graph URL, `robots.txt`, and `sitemap.xml`; set `NEXT_PUBLIC_SITE_URL` when the final host is chosen.
+- Scroll choreography now has distinct jobs by chapter: the hero zooms into orbit, Selected Worlds hands the active signal from constellation to evidence, Method tracks the reading path, Tech orbit tilts into view, and the credential shelf reveals as it enters the viewport.
+- Responsive composition is validated at 1440px, 1024px, 768px, 390px, and 360px, with a dedicated short-landscape fallback and touch-safe mobile controls.
 - A 26-record certificate and badge archive uses a signature record, kind filters, accessible detail viewing, and source PDFs where available.
 - Responsive portrait constellation layout, mobile navigation, immediate technology mark fallbacks, offscreen animation pausing, reduced-motion support, HenryLabs favicon, and generated Open Graph artwork.
 
