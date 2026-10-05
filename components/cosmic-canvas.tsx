@@ -270,6 +270,16 @@ export function CosmicCanvas({ activeId, onSelect, onPrevious, onNext, motionOn,
       const linkedProjectIndexes = item.projectIds.map((projectId) => projectWorlds.findIndex((world) => world.id === projectId)).filter((projectIndex) => projectIndex >= 0);
       return { group, surface, atmosphere, mark, radius, index, linkedProjectIndexes };
     });
+    const techOrbit = new THREE.Group();
+    const techOrbitLanes = [1.08, 1.38, 1.7].map((radius, index) => {
+      const curve = new THREE.EllipseCurve(0, 0, radius, radius * (.62 + index * .05), 0, Math.PI * 2, false, index * .22);
+      const geometry = new THREE.BufferGeometry().setFromPoints(curve.getPoints(150));
+      const lane = new THREE.LineLoop(geometry, new THREE.LineBasicMaterial({ color: 0x78cdbb, transparent: true, opacity: 0, depthWrite: false }));
+      lane.rotation.set(.54 + index * .18, index * .16, index * .2);
+      techOrbit.add(lane);
+      return lane;
+    });
+    system.add(techOrbit);
     // A spanning path keeps every world connected without turning the field into a wireframe.
     const networkPairs = [[0, 1], [1, 2], [2, 4], [4, 3]] as const;
     const networkPositions = new Float32Array(networkPairs.length * 6);
@@ -376,12 +386,22 @@ export function CosmicCanvas({ activeId, onSelect, onPrevious, onNext, motionOn,
       techSystem.rotation.x = Math.sin(elapsed * .1) * .045;
       techSystem.rotation.z = Math.sin(elapsed * .08) * .025;
       const selectedProjectIndex = projectWorlds.findIndex((world) => world.id === state.current.activeId);
+      const selectedPlanetPosition = selectedProjectIndex >= 0 ? planets[selectedProjectIndex].group.position : new THREE.Vector3();
+      techOrbit.position.copy(selectedPlanetPosition);
+      techOrbit.visible = selectedProjectIndex >= 0;
+      techOrbitLanes.forEach((lane, index) => {
+        const material = lane.material as THREE.LineBasicMaterial;
+        material.color.set(projectWorlds[selectedProjectIndex]?.color ?? "#78cdbb");
+        material.opacity = state.current.motionOn ? .16 + (index === 1 ? .08 : 0) + Math.sin(elapsed * .8 + index) * .025 : .22;
+        lane.scale.setScalar(1 + (state.current.motionOn ? Math.sin(elapsed * .65 + index) * .025 : 0));
+      });
       techPlanets.forEach(({ group, surface, atmosphere, mark, radius, index, linkedProjectIndexes }) => {
         const lane = index % 3;
         const anchorIndex = linkedProjectIndexes.includes(selectedProjectIndex) ? selectedProjectIndex : linkedProjectIndexes[0] ?? -1;
         const belongsToProject = anchorIndex >= 0;
         const isActiveProjectTool = linkedProjectIndexes.includes(selectedProjectIndex);
-        const radiusPath = belongsToProject ? .48 + (index % 4) * .07 : 2.55 + (index % 3) * .16;
+        const anchorRadius = belongsToProject ? (.37 + anchorIndex * .02) * (anchorIndex === selectedProjectIndex ? 2 : .94) : 0;
+        const radiusPath = belongsToProject ? anchorRadius + (anchorIndex === selectedProjectIndex ? .34 : .18) + (index % 4) * (anchorIndex === selectedProjectIndex ? .14 : .07) : 2.55 + (index % 3) * .16;
         const phase = index * 2.37 + angle * (.18 + lane * .03) + elapsed * (.018 + lane * .006);
         const anchor = belongsToProject ? planets[anchorIndex].group.position : { x: 0, y: -.25, z: -1.05 };
         const orbitX = Math.cos(phase) * radiusPath;

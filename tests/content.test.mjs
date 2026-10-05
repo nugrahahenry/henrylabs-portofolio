@@ -26,6 +26,12 @@ test("portfolio surface keeps its core experience contracts", () => {
   assert.match(experience, /Technology stack orbit/);
   assert.match(experience, /maker-orbit/);
   assert.match(experience, /case-facts/);
+  assert.match(experience, /academic-runway/);
+  assert.match(experience, /academic-card-signal/);
+  assert.match(experience, /academic-card-stack/);
+  assert.match(experience, /CarFront/);
+  assert.match(experience, /FlaskConical/);
+  assert.match(experience, /ShoppingCart/);
   assert.match(experience, /AI-Gesture-Cat/);
   assert.match(experience, /catmoji-hero\.png/);
   assert.match(experience, /polara-og\.png/);
@@ -102,6 +108,8 @@ test("portfolio surface keeps its core experience contracts", () => {
   assert.match(canvas, /safeOrbitX/);
   assert.match(canvas, /linkedTechCount/);
   assert.match(canvas, /THREE\.MathUtils\.damp\(group\.position/);
+  assert.match(canvas, /techOrbitLanes/);
+  assert.match(canvas, /anchorRadius/);
   assert.match(canvas, /techPlanetTexture/);
   assert.match(canvas, /techSystem\.rotation\.y/);
   assert.match(read("components/project-sculptures.ts"), /ExtrudeGeometry/);

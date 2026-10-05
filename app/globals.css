@@ -722,3 +722,44 @@ html[data-motion="off"] *, html[data-motion="off"] *::before, html[data-motion="
 @media (prefers-reduced-motion: reduce) {
   .field-continuum-orbit, .field-continuum-signal, .field-continuum::before { animation: none; }
 }
+
+/* University builds: a connected shelf of solo build records, not three empty cards. */
+.academic-runway { display: flex; align-items: center; gap: 13px; margin: -29px 0 26px; color: rgba(89,101,94,.62); font-family: var(--mono); font-size: .56rem; letter-spacing: .09em; text-transform: uppercase; }
+.academic-runway i { display: block; flex: 1; height: 1px; background: linear-gradient(90deg, rgba(89,101,94,.2), rgba(89,101,94,.55), rgba(89,101,94,.2)); }
+.academic-card { display: flex; flex-direction: column; min-height: 430px; background: rgba(255,253,248,.84); isolation: isolate; }
+.academic-card::before { content: ""; position: absolute; z-index: -1; top: 0; right: 23px; left: 23px; height: 2px; background: var(--academic-color); box-shadow: 0 0 20px color-mix(in srgb, var(--academic-color) 35%, transparent); }
+.academic-card-top { position: relative; z-index: 1; }
+.academic-card-visual { position: relative; display: grid; place-items: center; width: 104px; height: 82px; margin: 28px 0 17px; }
+.academic-mark { position: relative; z-index: 2; width: 52px; height: 52px; margin: 0; background: color-mix(in srgb, var(--academic-color) 8%, transparent); box-shadow: 0 0 0 7px color-mix(in srgb, var(--academic-color) 7%, transparent), 0 0 25px color-mix(in srgb, var(--academic-color) 18%, transparent); }
+.academic-card-orbit { position: absolute; display: block; border: 1px solid color-mix(in srgb, var(--academic-color) 55%, transparent); border-radius: 50%; pointer-events: none; animation: academic-orbit-drift 9s ease-in-out infinite alternate; }
+.academic-card-orbit--one { width: 78px; height: 37px; transform: rotate(-24deg); }
+.academic-card-orbit--two { width: 111px; height: 56px; opacity: .55; transform: rotate(28deg); animation-delay: -3s; }
+.academic-card-label { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.academic-card-label p { margin: 0; }
+.academic-card-label small { color: rgba(89,101,94,.58); font-family: var(--mono); font-size: .5rem; letter-spacing: .08em; text-align: right; }
+.academic-card h3 { max-width: 11ch; margin-top: 10px; }
+.academic-card-body { min-height: 0; max-width: 38ch; margin-bottom: 17px; }
+.academic-card-signal { display: grid; gap: 5px; padding: 11px 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+.academic-card-signal span, .academic-card-output small { color: var(--muted); font-family: var(--mono); font-size: .51rem; letter-spacing: .08em; text-transform: uppercase; }
+.academic-card-signal strong { color: var(--academic-color); font-family: var(--mono); font-size: .62rem; font-weight: 600; letter-spacing: .02em; }
+.academic-card-stack { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 12px; }
+.academic-card-stack span { padding: 5px 7px; border: 1px solid color-mix(in srgb, var(--academic-color) 32%, var(--line)); color: rgba(89,101,94,.8); font-family: var(--mono); font-size: .51rem; }
+.academic-card-foot { position: static; right: auto; bottom: auto; left: auto; grid-template-columns: minmax(0, 1fr) auto; margin-top: auto; padding-top: 14px; }
+.academic-card-output { display: grid; gap: 4px; }
+.academic-card-output strong { color: var(--academic-color); }
+.academic-card-foot a, .academic-card-local { align-self: end; }
+.academic-card:hover .academic-card-orbit--one { animation-duration: 4.5s; }
+.academic-card:hover .academic-card-orbit--two { animation-duration: 6.5s; }
+@keyframes academic-orbit-drift { from { transform: rotate(-24deg) scale(.96); } to { transform: rotate(-12deg) scale(1.04); } }
+
+@media (max-width: 640px) {
+  .academic-runway { margin-top: -14px; font-size: .48rem; }
+  .academic-runway span:last-child { text-align: right; }
+  .academic-card { min-height: 405px; padding: 21px; }
+  .academic-card::before { right: 21px; left: 21px; }
+  .academic-card-visual { margin-top: 24px; }
+  .academic-card-label { align-items: flex-start; flex-direction: column; gap: 4px; }
+  .academic-card-label small { text-align: left; }
+  .academic-card h3 { font-size: 2rem; }
+  .academic-card-foot { grid-template-columns: minmax(0, 1fr) auto; }
+}

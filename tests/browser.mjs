@@ -32,6 +32,8 @@ try {
       techNodes: document.querySelectorAll(".maker-tech").length,
       stackInspector: document.querySelectorAll(".maker-orbit-inspector").length,
       academicSourceLinks: document.querySelectorAll(".academic-card-foot a[href*='github.com']").length,
+      academicCards: document.querySelectorAll(".academic-card").length,
+      academicStackChips: document.querySelectorAll(".academic-card-stack span").length,
       showcaseWorlds: document.querySelectorAll(".project-showcase-index [role='tab']").length,
       continuumNodes: document.querySelectorAll(".field-continuum-node").length,
       continuumRouteStages: document.querySelectorAll(".field-continuum-route-stage").length,
@@ -60,6 +62,8 @@ try {
     assert.equal(result.techNodes, 21);
     assert.equal(result.stackInspector, 1);
     assert.equal(result.academicSourceLinks, 2);
+    assert.equal(result.academicCards, 3);
+    assert.equal(result.academicStackChips, 9);
     assert.equal(result.showcaseWorlds, 5);
     assert.equal(result.continuumNodes, 5);
     assert.equal(result.continuumRouteStages, 3);

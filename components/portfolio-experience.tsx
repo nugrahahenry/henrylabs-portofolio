@@ -7,11 +7,12 @@ import {
   ArrowUpRight,
   Asterisk,
   Brackets,
+  CarFront,
   ChevronDown,
   ChevronLeft,
   ChevronRight,
   Code2,
-  Command,
+  FlaskConical,
   Github,
   Instagram,
   Linkedin,
@@ -20,6 +21,7 @@ import {
   Menu,
   MessageCircle,
   MousePointer2,
+  ShoppingCart,
   Sparkles,
   X,
   Zap,
@@ -254,9 +256,9 @@ const stackGroups = [
 const techNodes = stackGroups.flatMap((group) => group.items.map(([label, slug, color]) => ({ label, slug, color, projectIds: projects.filter((project) => project.stack.includes(label)).map((project) => project.id as ProjectId) })));
 
 const academicProjects = [
-  { title: "RentalMobil.SG", tag: "OOP · Semester 2", body: "A car-rental web system with vehicle catalog, authentication, booking, payment confirmation, user area, and admin operations.", output: "Booking flow", stack: ["Java", "OOP", "Rental"], color: "#efc95f", linkLabel: "Class build · local" },
-  { title: "POS Z Shoes", tag: "APBDS · Semester 3", body: "A point-of-sale system with product, supplier, purchase, customer transaction, return, dashboard, and reporting flows.", output: "Business flow", stack: ["Analysis", "POS", "Reporting"], color: "#ef8e73", link: "https://github.com/nugrahahenry/POS_APBDS", linkLabel: "View source" },
-  { title: "LabQ", tag: "Mobile & Web · Semester 4", body: "A digital health laboratory platform connecting patients, lab staff, and admins from registration to test results.", output: "Health workflow", stack: ["React", "Web", "Mobile"], color: "#60c9b0", link: "https://github.com/nugrahahenry/labQ-Android", linkLabel: "View source" },
+  { title: "RentalMobil.SG", tag: "OOP · Semester 2", body: "A car-rental web system with vehicle catalog, authentication, booking, payment confirmation, user area, and admin operations.", signal: "Model → reserve → confirm", output: "Booking flow", stack: ["Java", "OOP", "Rental"], color: "#efc95f", icon: CarFront, linkLabel: "Class build · local" },
+  { title: "POS Z Shoes", tag: "APBDS · Semester 3", body: "A point-of-sale system with product, supplier, purchase, customer transaction, return, dashboard, and reporting flows.", signal: "Stock → sale → report", output: "Business flow", stack: ["Analysis", "POS", "Reporting"], color: "#ef8e73", icon: ShoppingCart, link: "https://github.com/nugrahahenry/POS_APBDS", linkLabel: "View source" },
+  { title: "LabQ", tag: "Mobile & Web · Semester 4", body: "A digital health laboratory platform connecting patients, lab staff, and admins from registration to test results.", signal: "Register → test → result", output: "Health workflow", stack: ["React", "Web", "Mobile"], color: "#60c9b0", icon: FlaskConical, link: "https://github.com/nugrahahenry/labQ-Android", linkLabel: "View source" },
 ];
 
 const clientProjects = [
@@ -633,7 +635,7 @@ export function PortfolioExperience() {
       </section>
       </div>
 
-      <section className="content-section split-section academic-section" id="academic" aria-labelledby="academic-title"><div className="section-heading"><div><p className="section-kicker">University builds</p><h2 id="academic-title">{t.academic.title}</h2></div><p>{t.academic.body}</p></div><div className="academic-grid">{academicProjects.map((project, index) => <article className="academic-card" style={{ "--academic-color": project.color } as React.CSSProperties} key={project.title}><div className="academic-card-top"><span>0{index + 1}</span><small>solo system</small></div><span className="academic-mark"><Command size={20} /></span><p>{project.tag}</p><h3>{project.title}</h3><span className="academic-card-body">{project.body}</span><div className="academic-card-foot"><strong>{project.output}</strong><span>{project.stack.join(" · ")}</span>{project.link ? <a href={project.link} target="_blank" rel="noreferrer" aria-label={`${project.linkLabel} for ${project.title}`}>{project.linkLabel}<ArrowUpRight size={18} /></a> : <span className="academic-card-local">class build</span>}</div></article>)}</div></section>
+      <section className="content-section split-section academic-section" id="academic" aria-labelledby="academic-title"><div className="section-heading"><div><p className="section-kicker">University builds</p><h2 id="academic-title">{t.academic.title}</h2></div><p>{t.academic.body}</p></div><div className="academic-runway" aria-hidden="true"><span>SOLO BUILD RECORDS</span><i /><span>SEMESTER 02 → 04</span></div><div className="academic-grid">{academicProjects.map((project, index) => { const AcademicIcon = project.icon; return <article className="academic-card" style={{ "--academic-color": project.color } as React.CSSProperties} key={project.title}><div className="academic-card-top"><span>0{index + 1}</span><small>solo system</small></div><div className="academic-card-visual" aria-hidden="true"><span className="academic-mark"><AcademicIcon size={21} strokeWidth={1.7} /></span><span className="academic-card-orbit academic-card-orbit--one" /><span className="academic-card-orbit academic-card-orbit--two" /></div><div className="academic-card-label"><p>{project.tag}</p><small>OWNED END TO END</small></div><h3>{project.title}</h3><span className="academic-card-body">{project.body}</span><div className="academic-card-signal"><span>FLOW</span><strong>{project.signal}</strong></div><div className="academic-card-stack" aria-label={`${project.title} stack`}>{project.stack.map((item) => <span key={item}>{item}</span>)}</div><div className="academic-card-foot"><span className="academic-card-output"><small>OUTPUT</small><strong>{project.output}</strong></span>{project.link ? <a href={project.link} target="_blank" rel="noreferrer" aria-label={`${project.linkLabel} for ${project.title}`}>{project.linkLabel}<ArrowUpRight size={18} /></a> : <span className="academic-card-local">class build</span>}</div></article>; })}</div></section>
 
       <section className="client-section" id="client-work" aria-labelledby="client-title"><div className="content-section"><div className="section-heading"><div><p className="section-kicker section-kicker-dark">Private evidence</p><h2 id="client-title">{t.client.title}</h2></div><p>{t.client.body}</p></div><div className="client-signal-rail" aria-hidden="true"><span>PRIVATE / SANITIZED EVIDENCE</span><i /><span>02 CASES / OWNER SIGNAL</span></div><div className="client-grid">{clientProjects.map(({ title, icon: Icon, body, context, ownership, output, boundary, signal, color }, index) => <motion.article className="client-card" style={{ "--client-color": color } as React.CSSProperties} key={title} initial={motionOn ? { opacity: 0, x: index === 0 ? -36 : 36, rotate: index === 0 ? -1.2 : 1.2 } : false} whileInView={motionOn ? { opacity: 1, x: 0, rotate: 0 } : undefined} viewport={{ once: false, amount: .3 }} transition={{ duration: .7, delay: index * .08, ease: [0.16, 1, 0.3, 1] }}><div className="client-card-orbit" aria-hidden="true"><span /><span /><span /></div><div className="client-topline"><span>0{index + 1} / PRIVATE EVIDENCE</span><Icon size={21} /></div><div className="client-card-titleline"><h3>{title}</h3><span className="client-owner-stamp">OWNER / HENRY</span></div><p>{body}</p><div className="client-evidence-map" aria-label={`${title} sanitized evidence map`}><div className="client-map-topline"><span>SAFE VIEW / SYSTEM MAP</span><span>NO PRIVATE DATA</span></div><div className="client-map-canvas"><span className="client-map-line client-map-line--one" /><span className="client-map-line client-map-line--two" /><span className="client-map-line client-map-line--three" /><span className="client-map-node client-map-node--one"><i>01</i><b>{signal[language].split(" → ")[0]}</b></span><span className="client-map-node client-map-node--two"><i>02</i><b>{signal[language].split(" → ")[1]}</b></span><span className="client-map-node client-map-node--three"><i>03</i><b>{signal[language].split(" → ")[2]}</b></span><span className="client-map-core"><Icon size={15} /><b>HENRY</b></span></div></div><div className="client-proof"><span><small>{t.client.context}</small><strong>{context[language]}</strong></span><span><small>{t.caseStudy.ownership}</small><strong>{ownership[language]}</strong></span><span><small>{t.client.output}</small><strong>{output[language]}</strong></span><span><small>{t.client.boundary}</small><strong>{boundary[language]}</strong></span></div><a className="client-card-action" href="#contact">{t.client.request} <ArrowUpRight size={15} /></a></motion.article>)}</div></div></section>
 
