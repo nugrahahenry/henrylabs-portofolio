@@ -40,6 +40,8 @@ try {
       clientEvidenceMaps: document.querySelectorAll(".client-evidence-map").length,
       methodScenes: document.querySelectorAll(".method-scene").length,
       projectSignatures: document.querySelectorAll(".project-signature").length,
+      fieldContinuum: document.querySelectorAll(".field-continuum").length,
+      fieldContinuumOrbits: document.querySelectorAll(".field-continuum-orbit").length,
     }));
     assert.equal(result.viewport, viewport.width);
     assert.equal(result.scrollWidth, viewport.width);
@@ -62,6 +64,8 @@ try {
     assert.equal(result.clientEvidenceMaps, 2);
     assert.equal(result.methodScenes, 1);
     assert.ok(result.projectSignatures >= 1);
+    assert.equal(result.fieldContinuum, 1);
+    assert.equal(result.fieldContinuumOrbits, 3);
     assert.equal(await page.locator(".certificate-feature-preview > img").getAttribute("src"), "/assets/certificates/previews/google-student-ambassador.png");
     await page.getByRole("button", { name: /Open full archive/ }).click();
     await expect(page.locator(".certificate-card")).toHaveCount(26);

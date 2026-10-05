@@ -30,8 +30,10 @@ test("portfolio surface keeps its core experience contracts", () => {
   assert.match(experience, /polara-og\.png/);
   assert.match(experience, /\["PHP", "php"/);
   assert.match(experience, /tech-icon-fallback/);
-  assert.match(experience, /loader-system/);
-  assert.match(experience, /loader-telemetry/);
+  assert.match(experience, /loader-mark/);
+  assert.match(experience, /className="loader-status"/);
+  assert.doesNotMatch(experience, /loader-system/);
+  assert.doesNotMatch(experience, /loader-telemetry/);
   assert.match(experience, /hero-transition/);
   assert.match(experience, /world-chain/);
   assert.match(experience, /project-showcase-index/);
@@ -53,6 +55,8 @@ test("portfolio surface keeps its core experience contracts", () => {
   assert.match(experience, /work-scroll-track/);
   assert.match(experience, /workProgress/);
   assert.match(experience, /stackStageRotate/);
+  assert.match(experience, /field-continuum/);
+  assert.match(experience, /field-continuum-active/);
   assert.match(experience, /whileInView=\{motionOn \? \{ opacity: 1, y: 0, scale: 1 \} : undefined\}/);
   assert.match(experience, /filter: "blur\(8px\)"/);
   assert.match(experience, /rotateY: -10/);
@@ -105,6 +109,8 @@ test("portfolio surface keeps its core experience contracts", () => {
   assert.match(styles, /@keyframes section-atmosphere/);
   assert.match(styles, /\.client-evidence-map/);
   assert.match(styles, /@keyframes evidence-map-scan/);
+  assert.match(styles, /\.field-continuum/);
+  assert.match(styles, /@keyframes continuum-orbit-breathe/);
   assert.match(styles, /\.method-scene-stage/);
   assert.match(styles, /\.project-signature/);
   assert.match(styles, /@keyframes signature-pulse/);

@@ -488,17 +488,13 @@ export function PortfolioExperience() {
     <MotionConfig reducedMotion={motionOn ? "never" : "always"} transition={{ duration: motionOn ? 0.55 : 0, ease: [0.16, 1, 0.3, 1] }}>
     <main className="site-shell" data-motion={motionOn ? "on" : "off"}>
       <motion.div className={cx("intro-loader", introDone && "intro-loader--done")} aria-hidden={introDone}>
-        <div className="loader-stars" aria-hidden="true"><span /><span /><span /><span /><span /><span /></div>
-        <div className="loader-system" aria-hidden="true"><span className="loader-system-axis loader-system-axis--one" /><span className="loader-system-axis loader-system-axis--two" /><span className="loader-system-orbit loader-system-orbit--one"><i><img src="/assets/brand/catmoji.png" alt="" /></i></span><span className="loader-system-orbit loader-system-orbit--two"><i><img src="/assets/brand/nalira.svg" alt="" /></i></span><span className="loader-system-node loader-system-node--canox"><img src="/assets/brand/canox.png" alt="" /></span><span className="loader-system-node loader-system-node--hengs"><img src="/assets/brand/hengs.png" alt="" /></span><span className="loader-system-node loader-system-node--polara"><img src="/assets/brand/polara.png" alt="" /></span><span className="loader-system-core"><span className="loader-core-pulse" /><Asterisk size={27} strokeWidth={1.5} /><small>HENRY</small></span></div>
         <div className="loader-content">
           <div className="loader-meta"><span>HENRYLABS / USEFUL WORLDS</span><span>0{Math.min(loadingStep + 1, 4)} / 04</span></div>
+          <div className="loader-mark"><span><Asterisk size={20} strokeWidth={1.5} /></span><small>HENRY</small></div>
           <p className="loader-eyebrow">{t.loader.eyebrow}</p>
           <h2><span>{t.loader.title}</span><em>{t.loader.accent}</em></h2>
-          <p className="loader-intro">{t.loader.body}</p>
           <div className="loader-line"><span style={{ transform: `scaleX(${(loadingStep + 1) / 4})` }} /></div>
-          <div className="loader-status"><p>{t.loading[loadingStep]}</p><span className="loader-status-dots"><i className={loadingStep >= 0 ? "is-on" : undefined} /><i className={loadingStep >= 1 ? "is-on" : undefined} /><i className={loadingStep >= 2 ? "is-on" : undefined} /><i className={loadingStep >= 3 ? "is-on" : undefined} /></span></div>
-          <div className="loader-telemetry"><span>{t.loader.telemetry[loadingStep]}</span><span>MARKS / 05</span><span>MAKER / 01</span></div>
-          <div className="loader-phases" aria-label="Portfolio loading phases">{t.loader.phases.map((phase, index) => <span className={cx(index <= loadingStep - 1 && "is-complete", index === loadingStep && "is-active")} key={phase}><i>{String(index + 1).padStart(2, "0")}</i><strong>{phase}</strong></span>)}</div>
+          <div className="loader-status"><p>{t.loading[loadingStep]}</p><span>{t.loader.telemetry[loadingStep]}</span></div>
         </div>
       </motion.div>
 
@@ -563,6 +559,20 @@ export function PortfolioExperience() {
         <a href="#work" className="scroll-cue"><span>Scroll to enter</span><ArrowDown size={18} /></a>
       </section>
 
+      <div className="field-continuum" data-active-world={activeProject.id}>
+        <div className="field-continuum-visual" aria-hidden="true">
+          <span className="field-continuum-glow" />
+          <span className="field-continuum-orbit field-continuum-orbit--wide" />
+          <span className="field-continuum-orbit field-continuum-orbit--mid" />
+          <span className="field-continuum-orbit field-continuum-orbit--tight" />
+          <span className="field-continuum-tether field-continuum-tether--one" />
+          <span className="field-continuum-tether field-continuum-tether--two" />
+          <motion.div className="field-continuum-active" style={{ "--continuum-color": activeProject.color } as CSSProperties} animate={motionOn ? { y: [0, -9, 0], rotate: [0, 2, 0] } : undefined} transition={motionOn ? { duration: 6.5, repeat: Infinity, ease: "easeInOut" } : undefined}>
+            <span><img src={activeProject.logo} alt="" /></span><b>{activeProject.name}</b>
+          </motion.div>
+          <span className="field-continuum-label">ACTIVE WORLDLINE / PROJECT → METHOD → STACK</span>
+        </div>
+
       <motion.section ref={workRef} className="content-section work-section" id="work" aria-labelledby="work-title">
         <div className="section-heading"><div><p className="section-kicker">Selected worlds</p><h2 id="work-title">{t.work.title}</h2></div><p>{t.work.body}</p></div>
         <div className="work-scroll-track" aria-hidden="true"><span>orbit / evidence</span><motion.i style={{ scaleX: motionOn ? workProgress : 1 }} /><span>{activeProject.name} / live signal</span></div>
@@ -617,6 +627,7 @@ export function PortfolioExperience() {
         </div>
         <div className="stack-foot content-section"><span><Brackets size={19} /> from interface to systems</span><span><Zap size={19} /> motion with a reason</span><span><Code2 size={19} /> honest about the state</span></div>
       </section>
+      </div>
 
       <section className="content-section split-section academic-section" id="academic" aria-labelledby="academic-title"><div className="section-heading"><div><p className="section-kicker">University builds</p><h2 id="academic-title">{t.academic.title}</h2></div><p>{t.academic.body}</p></div><div className="academic-grid">{academicProjects.map((project, index) => <article className="academic-card" style={{ "--academic-color": project.color } as React.CSSProperties} key={project.title}><div className="academic-card-top"><span>0{index + 1}</span><small>solo system</small></div><span className="academic-mark"><Command size={20} /></span><p>{project.tag}</p><h3>{project.title}</h3><span className="academic-card-body">{project.body}</span><div className="academic-card-foot"><strong>{project.output}</strong><span>{project.stack.join(" · ")}</span>{project.link ? <a href={project.link} target="_blank" rel="noreferrer" aria-label={`${project.linkLabel} for ${project.title}`}>{project.linkLabel}<ArrowUpRight size={18} /></a> : <span className="academic-card-local">class build</span>}</div></article>)}</div></section>
 
