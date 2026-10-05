@@ -254,7 +254,7 @@ export function CosmicCanvas({ activeId, onSelect, onPrevious, onNext, motionOn,
       const color = `#${item.color}`;
       const surface = new THREE.Mesh(
         new THREE.SphereGeometry(radius, 16, 12),
-        new THREE.MeshStandardMaterial({ color, emissive: color, emissiveIntensity: .22, metalness: .14, roughness: .66 }),
+        new THREE.MeshStandardMaterial({ color, emissive: color, emissiveIntensity: .22, metalness: .14, roughness: .66, transparent: true, opacity: .82 }),
       );
       const atmosphere = new THREE.Mesh(
         new THREE.SphereGeometry(radius * 1.22, 12, 10),
@@ -348,7 +348,8 @@ export function CosmicCanvas({ activeId, onSelect, onPrevious, onNext, motionOn,
         const orbitX = Math.cos(phase) * (portrait ? 1.95 : 3.35);
         const orbitY = Math.sin(phase) * 1.45;
         const orbitZ = Math.sin(phase) * .55;
-        const targetX = selected ? 0 : orbitX;
+        const safeOrbitX = portrait || camera.aspect < 1.2 ? orbitX : Math.min(orbitX, 1.2);
+        const targetX = selected ? 0 : safeOrbitX;
         const targetY = selected ? .2 : orbitY;
         const targetZ = selected ? 1.85 : orbitZ;
         if (state.current.motionOn) {
@@ -379,20 +380,31 @@ export function CosmicCanvas({ activeId, onSelect, onPrevious, onNext, motionOn,
         const lane = index % 3;
         const anchorIndex = linkedProjectIndexes.includes(selectedProjectIndex) ? selectedProjectIndex : linkedProjectIndexes[0] ?? -1;
         const belongsToProject = anchorIndex >= 0;
+        const isActiveProjectTool = linkedProjectIndexes.includes(selectedProjectIndex);
         const radiusPath = belongsToProject ? .48 + (index % 4) * .07 : 2.55 + (index % 3) * .16;
         const phase = index * 2.37 + angle * (.18 + lane * .03) + elapsed * (.018 + lane * .006);
         const anchor = belongsToProject ? planets[anchorIndex].group.position : { x: 0, y: -.25, z: -1.05 };
-        group.position.set(
-          anchor.x + Math.cos(phase) * radiusPath,
-          anchor.y + Math.sin(phase) * radiusPath * (.45 + lane * .04),
-          anchor.z + Math.sin(phase * 1.08) * (.28 + lane * .1),
-        );
+        const orbitX = Math.cos(phase) * radiusPath;
+        const safeOrbitX = portrait || camera.aspect < 1.2 ? orbitX : Math.min(orbitX, 1.55);
+        const targetX = anchor.x + safeOrbitX;
+        const targetY = anchor.y + Math.sin(phase) * radiusPath * (.45 + lane * .04);
+        const targetZ = anchor.z + Math.sin(phase * 1.08) * (.28 + lane * .1);
+        if (state.current.motionOn) {
+          group.position.x = THREE.MathUtils.damp(group.position.x, targetX, 7, dt);
+          group.position.y = THREE.MathUtils.damp(group.position.y, targetY, 7, dt);
+          group.position.z = THREE.MathUtils.damp(group.position.z, targetZ, 7, dt);
+        } else {
+          group.position.set(targetX, targetY, targetZ);
+        }
         group.rotation.y = elapsed * (.16 + lane * .04) + index;
         const pulse = state.current.motionOn ? 1 + Math.sin(elapsed * 1.7 + index) * .05 : 1;
-        group.scale.setScalar(pulse);
+        group.scale.setScalar(pulse * (isActiveProjectTool ? 1.18 : belongsToProject ? .98 : .78));
+        const surfaceMaterial = surface.material as THREE.MeshStandardMaterial;
+        surfaceMaterial.opacity = isActiveProjectTool ? .96 : belongsToProject ? .72 : .42;
+        surfaceMaterial.emissiveIntensity = isActiveProjectTool ? .42 : belongsToProject ? .24 : .12;
         surface.scale.setScalar(1);
-        atmosphere.material.opacity = .13 + (state.current.motionOn ? Math.sin(elapsed * .8 + index) * .025 : 0);
-        mark.material.opacity = .64 + (state.current.motionOn ? Math.sin(elapsed * 1.1 + index) * .1 : 0);
+        atmosphere.material.opacity = (isActiveProjectTool ? .22 : belongsToProject ? .14 : .08) + (state.current.motionOn ? Math.sin(elapsed * .8 + index) * .025 : 0);
+        mark.material.opacity = (isActiveProjectTool ? .94 : belongsToProject ? .68 : .38) + (state.current.motionOn ? Math.sin(elapsed * 1.1 + index) * .1 : 0);
         mark.scale.setScalar(radius * 1.9);
       });
       updateNetwork();
@@ -417,6 +429,7 @@ export function CosmicCanvas({ activeId, onSelect, onPrevious, onNext, motionOn,
       host.dataset.angle = angle.toFixed(3);
       host.dataset.pitch = pitch.toFixed(3);
       host.dataset.techCount = String(techNodes.length);
+      host.dataset.linkedTechCount = String(techPlanets.filter(({ linkedProjectIndexes }) => linkedProjectIndexes.includes(selectedProjectIndex)).length);
       if (state.current.motionOn) frame = requestAnimationFrame(render);
     };
     const wake = () => { if (!frame && !disposed) frame = requestAnimationFrame(render); };

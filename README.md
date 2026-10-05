@@ -55,6 +55,7 @@ Interactive personal portfolio for Henry Nugraha, now moving from a single-file 
 - Project orbit drag now supports both yaw and pitch: horizontal and vertical movement rotate the 3D constellation on separate axes while planet clicks, labels, keyboard controls, reduced motion, and mobile fallback remain intact.
 - The shared 3D space now runs behind the hero and Selected Worlds as one fixed Worldline; the five project worlds stay large while all 21 stack signals become smaller orbiting planets with compact marks, leaving Maker Orbit intact for the future Henry portrait concept.
 - Tech planets now orbit their factual project owner(s) from the same stack metadata, with active-world focus and a shared outer lane for unmapped tools; the mobile hero keeps the orbit and dossier rail separate so controls do not collide.
+- Switching worlds now smoothly transfers the relevant tech satellites, brightens the active project's tools, and keeps the wide-screen orbit clear of the dossier rail.
 - The intro loader is now a quiet launch cue: one Henry mark, the opening sentence, a single progress line, and one status signal replace the former multi-orbit loading scene.
 - Responsive composition is validated at 1440px, 1024px, 768px, 390px, and 360px, with a dedicated short-landscape fallback and touch-safe mobile controls.
 - A 26-record certificate and badge archive uses a signature record, kind filters, accessible detail viewing, and source PDFs where available.

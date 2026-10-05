@@ -118,6 +118,7 @@ try {
     const scene = page.locator(".cosmic-canvas");
     await expect(scene).toHaveAttribute("data-ready", "true");
     await expect(scene).toHaveAttribute("data-tech-count", "21");
+    await expect(scene).toHaveAttribute("data-linked-tech-count", "4");
     const angle = Number(await scene.getAttribute("data-angle"));
     await expect.poll(async () => Number(await scene.getAttribute("data-angle"))).toBeGreaterThan(angle + .02);
     const hasPixels = await page.locator(".cosmic-canvas canvas").evaluate((canvas) => new Promise((resolve) => {
@@ -155,6 +156,7 @@ try {
     await expect(page.locator(".project-showcase")).toContainText("Nalira");
     await page.getByRole("tab", { name: "Focus Canox" }).click();
     await expect(page.locator(".project-showcase")).toContainText("Canox");
+    await expect(scene).toHaveAttribute("data-linked-tech-count", "3");
     await expect(page.locator(".dossier")).toContainText("Canox");
     assert.match(await page.locator(".dossier-art-evidence").innerText(), /PRIVATE WALKTHROUGH/);
     await page.locator(".planet-label").nth(2).evaluate((button) => button.click());
