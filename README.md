@@ -49,6 +49,7 @@ Interactive personal portfolio for Henry Nugraha, now moving from a single-file 
 - The Worldline now owns that field: the five real project marks persist as a single vertical constellation, with one active node and a visible World / Method / Stack route. Redundant method and world-chain constellations were removed so the visual system has one primary story.
 - Worldline 2.0 is now scroll-synced: its route progress and active World / Method / Stack stage follow the reading position while the five project marks keep a restrained drift and the active project context carries into each chapter.
 - Fixed a layout regression where the chapter atmosphere could enter normal document flow and create a large blank gap before The Henry Method.
+- The Worldline now gives each reading stage its own visual focus: the World, Method, or Stack orbit brightens with the active stage while the other paths recede, and the active project node receives a restrained signal pulse.
 - The intro loader is now a quiet launch cue: one Henry mark, the opening sentence, a single progress line, and one status signal replace the former multi-orbit loading scene.
 - Responsive composition is validated at 1440px, 1024px, 768px, 390px, and 360px, with a dedicated short-landscape fallback and touch-safe mobile controls.
 - A 26-record certificate and badge archive uses a signature record, kind filters, accessible detail viewing, and source PDFs where available.

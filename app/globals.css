@@ -642,7 +642,7 @@ html[data-motion="off"] *, html[data-motion="off"] *::before, html[data-motion="
 .signal-chapter > .chapter-atmosphere { position: absolute; z-index: 0; }
 .field-continuum-visual { position: absolute; z-index: 0; top: 0; right: -10vw; width: min(90vw, 1240px); height: 100%; min-height: 2800px; overflow: hidden; opacity: .82; pointer-events: none; }
 .field-continuum-glow { position: absolute; top: 24%; right: 18%; width: 42%; aspect-ratio: 1; border-radius: 50%; background: radial-gradient(circle, rgba(110,231,244,.09), transparent 68%); filter: blur(24px); }
-.field-continuum-orbit { position: absolute; display: block; border: 1px solid rgba(110,231,244,.15); border-radius: 50%; transform-origin: center; animation: continuum-orbit-breathe 18s ease-in-out infinite alternate; }
+.field-continuum-orbit { position: absolute; display: block; border: 1px solid rgba(110,231,244,.15); border-radius: 50%; transform-origin: center; opacity: .54; animation: continuum-orbit-breathe 18s ease-in-out infinite alternate; transition: border-color .8s ease, box-shadow .8s ease, opacity .8s ease; }
 .field-continuum-orbit--wide { top: 4%; right: -28%; width: 112%; height: 28%; transform: rotate(-18deg); border-color: rgba(110,231,244,.21); }
 .field-continuum-orbit--mid { top: 35%; right: -16%; width: 97%; height: 31%; transform: rotate(13deg); border-color: rgba(255,130,200,.17); animation-delay: -5s; }
 .field-continuum-orbit--tight { top: 69%; right: -24%; width: 105%; height: 25%; transform: rotate(-9deg); border-color: rgba(239,201,95,.16); animation-delay: -10s; }
@@ -651,11 +651,13 @@ html[data-motion="off"] *, html[data-motion="off"] *::before, html[data-motion="
 .field-continuum-signal--two { top: 59%; right: 21%; background: var(--pink); box-shadow: 0 0 22px var(--pink); animation-delay: -2.7s; }
 .field-continuum-nodes { position: absolute; inset: 0; }
 .field-continuum-node { position: absolute; display: grid; justify-items: center; gap: 6px; color: var(--node-color); font-family: var(--mono); font-size: .5rem; letter-spacing: .08em; text-transform: uppercase; opacity: .22; transform: translate(-50%, -50%); transition: opacity .4s ease, transform .4s var(--ease); }
-.field-continuum-node i { display: grid; place-items: center; width: 48px; height: 48px; border: 1px solid color-mix(in srgb, var(--node-color) 62%, rgba(244,245,239,.35)); border-radius: 50%; background: rgba(7,9,27,.82); box-shadow: 0 0 0 7px color-mix(in srgb, var(--node-color) 6%, transparent), 0 0 22px color-mix(in srgb, var(--node-color) 18%, transparent); }
+.field-continuum-node i { position: relative; display: grid; place-items: center; width: 48px; height: 48px; border: 1px solid color-mix(in srgb, var(--node-color) 62%, rgba(244,245,239,.35)); border-radius: 50%; background: rgba(7,9,27,.82); box-shadow: 0 0 0 7px color-mix(in srgb, var(--node-color) 6%, transparent), 0 0 22px color-mix(in srgb, var(--node-color) 18%, transparent); }
+.field-continuum-node i::after { content: ""; position: absolute; inset: -7px; border: 1px solid var(--node-color); border-radius: 50%; opacity: 0; transform: scale(.74); animation: continuum-node-pulse 4.8s ease-out infinite; pointer-events: none; }
 .field-continuum-node img { width: 29px; height: 29px; object-fit: contain; border-radius: 7px; }
 .field-continuum-node b { color: rgba(244,245,239,.56); font-size: .48rem; font-weight: 500; }
 .field-continuum-node.is-active { opacity: 1; transform: translate(-50%, -50%) scale(1.12); }
 .field-continuum-node.is-active i { border-color: var(--node-color); box-shadow: 0 0 0 8px color-mix(in srgb, var(--node-color) 9%, transparent), 0 0 32px color-mix(in srgb, var(--node-color) 38%, transparent); }
+.field-continuum-node.is-active i::after { opacity: .72; animation-duration: 3.2s; }
 .field-continuum-node.is-active b { color: var(--paper); }
 .field-continuum-node--1 { top: 10%; left: 24%; }
 .field-continuum-node--2 { top: 28%; left: 68%; }
@@ -673,8 +675,12 @@ html[data-motion="off"] *, html[data-motion="off"] *::before, html[data-motion="
 .field-continuum-route b { color: rgba(244,245,239,.62); font-size: .48rem; font-weight: 500; }
 .field-continuum-route-stage.is-active b { color: var(--paper); }
 .worldline-context { color: var(--yellow); }
+.field-continuum[data-worldline-stage="world"] .field-continuum-orbit--wide { opacity: 1; border-color: rgba(110,231,244,.42); box-shadow: 0 0 30px rgba(110,231,244,.08); }
+.field-continuum[data-worldline-stage="method"] .field-continuum-orbit--mid { opacity: 1; border-color: rgba(255,130,200,.4); box-shadow: 0 0 30px rgba(255,130,200,.08); }
+.field-continuum[data-worldline-stage="stack"] .field-continuum-orbit--tight { opacity: 1; border-color: rgba(239,201,95,.4); box-shadow: 0 0 30px rgba(239,201,95,.08); }
 @keyframes continuum-orbit-breathe { from { transform: rotate(-18deg) translate3d(-1%, 0, 0) scale(1); } to { transform: rotate(-14deg) translate3d(1%, -1%, 0) scale(1.035); } }
 @keyframes continuum-signal { 0%, 100% { opacity: .28; transform: scale(.72); } 50% { opacity: .95; transform: scale(1.5); } }
+@keyframes continuum-node-pulse { 0% { opacity: .72; transform: scale(.74); } 72%, 100% { opacity: 0; transform: scale(1.42); } }
 
 /* The opening is a quiet launch cue, not a second hero. */
 .intro-loader { background: radial-gradient(circle at 50% 46%, #11183b 0, #080b23 48%, #050612 100%); transition-duration: .62s; }
@@ -703,6 +709,8 @@ html[data-motion="off"] *, html[data-motion="off"] *::before, html[data-motion="
   .field-continuum-route { right: 3%; width: 56px; padding-left: 9px; font-size: .4rem; }
   .field-continuum-route-stage::before { left: -13px; width: 5px; height: 5px; }
   .field-continuum-route b { font-size: .4rem; }
+  .field-continuum-route-progress { left: -1px; width: 3px; }
+  .field-continuum-node i::after { inset: -5px; }
   .loader-mark { margin-top: 22vh; }
   .loader-content h2 { font-size: clamp(3.7rem, 16vw, 5.8rem); }
   .intro-loader::after { right: 20px; left: 20px; bottom: 13%; }

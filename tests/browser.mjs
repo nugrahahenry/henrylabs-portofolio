@@ -89,6 +89,7 @@ try {
 
     await page.locator("#stack").scrollIntoViewIfNeeded();
     await expect(page.locator(".field-continuum-route-stage.is-active b")).toContainText("STACK");
+    await expect(page.locator(".field-continuum")).toHaveAttribute("data-worldline-stage", "stack");
     await page.getByRole("button", { name: /Focus Nalira through Supabase/ }).click({ force: true });
     await expect(page.locator(".maker-orbit-inspector")).toContainText("Nalira");
     await expect(page.locator(".dossier-art-preview")).toHaveAttribute("src", "/assets/projects/nalira-ambient.svg");
