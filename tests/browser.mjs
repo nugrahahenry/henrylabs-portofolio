@@ -37,7 +37,7 @@ try {
       heroTelemetry: document.querySelectorAll(".hero-telemetry span").length,
       starFields: document.querySelectorAll(".star-field").length,
       credentialControlHeights: [...document.querySelectorAll(".certificate-feature-switcher button, .certificate-archive-toggle")].map((control) => Math.round(control.getBoundingClientRect().height)),
-      clientFlows: document.querySelectorAll(".client-flow").length,
+      clientEvidenceMaps: document.querySelectorAll(".client-evidence-map").length,
       methodScenes: document.querySelectorAll(".method-scene").length,
       projectSignatures: document.querySelectorAll(".project-signature").length,
     }));
@@ -59,7 +59,7 @@ try {
     assert.equal(result.heroTelemetry, 3);
     assert.equal(result.starFields, 2);
     assert.ok(result.credentialControlHeights.every((height) => height >= 44), `credential controls must remain touchable: ${result.credentialControlHeights}`);
-    assert.equal(result.clientFlows, 2);
+    assert.equal(result.clientEvidenceMaps, 2);
     assert.equal(result.methodScenes, 1);
     assert.ok(result.projectSignatures >= 1);
     assert.equal(await page.locator(".certificate-feature-preview > img").getAttribute("src"), "/assets/certificates/previews/google-student-ambassador.png");

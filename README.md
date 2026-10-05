@@ -36,6 +36,7 @@ Interactive personal portfolio for Henry Nugraha, now moving from a single-file 
 - The Henry method now reads as a scroll-filled horizontal signal track on wide screens, with a stacked sequence on mobile and a constellation that shifts with the reading progress.
 - Private client work now has an evidence rail, visible owner stamps, localized signal/ownership fields, and directional entry motion so the real-stakes section has a clearer proof hierarchy.
 - Client cards now render authored signal-flow maps from their actual workflow data, while The Henry method carries a separate three-node scene that moves with scroll progress.
+- Private client evidence now reads as a sanitized atlas: authored system maps, owner contribution, shipped layer, context, and privacy boundary are visible without exposing private screenshots or runtime data.
 - Each active world now carries a compact project signature built from its real workflow: three authored stages connect the logo, story, and stack without inventing product screenshots.
 - Google Student Ambassador leads the credential feature; archive opening and closing use Motion enter/exit transitions.
 - The credential feature is now a five-record editorial deck with ghosted adjacent previews, directional Motion transitions, a focus-trapped detail modal, and a separate archive for the full 26-record proof set.

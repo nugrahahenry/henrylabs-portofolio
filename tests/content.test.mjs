@@ -45,7 +45,8 @@ test("portfolio surface keeps its core experience contracts", () => {
   assert.match(experience, /maker-orbit-inspector/);
   assert.match(experience, /client-signal-rail/);
   assert.match(experience, /client-owner-stamp/);
-  assert.match(experience, /client-flow/);
+  assert.match(experience, /client-evidence-map/);
+  assert.match(experience, /NO PRIVATE DATA/);
   assert.match(experience, /method-scene/);
   assert.match(experience, /ProjectSignature/);
   assert.match(experience, /project signature/);
@@ -102,7 +103,8 @@ test("portfolio surface keeps its core experience contracts", () => {
   assert.match(styles, /\.certificate-feature-switcher button \{ width: 44px; height: 44px; \}/);
   assert.match(styles, /\.client-signal-rail/);
   assert.match(styles, /@keyframes section-atmosphere/);
-  assert.match(styles, /\.client-flow/);
+  assert.match(styles, /\.client-evidence-map/);
+  assert.match(styles, /@keyframes evidence-map-scan/);
   assert.match(styles, /\.method-scene-stage/);
   assert.match(styles, /\.project-signature/);
   assert.match(styles, /@keyframes signature-pulse/);

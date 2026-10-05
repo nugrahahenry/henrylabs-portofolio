@@ -509,23 +509,12 @@ html[data-motion="off"] *, html[data-motion="off"] *::before, html[data-motion="
 .method-scene-step strong { padding-top: 8px; font-size: .72rem; line-height: 1.2; }
 .method-scene-step.is-active { color: var(--paper); transform: translateY(-5px); }
 .method-scene-step.is-active i { border-color: var(--yellow); color: var(--yellow); box-shadow: 0 0 20px rgba(239,201,95,.18); }
-.client-flow { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-top: 20px; padding: 11px 0 10px; border-top: 1px solid rgba(244,245,239,.12); border-bottom: 1px solid rgba(244,245,239,.12); }
-.client-flow span { position: relative; display: grid; gap: 6px; min-width: 0; padding-right: 8px; }
-.client-flow span:not(:last-child)::after { content: "→"; position: absolute; top: 1px; right: -3px; color: var(--client-color); font-family: var(--mono); font-size: .7rem; opacity: .8; }
-.client-flow i { color: var(--client-color); font-family: var(--mono); font-size: .5rem; font-style: normal; letter-spacing: .08em; }
-.client-flow b { overflow-wrap: anywhere; color: rgba(244,245,239,.76); font-family: var(--mono); font-size: .56rem; font-weight: 500; line-height: 1.25; text-transform: uppercase; }
-.client-card:hover .client-flow b { color: var(--paper); }
-
 @media (max-width: 700px) {
   .method-scene { margin-top: 52px; }
   .method-scene-stage { gap: 7px; }
   .method-scene-step { grid-template-columns: 30px 1fr; gap: 6px; }
   .method-scene-step i { width: 30px; height: 30px; }
   .method-scene-step strong { padding-top: 5px; font-size: .58rem; }
-  .client-flow { gap: 5px; }
-  .client-flow span { padding-right: 4px; }
-  .client-flow span:not(:last-child)::after { right: -5px; }
-  .client-flow b { font-size: .49rem; }
 }
 
 /* Each active world gets a small authored signature before its stack: input, transformation, outcome. */
@@ -602,4 +591,39 @@ html[data-motion="off"] *, html[data-motion="off"] *::before, html[data-motion="
   .hero-copy h1 { font-size: clamp(3.2rem, 9vw, 5.5rem); }
   .cosmic-frame { min-height: 520px; }
   .project-showcase { top: 82px; width: min(320px, 34vw); }
+}
+
+/* Private evidence atlas: authored system maps keep the visual language rich without exposing client data. */
+.client-card { min-height: 610px; padding-bottom: 94px; }
+.client-card-titleline { margin-top: 38px; }
+.client-evidence-map { position: relative; margin-top: 22px; padding: 11px 12px 13px; border: 1px solid color-mix(in srgb, var(--client-color) 42%, rgba(244,245,239,.18)); background: linear-gradient(135deg, color-mix(in srgb, var(--client-color) 12%, transparent), rgba(7,9,27,.36)); overflow: hidden; }
+.client-evidence-map::after { content: ""; position: absolute; inset: 0; background: linear-gradient(110deg, transparent 28%, color-mix(in srgb, var(--client-color) 15%, transparent) 48%, transparent 68%); transform: translateX(-85%); animation: evidence-map-scan 5.8s ease-in-out infinite; pointer-events: none; }
+.client-map-topline { position: relative; z-index: 1; display: flex; justify-content: space-between; gap: 12px; color: rgba(244,245,239,.42); font-family: var(--mono); font-size: .48rem; letter-spacing: .08em; text-transform: uppercase; }
+.client-map-topline span:last-child { color: var(--client-color); }
+.client-map-canvas { position: relative; min-height: 126px; margin-top: 10px; overflow: hidden; }
+.client-map-line { position: absolute; z-index: 0; height: 1px; background: linear-gradient(90deg, transparent, var(--client-color), transparent); opacity: .7; transform-origin: left center; }
+.client-map-line--one { top: 55px; left: 10%; width: 77%; transform: rotate(-14deg); }
+.client-map-line--two { top: 77px; left: 33%; width: 34%; transform: rotate(28deg); }
+.client-map-line--three { top: 76px; left: 55%; width: 33%; transform: rotate(-24deg); }
+.client-map-node { position: absolute; z-index: 1; display: grid; justify-items: center; gap: 5px; width: 28%; color: rgba(244,245,239,.72); font-family: var(--mono); text-align: center; text-transform: uppercase; }
+.client-map-node i { display: grid; place-items: center; width: 26px; height: 26px; border: 1px solid color-mix(in srgb, var(--client-color) 75%, white); border-radius: 50%; background: rgba(7,9,27,.88); color: var(--client-color); font-size: .46rem; font-style: normal; box-shadow: 0 0 16px color-mix(in srgb, var(--client-color) 23%, transparent); }
+.client-map-node b { max-width: 12ch; color: rgba(244,245,239,.7); font-size: .48rem; font-weight: 500; letter-spacing: .04em; line-height: 1.2; }
+.client-map-node--one { top: 34px; left: 0; }
+.client-map-node--two { top: 7px; left: 36%; }
+.client-map-node--three { top: 53px; right: 0; }
+.client-map-core { position: absolute; z-index: 2; right: 37%; bottom: 3px; left: 37%; display: inline-flex; align-items: center; justify-content: center; gap: 5px; min-height: 26px; border: 1px solid rgba(244,245,239,.35); border-radius: 999px; background: rgba(7,9,27,.88); color: var(--client-color); font-family: var(--mono); font-size: .48rem; letter-spacing: .08em; }
+.client-map-core b { color: rgba(244,245,239,.78); font-size: .47rem; font-weight: 600; }
+.client-card .client-proof { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 11px 15px; margin-top: 18px; }
+.client-card .client-proof strong { overflow-wrap: anywhere; min-height: 2.1em; }
+@keyframes evidence-map-scan { 0%, 18% { transform: translateX(-85%); opacity: 0; } 35%, 68% { opacity: .8; } 86%, 100% { transform: translateX(85%); opacity: 0; } }
+
+@media (max-width: 640px) {
+  .client-card { min-height: 650px; padding-bottom: 96px; }
+  .client-card-titleline { margin-top: 34px; }
+  .client-evidence-map { margin-top: 18px; padding-inline: 9px; }
+  .client-map-canvas { min-height: 120px; }
+  .client-map-node b { font-size: .44rem; }
+  .client-map-core { right: 34%; left: 34%; }
+  .client-card .client-proof { gap: 10px 12px; }
+  .client-card .client-proof strong { font-size: .66rem; }
 }
