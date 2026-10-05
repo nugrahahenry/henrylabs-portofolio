@@ -251,6 +251,8 @@ const stackGroups = [
   { label: "Systems", items: [["Node.js", "nodedotjs", "339933"], ["n8n", "n8n", "ea4b71"], ["OpenAI", "openai", "ffffff"], ["Laravel", "laravel", "ff2d20"], ["Supabase", "supabase", "3ecf8e"], ["Groq", "groq", "f55036"], ["FastAPI", "fastapi", "009688"], ["WhatsApp", "whatsapp", "25d366"], ["Discord", "discord", "5865f2"]] },
 ];
 
+const techNodes = stackGroups.flatMap((group) => group.items.map(([label, slug, color]) => ({ label, slug, color })));
+
 const academicProjects = [
   { title: "RentalMobil.SG", tag: "OOP · Semester 2", body: "A car-rental web system with vehicle catalog, authentication, booking, payment confirmation, user area, and admin operations.", output: "Booking flow", stack: ["Java", "OOP", "Rental"], color: "#efc95f", linkLabel: "Class build · local" },
   { title: "POS Z Shoes", tag: "APBDS · Semester 3", body: "A point-of-sale system with product, supplier, purchase, customer transaction, return, dashboard, and reporting flows.", output: "Business flow", stack: ["Analysis", "POS", "Reporting"], color: "#ef8e73", link: "https://github.com/nugrahahenry/POS_APBDS", linkLabel: "View source" },
@@ -493,6 +495,7 @@ export function PortfolioExperience() {
   return (
     <MotionConfig reducedMotion={motionOn ? "never" : "always"} transition={{ duration: motionOn ? 0.55 : 0, ease: [0.16, 1, 0.3, 1] }}>
     <main className="site-shell" data-motion={motionOn ? "on" : "off"}>
+      <WorldlineBackdrop activeId={activeProject.id} motionOn={motionOn} progress={worldlineProgress} />
       <motion.div className={cx("intro-loader", introDone && "intro-loader--done")} aria-hidden={introDone}>
         <div className="loader-content">
           <div className="loader-meta"><span>HENRYLABS / USEFUL WORLDS</span><span>0{Math.min(loadingStep + 1, 4)} / 04</span></div>
@@ -542,7 +545,7 @@ export function PortfolioExperience() {
           <motion.div className="cosmic-frame-wrap" inert={motionOn && heroPhase !== "worlds"} style={{ scale: motionOn ? fieldScale : 1, y: motionOn ? fieldY : 0 }}>
             <div className="cosmic-frame" style={{ "--active-world-color": activeProject.color } as CSSProperties}>
               <div className="frame-topline"><span>{t.field.label}</span><span>{activeProject.name} / {activeProject.status[language]}</span></div>
-              <CosmicCanvas activeId={activeId} onSelect={focusProject} onPrevious={() => cycleProject(-1)} onNext={() => cycleProject(1)} motionOn={motionOn} progress={scrollYProgress} />
+              <CosmicCanvas activeId={activeId} onSelect={focusProject} onPrevious={() => cycleProject(-1)} onNext={() => cycleProject(1)} motionOn={motionOn} progress={scrollYProgress} techNodes={techNodes} />
               <AnimatePresence mode="wait" initial={false}>
                 <motion.section className="project-showcase" key={activeProject.id} aria-label={`Active project: ${activeProject.name}`} style={{ "--project-showcase-color": activeProject.color } as CSSProperties} initial={motionOn ? { opacity: 0, x: 22 } : false} animate={{ opacity: 1, x: 0 }} exit={motionOn ? { opacity: 0, x: -16 } : undefined} transition={{ duration: motionOn ? .4 : 0, ease: [0.16, 1, 0.3, 1] }}>
                   <div className="project-showcase-topline"><span>ACTIVE WORLD / {String(projects.findIndex((project) => project.id === activeProject.id) + 1).padStart(2, "0")}</span><div className="project-showcase-nav"><button type="button" onClick={() => cycleProject(-1)} aria-label="Previous project"><ChevronLeft size={13} /></button><button type="button" onClick={() => cycleProject(1)} aria-label="Next project"><ChevronRight size={13} /></button></div></div>
@@ -566,7 +569,6 @@ export function PortfolioExperience() {
       </section>
 
       <div ref={fieldRef} className="field-continuum" data-active-world={activeProject.id} data-worldline-stage={worldlineStage}>
-        <WorldlineBackdrop activeId={activeProject.id} motionOn={motionOn} progress={worldlineProgress} />
         <div className="field-continuum-visual" aria-hidden="true">
           <span className="field-continuum-glow" />
           <span className="field-continuum-orbit field-continuum-orbit--wide" />

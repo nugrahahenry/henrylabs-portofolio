@@ -95,6 +95,9 @@ test("portfolio surface keeps its core experience contracts", () => {
   assert.match(backdrop, /TextureLoader/);
   assert.match(backdrop, /planetSystem\.rotation\.y/);
   assert.match(backdrop, /SphereGeometry/);
+  assert.match(canvas, /TechOrbitItem/);
+  assert.match(canvas, /techPlanetTexture/);
+  assert.match(canvas, /techSystem\.rotation\.y/);
   assert.match(read("components/project-sculptures.ts"), /ExtrudeGeometry/);
   assert.match(styles, /prefers-reduced-motion/);
   assert.match(styles, /html\[data-motion="off"\]/);
@@ -123,7 +126,7 @@ test("portfolio surface keeps its core experience contracts", () => {
   assert.match(styles, /\.client-evidence-map/);
   assert.match(styles, /@keyframes evidence-map-scan/);
   assert.match(styles, /\.field-continuum/);
-  assert.match(styles, /\.worldline-backdrop \{ position: sticky/);
+  assert.match(styles, /\.worldline-backdrop \{ position: fixed/);
   assert.match(styles, /@keyframes continuum-orbit-breathe/);
   assert.match(styles, /\.method-scene-stage/);
   assert.match(styles, /\.project-signature/);

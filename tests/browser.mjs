@@ -73,7 +73,7 @@ try {
     assert.equal(result.fieldContinuum, 1);
     assert.equal(result.fieldContinuumOrbits, 3);
     assert.equal(result.worldlineBackdrops, 1);
-    assert.equal(result.worldlineBackdropPosition, "sticky");
+    assert.equal(result.worldlineBackdropPosition, "fixed");
     assert.equal(await page.locator(".certificate-feature-preview > img").getAttribute("src"), "/assets/certificates/previews/google-student-ambassador.png");
     await page.getByRole("button", { name: /Open full archive/ }).click();
     await expect(page.locator(".certificate-card")).toHaveCount(26);
@@ -117,6 +117,7 @@ try {
     await expect(page.locator(".hero-stage")).toHaveAttribute("data-phase", "worlds");
     const scene = page.locator(".cosmic-canvas");
     await expect(scene).toHaveAttribute("data-ready", "true");
+    await expect(scene).toHaveAttribute("data-tech-count", "21");
     const angle = Number(await scene.getAttribute("data-angle"));
     await expect.poll(async () => Number(await scene.getAttribute("data-angle"))).toBeGreaterThan(angle + .02);
     const hasPixels = await page.locator(".cosmic-canvas canvas").evaluate((canvas) => new Promise((resolve) => {

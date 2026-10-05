@@ -27,7 +27,7 @@ button { border: 0; font: inherit; color: inherit; }
 button:focus-visible, a:focus-visible { outline: 3px solid var(--coral); outline-offset: 4px; }
 img { display: block; max-width: 100%; }
 
-.site-shell { min-height: 100vh; overflow: clip; }
+.site-shell { position: relative; z-index: 0; min-height: 100vh; overflow: clip; }
 .site-header { position: fixed; z-index: 30; top: 0; left: 0; right: 0; display: flex; align-items: center; justify-content: space-between; min-height: 76px; padding: 17px clamp(20px, 4.5vw, 72px); color: var(--paper); background: rgba(7, 9, 27, .84); border-bottom: 1px solid rgba(244,245,239,.13); backdrop-filter: blur(17px) saturate(1.1); }
 .brand { display: inline-flex; align-items: center; gap: 9px; font-weight: 700; letter-spacing: -.035em; }
 .brand-mark { display: grid; place-items: center; width: 25px; height: 25px; color: var(--cyan); }
@@ -92,14 +92,14 @@ html[data-cursor="quiet"] .cursor-guide { opacity: 0; }
 
 .chapter-rail { position: fixed; z-index: 24; top: 50%; right: clamp(18px, 3.4vw, 56px); display: grid; gap: 12px; color: rgba(244,245,239,.44); transform: translateY(-50%); }.chapter-rail-caption { writing-mode: vertical-rl; color: rgba(244,245,239,.3); font-family: var(--mono); font-size: .52rem; letter-spacing: .12em; text-transform: uppercase; }.chapter-rail-track { display: grid; gap: 9px; padding-left: 11px; border-left: 1px solid rgba(244,245,239,.2); }.chapter-rail a { display: grid; grid-template-columns: 19px auto; align-items: center; gap: 7px; min-height: 23px; color: inherit; font-family: var(--mono); font-size: .56rem; letter-spacing: .06em; text-transform: uppercase; transition: color .25s ease, transform .35s var(--ease); }.chapter-rail a span { color: rgba(244,245,239,.3); }.chapter-rail a strong { font-weight: 500; }.chapter-rail a:hover, .chapter-rail-link--active { color: var(--cyan) !important; transform: translateX(-4px); }.chapter-rail-link--active span { color: var(--yellow); }
 
-.hero-stage { position: relative; min-height: 240svh; overflow: clip; background: var(--space); color: var(--paper); isolation: isolate; }
+.hero-stage { position: relative; min-height: 240svh; overflow: clip; background: transparent; color: var(--paper); isolation: isolate; }
 .hero-sticky { position: sticky; top: 0; z-index: 2; height: 100svh; min-height: 690px; }
 .hero-stage[data-phase="all"] { min-height: 100svh; overflow: visible; }
 .hero-stage[data-phase="all"] .hero-sticky { position: relative; height: auto; min-height: 100svh; display: grid; align-content: start; }
 .hero-stage[data-phase="all"] .hero-copy { position: relative; inset: auto; min-height: 47svh; }
 .hero-stage[data-phase="all"] .cosmic-frame-wrap { position: relative; inset: auto; min-height: 53svh; padding-top: 0; }
 .hero-stage[data-phase="all"] .scroll-cue { display: none; }
-.space-backdrop { position: absolute; z-index: -1; inset: 0; overflow: hidden; background: var(--space); }
+.space-backdrop { position: absolute; z-index: -1; inset: 0; overflow: hidden; background: transparent; }
 .space-backdrop > img { position: absolute; inset: -8%; width: 116%; height: 116%; object-fit: cover; object-position: 54% 46%; opacity: .46; mix-blend-mode: screen; filter: saturate(.9) contrast(1.1); animation: nebula-pan 38s ease-in-out infinite alternate; }
 .space-backdrop::before { content: ""; position: absolute; inset: 0; background: radial-gradient(circle at 52% 47%, transparent 0 15%, rgba(7,9,27,.2) 36%, rgba(7,9,27,.88) 92%); }
 .space-backdrop::after { content: ""; position: absolute; inset: 0; background: linear-gradient(115deg, transparent 0 39%, rgba(110,231,244,.07) 47%, transparent 54%), radial-gradient(ellipse at 78% 30%, rgba(255,130,200,.12), transparent 22%), radial-gradient(ellipse at 20% 78%, rgba(101,123,232,.13), transparent 26%); mix-blend-mode: screen; opacity: .72; animation: backdrop-signal 24s ease-in-out infinite alternate; pointer-events: none; }
@@ -628,8 +628,8 @@ html[data-motion="off"] *, html[data-motion="off"] *::before, html[data-motion="
 }
 
 /* Worldline: one project constellation carries the reading path from world to method to stack. */
-.field-continuum { position: relative; isolation: isolate; overflow: clip; background: linear-gradient(180deg, #080c23 0%, #0b1230 48%, #080b21 100%); }
-.field-continuum::before { content: ""; position: absolute; z-index: 0; inset: 0; background: linear-gradient(180deg, #080c23 0%, #0b1230 48%, #080b21 100%); pointer-events: none; }
+.field-continuum { position: relative; isolation: isolate; overflow: clip; background: transparent; }
+.field-continuum::before { content: ""; position: absolute; z-index: 0; inset: 0; background: linear-gradient(180deg, rgba(8,12,35,.1) 0%, rgba(11,18,48,.18) 48%, rgba(8,11,33,.16) 100%); pointer-events: none; }
 .field-continuum > section { position: relative; z-index: 1; background: transparent; }
 .field-continuum .work-section::before, .field-continuum .signal-chapter::before, .field-continuum .stack-section::before { opacity: .02; }
 .field-continuum .signal-chapter { background: transparent; }
@@ -638,7 +638,7 @@ html[data-motion="off"] *, html[data-motion="off"] *::before, html[data-motion="
 .field-continuum .stack-section { background: transparent; }
 .field-continuum .stack-intro { padding-top: 90px; padding-bottom: 42px; }
 .field-continuum .maker-orbit { padding-top: 10px; }
-.worldline-backdrop { position: sticky; z-index: 0; top: 0; height: max(100vh, 520px); height: max(100svh, 520px); margin-bottom: calc(-1 * max(100vh, 520px)); margin-bottom: calc(-1 * max(100svh, 520px)); overflow: hidden; background: #080c23 url('/assets/background/cosmic-nebula.png') center / cover; opacity: .78; pointer-events: none; }
+.worldline-backdrop { position: fixed; z-index: 0; inset: 0; width: 100%; height: max(100vh, 520px); height: max(100svh, 520px); overflow: hidden; background: #080c23 url('/assets/background/cosmic-nebula.png') center / cover; opacity: .78; pointer-events: none; }
 .worldline-backdrop::after { content: ""; position: absolute; inset: 0; background: radial-gradient(ellipse at 50% 42%, transparent 0 22%, rgba(7,9,27,.08) 54%, rgba(7,9,27,.54) 100%); pointer-events: none; }
 .worldline-backdrop canvas { display: block; width: 100%; height: 100%; opacity: .95; mix-blend-mode: screen; }
 .worldline-backdrop[data-fallback="true"] canvas { display: none; }
