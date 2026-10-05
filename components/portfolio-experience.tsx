@@ -28,6 +28,7 @@ import { AnimatePresence, MotionConfig, motion, useInView, useMotionValue, useMo
 import { CosmicCanvas, type ProjectId } from "./cosmic-canvas";
 
 type Language = "en" | "id";
+type WorldlineStage = "world" | "method" | "stack";
 
 const projects: Array<{
   id: ProjectId;
@@ -327,11 +328,13 @@ export function PortfolioExperience() {
   const [motionPreference, setMotionPreference] = useState(true);
   const [motionReady, setMotionReady] = useState(false);
   const [methodStep, setMethodStep] = useState(0);
+  const [worldlineStage, setWorldlineStage] = useState<WorldlineStage>("world");
   const reducedMotion = useReducedMotion();
   const motionOn = motionReady && motionPreference && !reducedMotion;
   const [loadingStep, setLoadingStep] = useState(0);
   const [heroPhase, setHeroPhase] = useState("intro");
   const heroRef = useRef<HTMLElement>(null);
+  const fieldRef = useRef<HTMLDivElement>(null);
   const workRef = useRef<HTMLElement>(null);
   const methodRef = useRef<HTMLElement>(null);
   const stackRef = useRef<HTMLElement>(null);
@@ -341,6 +344,7 @@ export function PortfolioExperience() {
   const stackVisible = useInView(stackRef, { margin: "150px" });
   const { scrollYProgress: workProgress } = useScroll({ target: workRef, offset: ["start end", "end start"] });
   const { scrollYProgress: methodProgress } = useScroll({ target: methodRef, offset: ["start start", "end start"] });
+  const { scrollYProgress: worldlineProgress } = useScroll({ target: fieldRef, offset: ["start 72%", "end 30%"] });
   const methodY = useTransform(methodProgress, [0, 1], [42, 0]);
   const methodImageY = useTransform(methodProgress, [0, 1], [-36, 0]);
   const methodSceneScale = useTransform(methodProgress, [0, .5, 1], [.92, 1, 1.04]);
@@ -367,6 +371,10 @@ export function PortfolioExperience() {
   useMotionValueEvent(methodProgress, "change", (value) => {
     const nextStep = value < 0.34 ? 0 : value < 0.68 ? 1 : 2;
     setMethodStep((previous) => previous === nextStep ? previous : nextStep);
+  });
+  useMotionValueEvent(worldlineProgress, "change", (value) => {
+    const nextStage: WorldlineStage = value < 0.34 ? "world" : value < 0.68 ? "method" : "stack";
+    setWorldlineStage((previous) => previous === nextStage ? previous : nextStage);
   });
 
   const t = copy[language];
@@ -557,7 +565,7 @@ export function PortfolioExperience() {
         <a href="#work" className="scroll-cue"><span>Scroll to enter</span><ArrowDown size={18} /></a>
       </section>
 
-      <div className="field-continuum" data-active-world={activeProject.id}>
+      <div ref={fieldRef} className="field-continuum" data-active-world={activeProject.id} data-worldline-stage={worldlineStage}>
         <div className="field-continuum-visual" aria-hidden="true">
           <span className="field-continuum-glow" />
           <span className="field-continuum-orbit field-continuum-orbit--wide" />
@@ -565,8 +573,8 @@ export function PortfolioExperience() {
           <span className="field-continuum-orbit field-continuum-orbit--tight" />
           <span className="field-continuum-signal field-continuum-signal--one" />
           <span className="field-continuum-signal field-continuum-signal--two" />
-          <div className="field-continuum-nodes">{projects.map((project, index) => <span className={cx("field-continuum-node", `field-continuum-node--${index + 1}`, project.id === activeProject.id && "is-active")} style={{ "--node-color": project.color } as CSSProperties} key={project.id}><i><img src={project.logo} alt="" /></i><b>{project.name}</b></span>)}</div>
-          <div className="field-continuum-route"><span className="field-continuum-route-line" /><span><i>01</i><b>WORLD</b></span><span><i>02</i><b>METHOD</b></span><span><i>03</i><b>STACK</b></span></div>
+          <div className="field-continuum-nodes">{projects.map((project, index) => <motion.span className={cx("field-continuum-node", `field-continuum-node--${index + 1}`, project.id === activeProject.id && "is-active")} style={{ "--node-color": project.color } as CSSProperties} animate={motionOn ? { y: [0, -5, 0] } : undefined} transition={motionOn ? { duration: 5.5 + index * .35, delay: index * -.7, repeat: Infinity, ease: "easeInOut" } : undefined} key={project.id}><i><img src={project.logo} alt="" /></i><b>{project.name}</b></motion.span>)}</div>
+          <div className="field-continuum-route" aria-label="Worldline reading path"><span className="field-continuum-route-line" /><motion.span className="field-continuum-route-progress" aria-hidden="true" style={{ scaleY: motionOn ? worldlineProgress : 1 }} /><span className={cx("field-continuum-route-stage", worldlineStage === "world" && "is-active")}><i>01</i><b>WORLD</b></span><span className={cx("field-continuum-route-stage", worldlineStage === "method" && "is-active")}><i>02</i><b>METHOD</b></span><span className={cx("field-continuum-route-stage", worldlineStage === "stack" && "is-active")}><i>03</i><b>STACK</b></span></div>
         </div>
 
       <motion.section ref={workRef} className="content-section work-section" id="work" aria-labelledby="work-title">

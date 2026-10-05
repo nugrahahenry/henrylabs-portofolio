@@ -37,6 +37,8 @@ test("portfolio surface keeps its core experience contracts", () => {
   assert.match(experience, /hero-transition/);
   assert.match(experience, /field-continuum-node/);
   assert.match(experience, /field-continuum-route/);
+  assert.match(experience, /worldlineProgress/);
+  assert.match(experience, /WorldlineStage/);
   assert.doesNotMatch(experience, /signal-constellation/);
   assert.doesNotMatch(experience, /world-chain/);
   assert.match(experience, /project-showcase-index/);

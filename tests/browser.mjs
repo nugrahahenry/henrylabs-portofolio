@@ -34,7 +34,8 @@ try {
       academicSourceLinks: document.querySelectorAll(".academic-card-foot a[href*='github.com']").length,
       showcaseWorlds: document.querySelectorAll(".project-showcase-index [role='tab']").length,
       continuumNodes: document.querySelectorAll(".field-continuum-node").length,
-      continuumRouteStages: document.querySelectorAll(".field-continuum-route > span:not(.field-continuum-route-line)").length,
+      continuumRouteStages: document.querySelectorAll(".field-continuum-route-stage").length,
+      worldlineActiveStages: document.querySelectorAll(".field-continuum-route-stage.is-active").length,
       heroTelemetry: document.querySelectorAll(".hero-telemetry span").length,
       starFields: document.querySelectorAll(".star-field").length,
       credentialControlHeights: [...document.querySelectorAll(".certificate-feature-switcher button, .certificate-archive-toggle")].map((control) => Math.round(control.getBoundingClientRect().height)),
@@ -60,6 +61,7 @@ try {
     assert.equal(result.showcaseWorlds, 5);
     assert.equal(result.continuumNodes, 5);
     assert.equal(result.continuumRouteStages, 3);
+    assert.equal(result.worldlineActiveStages, 1);
     assert.equal(result.heroTelemetry, 3);
     assert.equal(result.starFields, 2);
     assert.ok(result.credentialControlHeights.every((height) => height >= 44), `credential controls must remain touchable: ${result.credentialControlHeights}`);
@@ -86,6 +88,7 @@ try {
     await expect(page.locator('a[href="https://www.linkedin.com/in/nugrahahenry/"]')).toHaveCount(1);
 
     await page.locator("#stack").scrollIntoViewIfNeeded();
+    await expect(page.locator(".field-continuum-route-stage.is-active b")).toContainText("STACK");
     await page.getByRole("button", { name: /Focus Nalira through Supabase/ }).click({ force: true });
     await expect(page.locator(".maker-orbit-inspector")).toContainText("Nalira");
     await expect(page.locator(".dossier-art-preview")).toHaveAttribute("src", "/assets/projects/nalira-ambient.svg");
