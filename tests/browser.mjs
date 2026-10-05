@@ -45,6 +45,7 @@ try {
       fieldContinuum: document.querySelectorAll(".field-continuum").length,
       fieldContinuumOrbits: document.querySelectorAll(".field-continuum-orbit").length,
       worldlineBackdrops: document.querySelectorAll(".worldline-backdrop canvas").length,
+      worldlineBackdropPosition: getComputedStyle(document.querySelector(".worldline-backdrop")).position,
     }));
     assert.equal(result.viewport, viewport.width);
     assert.equal(result.scrollWidth, viewport.width);
@@ -72,6 +73,7 @@ try {
     assert.equal(result.fieldContinuum, 1);
     assert.equal(result.fieldContinuumOrbits, 3);
     assert.equal(result.worldlineBackdrops, 1);
+    assert.equal(result.worldlineBackdropPosition, "sticky");
     assert.equal(await page.locator(".certificate-feature-preview > img").getAttribute("src"), "/assets/certificates/previews/google-student-ambassador.png");
     await page.getByRole("button", { name: /Open full archive/ }).click();
     await expect(page.locator(".certificate-card")).toHaveCount(26);

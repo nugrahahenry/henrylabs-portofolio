@@ -3,7 +3,7 @@
 import { useEffect, useRef } from "react";
 import type { MotionValue } from "motion/react";
 import * as THREE from "three";
-import type { ProjectId } from "./cosmic-canvas";
+import { projectWorlds, type ProjectId } from "./cosmic-canvas";
 
 const projectColors: Record<ProjectId, number> = {
   catmoji: 0xef8e73,
@@ -51,7 +51,7 @@ export function WorldlineBackdrop({ activeId, motionOn, progress }: {
 
     let renderer: THREE.WebGLRenderer;
     try {
-      renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true, powerPreference: "low-power" });
+      renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true, preserveDrawingBuffer: true, powerPreference: "low-power" });
     } catch {
       host.dataset.fallback = "true";
       return;
@@ -63,7 +63,13 @@ export function WorldlineBackdrop({ activeId, motionOn, progress }: {
     const camera = new THREE.PerspectiveCamera(44, 1, .1, 100);
     const field = new THREE.Group();
     const starField = new THREE.Group();
-    scene.add(field, starField);
+    const planetSystem = new THREE.Group();
+    planetSystem.position.z = -3.2;
+    scene.add(field, starField, planetSystem);
+    scene.add(new THREE.AmbientLight(0x9fc4df, 1.15));
+    const planetLight = new THREE.PointLight(0xffe5b2, 7, 18, 1.5);
+    planetLight.position.set(-2.4, 2.8, 2.8);
+    scene.add(planetLight);
 
     const starCount = 980;
     const starPositions = new Float32Array(starCount * 3);
@@ -117,6 +123,48 @@ export function WorldlineBackdrop({ activeId, motionOn, progress }: {
       return line;
     });
 
+    const planetLoader = new THREE.TextureLoader();
+    const planetTextures: THREE.Texture[] = [];
+    let disposed = false;
+    const orbitPlanets = projectWorlds.map((world, index) => {
+      const pivot = new THREE.Group();
+      const body = new THREE.Group();
+      const radius = .22 + (index % 2) * .028;
+      const phase = [2.75, 1.4, .18, 4.2, 5.2][index];
+      const surface = new THREE.Mesh(
+        new THREE.SphereGeometry(radius, 24, 16),
+        new THREE.MeshStandardMaterial({ color: world.color, emissive: world.color, emissiveIntensity: .2, metalness: .12, roughness: .62, transparent: true, opacity: .9 }),
+      );
+      const atmosphere = new THREE.Mesh(
+        new THREE.SphereGeometry(radius * 1.16, 20, 14),
+        new THREE.MeshBasicMaterial({ color: world.color, transparent: true, opacity: .15, side: THREE.BackSide, blending: THREE.AdditiveBlending, depthWrite: false }),
+      );
+      const ring = new THREE.Mesh(
+        new THREE.TorusGeometry(radius * 1.42, .008, 6, 36),
+        new THREE.MeshBasicMaterial({ color: world.color, transparent: true, opacity: .25, depthWrite: false }),
+      );
+      ring.rotation.set(.72, -.2, .2);
+      body.add(surface, atmosphere, ring);
+      pivot.add(body);
+      planetSystem.add(pivot);
+
+      let logo: THREE.Sprite | undefined;
+      planetLoader.load(`/assets/brand/${world.logo}`, (loaded) => {
+        if (disposed) {
+          loaded.dispose();
+          return;
+        }
+        loaded.colorSpace = THREE.SRGBColorSpace;
+        planetTextures.push(loaded);
+        logo = new THREE.Sprite(new THREE.SpriteMaterial({ map: loaded, transparent: true, opacity: .78, depthWrite: false }));
+        logo.position.z = radius * 1.04;
+        logo.scale.setScalar(radius * 1.18);
+        body.add(logo);
+        wakeRef.current();
+      });
+      return { pivot, body, ring, get logo() { return logo; }, phase, radius, index };
+    });
+
     let visible = true;
     let frame = 0;
     let lastTime = 0;
@@ -143,6 +191,25 @@ export function WorldlineBackdrop({ activeId, motionOn, progress }: {
       lanes.forEach((lane, index) => {
         lane.rotation.z = (index % 2 ? -.42 : .28) + Math.sin(drift * .02 + index) * .018;
       });
+
+      const orbitAngle = drift * .045 + scroll * Math.PI * 1.6;
+      planetSystem.rotation.y = orbitAngle;
+      planetSystem.rotation.x = .2 + Math.sin(scroll * Math.PI * 1.4) * .17;
+      planetSystem.rotation.z = Math.sin(drift * .012) * .018;
+      orbitPlanets.forEach(({ pivot, body, ring, logo, phase, radius, index }) => {
+        const phaseOffset = phase + orbitAngle * (.7 + index * .04);
+        pivot.position.set(
+          Math.cos(phaseOffset) * radius,
+          Math.sin(phaseOffset) * radius * .44,
+          Math.sin(phaseOffset) * radius * .72,
+        );
+        body.rotation.y = drift * (.12 + index * .01) + index;
+        body.rotation.z = Math.sin(drift * .18 + index) * .12;
+        const selected = projectWorlds[index].id === state.current.activeId;
+        body.scale.setScalar(selected ? 1.22 : .86);
+        ring.material.opacity = selected ? .64 : .25;
+        if (logo) logo.material.opacity = selected ? .98 : .78;
+      });
       camera.position.x = Math.sin(scroll * Math.PI * 1.15) * .36;
       camera.position.y = Math.cos(scroll * Math.PI * .9) * .18;
       camera.position.z = 6.8 - scroll * .42;
@@ -162,8 +229,9 @@ export function WorldlineBackdrop({ activeId, motionOn, progress }: {
     };
     const observer = new ResizeObserver(resize);
     observer.observe(host);
-    const intersection = new IntersectionObserver(([entry]) => { visible = entry.isIntersecting; if (visible) wake(); });
-    intersection.observe(host);
+    const visibilityTarget = host.parentElement ?? host;
+    const intersection = new IntersectionObserver(([entry]) => { visible = entry.isIntersecting; if (visible) wake(); }, { rootMargin: "100% 0px" });
+    intersection.observe(visibilityTarget);
     const unsubscribe = progress.on("change", wake);
     const contextLost = (event: Event) => { event.preventDefault(); host.dataset.fallback = "true"; cancelAnimationFrame(frame); };
     canvas.addEventListener("webglcontextlost", contextLost);
@@ -171,6 +239,7 @@ export function WorldlineBackdrop({ activeId, motionOn, progress }: {
     resize();
 
     return () => {
+      disposed = true;
       cancelAnimationFrame(frame);
       observer.disconnect();
       intersection.disconnect();
@@ -183,6 +252,7 @@ export function WorldlineBackdrop({ activeId, motionOn, progress }: {
         if (mesh.material) (Array.isArray(mesh.material) ? mesh.material : [mesh.material]).forEach((material) => material.dispose());
       });
       glowTexture.dispose();
+      planetTextures.forEach((texture) => texture.dispose());
       renderer.dispose();
       wakeRef.current = () => {};
     };

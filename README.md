@@ -51,6 +51,7 @@ Interactive personal portfolio for Henry Nugraha, now moving from a single-file 
 - Fixed a layout regression where the chapter atmosphere could enter normal document flow and create a large blank gap before The Henry Method.
 - The Worldline now gives each reading stage its own visual focus: the World, Method, or Stack orbit brightens with the active stage while the other paths recede, and the active project node receives a restrained signal pulse.
 - The continuous Worldline now has one progressive 3D backdrop with layered stars, haze, orbit lanes, scroll parallax, and an image fallback; section-specific nebula plates were removed so the reading field stays visually unified.
+- The Worldline backdrop is now a viewport-sized sticky scene that stays behind Work, Method, and Stack; five small logo-skinned planets keep orbiting in depth as the reader scrolls through the field.
 - Project orbit drag now supports both yaw and pitch: horizontal and vertical movement rotate the 3D constellation on separate axes while planet clicks, labels, keyboard controls, reduced motion, and mobile fallback remain intact.
 - The intro loader is now a quiet launch cue: one Henry mark, the opening sentence, a single progress line, and one status signal replace the former multi-orbit loading scene.
 - Responsive composition is validated at 1440px, 1024px, 768px, 390px, and 360px, with a dedicated short-landscape fallback and touch-safe mobile controls.

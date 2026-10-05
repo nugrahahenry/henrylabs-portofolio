@@ -7,13 +7,15 @@ import { createProjectSculpture } from "./project-sculptures";
 
 export type ProjectId = "catmoji" | "nalira" | "canox" | "hengs" | "polara";
 
-const worlds = [
+export const projectWorlds = [
   { id: "catmoji", name: "Catmoji", x: -3.2, y: 1.15, z: .2, color: "#ef8e73", logo: "catmoji.png" },
   { id: "nalira", name: "Nalira", x: 2.25, y: 1.3, z: -.7, color: "#78cdbb", logo: "nalira.svg" },
   { id: "canox", name: "Canox", x: 3.15, y: -.85, z: .2, color: "#8ea2d5", logo: "canox.png" },
   { id: "hengs", name: "Hengs", x: -2.1, y: -1.6, z: -.5, color: "#ebcd89", logo: "hengs.png" },
   { id: "polara", name: "Polara", x: .85, y: -1.7, z: .6, color: "#d5a7c8", logo: "polara.png" },
 ] as const;
+
+const worlds = projectWorlds;
 
 const orbitPhases = [130, 60, 0, 210, 300].map(THREE.MathUtils.degToRad);
 

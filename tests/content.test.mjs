@@ -8,6 +8,7 @@ const read = (path) => readFileSync(new URL(path, root), "utf8");
 test("portfolio surface keeps its core experience contracts", () => {
   const experience = read("components/portfolio-experience.tsx");
   const canvas = read("components/cosmic-canvas.tsx");
+  const backdrop = read("components/worldline-backdrop.tsx");
   const styles = read("app/globals.css");
   const layout = read("app/layout.tsx");
   const robots = read("app/robots.ts");
@@ -90,6 +91,10 @@ test("portfolio surface keeps its core experience contracts", () => {
   assert.match(canvas, /\[\[0, 1\], \[1, 2\], \[2, 4\], \[4, 3\]\]/);
   assert.match(canvas, /LineSegments/);
   assert.doesNotMatch(canvas, /SphereGeometry\(\.87/);
+  assert.match(backdrop, /projectWorlds/);
+  assert.match(backdrop, /TextureLoader/);
+  assert.match(backdrop, /planetSystem\.rotation\.y/);
+  assert.match(backdrop, /SphereGeometry/);
   assert.match(read("components/project-sculptures.ts"), /ExtrudeGeometry/);
   assert.match(styles, /prefers-reduced-motion/);
   assert.match(styles, /html\[data-motion="off"\]/);
@@ -118,6 +123,7 @@ test("portfolio surface keeps its core experience contracts", () => {
   assert.match(styles, /\.client-evidence-map/);
   assert.match(styles, /@keyframes evidence-map-scan/);
   assert.match(styles, /\.field-continuum/);
+  assert.match(styles, /\.worldline-backdrop \{ position: sticky/);
   assert.match(styles, /@keyframes continuum-orbit-breathe/);
   assert.match(styles, /\.method-scene-stage/);
   assert.match(styles, /\.project-signature/);
