@@ -763,3 +763,35 @@ html[data-motion="off"] *, html[data-motion="off"] *::before, html[data-motion="
   .academic-card h3 { font-size: 2rem; }
   .academic-card-foot { grid-template-columns: minmax(0, 1fr) auto; }
 }
+
+/* Maker core: a portrait-ready identity window keeps the active world at the center of the orbit. */
+.maker-core { isolation: isolate; }
+.maker-core::before { content: ""; position: absolute; inset: 11px; border: 1px solid rgba(244,245,239,.12); border-radius: 50%; pointer-events: none; }
+.maker-core-orbit-dot { position: absolute; z-index: 2; left: 50%; top: 50%; width: 6px; height: 6px; border-radius: 50%; background: var(--node-color, var(--cyan)); box-shadow: 0 0 14px currentColor; pointer-events: none; }
+.maker-core-orbit-dot--one { color: var(--cyan); animation: maker-core-dot-one 9s linear infinite; }
+.maker-core-orbit-dot--two { color: var(--pink); animation: maker-core-dot-two 13s linear -4s infinite; }
+.maker-core-portrait { position: relative; z-index: 1; display: grid; place-items: center; width: 75px; aspect-ratio: 1; overflow: hidden; border: 1px solid rgba(110,231,244,.68); border-radius: 43% 57% 52% 48%; background: radial-gradient(circle at 42% 28%, rgba(244,245,239,.2), rgba(110,231,244,.07) 38%, rgba(7,9,27,.84) 74%); box-shadow: 0 0 0 5px rgba(110,231,244,.045), 0 0 28px rgba(110,231,244,.2); transform: rotate(-5deg); transition: border-color .35s ease, box-shadow .35s ease, transform .45s var(--ease); }
+.maker-core:hover .maker-core-portrait { border-color: var(--yellow); box-shadow: 0 0 0 7px rgba(239,201,95,.06), 0 0 38px rgba(110,231,244,.28); transform: rotate(0deg) scale(1.03); }
+.maker-core-portrait-grid { position: absolute; inset: 0; opacity: .42; background: linear-gradient(90deg, transparent 49%, rgba(110,231,244,.28) 50%, transparent 51%), linear-gradient(0deg, transparent 49%, rgba(110,231,244,.22) 50%, transparent 51%); background-size: 19px 19px; mask-image: radial-gradient(circle, black 30%, transparent 80%); }
+.maker-core-portrait::after { content: ""; position: absolute; inset: 14px; border: 1px solid rgba(244,245,239,.18); border-radius: 50%; transform: rotate(21deg); }
+.maker-core-portrait-scan { position: absolute; z-index: 2; top: 13%; left: 7%; width: 86%; height: 1px; background: linear-gradient(90deg, transparent, var(--cyan), transparent); box-shadow: 0 0 9px var(--cyan); animation: maker-portrait-scan 3.8s ease-in-out infinite; }
+.maker-core-portrait small { position: absolute; z-index: 3; bottom: 8px; max-width: none; color: rgba(244,245,239,.62); font-size: .39rem; letter-spacing: .08em; white-space: nowrap; }
+.maker-core > small { position: relative; z-index: 1; max-width: 21ch; }
+@keyframes maker-core-dot-one { from { transform: translate(-50%, -50%) rotate(0deg) translateX(94px); } to { transform: translate(-50%, -50%) rotate(360deg) translateX(94px); } }
+@keyframes maker-core-dot-two { from { transform: translate(-50%, -50%) rotate(210deg) translateX(79px); } to { transform: translate(-50%, -50%) rotate(-150deg) translateX(79px); } }
+@keyframes maker-portrait-scan { 0%, 100% { top: 15%; opacity: .15; } 50% { top: 81%; opacity: .85; } }
+
+@media (max-width: 640px) {
+  .maker-core::before { inset: 8px; }
+  .maker-core-portrait { width: 57px; }
+  .maker-core-portrait small { bottom: 5px; font-size: .31rem; }
+  .maker-core-portrait-grid { background-size: 14px 14px; }
+  .maker-core-portrait::after { inset: 10px; }
+  .maker-core > small { max-width: 19ch; font-size: .43rem; }
+  @keyframes maker-core-dot-one { from { transform: translate(-50%, -50%) rotate(0deg) translateX(69px); } to { transform: translate(-50%, -50%) rotate(360deg) translateX(69px); } }
+  @keyframes maker-core-dot-two { from { transform: translate(-50%, -50%) rotate(210deg) translateX(58px); } to { transform: translate(-50%, -50%) rotate(-150deg) translateX(58px); } }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .maker-core-orbit-dot, .maker-core-portrait-scan { animation: none; }
+}

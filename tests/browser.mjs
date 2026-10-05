@@ -31,6 +31,8 @@ try {
       stackGroups: document.querySelectorAll(".maker-orbit-track").length,
       techNodes: document.querySelectorAll(".maker-tech").length,
       stackInspector: document.querySelectorAll(".maker-orbit-inspector").length,
+      makerPortrait: document.querySelectorAll(".maker-core-portrait").length,
+      makerActiveWorld: document.querySelector(".maker-core")?.dataset.activeWorld ?? "",
       academicSourceLinks: document.querySelectorAll(".academic-card-foot a[href*='github.com']").length,
       academicCards: document.querySelectorAll(".academic-card").length,
       academicStackChips: document.querySelectorAll(".academic-card-stack span").length,
@@ -61,6 +63,8 @@ try {
     assert.equal(result.stackGroups, 3);
     assert.equal(result.techNodes, 21);
     assert.equal(result.stackInspector, 1);
+    assert.equal(result.makerPortrait, 1);
+    assert.equal(result.makerActiveWorld, "catmoji");
     assert.equal(result.academicSourceLinks, 2);
     assert.equal(result.academicCards, 3);
     assert.equal(result.academicStackChips, 9);

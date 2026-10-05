@@ -58,6 +58,8 @@ test("portfolio surface keeps its core experience contracts", () => {
   assert.doesNotMatch(experience, /PhaseBridge/);
   assert.match(experience, /--node-color/);
   assert.match(experience, /maker-orbit-inspector/);
+  assert.match(experience, /maker-core-portrait/);
+  assert.match(experience, /data-active-world=\{activeProject.id\}/);
   assert.match(experience, /client-signal-rail/);
   assert.match(experience, /client-owner-stamp/);
   assert.match(experience, /client-evidence-map/);
@@ -131,6 +133,8 @@ test("portfolio surface keeps its core experience contracts", () => {
   assert.match(styles, /data-visible="true"/);
   assert.match(styles, /\.maker-tech\.is-linked/);
   assert.match(styles, /\.maker-orbit-inspector/);
+  assert.match(styles, /\.maker-core-portrait/);
+  assert.match(styles, /@keyframes maker-portrait-scan/);
   assert.match(styles, /\.star-field--far/);
   assert.match(styles, /\.project-showcase \{[^}]*pointer-events: none/);
   assert.match(styles, /\.project-showcase button, \.project-showcase a \{ pointer-events: auto; \}/);

@@ -57,6 +57,7 @@ Interactive personal portfolio for Henry Nugraha, now moving from a single-file 
 - Tech planets now orbit their factual project owner(s) from the same stack metadata, with active-world focus and a shared outer lane for unmapped tools; the mobile hero keeps the orbit and dossier rail separate so controls do not collide.
 - Switching worlds now smoothly transfers the relevant tech satellites, brightens the active project's tools, and keeps the wide-screen orbit clear of the dossier rail.
 - The selected world now reads as a satellite system: linked tech planets sit outside its scaled body on three quiet orbit lanes, while University Builds uses domain-specific records with flow, stack, and source evidence.
+- Maker Orbit now has a portrait-ready Henry identity core with a truthful brand-mark fallback, active-world telemetry, linked-signal count, and subtle identity points orbiting the center; an approved portrait can be mounted later without changing the interaction model.
 - The intro loader is now a quiet launch cue: one Henry mark, the opening sentence, a single progress line, and one status signal replace the former multi-orbit loading scene.
 - Responsive composition is validated at 1440px, 1024px, 768px, 390px, and 360px, with a dedicated short-landscape fallback and touch-safe mobile controls.
 - A 26-record certificate and badge archive uses a signature record, kind filters, accessible detail viewing, and source PDFs where available.

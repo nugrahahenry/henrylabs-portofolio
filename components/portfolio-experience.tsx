@@ -620,11 +620,18 @@ export function PortfolioExperience() {
             <span className="maker-orbit-path maker-orbit-path--build" aria-hidden="true" />
             <span className="maker-orbit-path maker-orbit-path--interface" aria-hidden="true" />
             <span className="maker-orbit-path maker-orbit-path--systems" aria-hidden="true" />
-            <motion.div className="maker-core" whileHover={motionOn ? { scale: 1.04, rotate: -2 } : undefined} transition={{ type: "spring", stiffness: 230, damping: 18 }}>
-              <span className="maker-core-mark"><Asterisk size={25} /></span>
+            <motion.div className="maker-core" data-active-world={activeProject.id} whileHover={motionOn ? { scale: 1.04, rotate: -2 } : undefined} transition={{ type: "spring", stiffness: 230, damping: 18 }}>
+              <span className="maker-core-orbit-dot maker-core-orbit-dot--one" aria-hidden="true" />
+              <span className="maker-core-orbit-dot maker-core-orbit-dot--two" aria-hidden="true" />
+              <div className="maker-core-portrait" aria-hidden="true">
+                <span className="maker-core-portrait-grid" />
+                <span className="maker-core-mark"><Asterisk size={25} /></span>
+                <span className="maker-core-portrait-scan" />
+                <small>MAKER SIGNAL / {String(activeProject.stack.length).padStart(2, "0")}</small>
+              </div>
               <span className="maker-core-meta">HENRY / MAKER</span>
               <strong>one point<br /><em>of view.</em></strong>
-              <small>products · systems · playful interfaces</small>
+              <small>{activeProject.name} · {activeProject.stack.length} linked signals</small>
             </motion.div>
             {stackGroups.map((group, groupIndex) => <div className={cx("maker-orbit-track", `maker-orbit-track--${groupIndex + 1}`)} key={group.label}>{group.items.map(([label, slug, color], itemIndex) => { const linkedProject = projects.find((project) => project.stack.includes(label)); const linked = activeProject.stack.includes(label); return <button type="button" className={cx("maker-tech", linked && "is-linked", !linkedProject && "is-unmapped")} style={{ "--node-angle": `${itemIndex * (360 / group.items.length)}deg`, "--node-color": `#${color}` } as React.CSSProperties} key={label} title={linkedProject ? `${label} · ${linkedProject.name}` : label} aria-pressed={linked} aria-label={linkedProject ? `Focus ${linkedProject.name} through ${label}` : label} disabled={!linkedProject} onClick={() => focusStackProject(label)}><span className="maker-tech-icon"><TechIcon label={label} slug={slug} color={color} /></span><b>{label}</b></button>; })}</div>)}
           </motion.div>
