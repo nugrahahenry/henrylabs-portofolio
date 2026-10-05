@@ -33,7 +33,8 @@ try {
       stackInspector: document.querySelectorAll(".maker-orbit-inspector").length,
       academicSourceLinks: document.querySelectorAll(".academic-card-foot a[href*='github.com']").length,
       showcaseWorlds: document.querySelectorAll(".project-showcase-index [role='tab']").length,
-      worldChainNodes: document.querySelectorAll(".world-chain-node").length,
+      continuumNodes: document.querySelectorAll(".field-continuum-node").length,
+      continuumRouteStages: document.querySelectorAll(".field-continuum-route > span:not(.field-continuum-route-line)").length,
       heroTelemetry: document.querySelectorAll(".hero-telemetry span").length,
       starFields: document.querySelectorAll(".star-field").length,
       credentialControlHeights: [...document.querySelectorAll(".certificate-feature-switcher button, .certificate-archive-toggle")].map((control) => Math.round(control.getBoundingClientRect().height)),
@@ -57,7 +58,8 @@ try {
     assert.equal(result.stackInspector, 1);
     assert.equal(result.academicSourceLinks, 2);
     assert.equal(result.showcaseWorlds, 5);
-    assert.equal(result.worldChainNodes, 5);
+    assert.equal(result.continuumNodes, 5);
+    assert.equal(result.continuumRouteStages, 3);
     assert.equal(result.heroTelemetry, 3);
     assert.equal(result.starFields, 2);
     assert.ok(result.credentialControlHeights.every((height) => height >= 44), `credential controls must remain touchable: ${result.credentialControlHeights}`);

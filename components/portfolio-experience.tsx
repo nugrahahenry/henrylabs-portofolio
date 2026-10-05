@@ -343,8 +343,6 @@ export function PortfolioExperience() {
   const { scrollYProgress: methodProgress } = useScroll({ target: methodRef, offset: ["start start", "end start"] });
   const methodY = useTransform(methodProgress, [0, 1], [42, 0]);
   const methodImageY = useTransform(methodProgress, [0, 1], [-36, 0]);
-  const methodConstellationX = useTransform(methodProgress, [0, 1], [58, -72]);
-  const methodConstellationRotate = useTransform(methodProgress, [0, 1], [-4, 7]);
   const methodSceneScale = useTransform(methodProgress, [0, .5, 1], [.92, 1, 1.04]);
   const methodSceneY = useTransform(methodProgress, [0, 1], [18, -18]);
   const workArtX = useTransform(workProgress, [0, .35, .72, 1], [-30, 0, 0, 30]);
@@ -565,12 +563,10 @@ export function PortfolioExperience() {
           <span className="field-continuum-orbit field-continuum-orbit--wide" />
           <span className="field-continuum-orbit field-continuum-orbit--mid" />
           <span className="field-continuum-orbit field-continuum-orbit--tight" />
-          <span className="field-continuum-tether field-continuum-tether--one" />
-          <span className="field-continuum-tether field-continuum-tether--two" />
-          <motion.div className="field-continuum-active" style={{ "--continuum-color": activeProject.color } as CSSProperties} animate={motionOn ? { y: [0, -9, 0], rotate: [0, 2, 0] } : undefined} transition={motionOn ? { duration: 6.5, repeat: Infinity, ease: "easeInOut" } : undefined}>
-            <span><img src={activeProject.logo} alt="" /></span><b>{activeProject.name}</b>
-          </motion.div>
-          <span className="field-continuum-label">ACTIVE WORLDLINE / PROJECT → METHOD → STACK</span>
+          <span className="field-continuum-signal field-continuum-signal--one" />
+          <span className="field-continuum-signal field-continuum-signal--two" />
+          <div className="field-continuum-nodes">{projects.map((project, index) => <span className={cx("field-continuum-node", `field-continuum-node--${index + 1}`, project.id === activeProject.id && "is-active")} style={{ "--node-color": project.color } as CSSProperties} key={project.id}><i><img src={project.logo} alt="" /></i><b>{project.name}</b></span>)}</div>
+          <div className="field-continuum-route"><span className="field-continuum-route-line" /><span><i>01</i><b>WORLD</b></span><span><i>02</i><b>METHOD</b></span><span><i>03</i><b>STACK</b></span></div>
         </div>
 
       <motion.section ref={workRef} className="content-section work-section" id="work" aria-labelledby="work-title">
@@ -596,19 +592,17 @@ export function PortfolioExperience() {
         <div className="signal-inner">
           <div className="signal-layout">
             <div className="signal-heading">
-              <p className="section-kicker section-kicker-dark">{t.method.kicker}</p>
+              <p className="section-kicker section-kicker-dark">{t.method.kicker} <span className="worldline-context">/ {activeProject.name}</span></p>
               <motion.h2 id="method-title" style={{ y: motionOn ? methodY : 0 }}>{t.method.title.split("\n").map((line) => <span key={line}>{line}</span>)}</motion.h2>
             </div>
             <div className="signal-copy"><p>{t.method.body}</p><div className="signal-steps" aria-label="The Henry method steps"><motion.span className="signal-progress" aria-hidden="true" style={{ scaleX: motionOn ? methodProgress : 1 }} />{t.method.steps.map((step, index) => <span key={step} className={index === methodStep ? "signal-step--active" : undefined}><i>{String(index + 1).padStart(2, "0")}</i><strong>{step}</strong><small>{index === methodStep ? "current signal" : "next useful move"}</small></span>)}</div></div>
           </div>
           <motion.div className="method-scene" aria-hidden="true" style={{ scale: motionOn ? methodSceneScale : 1, y: motionOn ? methodSceneY : 0 }}><span className="method-scene-label">{t.method.marker} / READING THE SYSTEM</span><div className="method-scene-stage">{t.method.steps.map((step, index) => <span className={cx("method-scene-step", index === methodStep && "is-active")} key={step}><i>{String(index + 1).padStart(2, "0")}</i><strong>{step}</strong></span>)}</div></motion.div>
-          <motion.div className="signal-constellation" aria-hidden="true" style={{ x: motionOn ? methodConstellationX : 0, rotate: motionOn ? methodConstellationRotate : 0 }}><span className="signal-constellation-label">observe / shape / ship</span><span className="signal-constellation-dot dot-a" /><span className="signal-constellation-dot dot-b" /><span className="signal-constellation-dot dot-c" /><span className="signal-constellation-line line-a" /><span className="signal-constellation-line line-b" /><span className="signal-constellation-line line-c" /></motion.div>
         </div>
-        <div className="world-chain" aria-hidden="true"><span className="world-chain-label">05 worlds / 01 maker</span><div className="world-chain-track">{projects.map((project, index) => <span className="world-chain-node" style={{ "--world-color": project.color } as React.CSSProperties} key={project.id}><i><img src={project.logo} alt="" /></i><b>0{index + 1}</b></span>)}</div><span className="world-chain-note">different friction / same instinct</span></div>
       </section>
 
       <section ref={stackRef} className="stack-section" id="stack" aria-labelledby="stack-title" data-visible={stackVisible}>
-        <div className="content-section stack-intro"><div className="section-heading"><div><p className="section-kicker section-kicker-dark">Tech orbit</p><h2 id="stack-title">{t.stack.title}</h2></div><p>{t.stack.body}</p></div></div>
+        <div className="content-section stack-intro"><div className="section-heading"><div><p className="section-kicker section-kicker-dark">Tech orbit <span className="worldline-context">/ {activeProject.name}</span></p><h2 id="stack-title">{t.stack.title}</h2></div><p>{t.stack.body}</p></div></div>
         <div className="maker-orbit content-section" aria-label="Technology stack orbit">
           <motion.div className="maker-orbit-stage" style={{ rotate: motionOn ? stackStageRotate : 0, y: motionOn ? stackStageY : 0, scale: motionOn ? stackStageScale : 1 }}>
             <span className="maker-orbit-path maker-orbit-path--build" aria-hidden="true" />

@@ -35,7 +35,10 @@ test("portfolio surface keeps its core experience contracts", () => {
   assert.doesNotMatch(experience, /loader-system/);
   assert.doesNotMatch(experience, /loader-telemetry/);
   assert.match(experience, /hero-transition/);
-  assert.match(experience, /world-chain/);
+  assert.match(experience, /field-continuum-node/);
+  assert.match(experience, /field-continuum-route/);
+  assert.doesNotMatch(experience, /signal-constellation/);
+  assert.doesNotMatch(experience, /world-chain/);
   assert.match(experience, /project-showcase-index/);
   assert.match(experience, /dossier-art-evidence/);
   assert.match(experience, /access: Record<Language, string>/);
@@ -56,7 +59,7 @@ test("portfolio surface keeps its core experience contracts", () => {
   assert.match(experience, /workProgress/);
   assert.match(experience, /stackStageRotate/);
   assert.match(experience, /field-continuum/);
-  assert.match(experience, /field-continuum-active/);
+  assert.match(experience, /is-active/);
   assert.match(experience, /whileInView=\{motionOn \? \{ opacity: 1, y: 0, scale: 1 \} : undefined\}/);
   assert.match(experience, /filter: "blur\(8px\)"/);
   assert.match(experience, /rotateY: -10/);

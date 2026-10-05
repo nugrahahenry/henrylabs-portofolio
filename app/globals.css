@@ -628,28 +628,45 @@ html[data-motion="off"] *, html[data-motion="off"] *::before, html[data-motion="
   .client-card .client-proof strong { font-size: .66rem; }
 }
 
-/* Continuous field: the project orbit, method, and tools share one visual world. */
+/* Worldline: one project constellation carries the reading path from world to method to stack. */
 .field-continuum { position: relative; isolation: isolate; overflow: clip; background: linear-gradient(180deg, #080c23 0%, #0b1230 48%, #080b21 100%); }
-.field-continuum::before { content: ""; position: absolute; z-index: 0; inset: 0; background: url('/assets/background/cosmic-nebula.png') center / cover; opacity: .14; mix-blend-mode: screen; filter: hue-rotate(198deg) saturate(.9); animation: nebula-pan 48s ease-in-out infinite alternate; pointer-events: none; }
+.field-continuum::before { content: ""; position: absolute; z-index: 0; inset: 0; background: url('/assets/background/cosmic-nebula.png') center / cover; opacity: .16; mix-blend-mode: screen; filter: hue-rotate(198deg) saturate(.9); animation: nebula-pan 48s ease-in-out infinite alternate; pointer-events: none; }
 .field-continuum > section { position: relative; z-index: 1; background: transparent; }
-.field-continuum .work-section::before, .field-continuum .signal-chapter::before, .field-continuum .stack-section::before { opacity: .035; }
+.field-continuum .work-section::before, .field-continuum .signal-chapter::before, .field-continuum .stack-section::before { opacity: .02; }
 .field-continuum .signal-chapter { background: transparent; }
-.field-continuum .work-section { background: radial-gradient(ellipse at 12% 15%, rgba(110,231,244,.08), transparent 28%), linear-gradient(165deg, rgba(12,18,48,.2), rgba(9,13,39,.1) 54%, rgba(17,24,67,.18)); }
-.field-continuum .stack-section { background: radial-gradient(ellipse at 84% 72%, rgba(155,140,255,.11), transparent 31%), linear-gradient(145deg, rgba(7,9,27,.12), rgba(16,22,58,.2) 52%, rgba(9,13,38,.12)); }
-.field-continuum-visual { position: absolute; z-index: 0; top: 0; right: -13vw; width: min(92vw, 1260px); height: 100%; min-height: 3100px; overflow: hidden; opacity: .72; pointer-events: none; }
-.field-continuum-glow { position: absolute; top: 22%; right: 18%; width: 42%; aspect-ratio: 1; border-radius: 50%; background: radial-gradient(circle, color-mix(in srgb, var(--continuum-color, var(--cyan)) 13%, transparent), transparent 68%); filter: blur(24px); }
-.field-continuum-orbit { position: absolute; display: block; border: 1px solid rgba(110,231,244,.18); border-radius: 50%; transform-origin: center; animation: continuum-orbit-breathe 18s ease-in-out infinite alternate; }
-.field-continuum-orbit--wide { top: 5%; right: -28%; width: 112%; height: 27%; transform: rotate(-18deg); border-color: rgba(110,231,244,.23); }
-.field-continuum-orbit--mid { top: 34%; right: -16%; width: 97%; height: 32%; transform: rotate(13deg); border-color: rgba(255,130,200,.2); animation-delay: -5s; }
-.field-continuum-orbit--tight { top: 68%; right: -24%; width: 105%; height: 26%; transform: rotate(-9deg); border-color: rgba(239,201,95,.18); animation-delay: -10s; }
-.field-continuum-tether { position: absolute; display: block; width: 7px; height: 7px; border-radius: 50%; background: var(--cyan); box-shadow: 0 0 22px var(--cyan); animation: continuum-signal 5.6s ease-in-out infinite; }
-.field-continuum-tether--one { top: 21%; left: 18%; }
-.field-continuum-tether--two { top: 57%; right: 23%; color: var(--pink); background: var(--pink); box-shadow: 0 0 22px var(--pink); animation-delay: -2.7s; }
-.field-continuum-active { position: absolute; top: 39%; left: 23%; display: grid; justify-items: center; gap: 7px; color: var(--continuum-color, var(--cyan)); font-family: var(--mono); font-size: .55rem; letter-spacing: .1em; text-transform: uppercase; }
-.field-continuum-active span { display: grid; place-items: center; width: 60px; height: 60px; border: 1px solid color-mix(in srgb, var(--continuum-color, var(--cyan)) 75%, white); border-radius: 50%; background: rgba(7,9,27,.86); box-shadow: 0 0 24px color-mix(in srgb, var(--continuum-color, var(--cyan)) 32%, transparent); }
-.field-continuum-active img { width: 36px; height: 36px; object-fit: contain; border-radius: 9px; }
-.field-continuum-active b { color: rgba(244,245,239,.6); font-size: .51rem; font-weight: 500; }
-.field-continuum-label { position: absolute; top: 31%; left: 24%; color: rgba(244,245,239,.3); font-family: var(--mono); font-size: .48rem; letter-spacing: .12em; text-transform: uppercase; transform: rotate(-4deg); }
+.field-continuum .work-section { background: radial-gradient(ellipse at 12% 15%, rgba(110,231,244,.08), transparent 28%), linear-gradient(165deg, rgba(12,18,48,.16), rgba(9,13,39,.08) 54%, rgba(17,24,67,.14)); }
+.field-continuum .signal-inner { padding-top: 82px; padding-bottom: 92px; }
+.field-continuum .stack-section { background: radial-gradient(ellipse at 84% 72%, rgba(155,140,255,.09), transparent 31%), linear-gradient(145deg, rgba(7,9,27,.1), rgba(16,22,58,.14) 52%, rgba(9,13,38,.1)); }
+.field-continuum .stack-intro { padding-top: 90px; padding-bottom: 42px; }
+.field-continuum .maker-orbit { padding-top: 10px; }
+.field-continuum-visual { position: absolute; z-index: 0; top: 0; right: -10vw; width: min(90vw, 1240px); height: 100%; min-height: 2800px; overflow: hidden; opacity: .82; pointer-events: none; }
+.field-continuum-glow { position: absolute; top: 24%; right: 18%; width: 42%; aspect-ratio: 1; border-radius: 50%; background: radial-gradient(circle, rgba(110,231,244,.09), transparent 68%); filter: blur(24px); }
+.field-continuum-orbit { position: absolute; display: block; border: 1px solid rgba(110,231,244,.15); border-radius: 50%; transform-origin: center; animation: continuum-orbit-breathe 18s ease-in-out infinite alternate; }
+.field-continuum-orbit--wide { top: 4%; right: -28%; width: 112%; height: 28%; transform: rotate(-18deg); border-color: rgba(110,231,244,.21); }
+.field-continuum-orbit--mid { top: 35%; right: -16%; width: 97%; height: 31%; transform: rotate(13deg); border-color: rgba(255,130,200,.17); animation-delay: -5s; }
+.field-continuum-orbit--tight { top: 69%; right: -24%; width: 105%; height: 25%; transform: rotate(-9deg); border-color: rgba(239,201,95,.16); animation-delay: -10s; }
+.field-continuum-signal { position: absolute; display: block; width: 7px; height: 7px; border-radius: 50%; background: var(--cyan); box-shadow: 0 0 22px var(--cyan); animation: continuum-signal 5.6s ease-in-out infinite; }
+.field-continuum-signal--one { top: 20%; left: 17%; }
+.field-continuum-signal--two { top: 59%; right: 21%; background: var(--pink); box-shadow: 0 0 22px var(--pink); animation-delay: -2.7s; }
+.field-continuum-nodes { position: absolute; inset: 0; }
+.field-continuum-node { position: absolute; display: grid; justify-items: center; gap: 6px; color: var(--node-color); font-family: var(--mono); font-size: .5rem; letter-spacing: .08em; text-transform: uppercase; opacity: .22; transform: translate(-50%, -50%); transition: opacity .4s ease, transform .4s var(--ease); }
+.field-continuum-node i { display: grid; place-items: center; width: 48px; height: 48px; border: 1px solid color-mix(in srgb, var(--node-color) 62%, rgba(244,245,239,.35)); border-radius: 50%; background: rgba(7,9,27,.82); box-shadow: 0 0 0 7px color-mix(in srgb, var(--node-color) 6%, transparent), 0 0 22px color-mix(in srgb, var(--node-color) 18%, transparent); }
+.field-continuum-node img { width: 29px; height: 29px; object-fit: contain; border-radius: 7px; }
+.field-continuum-node b { color: rgba(244,245,239,.56); font-size: .48rem; font-weight: 500; }
+.field-continuum-node.is-active { opacity: 1; transform: translate(-50%, -50%) scale(1.12); }
+.field-continuum-node.is-active i { border-color: var(--node-color); box-shadow: 0 0 0 8px color-mix(in srgb, var(--node-color) 9%, transparent), 0 0 32px color-mix(in srgb, var(--node-color) 38%, transparent); }
+.field-continuum-node.is-active b { color: var(--paper); }
+.field-continuum-node--1 { top: 10%; left: 24%; }
+.field-continuum-node--2 { top: 28%; left: 68%; }
+.field-continuum-node--3 { top: 47%; left: 31%; }
+.field-continuum-node--4 { top: 66%; left: 73%; }
+.field-continuum-node--5 { top: 84%; left: 39%; }
+.field-continuum-route { position: absolute; top: 12%; right: 4%; bottom: 12%; display: grid; grid-template-rows: repeat(3, auto); align-content: space-between; width: 84px; padding-left: 15px; color: rgba(244,245,239,.38); font-family: var(--mono); font-size: .48rem; letter-spacing: .1em; text-transform: uppercase; }
+.field-continuum-route-line { position: absolute; top: 4px; bottom: 4px; left: 0; width: 1px; background: linear-gradient(180deg, var(--cyan), rgba(244,245,239,.15) 48%, var(--pink)); }
+.field-continuum-route span:not(.field-continuum-route-line) { display: grid; gap: 3px; }
+.field-continuum-route i { color: var(--cyan); font-style: normal; }
+.field-continuum-route b { color: rgba(244,245,239,.62); font-size: .48rem; font-weight: 500; }
+.worldline-context { color: var(--yellow); }
 @keyframes continuum-orbit-breathe { from { transform: rotate(-18deg) translate3d(-1%, 0, 0) scale(1); } to { transform: rotate(-14deg) translate3d(1%, -1%, 0) scale(1.035); } }
 @keyframes continuum-signal { 0%, 100% { opacity: .28; transform: scale(.72); } 50% { opacity: .95; transform: scale(1.5); } }
 
@@ -666,14 +683,24 @@ html[data-motion="off"] *, html[data-motion="off"] *::before, html[data-motion="
 .loader-status span { color: rgba(244,245,239,.37); font-family: var(--mono); font-size: .58rem; letter-spacing: .08em; text-transform: uppercase; }
 
 @media (max-width: 640px) {
-  .field-continuum-visual { right: -54vw; width: 145vw; min-height: 3200px; opacity: .45; }
-  .field-continuum-active { top: 37%; left: 21%; }
-  .field-continuum-label { top: 29%; left: 22%; max-width: 18ch; line-height: 1.35; }
+  .field-continuum-visual { right: -56vw; width: 148vw; min-height: 3200px; opacity: .5; }
+  .field-continuum .signal-inner { padding-top: 68px; padding-bottom: 76px; }
+  .field-continuum .stack-intro { padding-top: 72px; padding-bottom: 30px; }
+  .field-continuum-node { font-size: .44rem; }
+  .field-continuum-node i { width: 39px; height: 39px; }
+  .field-continuum-node img { width: 23px; height: 23px; }
+  .field-continuum-node--1 { left: 18%; }
+  .field-continuum-node--2 { left: 72%; }
+  .field-continuum-node--3 { left: 22%; }
+  .field-continuum-node--4 { left: 78%; }
+  .field-continuum-node--5 { left: 26%; }
+  .field-continuum-route { right: 3%; width: 56px; padding-left: 9px; font-size: .4rem; }
+  .field-continuum-route b { font-size: .4rem; }
   .loader-mark { margin-top: 22vh; }
   .loader-content h2 { font-size: clamp(3.7rem, 16vw, 5.8rem); }
   .intro-loader::after { right: 20px; left: 20px; bottom: 13%; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .field-continuum-orbit, .field-continuum-tether, .field-continuum::before { animation: none; }
+  .field-continuum-orbit, .field-continuum-signal, .field-continuum::before { animation: none; }
 }
