@@ -26,6 +26,7 @@ import {
 } from "lucide-react";
 import { AnimatePresence, MotionConfig, motion, useInView, useMotionValue, useMotionValueEvent, useReducedMotion, useScroll, useSpring, useTransform } from "motion/react";
 import { CosmicCanvas, type ProjectId } from "./cosmic-canvas";
+import { WorldlineBackdrop } from "./worldline-backdrop";
 
 type Language = "en" | "id";
 type WorldlineStage = "world" | "method" | "stack";
@@ -195,7 +196,7 @@ const copy = {
       contact: "Start a project",
       note: "Open to thoughtful freelance work and the right team.",
     },
-    field: { label: "A living map of HenryLabs", hint: "Drag the field · select a world", inspect: "Inspect dossier", open: "Open project" },
+    field: { label: "A living map of HenryLabs", hint: "Drag X/Y · select a world", inspect: "Inspect dossier", open: "Open project" },
     transition: { eyebrow: "02 / Project field", title: "The signal is live.", body: "Scroll into the systems behind the marks." },
     method: {
       kicker: "The Henry method",
@@ -224,7 +225,7 @@ const copy = {
       contact: "Mulai project",
       note: "Terbuka untuk project freelance dan tim yang tepat.",
     },
-    field: { label: "Peta hidup HenryLabs", hint: "Geser field · pilih sebuah dunia", inspect: "Buka dossier", open: "Buka project" },
+    field: { label: "Peta hidup HenryLabs", hint: "Geser X/Y · pilih sebuah dunia", inspect: "Buka dossier", open: "Buka project" },
     transition: { eyebrow: "02 / Project field", title: "Sinyalnya hidup.", body: "Masuk lebih dalam ke sistem di balik setiap mark." },
     method: {
       kicker: "Cara kerja Henry",
@@ -346,7 +347,6 @@ export function PortfolioExperience() {
   const { scrollYProgress: methodProgress } = useScroll({ target: methodRef, offset: ["start start", "end start"] });
   const { scrollYProgress: worldlineProgress } = useScroll({ target: fieldRef, offset: ["start 72%", "end 30%"] });
   const methodY = useTransform(methodProgress, [0, 1], [42, 0]);
-  const methodImageY = useTransform(methodProgress, [0, 1], [-36, 0]);
   const methodSceneScale = useTransform(methodProgress, [0, .5, 1], [.92, 1, 1.04]);
   const methodSceneY = useTransform(methodProgress, [0, 1], [18, -18]);
   const workArtX = useTransform(workProgress, [0, .35, .72, 1], [-30, 0, 0, 30]);
@@ -566,6 +566,7 @@ export function PortfolioExperience() {
       </section>
 
       <div ref={fieldRef} className="field-continuum" data-active-world={activeProject.id} data-worldline-stage={worldlineStage}>
+        <WorldlineBackdrop activeId={activeProject.id} motionOn={motionOn} progress={worldlineProgress} />
         <div className="field-continuum-visual" aria-hidden="true">
           <span className="field-continuum-glow" />
           <span className="field-continuum-orbit field-continuum-orbit--wide" />
@@ -596,7 +597,6 @@ export function PortfolioExperience() {
         id="method"
         aria-labelledby="method-title"
       >
-        <motion.img className="chapter-atmosphere" src="/assets/background/cosmic-nebula.png" alt="" loading="lazy" style={{ y: motionOn ? methodImageY : 0 }} />
         <div className="signal-inner">
           <div className="signal-layout">
             <div className="signal-heading">

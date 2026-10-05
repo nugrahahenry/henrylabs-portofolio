@@ -213,7 +213,6 @@ html[data-cursor="quiet"] .cursor-guide { opacity: 0; }
 
 .signal-chapter { position: relative; overflow: hidden; background: radial-gradient(ellipse at 78% 24%, rgba(255,130,200,.15), transparent 33%), radial-gradient(ellipse at 18% 82%, rgba(110,231,244,.1), transparent 30%), linear-gradient(180deg, #0b102b 0%, #11163a 100%); color: var(--paper); }
 .signal-chapter::before { content: ""; position: absolute; inset: 0; background: url('/assets/background/cosmic-nebula.png') center / cover; opacity: .11; mix-blend-mode: screen; filter: hue-rotate(28deg) saturate(1.2); animation: nebula-pan 44s ease-in-out infinite alternate; pointer-events: none; }
-.chapter-atmosphere { position: absolute; z-index: 0; inset: -20% -10%; width: 120%; height: 140%; object-fit: cover; opacity: .12; mix-blend-mode: screen; filter: hue-rotate(36deg) saturate(.9); pointer-events: none; }
 .signal-ticker { display: flex; width: max-content; align-items: center; gap: 27px; padding: 18px 24px; border-top: 1px solid rgba(244,245,239,.14); border-bottom: 1px solid rgba(244,245,239,.14); color: var(--cyan); font-family: var(--mono); font-size: .62rem; letter-spacing: .14em; text-transform: uppercase; animation: marquee 26s linear infinite; }
 .signal-ticker span:nth-of-type(2) { color: var(--pink); }.signal-ticker span:nth-of-type(3) { color: var(--yellow); }.signal-ticker svg { color: rgba(244,245,239,.52); }
 .signal-inner { position: relative; width: min(1180px, calc(100% - 46px)); margin: 0 auto; padding: 104px 0 120px; }
@@ -630,16 +629,19 @@ html[data-motion="off"] *, html[data-motion="off"] *::before, html[data-motion="
 
 /* Worldline: one project constellation carries the reading path from world to method to stack. */
 .field-continuum { position: relative; isolation: isolate; overflow: clip; background: linear-gradient(180deg, #080c23 0%, #0b1230 48%, #080b21 100%); }
-.field-continuum::before { content: ""; position: absolute; z-index: 0; inset: 0; background: url('/assets/background/cosmic-nebula.png') center / cover; opacity: .16; mix-blend-mode: screen; filter: hue-rotate(198deg) saturate(.9); animation: nebula-pan 48s ease-in-out infinite alternate; pointer-events: none; }
+.field-continuum::before { content: ""; position: absolute; z-index: 0; inset: 0; background: linear-gradient(180deg, #080c23 0%, #0b1230 48%, #080b21 100%); pointer-events: none; }
 .field-continuum > section { position: relative; z-index: 1; background: transparent; }
 .field-continuum .work-section::before, .field-continuum .signal-chapter::before, .field-continuum .stack-section::before { opacity: .02; }
 .field-continuum .signal-chapter { background: transparent; }
-.field-continuum .work-section { background: radial-gradient(ellipse at 12% 15%, rgba(110,231,244,.08), transparent 28%), linear-gradient(165deg, rgba(12,18,48,.16), rgba(9,13,39,.08) 54%, rgba(17,24,67,.14)); }
+.field-continuum .work-section { background: transparent; }
 .field-continuum .signal-inner { padding-top: 82px; padding-bottom: 92px; }
-.field-continuum .stack-section { background: radial-gradient(ellipse at 84% 72%, rgba(155,140,255,.09), transparent 31%), linear-gradient(145deg, rgba(7,9,27,.1), rgba(16,22,58,.14) 52%, rgba(9,13,38,.1)); }
+.field-continuum .stack-section { background: transparent; }
 .field-continuum .stack-intro { padding-top: 90px; padding-bottom: 42px; }
 .field-continuum .maker-orbit { padding-top: 10px; }
-.signal-chapter > .chapter-atmosphere { position: absolute; z-index: 0; }
+.worldline-backdrop { position: absolute; z-index: 0; inset: 0; overflow: hidden; background: #080c23 url('/assets/background/cosmic-nebula.png') center / cover; opacity: .72; pointer-events: none; }
+.worldline-backdrop::after { content: ""; position: absolute; inset: 0; background: radial-gradient(ellipse at 50% 42%, transparent 0 22%, rgba(7,9,27,.08) 54%, rgba(7,9,27,.54) 100%); pointer-events: none; }
+.worldline-backdrop canvas { display: block; width: 100%; height: 100%; opacity: .9; mix-blend-mode: screen; }
+.worldline-backdrop[data-fallback="true"] canvas { display: none; }
 .field-continuum-visual { position: absolute; z-index: 0; top: 0; right: -10vw; width: min(90vw, 1240px); height: 100%; min-height: 2800px; overflow: hidden; opacity: .82; pointer-events: none; }
 .field-continuum-glow { position: absolute; top: 24%; right: 18%; width: 42%; aspect-ratio: 1; border-radius: 50%; background: radial-gradient(circle, rgba(110,231,244,.09), transparent 68%); filter: blur(24px); }
 .field-continuum-orbit { position: absolute; display: block; border: 1px solid rgba(110,231,244,.15); border-radius: 50%; transform-origin: center; opacity: .54; animation: continuum-orbit-breathe 18s ease-in-out infinite alternate; transition: border-color .8s ease, box-shadow .8s ease, opacity .8s ease; }

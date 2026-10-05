@@ -39,6 +39,7 @@ test("portfolio surface keeps its core experience contracts", () => {
   assert.match(experience, /field-continuum-route/);
   assert.match(experience, /worldlineProgress/);
   assert.match(experience, /WorldlineStage/);
+  assert.match(experience, /WorldlineBackdrop/);
   assert.doesNotMatch(experience, /signal-constellation/);
   assert.doesNotMatch(experience, /world-chain/);
   assert.match(experience, /project-showcase-index/);
@@ -78,6 +79,8 @@ test("portfolio surface keeps its core experience contracts", () => {
   assert.match(robots, /sitemap\.xml/);
   assert.match(sitemap, /changeFrequency: "monthly"/);
   assert.match(canvas, /WebGLRenderer/);
+  assert.match(canvas, /system\.rotation\.x/);
+  assert.match(canvas, /dataset\.pitch/);
   assert.match(canvas, /orbitPhases/);
   assert.match(canvas, /planetSurfaceTexture/);
   assert.match(canvas, /TorusGeometry/);

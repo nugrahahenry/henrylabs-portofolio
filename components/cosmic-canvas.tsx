@@ -232,9 +232,11 @@ export function CosmicCanvas({ activeId, onSelect, onPrevious, onNext, motionOn,
     let pointerMoved = false;
     let pressedPlanet = -1;
     let lastX = 0;
+    let lastY = 0;
     let startX = 0;
     let startY = 0;
     let angle = 0;
+    let pitch = 0;
     const projected = new THREE.Vector3();
     const pointer = new THREE.Vector2();
     const raycaster = new THREE.Raycaster();
@@ -266,6 +268,7 @@ export function CosmicCanvas({ activeId, onSelect, onPrevious, onNext, motionOn,
       if (state.current.motionOn && !dragging) angle += dt * .055;
       // Orbit positions in a shallow ellipse, keeping the field readable at every angle.
       system.rotation.y = Math.sin(elapsed * .12) * .08;
+      system.rotation.x = pitch + Math.sin(elapsed * .09) * .018;
       planets.forEach(({ group, sphere, atmosphere, logoHalo, focusRing, sculpture }, index) => {
         const selected = worlds[index].id === state.current.activeId;
         const scale = selected ? 2 : .94;
@@ -317,6 +320,7 @@ export function CosmicCanvas({ activeId, onSelect, onPrevious, onNext, motionOn,
       host.dataset.ready = "true";
       host.dataset.time = elapsed.toFixed(2);
       host.dataset.angle = angle.toFixed(3);
+      host.dataset.pitch = pitch.toFixed(3);
       if (state.current.motionOn) frame = requestAnimationFrame(render);
     };
     const wake = () => { if (!frame && !disposed) frame = requestAnimationFrame(render); };
@@ -335,6 +339,7 @@ export function CosmicCanvas({ activeId, onSelect, onPrevious, onNext, motionOn,
       pointerMoved = false;
       pressedPlanet = findPlanetAt(event);
       lastX = event.clientX;
+      lastY = event.clientY;
       startX = event.clientX;
       startY = event.clientY;
       canvas.setPointerCapture(event.pointerId);
@@ -343,7 +348,9 @@ export function CosmicCanvas({ activeId, onSelect, onPrevious, onNext, motionOn,
       if (!dragging) return;
       if (Math.hypot(event.clientX - startX, event.clientY - startY) > 6) pointerMoved = true;
       angle += (event.clientX - lastX) * .006;
+      pitch += (event.clientY - lastY) * .006;
       lastX = event.clientX;
+      lastY = event.clientY;
       wake();
     };
     const up = (event: PointerEvent) => {

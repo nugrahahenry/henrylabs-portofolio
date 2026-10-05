@@ -44,6 +44,7 @@ try {
       projectSignatures: document.querySelectorAll(".project-signature").length,
       fieldContinuum: document.querySelectorAll(".field-continuum").length,
       fieldContinuumOrbits: document.querySelectorAll(".field-continuum-orbit").length,
+      worldlineBackdrops: document.querySelectorAll(".worldline-backdrop canvas").length,
     }));
     assert.equal(result.viewport, viewport.width);
     assert.equal(result.scrollWidth, viewport.width);
@@ -70,6 +71,7 @@ try {
     assert.ok(result.projectSignatures >= 1);
     assert.equal(result.fieldContinuum, 1);
     assert.equal(result.fieldContinuumOrbits, 3);
+    assert.equal(result.worldlineBackdrops, 1);
     assert.equal(await page.locator(".certificate-feature-preview > img").getAttribute("src"), "/assets/certificates/previews/google-student-ambassador.png");
     await page.getByRole("button", { name: /Open full archive/ }).click();
     await expect(page.locator(".certificate-card")).toHaveCount(26);
@@ -90,6 +92,19 @@ try {
     await page.locator("#stack").scrollIntoViewIfNeeded();
     await expect(page.locator(".field-continuum-route-stage.is-active b")).toContainText("STACK");
     await expect(page.locator(".field-continuum")).toHaveAttribute("data-worldline-stage", "stack");
+    const worldlineBackdropMetrics = await page.locator(".worldline-backdrop canvas").evaluate((canvas) => new Promise((resolve) => {
+      requestAnimationFrame(() => {
+        const gl = canvas.getContext("webgl2") || canvas.getContext("webgl");
+        if (!gl) return resolve({ gl: false, width: canvas.width, height: canvas.height, painted: false, ready: canvas.parentElement?.getAttribute("data-ready") });
+        const pixels = new Uint8Array(gl.drawingBufferWidth * gl.drawingBufferHeight * 4);
+        gl.readPixels(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight, gl.RGBA, gl.UNSIGNED_BYTE, pixels);
+        let painted = 0;
+        for (let i = 0; i < pixels.length; i += 4) if (pixels[i] > 20 || pixels[i + 1] > 20 || pixels[i + 2] > 20 || pixels[i + 3] > 20) painted++;
+        resolve({ gl: true, painted: painted > pixels.length / 10000, ready: canvas.parentElement?.getAttribute("data-ready") });
+      });
+    }));
+    assert.equal(worldlineBackdropMetrics.painted, true, "Worldline backdrop must contain painted WebGL pixels");
+    assert.equal(worldlineBackdropMetrics.ready, "true", "Worldline backdrop must render after entering the field");
     await page.getByRole("button", { name: /Focus Nalira through Supabase/ }).click({ force: true });
     await expect(page.locator(".maker-orbit-inspector")).toContainText("Nalira");
     await expect(page.locator(".dossier-art-preview")).toHaveAttribute("src", "/assets/projects/nalira-ambient.svg");
@@ -124,6 +139,12 @@ try {
     await page.mouse.up();
     await expect.poll(async () => Number(await scene.getAttribute("data-angle"))).toBeGreaterThan(beforeDrag + .4);
     await page.screenshot({ path: `test-results/${viewport.width}-orbit-drag.png` });
+    const beforePitch = Number(await scene.getAttribute("data-pitch"));
+    await page.mouse.move(bounds.x + bounds.width * .52, bounds.y + bounds.height * .35);
+    await page.mouse.down();
+    await page.mouse.move(bounds.x + bounds.width * .52, bounds.y + bounds.height * .72, { steps: 8 });
+    await page.mouse.up();
+    await expect.poll(async () => Number(await scene.getAttribute("data-pitch"))).toBeGreaterThan(beforePitch + .2);
     const directPlanetLabel = page.locator(".planet-label").nth(1);
     const directPlanetBounds = await directPlanetLabel.boundingBox();
     assert.ok(directPlanetBounds, "Nalira label should be projected for direct canvas click");
