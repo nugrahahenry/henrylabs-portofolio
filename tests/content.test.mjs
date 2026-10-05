@@ -96,6 +96,9 @@ test("portfolio surface keeps its core experience contracts", () => {
   assert.match(backdrop, /planetSystem\.rotation\.y/);
   assert.match(backdrop, /SphereGeometry/);
   assert.match(canvas, /TechOrbitItem/);
+  assert.match(canvas, /projectIds: readonly ProjectId\[\]/);
+  assert.match(canvas, /linkedProjectIndexes/);
+  assert.match(canvas, /selectedProjectIndex/);
   assert.match(canvas, /techPlanetTexture/);
   assert.match(canvas, /techSystem\.rotation\.y/);
   assert.match(read("components/project-sculptures.ts"), /ExtrudeGeometry/);

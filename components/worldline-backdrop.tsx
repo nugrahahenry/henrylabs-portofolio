@@ -175,6 +175,7 @@ export function WorldlineBackdrop({ activeId, motionOn, progress }: {
       const dt = Math.min((time - lastTime) / 1000 || 0, .04);
       lastTime = time;
       const scroll = THREE.MathUtils.clamp(progress.get(), 0, 1);
+      planetSystem.visible = THREE.MathUtils.smoothstep(scroll, .035, .14) > 0;
       if (state.current.motionOn) elapsed += dt;
       const color = projectColors[state.current.activeId];
       (activeGlow.material as THREE.SpriteMaterial).color.setHex(color);

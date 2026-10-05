@@ -251,7 +251,7 @@ const stackGroups = [
   { label: "Systems", items: [["Node.js", "nodedotjs", "339933"], ["n8n", "n8n", "ea4b71"], ["OpenAI", "openai", "ffffff"], ["Laravel", "laravel", "ff2d20"], ["Supabase", "supabase", "3ecf8e"], ["Groq", "groq", "f55036"], ["FastAPI", "fastapi", "009688"], ["WhatsApp", "whatsapp", "25d366"], ["Discord", "discord", "5865f2"]] },
 ];
 
-const techNodes = stackGroups.flatMap((group) => group.items.map(([label, slug, color]) => ({ label, slug, color })));
+const techNodes = stackGroups.flatMap((group) => group.items.map(([label, slug, color]) => ({ label, slug, color, projectIds: projects.filter((project) => project.stack.includes(label)).map((project) => project.id as ProjectId) })));
 
 const academicProjects = [
   { title: "RentalMobil.SG", tag: "OOP · Semester 2", body: "A car-rental web system with vehicle catalog, authentication, booking, payment confirmation, user area, and admin operations.", output: "Booking flow", stack: ["Java", "OOP", "Rental"], color: "#efc95f", linkLabel: "Class build · local" },

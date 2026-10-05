@@ -6,7 +6,7 @@ import * as THREE from "three";
 import { createProjectSculpture } from "./project-sculptures";
 
 export type ProjectId = "catmoji" | "nalira" | "canox" | "hengs" | "polara";
-export type TechOrbitItem = { label: string; slug: string; color: string };
+export type TechOrbitItem = { label: string; slug: string; color: string; projectIds: readonly ProjectId[] };
 
 export const projectWorlds = [
   { id: "catmoji", name: "Catmoji", x: -3.2, y: 1.15, z: .2, color: "#ef8e73", logo: "catmoji.png" },
@@ -247,16 +247,7 @@ export function CosmicCanvas({ activeId, onSelect, onPrevious, onNext, motionOn,
     const planetGroups: THREE.Object3D[] = planets.map(({ group }) => group);
     const techTextures: THREE.Texture[] = [];
     const techSystem = new THREE.Group();
-    techSystem.position.z = -.72;
     system.add(techSystem);
-    const techOrbits = [1.35, 2.02, 2.68].map((radius, index) => {
-      const curve = new THREE.EllipseCurve(0, 0, radius, radius * (.45 + index * .04), 0, Math.PI * 2, false, index * .28);
-      const geometry = new THREE.BufferGeometry().setFromPoints(curve.getPoints(160));
-      const orbit = new THREE.LineLoop(geometry, new THREE.LineBasicMaterial({ color: [0x6ee7f4, 0xff82c8, 0xefc95f][index], transparent: true, opacity: .08, depthWrite: false }));
-      orbit.rotation.x = .62 + index * .16;
-      techSystem.add(orbit);
-      return orbit;
-    });
     const techPlanets = techNodes.map((item, index) => {
       const group = new THREE.Group();
       const radius = .075 + (index % 3) * .012;
@@ -276,7 +267,8 @@ export function CosmicCanvas({ activeId, onSelect, onPrevious, onNext, motionOn,
       mark.scale.setScalar(radius * 1.9);
       group.add(surface, atmosphere, mark);
       techSystem.add(group);
-      return { group, surface, atmosphere, mark, radius, index };
+      const linkedProjectIndexes = item.projectIds.map((projectId) => projectWorlds.findIndex((world) => world.id === projectId)).filter((projectIndex) => projectIndex >= 0);
+      return { group, surface, atmosphere, mark, radius, index, linkedProjectIndexes };
     });
     // A spanning path keeps every world connected without turning the field into a wireframe.
     const networkPairs = [[0, 1], [1, 2], [2, 4], [4, 3]] as const;
@@ -339,6 +331,7 @@ export function CosmicCanvas({ activeId, onSelect, onPrevious, onNext, motionOn,
       lastTime = time;
       if (state.current.motionOn) elapsed += dt;
       const zoom = state.current.motionOn ? THREE.MathUtils.smoothstep(progress.get(), .24, .65) : 1;
+      techSystem.visible = true;
       const portrait = camera.aspect < .9;
       const halfWidth = portrait ? 3.1 : 4.7;
       const fittedDistance = Math.max(10.5, halfWidth / (Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) * camera.aspect));
@@ -378,17 +371,21 @@ export function CosmicCanvas({ activeId, onSelect, onPrevious, onNext, motionOn,
         focusRing.rotation.z = elapsed * (state.current.motionOn ? (selected ? .18 : -.035) : 0);
         focusRing.scale.setScalar(state.current.motionOn && selected ? 1 + Math.sin(elapsed * 2.4 + index) * .045 : 1);
       });
-      techSystem.rotation.y = angle * .22 + elapsed * .018;
-      techSystem.rotation.x = pitch * .16 + Math.sin(elapsed * .1) * .045;
+      techSystem.rotation.y = pitch * .06 + Math.sin(elapsed * .04) * .025;
+      techSystem.rotation.x = Math.sin(elapsed * .1) * .045;
       techSystem.rotation.z = Math.sin(elapsed * .08) * .025;
-      techPlanets.forEach(({ group, surface, atmosphere, mark, radius, index }) => {
+      const selectedProjectIndex = projectWorlds.findIndex((world) => world.id === state.current.activeId);
+      techPlanets.forEach(({ group, surface, atmosphere, mark, radius, index, linkedProjectIndexes }) => {
         const lane = index % 3;
-        const radiusPath = [1.35, 2.02, 2.68][lane] + (Math.floor(index / 3) % 2) * .06;
-        const phase = index * 2.37 + angle * (.32 + lane * .05) + elapsed * (.018 + lane * .006);
+        const anchorIndex = linkedProjectIndexes.includes(selectedProjectIndex) ? selectedProjectIndex : linkedProjectIndexes[0] ?? -1;
+        const belongsToProject = anchorIndex >= 0;
+        const radiusPath = belongsToProject ? .48 + (index % 4) * .07 : 2.55 + (index % 3) * .16;
+        const phase = index * 2.37 + angle * (.18 + lane * .03) + elapsed * (.018 + lane * .006);
+        const anchor = belongsToProject ? planets[anchorIndex].group.position : { x: 0, y: -.25, z: -1.05 };
         group.position.set(
-          Math.cos(phase) * radiusPath,
-          Math.sin(phase) * radiusPath * (.45 + lane * .04),
-          Math.sin(phase * 1.08) * (.28 + lane * .1),
+          anchor.x + Math.cos(phase) * radiusPath,
+          anchor.y + Math.sin(phase) * radiusPath * (.45 + lane * .04),
+          anchor.z + Math.sin(phase * 1.08) * (.28 + lane * .1),
         );
         group.rotation.y = elapsed * (.16 + lane * .04) + index;
         const pulse = state.current.motionOn ? 1 + Math.sin(elapsed * 1.7 + index) * .05 : 1;
