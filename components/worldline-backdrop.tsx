@@ -110,9 +110,7 @@ export function WorldlineBackdrop({ activeId, motionOn, progress }: {
     field.add(activeGlow);
 
     const lanes = [
-      { radius: 2.2, yScale: .55, z: -3.2, color: 0x6ee7f4, opacity: .12, rotation: .28 },
-      { radius: 3.6, yScale: .48, z: -4.2, color: 0xff82c8, opacity: .09, rotation: -.42 },
-      { radius: 5, yScale: .36, z: -5.8, color: 0xefc95f, opacity: .08, rotation: .12 },
+      { radius: 3.6, yScale: .48, z: -4.2, color: 0xff82c8, opacity: .07, rotation: -.42 },
     ].map(({ radius, yScale, z, color, opacity, rotation }) => {
       const curve = new THREE.EllipseCurve(0, 0, radius, radius * yScale, 0, Math.PI * 2, false, rotation);
       const geometry = new THREE.BufferGeometry().setFromPoints(curve.getPoints(160));

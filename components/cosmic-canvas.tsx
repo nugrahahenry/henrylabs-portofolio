@@ -229,14 +229,6 @@ export function CosmicCanvas({ activeId, onSelect, onPrevious, onNext, motionOn,
     }
     const stars = new THREE.Points(new THREE.BufferGeometry().setAttribute("position", new THREE.BufferAttribute(starPositions, 3)), new THREE.PointsMaterial({ color: 0xcce2df, size: .019, transparent: true, opacity: .65 }));
     scene.add(stars);
-    [2.3, 3.5, 4.5].forEach((radius, i) => {
-      const curve = new THREE.EllipseCurve(0, 0, radius, radius * .59, 0, Math.PI * 2, false, -.2);
-      const geometry = new THREE.BufferGeometry().setFromPoints(curve.getPoints(180));
-      const orbit = new THREE.LineLoop(geometry, new THREE.LineBasicMaterial({ color: i === 1 ? 0xe3b889 : 0x86c8c7, transparent: true, opacity: .18 }));
-      orbit.rotation.set(.4, -.1, i * .25);
-      system.add(orbit);
-    });
-
     const loader = new THREE.TextureLoader();
     loader.setCrossOrigin("anonymous");
     const textures: THREE.Texture[] = [];

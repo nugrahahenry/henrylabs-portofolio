@@ -21,6 +21,7 @@ import {
   Menu,
   MessageCircle,
   MousePointer2,
+  PanelRightOpen,
   ShoppingCart,
   Sparkles,
   X,
@@ -340,6 +341,7 @@ export function PortfolioExperience() {
   const motionOn = motionReady && motionPreference && !reducedMotionActive;
   const [loadingStep, setLoadingStep] = useState(0);
   const [heroPhase, setHeroPhase] = useState("intro");
+  const [showProjectShowcase, setShowProjectShowcase] = useState(true);
   const heroRef = useRef<HTMLElement>(null);
   const fieldRef = useRef<HTMLDivElement>(null);
   const workRef = useRef<HTMLElement>(null);
@@ -475,11 +477,17 @@ export function PortfolioExperience() {
     };
   }, [pointerX, pointerY, motionOn]);
 
-  const focusProject = (id: ProjectId) => setActiveId(id);
+  const focusProject = (id: ProjectId) => {
+    setActiveId(id);
+    setShowProjectShowcase(true);
+  };
 
   const focusStackProject = (label: string) => {
     const project = projects.find((candidate) => candidate.stack.includes(label));
-    if (project) setActiveId(project.id);
+    if (project) {
+      setActiveId(project.id);
+      setShowProjectShowcase(true);
+    }
   };
 
   const openProjectDossier = () => {
@@ -552,15 +560,15 @@ export function PortfolioExperience() {
               <div className="frame-topline"><span>{t.field.label}</span><span>{activeProject.name} / {activeProject.status[language]}</span></div>
               <CosmicCanvas activeId={activeId} onSelect={focusProject} onPrevious={() => cycleProject(-1)} onNext={() => cycleProject(1)} motionOn={motionOn} progress={scrollYProgress} techNodes={techNodes} />
               <AnimatePresence mode="wait" initial={false}>
-                <motion.section className="project-showcase" key={activeProject.id} aria-label={`Active project: ${activeProject.name}`} style={{ "--project-showcase-color": activeProject.color } as CSSProperties} initial={motionOn ? { opacity: 0, x: 22 } : false} animate={{ opacity: 1, x: 0 }} exit={motionOn ? { opacity: 0, x: -16 } : undefined} transition={{ duration: motionOn ? .4 : 0, ease: [0.16, 1, 0.3, 1] }}>
-                  <div className="project-showcase-topline"><span>ACTIVE WORLD / {String(projects.findIndex((project) => project.id === activeProject.id) + 1).padStart(2, "0")}</span><div className="project-showcase-nav"><button type="button" onClick={() => cycleProject(-1)} aria-label="Previous project"><ChevronLeft size={13} /></button><button type="button" onClick={() => cycleProject(1)} aria-label="Next project"><ChevronRight size={13} /></button></div></div>
+                {showProjectShowcase ? <motion.section className="project-showcase" key={activeProject.id} aria-label={`Active project: ${activeProject.name}`} style={{ "--project-showcase-color": activeProject.color } as CSSProperties} initial={motionOn ? { opacity: 0, x: 22 } : false} animate={{ opacity: 1, x: 0 }} exit={motionOn ? { opacity: 0, x: -16 } : undefined} transition={{ duration: motionOn ? .4 : 0, ease: [0.16, 1, 0.3, 1] }}>
+                  <div className="project-showcase-topline"><span>ACTIVE WORLD / {String(projects.findIndex((project) => project.id === activeProject.id) + 1).padStart(2, "0")}</span><div className="project-showcase-nav"><button type="button" onClick={() => cycleProject(-1)} aria-label="Previous project"><ChevronLeft size={13} /></button><button type="button" onClick={() => cycleProject(1)} aria-label="Next project"><ChevronRight size={13} /></button><button type="button" className="project-showcase-close" onClick={() => setShowProjectShowcase(false)} aria-label="Close active world" title="Close active world"><X size={13} /></button></div></div>
                   <div className="project-showcase-index" role="tablist" aria-label="Project worlds">{projects.map((project, index) => <button type="button" role="tab" aria-selected={activeId === project.id} className={cx(activeId === project.id && "is-active")} style={{ "--world-color": project.color } as CSSProperties} onClick={() => focusProject(project.id)} aria-label={`Focus ${project.name}`} title={project.name} key={project.id}><span className="project-showcase-index-mark"><img src={project.logo} alt="" /></span><span>{String(index + 1).padStart(2, "0")}</span></button>)}</div>
                   <div className="project-showcase-identity"><span className="project-showcase-mark"><img src={activeProject.logo} alt="" /></span><div><span>{activeProject.status[language]} · {activeProject.visibility[language]}</span><h2>{activeProject.name}</h2></div></div>
                   <p className="project-showcase-summary">{activeProject.summary[language]}</p>
                   <ProjectSignature project={activeProject} language={language} />
                   <div className="project-showcase-stack">{activeProject.stack.slice(0, 4).map((item) => <span key={item}>{item}</span>)}</div>
                   <div className="project-showcase-actions"><button type="button" onClick={openProjectDossier}>{t.field.inspect}<ArrowDown size={14} /></button><a href={activeProject.link} target={activeProject.link.startsWith("http") ? "_blank" : undefined} rel={activeProject.link.startsWith("http") ? "noreferrer" : undefined}>{t.field.open}<ArrowUpRight size={13} /></a></div>
-                </motion.section>
+                </motion.section> : <motion.button className="project-showcase-reopen" type="button" key="reopen-project-showcase" onClick={() => setShowProjectShowcase(true)} aria-expanded="false" aria-label="Open active world"><span><PanelRightOpen size={15} /> Active world</span><small>{activeProject.name}</small></motion.button>}
               </AnimatePresence>
               <div className="frame-bottomline"><span>05 worlds / 01 maker</span><span><MousePointer2 size={13} /> {t.field.hint}</span></div>
             </div>

@@ -143,6 +143,11 @@ try {
       });
     }));
     assert.equal(hasPixels, true, "WebGL scene must contain painted pixels");
+    await page.getByRole("button", { name: "Close active world" }).click();
+    await expect(page.locator(".project-showcase")).toHaveCount(0);
+    await expect(page.getByRole("button", { name: "Open active world" })).toBeVisible();
+    await page.getByRole("button", { name: "Open active world" }).click();
+    await expect(page.getByRole("button", { name: "Close active world" })).toBeVisible();
     await page.screenshot({ path: `test-results/${viewport.width}-orbit.png` });
 
     const bounds = await scene.boundingBox();

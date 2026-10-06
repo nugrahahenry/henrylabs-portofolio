@@ -68,6 +68,7 @@ Interactive personal portfolio for Henry Nugraha, now moving from a single-file 
 - The Maker Orbit's active-link inspector now inherits the selected world's color and uses a restrained re-entry motion when a project is changed, keeping the stack readout connected to the same world language as the constellation.
 - Landscape project showcases now reserve a compact right rail and shift the focused planet into a clear left-side bay, preventing the active dossier from covering the selected world while preserving the orbit controls.
 - Focused project planets now move slightly closer and scale up as the active world, while the Active World rail gains a perspective depth plate, edge highlight, and offset shadow so it reads as a 3D console in the constellation.
+- Active World is now a dismissible reading layer: close it to explore the constellation without a visual block, reopen it from the compact rail button, or select a planet to bring its dossier back. Redundant backdrop ellipses and the static panel connector were removed; functional orbit lanes remain.
 - The intro loader is now a quiet launch cue: one Henry mark, the opening sentence, a single progress line, and one status signal replace the former multi-orbit loading scene.
 - Responsive composition is validated at 1440px, 1024px, 768px, 390px, and 360px, with a dedicated short-landscape fallback and touch-safe mobile controls.
 - A 26-record certificate and badge archive uses a signature record, kind filters, accessible detail viewing, and source PDFs where available.
