@@ -108,6 +108,15 @@ test("portfolio surface keeps its core experience contracts", () => {
   assert.match(backdrop, /galaxyCore/);
   assert.match(backdrop, /sectorSystem/);
   assert.match(backdrop, /sectorNodes/);
+  assert.match(backdrop, /orbitRadius: 3\.6/);
+  assert.match(experience, /sector-navigation/);
+  assert.match(experience, /SatelliteReadout/);
+  assert.match(experience, /anchor: `academic-/);
+  assert.match(experience, /anchor: `client-/);
+  assert.match(canvas, /satelliteWorlds/);
+  assert.match(canvas, /satelliteTexture/);
+  assert.match(canvas, /renderer\.forceContextLoss/);
+  assert.match(styles, /max-height: calc\(100% - 118px\); overflow-y: auto; pointer-events: auto/);
   assert.match(backdrop, /planetSystem\.rotation\.y/);
   assert.match(backdrop, /SphereGeometry/);
   assert.match(canvas, /TechOrbitItem/);

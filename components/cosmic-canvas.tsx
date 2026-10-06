@@ -7,6 +7,10 @@ import * as THREE from "three";
 import { createProjectSculpture } from "./project-sculptures";
 
 export type ProjectId = "catmoji" | "nalira" | "canox" | "hengs" | "polara";
+export type SatelliteId = "rental" | "pos" | "labq" | "yventures" | "soreva";
+export type OrbitId = ProjectId | SatelliteId;
+export type SatelliteWorld = { id: SatelliteId; name: string; color: string; mark: string; x: number; y: number; z: number };
+type OrbitWorld = { id: OrbitId; name: string; color: string; logo?: string; mark?: string; x: number; y: number; z: number };
 export type TechOrbitItem = { label: string; slug: string; color: string; projectIds: readonly ProjectId[] };
 
 export const projectWorlds = [
@@ -17,9 +21,28 @@ export const projectWorlds = [
   { id: "polara", name: "Polara", x: .85, y: -1.7, z: .6, color: "#d5a7c8", logo: "polara.png" },
 ] as const;
 
-const worlds = projectWorlds;
-
 const orbitPhases = [130, 60, 0, 210, 300].map(THREE.MathUtils.degToRad);
+
+function satelliteTexture(color: string, mark: string) {
+  const canvas = document.createElement("canvas");
+  canvas.width = 512;
+  canvas.height = 256;
+  const ctx = canvas.getContext("2d")!;
+  ctx.fillStyle = color;
+  ctx.fillRect(0, 0, 512, 256);
+  for (let y = 0; y < 256; y++) {
+    ctx.fillStyle = `rgba(7,9,27,${.2 + Math.sin(y * .12) * .07 + Math.cos(y * .031) * .1})`;
+    ctx.fillRect(0, y, 512, 1);
+  }
+  ctx.font = "700 48px Arial, sans-serif";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillStyle = "#f4f5ef";
+  [128, 384].forEach((x) => ctx.fillText(mark, x, 128));
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  return texture;
+}
 
 function planetTexture(color: string) {
   const surface = document.createElement("canvas");
@@ -173,15 +196,17 @@ function techPlanetSurfaceTexture(item: TechOrbitItem) {
   return { texture, paintLogo };
 }
 
-export function CosmicCanvas({ activeId, onSelect, onPrevious, onNext, motionOn, progress, techNodes }: {
-  activeId: ProjectId;
-  onSelect: (id: ProjectId) => void;
+export function CosmicCanvas({ activeId, onSelect, onPrevious, onNext, motionOn, progress, techNodes, satelliteWorlds }: {
+  activeId: OrbitId;
+  onSelect: (id: OrbitId) => void;
   onPrevious: () => void;
   onNext: () => void;
   motionOn: boolean;
   progress: MotionValue<number>;
   techNodes: readonly TechOrbitItem[];
+  satelliteWorlds?: readonly SatelliteWorld[];
 }) {
+  const worlds: readonly OrbitWorld[] = satelliteWorlds ?? projectWorlds;
   const hostRef = useRef<HTMLDivElement>(null);
   const labels = useRef<Array<HTMLButtonElement | null>>([]);
   const selectRef = useRef(onSelect);
@@ -210,6 +235,7 @@ export function CosmicCanvas({ activeId, onSelect, onPrevious, onNext, motionOn,
       return;
     }
     renderer.setPixelRatio(Math.min(devicePixelRatio, 1.6));
+    setFallback(false);
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(40, 1, .1, 100);
@@ -238,10 +264,10 @@ export function CosmicCanvas({ activeId, onSelect, onPrevious, onNext, motionOn,
     const planets = worlds.map((world, index) => {
       const group = new THREE.Group();
       group.position.set(world.x, world.y, world.z);
-      const texture = planetTexture(world.color);
+      const texture = world.mark ? satelliteTexture(world.color, world.mark) : planetTexture(world.color);
       textures.push(texture);
       const radius = .37 + index * .02;
-      const sphereMaterial = new THREE.MeshStandardMaterial({ map: texture, color: "#ffffff", metalness: .08, roughness: .72, transparent: true, opacity: .2 });
+      const sphereMaterial = new THREE.MeshStandardMaterial({ map: texture, color: "#ffffff", metalness: .08, roughness: .72, transparent: true, opacity: satelliteWorlds ? 1 : .2 });
       const sphere = new THREE.Mesh(new THREE.SphereGeometry(radius, 48, 32), sphereMaterial);
       const atmosphere = new THREE.Mesh(
         new THREE.SphereGeometry(radius * 1.08, 32, 20),
@@ -257,21 +283,23 @@ export function CosmicCanvas({ activeId, onSelect, onPrevious, onNext, motionOn,
         new THREE.MeshBasicMaterial({ color: world.color, transparent: true, opacity: 0, depthWrite: false }),
       );
       focusRing.rotation.set(.72, -.18, .25);
-      const sculpture = createProjectSculpture(world.id);
+      const sculpture = satelliteWorlds ? new THREE.Group() : createProjectSculpture(world.id as ProjectId);
       sculpture.scale.multiplyScalar(radius * 1.05);
       group.add(sphere, atmosphere, logoHalo, focusRing, sculpture);
-      const logoTexture = loader.load(`/assets/brand/${world.logo}`, (loaded) => {
-        const surfaceTexture = planetSurfaceTexture(loaded.image, world.color);
-        logoTexture.dispose();
-        if (disposed) surfaceTexture.dispose();
-        else {
-          textures.push(surfaceTexture);
-          sphereMaterial.map = surfaceTexture;
-          sphereMaterial.opacity = .15;
-          sphereMaterial.needsUpdate = true;
-          wakeRef.current();
-        }
-      });
+      if (world.logo) {
+        const logoTexture = loader.load(`/assets/brand/${world.logo}`, (loaded) => {
+          const surfaceTexture = planetSurfaceTexture(loaded.image, world.color);
+          logoTexture.dispose();
+          if (disposed) surfaceTexture.dispose();
+          else {
+            textures.push(surfaceTexture);
+            sphereMaterial.map = surfaceTexture;
+            sphereMaterial.opacity = .15;
+            sphereMaterial.needsUpdate = true;
+            wakeRef.current();
+          }
+        });
+      }
       system.add(group);
       return { group, sphere, atmosphere, logoHalo, focusRing, sculpture };
     });
@@ -292,6 +320,7 @@ export function CosmicCanvas({ activeId, onSelect, onPrevious, onNext, motionOn,
           techSurface.paintLogo(loaded.image);
           wakeRef.current();
         }
+        loaded.dispose();
       }, undefined, () => {});
       const surface = new THREE.Mesh(
         new THREE.SphereGeometry(radius, 16, 12),
@@ -313,7 +342,7 @@ export function CosmicCanvas({ activeId, onSelect, onPrevious, onNext, motionOn,
       focusHalo.rotation.set(.78 + lane * .16, .18 + index * .04, .24 + lane * .22);
       group.add(surface, atmosphere, ring, focusHalo);
       techSystem.add(group);
-      const linkedProjectIndexes = item.projectIds.map((projectId) => projectWorlds.findIndex((world) => world.id === projectId)).filter((projectIndex) => projectIndex >= 0);
+      const linkedProjectIndexes = item.projectIds.map((projectId) => worlds.findIndex((world) => world.id === projectId)).filter((projectIndex) => projectIndex >= 0);
       return { group, surface, atmosphere, ring, focusHalo, radius, index, lane, linkedProjectIndexes };
     });
     const techOrbit = new THREE.Group();
@@ -331,7 +360,9 @@ export function CosmicCanvas({ activeId, onSelect, onPrevious, onNext, motionOn,
     techSignal.renderOrder = 2;
     techOrbit.add(techSignal);
     // A spanning path keeps every world connected without turning the field into a wireframe.
-    const networkPairs = [[0, 1], [1, 2], [2, 4], [4, 3]] as const;
+    const networkPairs: readonly (readonly [number, number])[] = satelliteWorlds
+      ? worlds.slice(1).map((_, index) => [index, index + 1] as const)
+      : [[0, 1], [1, 2], [2, 4], [4, 3]] as const;
     const networkPositions = new Float32Array(networkPairs.length * 6);
     const networkGeometry = new THREE.BufferGeometry();
     networkGeometry.setAttribute("position", new THREE.BufferAttribute(networkPositions, 3));
@@ -404,7 +435,7 @@ export function CosmicCanvas({ activeId, onSelect, onPrevious, onNext, motionOn,
         const selected = worlds[index].id === state.current.activeId;
         const scale = selected ? 2.25 : .94;
         group.scale.setScalar(state.current.motionOn ? THREE.MathUtils.damp(group.scale.x, scale, 7, dt) : scale);
-        const phase = orbitPhases[index] + angle;
+        const phase = (satelliteWorlds ? index * Math.PI * 2 / worlds.length + .8 : orbitPhases[index]) + angle;
         const orbitX = Math.cos(phase) * (portrait ? 1.95 : 3.35);
         const orbitY = Math.sin(phase) * 1.45;
         const orbitZ = Math.sin(phase) * .55;
@@ -436,21 +467,21 @@ export function CosmicCanvas({ activeId, onSelect, onPrevious, onNext, motionOn,
       techSystem.rotation.y = pitch * .06 + Math.sin(elapsed * .04) * .025;
       techSystem.rotation.x = Math.sin(elapsed * .1) * .045;
       techSystem.rotation.z = Math.sin(elapsed * .08) * .025;
-      const selectedProjectIndex = projectWorlds.findIndex((world) => world.id === state.current.activeId);
+      const selectedProjectIndex = worlds.findIndex((world) => world.id === state.current.activeId);
       const selectedPlanetPosition = selectedProjectIndex >= 0 ? planets[selectedProjectIndex].group.position : new THREE.Vector3();
       techOrbit.position.copy(selectedPlanetPosition);
-      techOrbit.visible = selectedProjectIndex >= 0;
+      techOrbit.visible = selectedProjectIndex >= 0 && techPlanets.length > 0;
       const activeTechPlanets = techPlanets.filter(({ linkedProjectIndexes }) => linkedProjectIndexes.includes(selectedProjectIndex));
       const activeLanes = new Set(activeTechPlanets.map(({ lane }) => lane));
       techOrbitLanes.forEach((lane, index) => {
         const material = lane.material as THREE.LineBasicMaterial;
-        material.color.set(projectWorlds[selectedProjectIndex]?.color ?? "#78cdbb");
+        material.color.set(worlds[selectedProjectIndex]?.color ?? "#78cdbb");
         const laneFocus = activeLanes.has(index) ? .1 : 0;
         material.opacity = state.current.motionOn ? .1 + laneFocus + (index === 1 ? .04 : 0) + Math.sin(elapsed * .8 + index) * .018 : .16 + laneFocus;
         lane.scale.setScalar(1 + (state.current.motionOn ? Math.sin(elapsed * .65 + index) * .025 : 0));
       });
       techSignal.visible = activeTechPlanets.length > 0;
-      techSignalMaterial.color.set(projectWorlds[selectedProjectIndex]?.color ?? "#78cdbb");
+      techSignalMaterial.color.set(worlds[selectedProjectIndex]?.color ?? "#78cdbb");
       techSignalMaterial.opacity = state.current.motionOn ? .55 + Math.sin(elapsed * 2.4) * .16 : .55;
       if (activeTechPlanets.length > 0) {
         const signalLane = activeTechPlanets[Math.floor(elapsed * .35) % activeTechPlanets.length]?.lane ?? 0;
@@ -519,6 +550,8 @@ export function CosmicCanvas({ activeId, onSelect, onPrevious, onNext, motionOn,
       host.dataset.techCount = String(techNodes.length);
       host.dataset.linkedTechCount = String(techPlanets.filter(({ linkedProjectIndexes }) => linkedProjectIndexes.includes(selectedProjectIndex)).length);
       host.dataset.viewZoom = state.current.viewZoom.toFixed(2);
+      host.dataset.worldCount = String(worlds.length);
+      host.dataset.activeWorld = state.current.activeId;
       if (state.current.motionOn) frame = requestAnimationFrame(render);
     };
     const wake = () => { if (!frame && !disposed) frame = requestAnimationFrame(render); };
@@ -601,12 +634,14 @@ export function CosmicCanvas({ activeId, onSelect, onPrevious, onNext, motionOn,
       signalMaterial.dispose();
       techSignal.geometry.dispose();
       techSignalMaterial.dispose();
+      // React Strict Mode reuses a connected canvas during its effect audit.
+      if (!canvas.isConnected) renderer.forceContextLoss();
       renderer.dispose();
       wakeRef.current = () => {};
     };
-  }, [progress]);
+  }, [progress, satelliteWorlds]);
 
-  return <div ref={hostRef} className={`cosmic-canvas${fallback ? " canvas-fallback" : ""}`} role="group" tabIndex={0} aria-label="Project orbit" onKeyDown={(event) => {
+  return <div ref={hostRef} data-kind={satelliteWorlds ? "satellite" : "main"} data-world-count={worlds.length} data-active-world={activeId} data-tech-count={techNodes.length} className={`cosmic-canvas${fallback ? " canvas-fallback" : ""}`} role="group" tabIndex={0} aria-label="Project orbit" onKeyDown={(event) => {
     if (event.key === "ArrowLeft") { event.preventDefault(); onPrevious(); }
     if (event.key === "ArrowRight") { event.preventDefault(); onNext(); }
   }}>

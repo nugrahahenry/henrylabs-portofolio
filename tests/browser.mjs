@@ -183,10 +183,10 @@ try {
     await expect(scene).toHaveAttribute("data-view-zoom", "0.00");
     await expect(page.locator(".project-showcase")).toHaveCount(0);
     await expect(page.getByRole("button", { name: "Open active world" })).toBeVisible();
-    await page.getByRole("button", { name: "Open active world" }).click({ force: true });
+    await page.getByRole("button", { name: "Open active world" }).click();
     await expect(page.getByRole("button", { name: "Close active world" })).toBeVisible();
     await expect(page.locator(".project-showcase-index [role='tab']")).toHaveCount(5);
-    await page.getByRole("button", { name: "Close active world" }).click({ force: true });
+    await page.getByRole("button", { name: "Close active world" }).click();
     await expect(page.locator(".project-showcase")).toHaveCount(0);
     await expect(page.getByRole("button", { name: "Open active world" })).toBeVisible();
     await page.screenshot({ path: `test-results/${viewport.width}-orbit.png` });
@@ -210,9 +210,9 @@ try {
     assert.ok(directPlanetBounds, "Nalira label should be projected for direct canvas click");
     await page.mouse.click(directPlanetBounds.x + directPlanetBounds.width / 2, directPlanetBounds.y - 30);
     await expect(page.locator(".project-showcase")).toHaveCount(0);
-    await page.getByRole("button", { name: "Open active world" }).click({ force: true });
+    await page.getByRole("button", { name: "Open active world" }).click();
     await expect(page.locator(".project-showcase")).toContainText("Nalira");
-    await page.getByRole("tab", { name: "Focus Canox" }).click({ force: true });
+    await page.getByRole("tab", { name: "Focus Canox" }).click();
     await expect(page.locator(".project-showcase")).toContainText("Canox");
     await expect(scene).toHaveAttribute("data-linked-tech-count", "3");
     await expect(page.locator(".dossier")).toContainText("Canox");

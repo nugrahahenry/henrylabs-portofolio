@@ -178,7 +178,7 @@ export function WorldlineBackdrop({ activeId, motionOn, progress }: {
       );
       highlight.position.set(-radius * .28, radius * .32, radius * .7);
       body.add(highlight);
-      return { pivot, body, ring, highlight, phase, radius, index };
+      return { pivot, body, ring, highlight, phase, orbitRadius: 3.6 + index * .38, index };
     });
 
     const sectorNodes = [
@@ -247,12 +247,12 @@ export function WorldlineBackdrop({ activeId, motionOn, progress }: {
       planetSystem.rotation.y = orbitAngle;
       planetSystem.rotation.x = .2 + Math.sin(scroll * Math.PI * 1.4) * .17;
       planetSystem.rotation.z = Math.sin(drift * .012) * .018;
-      orbitPlanets.forEach(({ pivot, body, ring, highlight, phase, radius, index }) => {
+      orbitPlanets.forEach(({ pivot, body, ring, highlight, phase, orbitRadius, index }) => {
         const phaseOffset = phase + orbitAngle * (.7 + index * .04);
         pivot.position.set(
-          Math.cos(phaseOffset) * radius,
-          Math.sin(phaseOffset) * radius * .44,
-          Math.sin(phaseOffset) * radius * .72,
+          Math.cos(phaseOffset) * orbitRadius,
+          Math.sin(phaseOffset) * orbitRadius * .44,
+          Math.sin(phaseOffset) * orbitRadius * .32,
         );
         body.rotation.y = drift * (.12 + index * .01) + index;
         body.rotation.z = Math.sin(drift * .18 + index) * .12;

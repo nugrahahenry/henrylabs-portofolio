@@ -7,6 +7,7 @@ import {
   ArrowUpRight,
   Asterisk,
   Brackets,
+  BriefcaseBusiness,
   CarFront,
   ChevronDown,
   ChevronLeft,
@@ -14,6 +15,7 @@ import {
   Code2,
   FlaskConical,
   Github,
+  GraduationCap,
   Instagram,
   Linkedin,
   LockKeyhole,
@@ -21,6 +23,7 @@ import {
   Menu,
   MessageCircle,
   MousePointer2,
+  Orbit,
   PanelRightOpen,
   ShoppingCart,
   Sparkles,
@@ -28,12 +31,13 @@ import {
   Zap,
 } from "lucide-react";
 import { AnimatePresence, MotionConfig, motion, useInView, useMotionValue, useMotionValueEvent, useReducedMotion, useScroll, useSpring, useTransform } from "motion/react";
-import { CosmicCanvas, type ProjectId } from "./cosmic-canvas";
+import { CosmicCanvas, type OrbitId, type ProjectId, type SatelliteId, type SatelliteWorld } from "./cosmic-canvas";
 import { SmoothScroll } from "./smooth-scroll";
 import { WorldlineBackdrop } from "./worldline-backdrop";
 
 type Language = "en" | "id";
 type WorldlineStage = "world" | "method" | "stack";
+type Sector = "main" | "university" | "client";
 
 const projects: Array<{
   id: ProjectId;
@@ -268,6 +272,35 @@ const clientProjects = [
   { title: "Soreva Autonomous Content", icon: Instagram, body: "Social-media content automation for grounded discovery, editorial generation, branded media, review, scheduling, and controlled publishing.", context: { en: "Social content operations", id: "Operasional konten sosial" }, ownership: { en: "Henry solo build + Vieri prototype account", id: "Build Henry + akun prototype Vieri" }, output: { en: "Discovery → review → publishing", id: "Discovery → review → publishing" }, boundary: { en: "Prototype account by Vieri", id: "Akun prototype oleh Vieri" }, signal: { en: "Discover → review → publish", id: "Temukan → review → publish" }, color: "#ff82c8" },
 ];
 
+// Satellite records reuse the existing evidence data, not a second set of project claims.
+const universityRecords = academicProjects.map((project, index) => ({
+  ...project,
+  id: (["rental", "pos", "labq"] as const)[index],
+  mark: ["RM", "POS", "LQ"][index],
+  name: project.title,
+  sector: "university" as const,
+  access: project.link ? { en: "Open source", id: "Open source" } : { en: "Local class build", id: "Project kuliah lokal" },
+  ownership: { en: "Solo by Henry", id: "Dibangun sendiri Henry" },
+  anchor: `academic-${index + 1}`,
+}));
+const clientRecords = clientProjects.map((project, index) => ({
+  ...project,
+  id: (["yventures", "soreva"] as const)[index],
+  mark: ["YV", "SC"][index],
+  name: ["Y-Ventures", "Soreva"][index],
+  sector: "client" as const,
+  access: { en: "Private walkthrough", id: "Walkthrough privat" },
+  anchor: `client-${index + 1}`,
+}));
+type SatelliteRecord = (typeof universityRecords)[number] | (typeof clientRecords)[number];
+const toSatelliteWorld = (record: SatelliteRecord, index: number): SatelliteWorld => ({
+  id: record.id, name: record.name, color: record.color, mark: record.mark,
+  x: Math.cos(index * 2.1) * 2.5, y: Math.sin(index * 2.1) * 1.4, z: 0,
+});
+const universityWorlds = universityRecords.map(toSatelliteWorld);
+const clientWorlds = clientRecords.map(toSatelliteWorld);
+const noTechNodes: readonly [] = [];
+
 const certificates = [
   { title: "Class of 2026 Graduation", issuer: "Google Student Ambassador", kind: "Community", date: "Class of 2026", image: "/assets/certificates/previews/google-student-ambassador.png", source: "/assets/certificates/source/google-student-ambassador.pdf", alt: "Google Student Ambassador Class of 2026 graduation certificate for Henry Nugraha" },
   { title: "Gemini Certified Educator", issuer: "Google", kind: "Certification", date: "18 Apr 2026", image: "/assets/certificates/previews/gemini-certified-educator.png", source: "/assets/certificates/source/gemini-certified-educator.pdf", alt: "Gemini Certified Educator certificate for Henry Nugraha" },
@@ -324,9 +357,56 @@ function ProjectSignature({ project, language, compact = false }: { project: (ty
   </div>;
 }
 
+function SatelliteReadout({ record, records, language, motionOn, onSelect, onCycle, onClose }: {
+  record: SatelliteRecord;
+  records: readonly SatelliteRecord[];
+  language: Language;
+  motionOn: boolean;
+  onSelect: (id: SatelliteId) => void;
+  onCycle: (direction: -1 | 1) => void;
+  onClose: () => void;
+}) {
+  const Icon = record.icon;
+  const flow = record.sector === "university" ? record.signal : record.signal[language];
+  const output = record.sector === "university" ? record.output : record.output[language];
+  return <motion.section className="project-showcase satellite-readout" data-lenis-prevent key={record.id}
+    aria-label={`Active project: ${record.name}`} style={{ "--project-showcase-color": record.color } as CSSProperties}
+    initial={motionOn ? { opacity: 0, x: 18 } : false} animate={{ opacity: 1, x: 0 }}
+    exit={motionOn ? { opacity: 0, x: -12 } : undefined} transition={{ duration: motionOn ? .35 : 0 }}>
+    <div className="project-showcase-topline"><span>{record.sector === "university" ? "UNIVERSITY" : "CLIENT WORK"}</span>
+      <div className="project-showcase-nav">
+        <button type="button" aria-label="Previous project" onClick={() => onCycle(-1)}><ChevronLeft size={15} /></button>
+        <button type="button" aria-label="Next project" onClick={() => onCycle(1)}><ChevronRight size={15} /></button>
+        <button type="button" aria-label="Close active world" onClick={onClose}><X size={15} /></button>
+      </div>
+    </div>
+    <div className="satellite-index" aria-label={language === "en" ? "Sector projects" : "Project sektor"}>
+      {records.map((item) => <button type="button" aria-label={`Focus ${item.name}`} aria-pressed={item.id === record.id}
+        key={item.id} style={{ "--world-color": item.color } as CSSProperties} onClick={() => onSelect(item.id)}>{item.mark}</button>)}
+    </div>
+    <div className="project-showcase-identity"><span className="project-showcase-mark"><Icon size={24} /></span>
+      <div><span>{record.access[language]}</span><h2>{record.name}</h2></div>
+    </div>
+    <p className="project-showcase-summary">{record.body}</p>
+    <dl className="satellite-facts">
+      <div><dt>{language === "en" ? "Ownership" : "Kontribusi"}</dt><dd>{record.ownership[language]}</dd></div>
+      <div><dt>{language === "en" ? "Workflow" : "Alur"}</dt><dd>{flow}</dd></div>
+      <div><dt>Output</dt><dd>{output}</dd></div>
+    </dl>
+    <div className="project-showcase-actions">
+      <a href={`#${record.anchor}`}>{language === "en" ? "View evidence" : "Lihat bukti"}<ArrowDown size={14} /></a>
+      {record.sector === "university" && record.link
+        ? <a href={record.link} target="_blank" rel="noreferrer">{language === "en" ? "View source" : "Lihat source"}<ArrowUpRight size={14} /></a>
+        : record.sector === "client" && <a href="#contact">{language === "en" ? "Request walkthrough" : "Minta walkthrough"}<ArrowUpRight size={14} /></a>}
+    </div>
+  </motion.section>;
+}
+
 export function PortfolioExperience() {
   const [language, setLanguage] = useState<Language>("en");
   const [activeId, setActiveId] = useState<ProjectId>("catmoji");
+  const [activeSector, setActiveSector] = useState<Sector>("main");
+  const [activeSatellites, setActiveSatellites] = useState({ university: "rental" as SatelliteId, client: "yventures" as SatelliteId });
   const [activeCertificate, setActiveCertificate] = useState<(typeof certificates)[number] | null>(null);
   const [certificateFilter, setCertificateFilter] = useState<(typeof certificateFilters)[number]>("All");
   const [spotlightIndex, setSpotlightIndex] = useState(0);
@@ -387,6 +467,10 @@ export function PortfolioExperience() {
 
   const t = copy[language];
   const activeProject = projects.find((project) => project.id === activeId) ?? projects[0];
+  const sectorRecords = activeSector === "university" ? universityRecords : clientRecords;
+  const activeSatellite = sectorRecords.find((record) => record.id === (activeSector === "university" ? activeSatellites.university : activeSatellites.client)) ?? sectorRecords[0];
+  const focusedWorld = activeSector === "main" ? activeProject : activeSatellite;
+  const satelliteWorlds = activeSector === "main" ? undefined : activeSector === "university" ? universityWorlds : clientWorlds;
   const filteredCertificates = certificateFilter === "All" ? certificates : certificates.filter((certificate) => certificate.kind === certificateFilter);
   const visibleCertificates = showCertificateArchive ? filteredCertificates : filteredCertificates.slice(0, 5);
   const spotlightPool = visibleCertificates.slice(0, Math.min(5, visibleCertificates.length));
@@ -485,6 +569,7 @@ export function PortfolioExperience() {
     const project = projects.find((candidate) => candidate.stack.includes(label));
     if (project) {
       setActiveId(project.id);
+      setActiveSector("main");
     }
   };
 
@@ -495,6 +580,22 @@ export function PortfolioExperience() {
   const cycleProject = (direction: -1 | 1) => {
     const index = projects.findIndex((project) => project.id === activeId);
     setActiveId(projects[(index + direction + projects.length) % projects.length].id);
+  };
+
+  const selectSatellite = (id: SatelliteId) => {
+    const sector = universityRecords.some((record) => record.id === id) ? "university" : "client";
+    setActiveSatellites((previous) => ({ ...previous, [sector]: id }));
+  };
+  const focusOrbitWorld = (id: OrbitId) => {
+    if (projects.some((project) => project.id === id)) focusProject(id as ProjectId);
+    else selectSatellite(id as SatelliteId);
+  };
+  const cycleOrbitWorld = (direction: -1 | 1) => {
+    if (activeSector === "main") cycleProject(direction);
+    else {
+      const index = sectorRecords.findIndex((record) => record.id === activeSatellite.id);
+      selectSatellite(sectorRecords[(index + direction + sectorRecords.length) % sectorRecords.length].id);
+    }
   };
 
   const cycleSpotlight = (direction: -1 | 1) => {
@@ -554,11 +655,16 @@ export function PortfolioExperience() {
           </motion.div>
 
           <motion.div className="cosmic-frame-wrap" inert={motionOn && heroPhase !== "worlds"} style={{ scale: motionOn ? fieldScale : 1, y: motionOn ? fieldY : 0 }}>
-            <div className="cosmic-frame" style={{ "--active-world-color": activeProject.color } as CSSProperties}>
-              <div className="frame-topline"><span>{t.field.label}</span><span>{activeProject.name} / {activeProject.status[language]}</span></div>
-              <CosmicCanvas activeId={activeId} onSelect={focusProject} onPrevious={() => cycleProject(-1)} onNext={() => cycleProject(1)} motionOn={motionOn} progress={scrollYProgress} techNodes={techNodes} />
+            <div className="cosmic-frame" data-sector={activeSector} style={{ "--active-world-color": focusedWorld.color } as CSSProperties}>
+              <div className="frame-topline"><span>{t.field.label}</span><span>{focusedWorld.name} / {activeSector === "main" ? activeProject.status[language] : activeSatellite.access[language]}</span></div>
+              <div className="sector-navigation" role="group" aria-label={language === "en" ? "Constellation sectors" : "Sektor konstelasi"}>
+                <button type="button" aria-pressed={activeSector === "main"} onClick={() => setActiveSector("main")}><Orbit size={16} /><span>HenryLabs</span><small>05</small></button>
+                <button type="button" aria-pressed={activeSector === "university"} onClick={() => setActiveSector("university")}><GraduationCap size={16} /><span>{language === "en" ? "University" : "Kuliah"}</span><small>03</small></button>
+                <button type="button" aria-pressed={activeSector === "client"} onClick={() => setActiveSector("client")}><BriefcaseBusiness size={16} /><span>{language === "en" ? "Client Work" : "Klien"}</span><small>02</small></button>
+              </div>
+              <CosmicCanvas key={activeSector} activeId={activeSector === "main" ? activeId : activeSatellite.id} onSelect={focusOrbitWorld} onPrevious={() => cycleOrbitWorld(-1)} onNext={() => cycleOrbitWorld(1)} motionOn={motionOn} progress={scrollYProgress} techNodes={activeSector === "main" ? techNodes : noTechNodes} satelliteWorlds={satelliteWorlds} />
               <AnimatePresence mode="wait" initial={false}>
-                {showProjectShowcase ? <motion.section className="project-showcase" key={activeProject.id} aria-label={`Active project: ${activeProject.name}`} style={{ "--project-showcase-color": activeProject.color } as CSSProperties} initial={motionOn ? { opacity: 0, x: 22 } : false} animate={{ opacity: 1, x: 0 }} exit={motionOn ? { opacity: 0, x: -16 } : undefined} transition={{ duration: motionOn ? .4 : 0, ease: [0.16, 1, 0.3, 1] }}>
+                {showProjectShowcase ? (activeSector === "main" ? <motion.section className="project-showcase" data-lenis-prevent key={activeProject.id} aria-label={`Active project: ${activeProject.name}`} style={{ "--project-showcase-color": activeProject.color } as CSSProperties} initial={motionOn ? { opacity: 0, x: 22 } : false} animate={{ opacity: 1, x: 0 }} exit={motionOn ? { opacity: 0, x: -16 } : undefined} transition={{ duration: motionOn ? .4 : 0, ease: [0.16, 1, 0.3, 1] }}>
                   <div className="project-showcase-topline"><span>ACTIVE WORLD / {String(projects.findIndex((project) => project.id === activeProject.id) + 1).padStart(2, "0")}</span><div className="project-showcase-nav"><button type="button" onClick={() => cycleProject(-1)} aria-label="Previous project"><ChevronLeft size={13} /></button><button type="button" onClick={() => cycleProject(1)} aria-label="Next project"><ChevronRight size={13} /></button><button type="button" className="project-showcase-close" onClick={() => setShowProjectShowcase(false)} aria-label="Close active world" title="Close active world"><X size={13} /></button></div></div>
                   <div className="project-showcase-index" role="tablist" aria-label="Project worlds">{projects.map((project, index) => <button type="button" role="tab" aria-selected={activeId === project.id} className={cx(activeId === project.id && "is-active")} style={{ "--world-color": project.color } as CSSProperties} onClick={() => focusProject(project.id)} aria-label={`Focus ${project.name}`} title={project.name} key={project.id}><span className="project-showcase-index-mark"><img src={project.logo} alt="" /></span><span>{String(index + 1).padStart(2, "0")}</span></button>)}</div>
                   <div className="project-showcase-identity"><span className="project-showcase-mark"><img src={activeProject.logo} alt="" /></span><div><span>{activeProject.status[language]} · {activeProject.visibility[language]}</span><h2>{activeProject.name}</h2></div></div>
@@ -566,9 +672,9 @@ export function PortfolioExperience() {
                   <ProjectSignature project={activeProject} language={language} />
                   <div className="project-showcase-stack">{activeProject.stack.slice(0, 4).map((item) => <span key={item}>{item}</span>)}</div>
                   <div className="project-showcase-actions"><button type="button" onClick={openProjectDossier}>{t.field.inspect}<ArrowDown size={14} /></button><a href={activeProject.link} target={activeProject.link.startsWith("http") ? "_blank" : undefined} rel={activeProject.link.startsWith("http") ? "noreferrer" : undefined}>{t.field.open}<ArrowUpRight size={13} /></a></div>
-                </motion.section> : <motion.button className="project-showcase-reopen" type="button" key="reopen-project-showcase" onClick={() => setShowProjectShowcase(true)} aria-expanded="false" aria-label="Open active world"><span><PanelRightOpen size={15} /> Active world</span><small>{activeProject.name}</small></motion.button>}
+                </motion.section> : <SatelliteReadout key={activeSatellite.id} record={activeSatellite} records={sectorRecords} language={language} motionOn={motionOn} onSelect={selectSatellite} onCycle={cycleOrbitWorld} onClose={() => setShowProjectShowcase(false)} />) : <motion.button className="project-showcase-reopen" type="button" key="reopen-project-showcase" onClick={() => setShowProjectShowcase(true)} aria-expanded="false" aria-label="Open active world"><span><PanelRightOpen size={15} /> Active world</span><small>{focusedWorld.name}</small></motion.button>}
               </AnimatePresence>
-              <div className="frame-bottomline"><span>05 worlds / 01 maker</span><span><MousePointer2 size={13} /> {t.field.hint}</span></div>
+              <div className="frame-bottomline"><span>{activeSector === "main" ? "05 worlds" : `${String(sectorRecords.length).padStart(2, "0")} satellites`} / 01 maker</span><span><MousePointer2 size={13} /> {t.field.hint}</span></div>
             </div>
           </motion.div>
           <div className="hero-transition" aria-hidden={heroPhase !== "transition"}>
@@ -651,9 +757,9 @@ export function PortfolioExperience() {
       </section>
       </div>
 
-      <section className="content-section split-section academic-section" id="academic" aria-labelledby="academic-title"><div className="section-heading"><div><p className="section-kicker">University builds</p><h2 id="academic-title">{t.academic.title}</h2></div><p>{t.academic.body}</p></div><div className="academic-runway" aria-hidden="true"><span>SOLO BUILD RECORDS</span><i /><span>SEMESTER 02 → 04</span></div><div className="academic-grid">{academicProjects.map((project, index) => { const AcademicIcon = project.icon; return <article className="academic-card" style={{ "--academic-color": project.color } as React.CSSProperties} key={project.title}><div className="academic-card-top"><span>0{index + 1}</span><small>solo system</small></div><div className="academic-card-visual" aria-hidden="true"><span className="academic-mark"><AcademicIcon size={21} strokeWidth={1.7} /></span><span className="academic-card-orbit academic-card-orbit--one" /><span className="academic-card-orbit academic-card-orbit--two" /></div><div className="academic-card-label"><p>{project.tag}</p><small>OWNED END TO END</small></div><h3>{project.title}</h3><span className="academic-card-body">{project.body}</span><div className="academic-card-signal"><span>FLOW</span><strong>{project.signal}</strong></div><div className="academic-card-stack" aria-label={`${project.title} stack`}>{project.stack.map((item) => <span key={item}>{item}</span>)}</div><div className="academic-card-foot"><span className="academic-card-output"><small>OUTPUT</small><strong>{project.output}</strong></span>{project.link ? <a href={project.link} target="_blank" rel="noreferrer" aria-label={`${project.linkLabel} for ${project.title}`}>{project.linkLabel}<ArrowUpRight size={18} /></a> : <span className="academic-card-local">class build</span>}</div></article>; })}</div></section>
+      <section className="content-section split-section academic-section" id="academic" aria-labelledby="academic-title"><div className="section-heading"><div><p className="section-kicker">University builds</p><h2 id="academic-title">{t.academic.title}</h2></div><p>{t.academic.body}</p></div><div className="academic-runway" aria-hidden="true"><span>SOLO BUILD RECORDS</span><i /><span>SEMESTER 02 → 04</span></div><div className="academic-grid">{academicProjects.map((project, index) => { const AcademicIcon = project.icon; return <article id={`academic-${index + 1}`} tabIndex={-1} className="academic-card" style={{ "--academic-color": project.color } as React.CSSProperties} key={project.title}><div className="academic-card-top"><span>0{index + 1}</span><small>solo system</small></div><div className="academic-card-visual" aria-hidden="true"><span className="academic-mark"><AcademicIcon size={21} strokeWidth={1.7} /></span><span className="academic-card-orbit academic-card-orbit--one" /><span className="academic-card-orbit academic-card-orbit--two" /></div><div className="academic-card-label"><p>{project.tag}</p><small>OWNED END TO END</small></div><h3>{project.title}</h3><span className="academic-card-body">{project.body}</span><div className="academic-card-signal"><span>FLOW</span><strong>{project.signal}</strong></div><div className="academic-card-stack" aria-label={`${project.title} stack`}>{project.stack.map((item) => <span key={item}>{item}</span>)}</div><div className="academic-card-foot"><span className="academic-card-output"><small>OUTPUT</small><strong>{project.output}</strong></span>{project.link ? <a href={project.link} target="_blank" rel="noreferrer" aria-label={`${project.linkLabel} for ${project.title}`}>{project.linkLabel}<ArrowUpRight size={18} /></a> : <span className="academic-card-local">class build</span>}</div></article>; })}</div></section>
 
-      <section className="client-section" id="client-work" aria-labelledby="client-title"><div className="content-section"><div className="section-heading"><div><p className="section-kicker section-kicker-dark">Private evidence</p><h2 id="client-title">{t.client.title}</h2></div><p>{t.client.body}</p></div><div className="client-signal-rail" aria-hidden="true"><span>PRIVATE / SANITIZED EVIDENCE</span><i /><span>02 CASES / OWNER SIGNAL</span></div><div className="client-grid">{clientProjects.map(({ title, icon: Icon, body, context, ownership, output, boundary, signal, color }, index) => <motion.article className="client-card" style={{ "--client-color": color } as React.CSSProperties} key={title} initial={motionOn ? { opacity: 0, x: index === 0 ? -36 : 36, rotate: index === 0 ? -1.2 : 1.2 } : false} whileInView={motionOn ? { opacity: 1, x: 0, rotate: 0 } : undefined} viewport={{ once: false, amount: .3 }} transition={{ duration: .7, delay: index * .08, ease: [0.16, 1, 0.3, 1] }}><div className="client-card-orbit" aria-hidden="true"><span /><span /><span /></div><div className="client-topline"><span>0{index + 1} / PRIVATE EVIDENCE</span><Icon size={21} /></div><div className="client-card-titleline"><h3>{title}</h3><span className="client-owner-stamp">OWNER / HENRY</span></div><p>{body}</p><div className="client-evidence-map" aria-label={`${title} sanitized evidence map`}><div className="client-map-topline"><span>SAFE VIEW / SYSTEM MAP</span><span>NO PRIVATE DATA</span></div><div className="client-map-canvas"><span className="client-map-line client-map-line--one" /><span className="client-map-line client-map-line--two" /><span className="client-map-line client-map-line--three" /><span className="client-map-node client-map-node--one"><i>01</i><b>{signal[language].split(" → ")[0]}</b></span><span className="client-map-node client-map-node--two"><i>02</i><b>{signal[language].split(" → ")[1]}</b></span><span className="client-map-node client-map-node--three"><i>03</i><b>{signal[language].split(" → ")[2]}</b></span><span className="client-map-core"><Icon size={15} /><b>HENRY</b></span></div></div><div className="client-proof"><span><small>{t.client.context}</small><strong>{context[language]}</strong></span><span><small>{t.caseStudy.ownership}</small><strong>{ownership[language]}</strong></span><span><small>{t.client.output}</small><strong>{output[language]}</strong></span><span><small>{t.client.boundary}</small><strong>{boundary[language]}</strong></span></div><a className="client-card-action" href="#contact">{t.client.request} <ArrowUpRight size={15} /></a></motion.article>)}</div></div></section>
+      <section className="client-section" id="client-work" aria-labelledby="client-title"><div className="content-section"><div className="section-heading"><div><p className="section-kicker section-kicker-dark">Private evidence</p><h2 id="client-title">{t.client.title}</h2></div><p>{t.client.body}</p></div><div className="client-signal-rail" aria-hidden="true"><span>PRIVATE / SANITIZED EVIDENCE</span><i /><span>02 CASES / OWNER SIGNAL</span></div><div className="client-grid">{clientProjects.map(({ title, icon: Icon, body, context, ownership, output, boundary, signal, color }, index) => <motion.article id={`client-${index + 1}`} tabIndex={-1} className="client-card" style={{ "--client-color": color } as React.CSSProperties} key={title} initial={motionOn ? { opacity: 0, x: index === 0 ? -36 : 36, rotate: index === 0 ? -1.2 : 1.2 } : false} whileInView={motionOn ? { opacity: 1, x: 0, rotate: 0 } : undefined} viewport={{ once: false, amount: .3 }} transition={{ duration: .7, delay: index * .08, ease: [0.16, 1, 0.3, 1] }}><div className="client-card-orbit" aria-hidden="true"><span /><span /><span /></div><div className="client-topline"><span>0{index + 1} / PRIVATE EVIDENCE</span><Icon size={21} /></div><div className="client-card-titleline"><h3>{title}</h3><span className="client-owner-stamp">OWNER / HENRY</span></div><p>{body}</p><div className="client-evidence-map" aria-label={`${title} sanitized evidence map`}><div className="client-map-topline"><span>SAFE VIEW / SYSTEM MAP</span><span>NO PRIVATE DATA</span></div><div className="client-map-canvas"><span className="client-map-line client-map-line--one" /><span className="client-map-line client-map-line--two" /><span className="client-map-line client-map-line--three" /><span className="client-map-node client-map-node--one"><i>01</i><b>{signal[language].split(" → ")[0]}</b></span><span className="client-map-node client-map-node--two"><i>02</i><b>{signal[language].split(" → ")[1]}</b></span><span className="client-map-node client-map-node--three"><i>03</i><b>{signal[language].split(" → ")[2]}</b></span><span className="client-map-core"><Icon size={15} /><b>HENRY</b></span></div></div><div className="client-proof"><span><small>{t.client.context}</small><strong>{context[language]}</strong></span><span><small>{t.caseStudy.ownership}</small><strong>{ownership[language]}</strong></span><span><small>{t.client.output}</small><strong>{output[language]}</strong></span><span><small>{t.client.boundary}</small><strong>{boundary[language]}</strong></span></div><a className="client-card-action" href="#contact">{t.client.request} <ArrowUpRight size={15} /></a></motion.article>)}</div></div></section>
 
       <section className="content-section proof-section" id="proof" aria-labelledby="proof-title">
         <div className="section-heading"><div><p className="section-kicker">Credentials / 05 featured</p><h2 id="proof-title">{t.proof.title}</h2></div><p>{t.proof.body}</p></div>

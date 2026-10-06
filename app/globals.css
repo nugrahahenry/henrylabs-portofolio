@@ -1012,3 +1012,49 @@ html[data-motion="off"] *, html[data-motion="off"] *::before, html[data-motion="
   .contact-copy::after { right: 2px; }
   .contact-actions .button { min-height: 50px; }
 }
+
+.sector-navigation { position: absolute; z-index: 10; top: 53px; left: 25px; display: flex; gap: 2px; max-width: calc(100% - 50px); padding: 3px; border: 1px solid rgba(210,228,245,.22); background: rgba(7,9,27,.88); }
+.sector-navigation button { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; padding: 8px 12px; color: #bdc8d7; background: transparent; cursor: pointer; font-size: .8rem; letter-spacing: 0; transition: background .22s ease, color .22s ease; }
+.sector-navigation button svg { flex: none; }
+.sector-navigation small { color: #9eafc3; font-family: var(--mono); font-size: .65rem; }
+.sector-navigation button[aria-pressed="true"] { background: rgba(110,231,244,.12); color: var(--cyan); }
+.sector-navigation button:hover { background: rgba(244,245,239,.09); color: var(--paper); }
+.hero-stage[data-phase="intro"] .sector-navigation, .hero-stage[data-phase="transition"] .sector-navigation { visibility: hidden; }
+.satellite-index { display: flex; gap: 8px; padding-block: 10px; border-block: 1px solid rgba(210,228,245,.18); }
+.satellite-index button { width: 44px; height: 44px; border: 1px solid rgba(210,228,245,.22); border-radius: 50%; background: rgba(7,9,27,.75); color: #bdc8d7; cursor: pointer; font-family: var(--mono); font-size: .75rem; letter-spacing: 0; }
+.satellite-index button[aria-pressed="true"], .satellite-index button:hover { border-color: var(--world-color); color: var(--world-color); }
+.satellite-readout .project-showcase-mark { color: var(--project-showcase-color); }
+.satellite-readout h2 { max-width: 100%; font-size: 2rem; line-height: 1.12; letter-spacing: 0; overflow-wrap: anywhere; }
+.satellite-readout .project-showcase-summary { color: #bdc8d7; font-size: .82rem; line-height: 1.55; }
+.satellite-facts { display: grid; gap: 12px; margin: 0; padding-block: 14px; border-top: 1px solid rgba(210,228,245,.18); }
+.satellite-facts div { display: grid; gap: 4px; }
+.satellite-facts dt { color: #9eafc3; font-size: .65rem; }
+.satellite-facts dd { margin: 0; color: var(--paper); font-size: .78rem; line-height: 1.5; }
+.satellite-readout .project-showcase-actions { flex-wrap: wrap; gap: 12px; }
+.satellite-readout .project-showcase-actions a { white-space: normal; font-size: .68rem; line-height: 1.4; }
+.cosmic-canvas[data-kind="satellite"] .planet-label { min-height: 44px; font-size: .75rem; letter-spacing: 0; }
+.academic-card[id], .client-card[id] { scroll-margin-top: 100px; }
+.academic-card[id]:focus-visible, .client-card[id]:focus-visible { outline: 2px solid var(--cyan); outline-offset: 4px; }
+.canvas-fallback { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; }
+.canvas-fallback .planet-label { position: relative; left: auto; top: auto; transform: none !important; min-height: 44px; }
+.canvas-fallback .cosmic-zoom-controls { display: none; }
+
+@media (min-width: 641px) {
+  .cosmic-frame-wrap { padding-top: 92px; padding-bottom: 50px; }
+  .cosmic-frame { height: calc(100svh - 142px); min-height: 0; aspect-ratio: auto; }
+  .project-showcase { max-height: calc(100% - 118px); overflow-y: auto; pointer-events: auto; overscroll-behavior: contain; scrollbar-width: thin; scrollbar-color: rgba(210,228,245,.4) transparent; }
+}
+
+@media (max-width: 640px) {
+  .sector-navigation { top: 48px; left: 14px; max-width: calc(100% - 28px); width: calc(100% - 28px); }
+  .sector-navigation button { flex: 1; min-width: 0; padding-inline: 6px; gap: 5px; font-size: .72rem; }
+  .sector-navigation small { display: none; }
+  .satellite-readout h2 { font-size: 1.8rem; }
+  .satellite-readout .project-showcase-nav button { width: 44px; height: 44px; }
+  .satellite-readout .project-showcase-actions a { min-height: 44px; }
+}
+
+@media (orientation: landscape) and (max-width: 900px) and (max-height: 620px) {
+  .cosmic-frame .cosmic-canvas { top: 106px; bottom: 34px; }
+  .cosmic-canvas[data-kind="satellite"] .planet-label { font-size: .65rem; padding-inline: 5px; }
+}
