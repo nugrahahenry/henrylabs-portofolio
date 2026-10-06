@@ -151,7 +151,25 @@ function techPlanetSurfaceTexture(item: TechOrbitItem) {
   const texture = new THREE.CanvasTexture(surface);
   texture.colorSpace = THREE.SRGBColorSpace;
   texture.wrapS = THREE.RepeatWrapping;
-  return texture;
+  const paintLogo = (image: HTMLImageElement) => {
+    const drawImageMark = (centerX: number, centerY: number, size: number, opacity: number) => {
+      const imageWidth = image.naturalWidth || image.width;
+      const imageHeight = image.naturalHeight || image.height;
+      const scale = Math.min(size / imageWidth, size / imageHeight);
+      context.save();
+      context.globalAlpha = opacity;
+      context.beginPath();
+      context.arc(centerX, centerY, size * .44, 0, Math.PI * 2);
+      context.clip();
+      context.drawImage(image, centerX - imageWidth * scale / 2, centerY - imageHeight * scale / 2, imageWidth * scale, imageHeight * scale);
+      context.restore();
+    };
+    drawImageMark(256, 128, 64, 1);
+    drawImageMark(78, 94, 42, .48);
+    drawImageMark(434, 94, 42, .48);
+    texture.needsUpdate = true;
+  };
+  return { texture, paintLogo };
 }
 
 export function CosmicCanvas({ activeId, onSelect, onPrevious, onNext, motionOn, progress, techNodes }: {
@@ -220,6 +238,7 @@ export function CosmicCanvas({ activeId, onSelect, onPrevious, onNext, motionOn,
     });
 
     const loader = new THREE.TextureLoader();
+    loader.setCrossOrigin("anonymous");
     const textures: THREE.Texture[] = [];
     let disposed = false;
     const planets = worlds.map((world, index) => {
@@ -271,8 +290,15 @@ export function CosmicCanvas({ activeId, onSelect, onPrevious, onNext, motionOn,
       const lane = index % 3;
       const radius = .09 + (index % 3) * .012;
       const color = `#${item.color}`;
-      const texture = techPlanetSurfaceTexture(item);
+      const techSurface = techPlanetSurfaceTexture(item);
+      const texture = techSurface.texture;
       techTextures.push(texture);
+      loader.load(`https://cdn.simpleicons.org/${item.slug}/${item.color}`, (loaded) => {
+        if (!disposed) {
+          techSurface.paintLogo(loaded.image);
+          wakeRef.current();
+        }
+      }, undefined, () => {});
       const surface = new THREE.Mesh(
         new THREE.SphereGeometry(radius, 16, 12),
         new THREE.MeshStandardMaterial({ map: texture, color: "#ffffff", emissive: color, emissiveIntensity: .22, metalness: .14, roughness: .66, transparent: true, opacity: .82 }),

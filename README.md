@@ -62,6 +62,7 @@ Interactive personal portfolio for Henry Nugraha, now moving from a single-file 
 - Tech satellites now read as miniature planets rather than colored dots: each has a transparent spherical mark, dimensional atmosphere, a tilted micro-ring, a safer elliptical clearance from the active project, and quieter treatment when it belongs to another world.
 - Tech marks now wrap around an equirectangular planet surface and rotate with the sphere; medium landscape layouts also reserve a readable Active World rail so project copy wins over decorative satellites.
 - Active project satellites now use a second rail guard on wide screens, compressing only the dossier-facing side of their orbit so the project explanation remains readable without removing the constellation.
+- Tech satellites now try the same Simple Icons marks used by the accessible stack surface, painted onto the spherical texture with the existing monogram as a failure-safe fallback.
 - The intro loader is now a quiet launch cue: one Henry mark, the opening sentence, a single progress line, and one status signal replace the former multi-orbit loading scene.
 - Responsive composition is validated at 1440px, 1024px, 768px, 390px, and 360px, with a dedicated short-landscape fallback and touch-safe mobile controls.
 - A 26-record certificate and badge archive uses a signature record, kind filters, accessible detail viewing, and source PDFs where available.

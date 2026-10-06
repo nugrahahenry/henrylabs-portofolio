@@ -117,6 +117,8 @@ test("portfolio surface keeps its core experience contracts", () => {
   assert.match(canvas, /techOrbitLanes/);
   assert.match(canvas, /anchorRadius/);
   assert.match(canvas, /techPlanetSurfaceTexture/);
+  assert.match(canvas, /cdn\.simpleicons\.org/);
+  assert.match(canvas, /paintLogo/);
   assert.match(canvas, /TorusGeometry\(radius \* 1\.42/);
   assert.match(canvas, /radiusPath = belongsToProject/);
   assert.match(canvas, /targetY = anchor\.y \+ Math\.sin\(phase\) \* radiusPath \* \(\.7/);
