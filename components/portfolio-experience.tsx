@@ -341,7 +341,7 @@ export function PortfolioExperience() {
   const motionOn = motionReady && motionPreference && !reducedMotionActive;
   const [loadingStep, setLoadingStep] = useState(0);
   const [heroPhase, setHeroPhase] = useState("intro");
-  const [showProjectShowcase, setShowProjectShowcase] = useState(true);
+  const [showProjectShowcase, setShowProjectShowcase] = useState(false);
   const heroRef = useRef<HTMLElement>(null);
   const fieldRef = useRef<HTMLDivElement>(null);
   const workRef = useRef<HTMLElement>(null);
@@ -479,14 +479,12 @@ export function PortfolioExperience() {
 
   const focusProject = (id: ProjectId) => {
     setActiveId(id);
-    setShowProjectShowcase(true);
   };
 
   const focusStackProject = (label: string) => {
     const project = projects.find((candidate) => candidate.stack.includes(label));
     if (project) {
       setActiveId(project.id);
-      setShowProjectShowcase(true);
     }
   };
 
