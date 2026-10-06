@@ -84,6 +84,40 @@ try {
     assert.equal(result.worldlineBackdrops, 1);
     assert.equal(result.worldlineBackdropPosition, "fixed");
     assert.equal(result.scrollDriver, "lenis-gsap");
+    const evidenceTheme = await page.evaluate(() => {
+      const style = (selector) => getComputedStyle(document.querySelector(selector));
+      return {
+        proofText: style(".proof-section").color,
+        credentialText: style(".certificate-card").color,
+        clientText: style(".client-card > p").color,
+        credentialMatte: style(".certificate-feature-preview").backgroundColor,
+        clientBackground: style(".client-section").backgroundColor,
+        proofBackground: style(".proof-section").backgroundColor,
+        clientMapBorder: style(".client-evidence-map").borderLeftWidth,
+      };
+    });
+    assert.equal(evidenceTheme.proofText, "rgb(244, 245, 239)");
+    assert.equal(evidenceTheme.credentialText, evidenceTheme.proofText);
+    assert.equal(evidenceTheme.clientText, "rgb(189, 200, 215)");
+    assert.equal(evidenceTheme.credentialMatte, "rgb(12, 18, 34)");
+    assert.equal(evidenceTheme.clientBackground, "rgba(0, 0, 0, 0)");
+    assert.equal(evidenceTheme.proofBackground, "rgba(0, 0, 0, 0)");
+    assert.equal(evidenceTheme.clientMapBorder, "0px", "client map must not form a nested card");
+    for (const [selector, name] of [["#client-work", "private-evidence"], ["#proof", "credentials"]]) {
+      await page.locator(selector).evaluate((section) => window.scrollTo({ top: scrollY + section.getBoundingClientRect().top - 96, behavior: "instant" }));
+      await expect(page.locator(`${selector} h2`)).toBeInViewport();
+      await page.screenshot({ path: `test-results/${viewport.width}-${name}.png` });
+    }
+    await page.locator(".certificate-feature").screenshot({ path: `test-results/${viewport.width}-credential-feature.png` });
+    await page.locator(".client-card").first().evaluate((card) => window.scrollTo({ top: scrollY + card.getBoundingClientRect().top - 96, behavior: "instant" }));
+    await expect(page.locator(".client-card").first()).toBeInViewport();
+    await page.locator(".client-grid").screenshot({ path: `test-results/${viewport.width}-client-cards.png` });
+    const clientOverlaps = await page.locator(".client-grid").evaluate((grid) => [...grid.querySelectorAll(".client-card")].some((card) => {
+      const proof = card.querySelector(".client-proof").getBoundingClientRect();
+      const action = card.querySelector(".client-card-action").getBoundingClientRect();
+      return proof.bottom > action.top;
+    }));
+    assert.equal(clientOverlaps, false, "client ownership must not collide with the walkthrough action");
     assert.equal(await page.locator(".certificate-feature-preview > img").getAttribute("src"), "/assets/certificates/previews/google-student-ambassador.png");
     await page.getByRole("button", { name: /Open full archive/ }).click();
     await expect(page.locator(".certificate-card")).toHaveCount(26);
@@ -197,6 +231,9 @@ try {
     await page.locator(".certificate-feature-preview").click();
     await page.locator('[role="dialog"]').waitFor();
     assert.match(await page.locator('[role="dialog"]').innerText(), /Google Student Ambassador/i);
+    assert.equal(await page.locator(".certificate-modal").evaluate((modal) => getComputedStyle(modal).backgroundColor), "rgb(12, 18, 34)");
+    assert.equal(await page.locator(".certificate-modal-image img").evaluate((image) => image.complete && image.naturalWidth > 0), true);
+    await page.screenshot({ path: `test-results/${viewport.width}-credential-modal.png` });
     await expect.poll(async () => (await page.locator(".certificate-modal-close").boundingBox())?.height ?? 0).toBeGreaterThanOrEqual(44);
     await page.keyboard.press("Escape");
     await page.locator('[role="dialog"]').waitFor({ state: "detached" });

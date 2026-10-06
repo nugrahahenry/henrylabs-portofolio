@@ -864,3 +864,89 @@ html[data-motion="off"] *, html[data-motion="off"] *::before, html[data-motion="
   .academic-section { background: linear-gradient(180deg, rgba(7,9,27,.16), rgba(7,9,27,.58)), radial-gradient(ellipse at 10% 11%, rgba(110,231,244,.13), transparent 32%), radial-gradient(ellipse at 90% 86%, rgba(155,140,255,.14), transparent 35%); }
   .academic-card { backdrop-filter: blur(5px); }
 }
+
+/* Evidence shares the cosmic field; original documents retain their own colors. */
+.client-section, .proof-section, .certificate-modal {
+  --evidence-text: #f4f5ef;
+  --evidence-muted: #bdc8d7;
+  --evidence-subtle: #9eafc3;
+  --evidence-line: rgba(210,228,245,.22);
+  --evidence-surface: rgba(7,9,27,.88);
+  --evidence-matte: #0c1222;
+  --ink: var(--evidence-text);
+  --muted: var(--evidence-muted);
+  --line: var(--evidence-line);
+  color: var(--evidence-text);
+}
+.client-section { background: linear-gradient(180deg, rgba(7,9,27,.38), rgba(7,9,27,.7) 50%, rgba(7,9,27,.38)); }
+.proof-section { background: linear-gradient(180deg, rgba(7,9,27,.38), rgba(7,9,27,.62) 48%, rgba(7,9,27,.38)); }
+.client-section .section-heading > p, .proof-section .section-heading > p { color: var(--evidence-muted); }
+.proof-section .section-kicker, .proof-count strong { color: var(--yellow); }
+.client-section .client-card, .proof-section .certificate-card {
+  border-color: var(--evidence-line);
+  background: var(--evidence-surface);
+  color: var(--evidence-text);
+  box-shadow: none;
+}
+.client-section .client-card {
+  display: flex;
+  flex-direction: column;
+  min-height: 640px;
+  padding: 28px;
+  background: linear-gradient(145deg, color-mix(in srgb, var(--client-color) 8%, var(--evidence-surface)), var(--evidence-surface) 60%);
+}
+.client-section .client-card:hover { border-color: var(--client-color); }
+.client-section .client-card h3 { margin: 0; font-size: 2.5rem; line-height: 1.08; letter-spacing: 0; }
+.client-card > p { margin-top: 16px; color: var(--evidence-muted); font-size: .95rem; }
+.client-signal-rail { color: var(--evidence-subtle); letter-spacing: 0; }
+.client-owner-stamp { max-width: 100%; font-size: .65rem; letter-spacing: 0; }
+.client-evidence-map { border: 0; border-block: 1px solid var(--evidence-line); background: transparent; padding: 14px 0; }
+.client-map-topline { color: var(--evidence-subtle); font-size: .6rem; letter-spacing: 0; }
+.client-map-node b { color: var(--evidence-muted); font-size: .6rem; letter-spacing: 0; }
+.client-card .client-proof { padding-top: 0; border-top: 0; gap: 18px; margin-block: 20px 26px; }
+.client-card .client-proof small { color: var(--evidence-subtle); font-size: .65rem; letter-spacing: 0; }
+.client-card .client-proof strong { min-height: 0; color: var(--evidence-text); font-size: .875rem; line-height: 1.5; }
+.client-card-action { position: static; margin-top: auto; width: 100%; font-size: .7rem; letter-spacing: 0; border-color: var(--evidence-line); }
+.proof-section .certificate-card:hover { border-color: var(--yellow); box-shadow: none; }
+.proof-section .certificate-preview, .proof-section .certificate-feature-preview, .certificate-modal-image { background: var(--evidence-matte); }
+.certificate-feature-preview img { filter: drop-shadow(0 18px 24px rgba(0,0,0,.32)); }
+.certificate-feature:hover .certificate-feature-preview img { filter: drop-shadow(0 24px 28px rgba(0,0,0,.4)); }
+.proof-section .certificate-card:hover .certificate-preview img { filter: none; }
+.certificate-feature-ghost { border-color: var(--evidence-line); background: var(--evidence-matte); box-shadow: 0 16px 28px rgba(0,0,0,.26); }
+.certificate-meta { color: var(--yellow); font-size: .65rem; letter-spacing: 0; }
+.certificate-meta span + span::before { color: var(--evidence-subtle); }
+.certificate-copy h3 { font-size: 1.25rem; line-height: 1.2; letter-spacing: 0; }
+.proof-section .certificate-feature-copy h3 { max-width: 14ch; font-size: 3rem; line-height: 1.05; letter-spacing: 0; overflow-wrap: anywhere; }
+.certificate-feature-title { gap: 14px; }
+.certificate-feature-switcher { gap: 8px; font-size: .7rem; letter-spacing: 0; font-variant-numeric: tabular-nums; }
+.proof-section .certificate-feature-switcher button { width: 44px; height: 44px; background: var(--evidence-matte); color: var(--evidence-text); }
+.proof-section .certificate-feature-switcher button:hover { background: var(--cyan); border-color: var(--cyan); color: var(--space); }
+.certificate-filters button { background: var(--evidence-surface); font-size: .7rem; letter-spacing: 0; }
+.certificate-filters button:hover, .certificate-filters button.is-active { background: var(--yellow); border-color: var(--yellow); color: var(--space); }
+.certificate-feature-specs small, .certificate-muted { color: var(--evidence-subtle); }
+.certificate-foot, .certificate-feature-source { font-size: .7rem; letter-spacing: 0; }
+.certificate-feature-open, .certificate-foot a { color: var(--cyan); border-color: var(--evidence-line); }
+.certificate-feature-open:hover, .certificate-foot a:hover, .certificate-feature-source:hover { color: var(--yellow); border-color: var(--yellow); }
+.certificate-archive-toggle { background: var(--evidence-surface); color: var(--cyan); }
+.certificate-archive-toggle:hover { background: var(--evidence-matte); border-color: var(--cyan); color: var(--evidence-text); }
+.certificate-modal { background: var(--evidence-matte); color-scheme: dark; scrollbar-color: var(--evidence-subtle) var(--evidence-matte); }
+.certificate-modal-copy { background: var(--evidence-surface); }
+.certificate-modal-copy h2 { max-width: 14ch; font-size: 2.25rem; line-height: 1.12; letter-spacing: 0; overflow-wrap: anywhere; }
+.certificate-modal-close { border-color: var(--evidence-line); background: var(--evidence-matte); }
+.certificate-modal-close:hover { background: var(--cyan); border-color: var(--cyan); color: var(--space); }
+.proof-section ::selection, .client-section ::selection, .certificate-modal ::selection { background: var(--cyan); color: var(--space); }
+
+@media (max-width: 900px) {
+  .proof-section .certificate-feature-copy h3 { font-size: 2.25rem; }
+}
+@media (max-width: 640px) {
+  .client-section .client-card { min-height: 0; padding: 23px; }
+  .client-section .client-card h3 { font-size: 2rem; }
+  .client-map-topline { gap: 8px; font-size: .55rem; }
+  .client-map-node b { font-size: .55rem; }
+  .client-card .client-proof { grid-template-columns: 1fr; gap: 16px; }
+  .client-card-action { padding-top: 18px; }
+  .proof-section .certificate-feature-copy h3, .certificate-modal-copy h2 { font-size: 2rem; }
+  .proof-section .certificate-feature-preview { min-height: 248px; }
+  .certificate-feature-specs small { font-size: .65rem; letter-spacing: 0; }
+}
