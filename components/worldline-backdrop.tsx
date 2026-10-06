@@ -92,7 +92,35 @@ export function WorldlineBackdrop({ activeId, motionOn, progress }: {
     const stars = new THREE.Points(starGeometry, new THREE.PointsMaterial({ vertexColors: true, size: .035, sizeAttenuation: true, transparent: true, opacity: .62, depthWrite: false }));
     starField.add(stars);
 
+    const galaxyCount = 1180;
+    const galaxyPositions = new Float32Array(galaxyCount * 3);
+    const galaxyColors = new Float32Array(galaxyCount * 3);
+    const galaxyColor = new THREE.Color();
+    const galaxyPalette = ["#d9fbf4", "#6ee7f4", "#9b8cff", "#ff82c8", "#efc95f"];
+    for (let i = 0; i < galaxyCount; i++) {
+      const arm = i % 4;
+      const radius = .35 + Math.pow((i * 17 % galaxyCount) / galaxyCount, .63) * 7.2;
+      const twist = radius * .72;
+      const phase = arm * Math.PI / 2 + twist + (i * 13 % 100) / 100 * .65;
+      const thickness = (.12 + radius * .045) * ((i * 29 % 100) / 100 - .5);
+      galaxyPositions[i * 3] = Math.cos(phase) * radius;
+      galaxyPositions[i * 3 + 1] = thickness;
+      galaxyPositions[i * 3 + 2] = -4.4 + Math.sin(phase) * radius * .32 - (i % 11) * .045;
+      galaxyColor.set(galaxyPalette[(i + arm) % galaxyPalette.length]);
+      galaxyColors.set([galaxyColor.r, galaxyColor.g, galaxyColor.b], i * 3);
+    }
+    const galaxyGeometry = new THREE.BufferGeometry();
+    galaxyGeometry.setAttribute("position", new THREE.BufferAttribute(galaxyPositions, 3));
+    galaxyGeometry.setAttribute("color", new THREE.BufferAttribute(galaxyColors, 3));
+    const galaxyDust = new THREE.Points(galaxyGeometry, new THREE.PointsMaterial({ vertexColors: true, size: .029, sizeAttenuation: true, transparent: true, opacity: .36, depthWrite: false, blending: THREE.AdditiveBlending }));
+    galaxyDust.rotation.x = .72;
+    starField.add(galaxyDust);
+
     const glowTexture = createGlowTexture();
+    const galaxyCore = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTexture, color: 0x9b8cff, transparent: true, opacity: .075, blending: THREE.AdditiveBlending, depthWrite: false }));
+    galaxyCore.position.set(0, 0, -5.2);
+    galaxyCore.scale.set(3.2, 1.35, 1);
+    field.add(galaxyCore);
     const haze = [
       { x: -3.6, y: 1.2, z: -5.8, scale: 5.8, color: 0x4366c7, opacity: .11 },
       { x: 3.8, y: -.2, z: -7.4, scale: 6.8, color: 0xd457a2, opacity: .1 },
@@ -121,13 +149,10 @@ export function WorldlineBackdrop({ activeId, motionOn, progress }: {
       return line;
     });
 
-    const planetLoader = new THREE.TextureLoader();
-    const planetTextures: THREE.Texture[] = [];
-    let disposed = false;
     const orbitPlanets = projectWorlds.map((world, index) => {
       const pivot = new THREE.Group();
       const body = new THREE.Group();
-      const radius = .22 + (index % 2) * .028;
+      const radius = .24 + (index % 2) * .035;
       const phase = [2.75, 1.4, .18, 4.2, 5.2][index];
       const surface = new THREE.Mesh(
         new THREE.SphereGeometry(radius, 24, 16),
@@ -145,22 +170,13 @@ export function WorldlineBackdrop({ activeId, motionOn, progress }: {
       body.add(surface, atmosphere, ring);
       pivot.add(body);
       planetSystem.add(pivot);
-
-      let logo: THREE.Sprite | undefined;
-      planetLoader.load(`/assets/brand/${world.logo}`, (loaded) => {
-        if (disposed) {
-          loaded.dispose();
-          return;
-        }
-        loaded.colorSpace = THREE.SRGBColorSpace;
-        planetTextures.push(loaded);
-        logo = new THREE.Sprite(new THREE.SpriteMaterial({ map: loaded, transparent: true, opacity: .78, depthWrite: false }));
-        logo.position.z = radius * 1.04;
-        logo.scale.setScalar(radius * 1.18);
-        body.add(logo);
-        wakeRef.current();
-      });
-      return { pivot, body, ring, get logo() { return logo; }, phase, radius, index };
+      const highlight = new THREE.Mesh(
+        new THREE.SphereGeometry(radius * .72, 16, 12),
+        new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: .045, blending: THREE.AdditiveBlending, depthWrite: false }),
+      );
+      highlight.position.set(-radius * .28, radius * .32, radius * .7);
+      body.add(highlight);
+      return { pivot, body, ring, highlight, phase, radius, index };
     });
 
     let visible = true;
@@ -182,6 +198,9 @@ export function WorldlineBackdrop({ activeId, motionOn, progress }: {
       field.rotation.x = Math.sin(drift * .018) * .018 + (scroll - .5) * .045;
       starField.rotation.y = drift * .004 + scroll * .08;
       stars.rotation.z = Math.sin(drift * .02) * .018;
+      galaxyDust.rotation.y = drift * .006 + scroll * .035;
+      galaxyDust.rotation.z = Math.sin(drift * .012) * .018;
+      galaxyCore.material.opacity = state.current.motionOn ? .065 + Math.sin(drift * .22) * .012 : .07;
       activeGlow.material.opacity = state.current.motionOn ? .07 + Math.sin(drift * 1.2) * .018 : .08;
       haze.forEach((sprite, index) => {
         sprite.position.x += state.current.motionOn ? Math.sin(drift * .04 + index) * .0005 : 0;
@@ -195,7 +214,7 @@ export function WorldlineBackdrop({ activeId, motionOn, progress }: {
       planetSystem.rotation.y = orbitAngle;
       planetSystem.rotation.x = .2 + Math.sin(scroll * Math.PI * 1.4) * .17;
       planetSystem.rotation.z = Math.sin(drift * .012) * .018;
-      orbitPlanets.forEach(({ pivot, body, ring, logo, phase, radius, index }) => {
+      orbitPlanets.forEach(({ pivot, body, ring, highlight, phase, radius, index }) => {
         const phaseOffset = phase + orbitAngle * (.7 + index * .04);
         pivot.position.set(
           Math.cos(phaseOffset) * radius,
@@ -205,9 +224,9 @@ export function WorldlineBackdrop({ activeId, motionOn, progress }: {
         body.rotation.y = drift * (.12 + index * .01) + index;
         body.rotation.z = Math.sin(drift * .18 + index) * .12;
         const selected = projectWorlds[index].id === state.current.activeId;
-        body.scale.setScalar(selected ? 1.22 : .86);
+        body.scale.setScalar(selected ? 1.3 : .9);
         ring.material.opacity = selected ? .64 : .25;
-        if (logo) logo.material.opacity = selected ? .98 : .78;
+        highlight.material.opacity = selected ? .09 : .045;
       });
       camera.position.x = Math.sin(scroll * Math.PI * 1.15) * .36;
       camera.position.y = Math.cos(scroll * Math.PI * .9) * .18;
@@ -238,7 +257,6 @@ export function WorldlineBackdrop({ activeId, motionOn, progress }: {
     resize();
 
     return () => {
-      disposed = true;
       cancelAnimationFrame(frame);
       observer.disconnect();
       intersection.disconnect();
@@ -251,7 +269,6 @@ export function WorldlineBackdrop({ activeId, motionOn, progress }: {
         if (mesh.material) (Array.isArray(mesh.material) ? mesh.material : [mesh.material]).forEach((material) => material.dispose());
       });
       glowTexture.dispose();
-      planetTextures.forEach((texture) => texture.dispose());
       renderer.dispose();
       wakeRef.current = () => {};
     };
