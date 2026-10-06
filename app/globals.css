@@ -951,6 +951,24 @@ html[data-motion="off"] *, html[data-motion="off"] *::before, html[data-motion="
   .certificate-feature-specs small { font-size: .65rem; letter-spacing: 0; }
 }
 
+/* The full archive reads as a dense night shelf while each original record stays inspectable. */
+.proof-section .certificate-shelf--compact { align-items: start; }
+.proof-section .certificate-shelf--compact .certificate-card { position: relative; overflow: hidden; transition: border-color .3s ease, box-shadow .45s var(--ease), filter .45s ease; }
+.proof-section .certificate-shelf--compact .certificate-card::before { content: ""; position: absolute; z-index: 2; top: 0; right: 14px; left: 14px; height: 1px; background: linear-gradient(90deg, transparent, var(--coral), transparent); opacity: .42; transition: opacity .3s ease, box-shadow .45s ease; pointer-events: none; }
+.proof-section .certificate-shelf--compact .certificate-card::after { content: ""; position: absolute; z-index: 1; inset: 0; background: radial-gradient(circle at 50% 0%, color-mix(in srgb, var(--yellow) 12%, transparent), transparent 44%); opacity: 0; transition: opacity .45s ease; pointer-events: none; }
+.proof-section .certificate-shelf--compact .certificate-card:hover, .proof-section .certificate-shelf--compact .certificate-card:focus-within { border-color: var(--yellow); box-shadow: 0 24px 48px rgba(0,0,0,.32), 0 0 26px rgba(239,201,95,.08); filter: saturate(1.06); }
+.proof-section .certificate-shelf--compact .certificate-card:hover::before, .proof-section .certificate-shelf--compact .certificate-card:focus-within::before { opacity: 1; box-shadow: 0 0 15px rgba(239,201,95,.35); }
+.proof-section .certificate-shelf--compact .certificate-card:hover::after, .proof-section .certificate-shelf--compact .certificate-card:focus-within::after { opacity: 1; }
+.proof-section .certificate-shelf--compact .certificate-preview, .proof-section .certificate-shelf--compact .certificate-copy { position: relative; z-index: 2; }
+.proof-section .certificate-shelf--compact .certificate-copy { min-height: 142px; }
+
+@media (min-width: 1200px) {
+  .proof-section .certificate-shelf--compact { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }
+  .proof-section .certificate-shelf--compact .certificate-preview { aspect-ratio: 1.54; padding: 11px; }
+  .proof-section .certificate-shelf--compact .certificate-copy { min-height: 132px; padding: 15px 15px 16px; gap: 9px; }
+  .proof-section .certificate-shelf--compact .certificate-copy h3 { font-size: 1.08rem; }
+}
+
 /* Contact closes the Worldline as a final signal instead of a separate blue block. */
 .contact-section { background: linear-gradient(180deg, rgba(7,9,27,.22), rgba(17,24,60,.3) 58%, rgba(7,9,27,.66)); }
 .contact-section::before { content: ""; position: absolute; z-index: 0; top: 13%; right: -13%; width: min(78vw, 980px); height: min(45vw, 520px); border: 1px solid rgba(110,231,244,.18); border-radius: 50%; transform: rotate(-13deg); box-shadow: 0 0 60px rgba(110,231,244,.035); pointer-events: none; }
