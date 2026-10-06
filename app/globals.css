@@ -358,7 +358,8 @@ html[data-cursor="quiet"] .cursor-guide { opacity: 0; }
 .maker-orbit-inspector-stack span { padding: 6px 8px; border: 1px solid color-mix(in srgb, var(--inspector-color, var(--cyan)) 42%, rgba(244,245,239,.2)); color: var(--inspector-color, var(--cyan)); }
 .stack-foot { display: flex; flex-wrap: wrap; gap: 24px 55px; padding-top: 34px; padding-bottom: 95px; color: rgba(244,245,239,.56); font-family: var(--mono); font-size: .64rem; text-transform: uppercase; letter-spacing: .06em; }.stack-foot span { display: inline-flex; align-items: center; gap: 8px; }.stack-foot svg { color: var(--cyan); }
 
-.academic-section { background: radial-gradient(ellipse at 7% 18%, rgba(110,231,244,.14), transparent 24%), radial-gradient(ellipse at 92% 83%, rgba(155,140,255,.12), transparent 28%), linear-gradient(150deg, #f4f5ef 0%, #e9eef3 57%, #f7e9e8 100%); }
+.academic-section { background: linear-gradient(180deg, rgba(7,9,27,.1), rgba(7,9,27,.48)), radial-gradient(ellipse at 7% 18%, rgba(110,231,244,.12), transparent 26%), radial-gradient(ellipse at 92% 83%, rgba(155,140,255,.14), transparent 31%); color: var(--paper); }
+.academic-section .section-heading > p { color: rgba(244,245,239,.68); }
 .academic-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 15px; }.academic-card { position: relative; min-height: 380px; padding: 23px; overflow: hidden; border: 1px solid var(--line); background: rgba(255,253,248,.76); color: var(--ink); transform: translateY(0); transition: border-color .3s ease, transform .4s var(--ease), box-shadow .4s ease; }.academic-card::after { content: ""; position: absolute; width: 190px; aspect-ratio: 1; right: -85px; bottom: -80px; border: 1px solid color-mix(in srgb, var(--academic-color) 45%, transparent); border-radius: 50%; }.academic-card:hover { border-color: var(--academic-color); box-shadow: 0 20px 42px rgba(17,22,46,.1); transform: translateY(-7px); }.academic-card-top { display: flex; justify-content: space-between; color: var(--academic-color); font-family: var(--mono); font-size: .59rem; letter-spacing: .08em; text-transform: uppercase; }.academic-card-top small { color: var(--muted); }.academic-mark { display: grid; place-items: center; width: 45px; height: 45px; margin: 53px 0 23px; border: 1px solid var(--academic-color); border-radius: 50%; color: var(--academic-color); }.academic-card p { margin: 0 0 8px; color: var(--muted); font-family: var(--mono); font-size: .61rem; letter-spacing: .07em; text-transform: uppercase; }.academic-card h3 { margin: 0 0 11px; font-size: clamp(1.45rem, 2.4vw, 2.2rem); letter-spacing: -.06em; line-height: .95; }.academic-card-body { display: block; min-height: 93px; color: var(--muted); font-size: .83rem; line-height: 1.55; }.academic-card-foot { position: absolute; right: 23px; bottom: 23px; left: 23px; display: grid; grid-template-columns: auto 1fr auto; gap: 9px; align-items: center; padding-top: 12px; border-top: 1px solid var(--line); }.academic-card-foot strong { color: var(--academic-color); font-family: var(--mono); font-size: .61rem; text-transform: uppercase; }.academic-card-foot span { color: var(--muted); font-family: var(--mono); font-size: .56rem; }.academic-card-foot svg { color: var(--muted); }
 
 .client-section { background: #0b102b; }.client-section > .content-section { padding-bottom: 120px; }.client-grid { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 18px; }.client-card { position: relative; min-height: 375px; padding: 29px; border: 1px solid rgba(244,245,239,.2); background: linear-gradient(145deg, color-mix(in srgb, var(--client-color) 10%, transparent), rgba(244,245,239,.035) 48%); transition: border-color .3s ease, transform .4s var(--ease), background .3s ease; }.client-card:hover { border-color: var(--client-color); background: linear-gradient(145deg, color-mix(in srgb, var(--client-color) 18%, transparent), rgba(244,245,239,.05) 52%); transform: translateY(-6px); }.client-topline { display: flex; justify-content: space-between; color: var(--client-color); font-family: var(--mono); font-size: .64rem; }.client-card h3 { max-width: 11ch; margin: 73px 0 12px; color: var(--paper); font-size: clamp(1.7rem, 3vw, 2.9rem); letter-spacing: -.06em; line-height: .92; }.client-card p { max-width: 43ch; margin: 0; color: rgba(244,245,239,.64); font-size: .89rem; line-height: 1.65; }.client-proof { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 15px; margin-top: 23px; padding-top: 13px; border-top: 1px solid rgba(244,245,239,.18); }.client-proof span { display: grid; gap: 5px; }.client-proof small { color: rgba(244,245,239,.4); font-family: var(--mono); font-size: .56rem; letter-spacing: .08em; text-transform: uppercase; }.client-proof strong { color: var(--paper); font-size: .7rem; line-height: 1.35; }.client-card-action { position: absolute; right: 29px; bottom: 25px; left: 29px; display: inline-flex; align-items: center; justify-content: space-between; width: auto; padding-top: 13px; border-top: 1px solid rgba(244,245,239,.18); color: var(--client-color); font-family: var(--mono); font-size: .61rem; letter-spacing: .05em; text-transform: uppercase; }.client-card-action:hover { color: var(--paper); }
@@ -834,4 +835,32 @@ html[data-motion="off"] *, html[data-motion="off"] *::before, html[data-motion="
 
 @media (orientation: landscape) and (max-width: 900px) and (max-height: 620px) {
   .project-showcase-reopen { top: 72px; right: 16px; width: min(260px, 30vw); }
+}
+
+/* University builds stay inside the Worldline instead of switching to a paper island. */
+.academic-section { background: linear-gradient(180deg, rgba(7,9,27,.1), rgba(7,9,27,.48)), radial-gradient(ellipse at 7% 18%, rgba(110,231,244,.12), transparent 26%), radial-gradient(ellipse at 92% 83%, rgba(155,140,255,.14), transparent 31%); color: var(--paper); }
+.academic-section .section-kicker { color: var(--cyan); }
+.academic-section .section-heading > p { color: rgba(244,245,239,.68); }
+.academic-runway { color: rgba(244,245,239,.5); }
+.academic-runway i { background: linear-gradient(90deg, rgba(244,245,239,.12), rgba(110,231,244,.48), rgba(244,245,239,.12)); }
+.academic-card { border-color: rgba(244,245,239,.2); background: linear-gradient(145deg, color-mix(in srgb, var(--academic-color) 9%, rgba(7,9,27,.72)), rgba(7,9,27,.6) 56%, rgba(17,24,60,.56)); color: var(--paper); box-shadow: 0 18px 46px rgba(0,0,0,.18); backdrop-filter: blur(8px); }
+.academic-card:hover { border-color: var(--academic-color); background: linear-gradient(145deg, color-mix(in srgb, var(--academic-color) 14%, rgba(7,9,27,.74)), rgba(7,9,27,.64) 56%, rgba(17,24,60,.62)); box-shadow: 0 24px 58px rgba(0,0,0,.28), 0 0 28px color-mix(in srgb, var(--academic-color) 10%, transparent); }
+.academic-card-top small, .academic-card-label small { color: rgba(244,245,239,.52); }
+.academic-mark { background: rgba(7,9,27,.58); box-shadow: 0 0 0 6px color-mix(in srgb, var(--academic-color) 6%, transparent), 0 0 24px color-mix(in srgb, var(--academic-color) 16%, transparent); }
+.academic-card p { color: color-mix(in srgb, var(--academic-color) 86%, var(--paper)); }
+.academic-card h3 { color: var(--paper); }
+.academic-card-body { color: rgba(244,245,239,.68); }
+.academic-card-signal { border-color: rgba(244,245,239,.18); }
+.academic-card-signal span, .academic-card-output small { color: rgba(244,245,239,.5); }
+.academic-card-stack span { border-color: color-mix(in srgb, var(--academic-color) 32%, rgba(244,245,239,.26)); color: rgba(244,245,239,.72); }
+.academic-card-foot { border-color: rgba(244,245,239,.18); }
+.academic-card-foot span { color: rgba(244,245,239,.55); }
+.academic-card-foot a { color: var(--paper); }
+.academic-card-foot a:hover { color: var(--academic-color); }
+.academic-card-foot svg { color: rgba(244,245,239,.55); }
+.academic-card-local { color: rgba(244,245,239,.5) !important; }
+
+@media (max-width: 640px) {
+  .academic-section { background: linear-gradient(180deg, rgba(7,9,27,.16), rgba(7,9,27,.58)), radial-gradient(ellipse at 10% 11%, rgba(110,231,244,.13), transparent 32%), radial-gradient(ellipse at 90% 86%, rgba(155,140,255,.14), transparent 35%); }
+  .academic-card { backdrop-filter: blur(5px); }
 }
