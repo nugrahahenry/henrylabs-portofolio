@@ -25,6 +25,7 @@ Interactive personal portfolio for Henry Nugraha, now moving from a single-file 
 - Work With Real Stakes and Credentials now share the same deep-field visual system: private evidence uses translucent signal cards, while original credential artwork stays bright inside dark cosmic frames.
 - The contact close now behaves as the final Worldline signal: the nebula remains visible, a single orbit horizon carries the field into the CTA, and the footer lands on the same dark surface.
 - The credential archive opens as a denser night shelf on wide screens, with original records staying readable and hover/focus depth revealing which proof item can be inspected.
+- The featured credential now sits in a restrained 3D proof deck: nearby original records drift behind it, then tighten their orbit on hover or keyboard focus.
 - Maker Orbit now acts as a live project-to-stack map: selecting a technology focuses the world that uses it, while the active world's tools brighten and the rest recede.
 - University Builds expose verified GitHub links for POS Z Shoes and LabQ, while RentalMobil.SG stays honestly marked as a local class build.
 - The orbit now carries one connected active-world stage: selecting a planet or using the stage arrows moves its real project mark into the hero position, updates the explanation and stack in place, and keeps the other worlds orbiting around it.

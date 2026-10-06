@@ -962,12 +962,33 @@ html[data-motion="off"] *, html[data-motion="off"] *::before, html[data-motion="
 .proof-section .certificate-shelf--compact .certificate-preview, .proof-section .certificate-shelf--compact .certificate-copy { position: relative; z-index: 2; }
 .proof-section .certificate-shelf--compact .certificate-copy { min-height: 142px; }
 
+/* Featured proof is a small orbital deck: the active record owns the center, nearby records hover behind it. */
+.proof-section .certificate-feature-preview { perspective: 1400px; transform-style: preserve-3d; }
+.proof-section .certificate-feature-preview::before { content: ""; position: absolute; z-index: 0; inset: 13% 15%; border: 1px solid rgba(110,231,244,.16); transform: rotate(-5deg) translateZ(-10px); pointer-events: none; }
+.proof-section .certificate-feature-ghost { will-change: transform; transform-style: preserve-3d; animation-duration: 7.5s; animation-timing-function: ease-in-out; animation-iteration-count: infinite; animation-direction: alternate; }
+.proof-section .certificate-feature-ghost--1 { animation-name: certificate-ghost-left; }
+.proof-section .certificate-feature-ghost--2 { animation-name: certificate-ghost-right; animation-delay: -2.3s; }
+.proof-section .certificate-feature-ghost--3 { animation-name: certificate-ghost-back; animation-delay: -4.6s; }
+.proof-section .certificate-feature:hover .certificate-feature-ghost--1, .proof-section .certificate-feature:focus-within .certificate-feature-ghost--1 { animation-duration: 4.2s; }
+.proof-section .certificate-feature:hover .certificate-feature-ghost--2, .proof-section .certificate-feature:focus-within .certificate-feature-ghost--2 { animation-duration: 4.8s; }
+.proof-section .certificate-feature:hover .certificate-feature-ghost--3, .proof-section .certificate-feature:focus-within .certificate-feature-ghost--3 { animation-duration: 5.4s; }
+@keyframes certificate-ghost-left { from { transform: translate(-123%, 17%) rotate(-9deg) translateY(4px); } to { transform: translate(-123%, 17%) rotate(-6deg) translateY(-5px); } }
+@keyframes certificate-ghost-right { from { transform: translate(123%, 14%) rotate(8deg) translateY(-4px); } to { transform: translate(123%, 14%) rotate(5deg) translateY(5px); } }
+@keyframes certificate-ghost-back { from { transform: translate(0, 28%) rotate(-2deg) scale(.82) translateY(3px); } to { transform: translate(0, 28%) rotate(2deg) scale(.84) translateY(-4px); } }
+
 @media (min-width: 1200px) {
   .proof-section .certificate-shelf--compact { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }
   .proof-section .certificate-shelf--compact .certificate-preview { aspect-ratio: 1.54; padding: 11px; }
   .proof-section .certificate-shelf--compact .certificate-copy { min-height: 132px; padding: 15px 15px 16px; gap: 9px; }
   .proof-section .certificate-shelf--compact .certificate-copy h3 { font-size: 1.08rem; }
 }
+
+@media (max-width: 640px) {
+  .proof-section .certificate-feature-ghost--1 { animation-name: certificate-ghost-left-mobile; }
+  .proof-section .certificate-feature-ghost--2 { animation-name: certificate-ghost-right-mobile; }
+}
+@keyframes certificate-ghost-left-mobile { from { transform: translate(-108%, 17%) rotate(-7deg) translateY(3px); } to { transform: translate(-108%, 17%) rotate(-4deg) translateY(-4px); } }
+@keyframes certificate-ghost-right-mobile { from { transform: translate(108%, 14%) rotate(6deg) translateY(-3px); } to { transform: translate(108%, 14%) rotate(3deg) translateY(4px); } }
 
 /* Contact closes the Worldline as a final signal instead of a separate blue block. */
 .contact-section { background: linear-gradient(180deg, rgba(7,9,27,.22), rgba(17,24,60,.3) 58%, rgba(7,9,27,.66)); }
