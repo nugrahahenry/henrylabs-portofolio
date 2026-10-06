@@ -86,6 +86,7 @@ test("portfolio surface keeps its core experience contracts", () => {
   assert.match(experience, /className="mobile-nav"/);
   assert.match(experience, /document\.documentElement\.dataset\.cursor/);
   assert.match(experience, /MotionConfig/);
+  assert.match(experience, /reducedMotionActive = motionReady/);
   assert.match(layout, /alternates: \{ canonical: "\/" \}/);
   assert.match(layout, /url: "\/"/);
   assert.match(robots, /sitemap\.xml/);

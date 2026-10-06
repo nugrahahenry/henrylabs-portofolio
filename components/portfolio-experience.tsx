@@ -336,7 +336,8 @@ export function PortfolioExperience() {
   const [methodStep, setMethodStep] = useState(0);
   const [worldlineStage, setWorldlineStage] = useState<WorldlineStage>("world");
   const reducedMotion = useReducedMotion();
-  const motionOn = motionReady && motionPreference && !reducedMotion;
+  const reducedMotionActive = motionReady && Boolean(reducedMotion);
+  const motionOn = motionReady && motionPreference && !reducedMotionActive;
   const [loadingStep, setLoadingStep] = useState(0);
   const [heroPhase, setHeroPhase] = useState("intro");
   const heroRef = useRef<HTMLElement>(null);
@@ -521,7 +522,7 @@ export function PortfolioExperience() {
           <a href="#work">{t.nav.work}</a><a href="#stack">{t.nav.stack}</a><a href="#proof">{t.nav.proof}</a><a href="#contact">{t.nav.contact}</a>
         </nav>
         <div className="header-controls">
-          <button className="motion-toggle" type="button" onClick={() => setMotionPreference((value) => !value)} disabled={Boolean(reducedMotion)} aria-label={reducedMotion ? "Reduced motion follows device preference" : "Animation"} aria-pressed={motionOn} title={reducedMotion ? "Reduced motion follows device preference" : motionOn ? "Turn motion off" : "Turn motion on"}><span className={cx("signal-dot", motionOn && "signal-dot--on")} />{motionOn ? "Motion" : "Still"}</button>
+          <button className="motion-toggle" type="button" onClick={() => setMotionPreference((value) => !value)} disabled={reducedMotionActive} aria-label={reducedMotionActive ? "Reduced motion follows device preference" : "Animation"} aria-pressed={motionOn} title={reducedMotionActive ? "Reduced motion follows device preference" : motionOn ? "Turn motion off" : "Turn motion on"}><span className={cx("signal-dot", motionOn && "signal-dot--on")} />{motionOn ? "Motion" : "Still"}</button>
           <button className="language-toggle" type="button" onClick={() => setLanguage((value) => value === "en" ? "id" : "en")} aria-label="Toggle language"><span className={language === "en" ? "is-active" : ""}>EN</span><span>/</span><span className={language === "id" ? "is-active" : ""}>ID</span></button>
           <details className="mobile-nav" ref={menuRef} onKeyDown={(event) => { if (event.key === "Escape" && menuRef.current) { menuRef.current.open = false; menuRef.current.querySelector("summary")?.focus(); } }}>
             <summary aria-label={language === "en" ? "Navigation" : "Navigasi"}><Menu size={18} /></summary>
