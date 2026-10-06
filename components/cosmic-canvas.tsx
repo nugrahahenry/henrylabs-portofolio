@@ -111,23 +111,38 @@ function techPlanetTexture(item: TechOrbitItem) {
   surface.height = 128;
   const context = surface.getContext("2d")!;
   const color = `#${item.color}`;
+  context.clearRect(0, 0, surface.width, surface.height);
   const gradient = context.createRadialGradient(42, 35, 4, 64, 64, 74);
   gradient.addColorStop(0, "rgba(255,255,255,.95)");
   gradient.addColorStop(.18, color);
   gradient.addColorStop(1, "#080c23");
   context.fillStyle = gradient;
-  context.fillRect(0, 0, 128, 128);
-  context.strokeStyle = "rgba(244,245,239,.74)";
-  context.lineWidth = 3;
+  context.beginPath();
+  context.arc(64, 64, 55, 0, Math.PI * 2);
+  context.fill();
+  context.save();
   context.beginPath();
   context.arc(64, 64, 53, 0, Math.PI * 2);
-  context.stroke();
-  context.fillStyle = "rgba(7,9,27,.58)";
+  context.clip();
+  context.strokeStyle = "rgba(244,245,239,.16)";
+  context.lineWidth = 2;
+  for (const offset of [-31, 0, 31]) {
+    context.beginPath();
+    context.ellipse(64 + offset * .42, 64, Math.max(8, 27 - Math.abs(offset) * .24), 52, offset * .004, 0, Math.PI * 2);
+    context.stroke();
+  }
+  context.restore();
+  context.strokeStyle = "rgba(244,245,239,.74)";
+  context.lineWidth = 2.5;
   context.beginPath();
-  context.arc(64, 64, 42, 0, Math.PI * 2);
+  context.arc(64, 64, 54, 0, Math.PI * 2);
+  context.stroke();
+  context.fillStyle = "rgba(7,9,27,.66)";
+  context.beginPath();
+  context.arc(64, 64, 38, 0, Math.PI * 2);
   context.fill();
   context.fillStyle = "#f4f5ef";
-  context.font = "600 28px Arial, sans-serif";
+  context.font = "700 25px Arial, sans-serif";
   context.textAlign = "center";
   context.textBaseline = "middle";
   context.fillText(techMark(item.label), 64, 65);
@@ -250,7 +265,8 @@ export function CosmicCanvas({ activeId, onSelect, onPrevious, onNext, motionOn,
     system.add(techSystem);
     const techPlanets = techNodes.map((item, index) => {
       const group = new THREE.Group();
-      const radius = .075 + (index % 3) * .012;
+      const lane = index % 3;
+      const radius = .09 + (index % 3) * .012;
       const color = `#${item.color}`;
       const surface = new THREE.Mesh(
         new THREE.SphereGeometry(radius, 16, 12),
@@ -260,15 +276,20 @@ export function CosmicCanvas({ activeId, onSelect, onPrevious, onNext, motionOn,
         new THREE.SphereGeometry(radius * 1.22, 12, 10),
         new THREE.MeshBasicMaterial({ color, transparent: true, opacity: .18, side: THREE.BackSide, blending: THREE.AdditiveBlending, depthWrite: false }),
       );
+      const ring = new THREE.Mesh(
+        new THREE.TorusGeometry(radius * 1.42, radius * .055, 6, 28),
+        new THREE.MeshBasicMaterial({ color, transparent: true, opacity: .25, depthWrite: false }),
+      );
+      ring.rotation.set(.78 + lane * .16, .18 + index * .04, .24 + lane * .22);
       const texture = techPlanetTexture(item);
       techTextures.push(texture);
       const mark = new THREE.Sprite(new THREE.SpriteMaterial({ map: texture, transparent: true, opacity: .8, depthWrite: false }));
       mark.position.z = radius * 1.02;
       mark.scale.setScalar(radius * 1.9);
-      group.add(surface, atmosphere, mark);
+      group.add(surface, atmosphere, ring, mark);
       techSystem.add(group);
       const linkedProjectIndexes = item.projectIds.map((projectId) => projectWorlds.findIndex((world) => world.id === projectId)).filter((projectIndex) => projectIndex >= 0);
-      return { group, surface, atmosphere, mark, radius, index, linkedProjectIndexes };
+      return { group, surface, atmosphere, ring, mark, radius, index, lane, linkedProjectIndexes };
     });
     const techOrbit = new THREE.Group();
     const techOrbitLanes = [1.08, 1.38, 1.7].map((radius, index) => {
@@ -395,20 +416,19 @@ export function CosmicCanvas({ activeId, onSelect, onPrevious, onNext, motionOn,
         material.opacity = state.current.motionOn ? .16 + (index === 1 ? .08 : 0) + Math.sin(elapsed * .8 + index) * .025 : .22;
         lane.scale.setScalar(1 + (state.current.motionOn ? Math.sin(elapsed * .65 + index) * .025 : 0));
       });
-      techPlanets.forEach(({ group, surface, atmosphere, mark, radius, index, linkedProjectIndexes }) => {
-        const lane = index % 3;
+      techPlanets.forEach(({ group, surface, atmosphere, ring, mark, radius, index, lane, linkedProjectIndexes }) => {
         const anchorIndex = linkedProjectIndexes.includes(selectedProjectIndex) ? selectedProjectIndex : linkedProjectIndexes[0] ?? -1;
         const belongsToProject = anchorIndex >= 0;
         const isActiveProjectTool = linkedProjectIndexes.includes(selectedProjectIndex);
         const anchorRadius = belongsToProject ? (.37 + anchorIndex * .02) * (anchorIndex === selectedProjectIndex ? 2 : .94) : 0;
-        const radiusPath = belongsToProject ? anchorRadius + (anchorIndex === selectedProjectIndex ? .34 : .18) + (index % 4) * (anchorIndex === selectedProjectIndex ? .14 : .07) : 2.55 + (index % 3) * .16;
+        const radiusPath = belongsToProject ? anchorRadius + (anchorIndex === selectedProjectIndex ? .48 + lane * .2 : .24 + lane * .1) + (index % 4) * .035 : 2.55 + lane * .16;
         const phase = index * 2.37 + angle * (.18 + lane * .03) + elapsed * (.018 + lane * .006);
         const anchor = belongsToProject ? planets[anchorIndex].group.position : { x: 0, y: -.25, z: -1.05 };
         const orbitX = Math.cos(phase) * radiusPath;
         const safeOrbitX = portrait || camera.aspect < 1.2 ? orbitX : Math.min(orbitX, 1.55);
         const targetX = anchor.x + safeOrbitX;
-        const targetY = anchor.y + Math.sin(phase) * radiusPath * (.45 + lane * .04);
-        const targetZ = anchor.z + Math.sin(phase * 1.08) * (.28 + lane * .1);
+        const targetY = anchor.y + Math.sin(phase) * radiusPath * (.7 + lane * .05);
+        const targetZ = anchor.z + Math.sin(phase * 1.08) * (.24 + lane * .08);
         if (state.current.motionOn) {
           group.position.x = THREE.MathUtils.damp(group.position.x, targetX, 7, dt);
           group.position.y = THREE.MathUtils.damp(group.position.y, targetY, 7, dt);
@@ -418,13 +438,15 @@ export function CosmicCanvas({ activeId, onSelect, onPrevious, onNext, motionOn,
         }
         group.rotation.y = elapsed * (.16 + lane * .04) + index;
         const pulse = state.current.motionOn ? 1 + Math.sin(elapsed * 1.7 + index) * .05 : 1;
-        group.scale.setScalar(pulse * (isActiveProjectTool ? 1.18 : belongsToProject ? .98 : .78));
+        group.scale.setScalar(pulse * (isActiveProjectTool ? 1.2 : belongsToProject ? .96 : .72));
         const surfaceMaterial = surface.material as THREE.MeshStandardMaterial;
-        surfaceMaterial.opacity = isActiveProjectTool ? .96 : belongsToProject ? .72 : .42;
+        surfaceMaterial.opacity = isActiveProjectTool ? .98 : belongsToProject ? .68 : .24;
         surfaceMaterial.emissiveIntensity = isActiveProjectTool ? .42 : belongsToProject ? .24 : .12;
         surface.scale.setScalar(1);
-        atmosphere.material.opacity = (isActiveProjectTool ? .22 : belongsToProject ? .14 : .08) + (state.current.motionOn ? Math.sin(elapsed * .8 + index) * .025 : 0);
-        mark.material.opacity = (isActiveProjectTool ? .94 : belongsToProject ? .68 : .38) + (state.current.motionOn ? Math.sin(elapsed * 1.1 + index) * .1 : 0);
+        atmosphere.material.opacity = (isActiveProjectTool ? .24 : belongsToProject ? .13 : .045) + (state.current.motionOn ? Math.sin(elapsed * .8 + index) * .025 : 0);
+        (ring.material as THREE.MeshBasicMaterial).opacity = isActiveProjectTool ? .64 : belongsToProject ? .26 : .07;
+        ring.rotation.z = .24 + lane * .22 + elapsed * (.12 + lane * .035);
+        mark.material.opacity = (isActiveProjectTool ? .98 : belongsToProject ? .64 : .22) + (state.current.motionOn ? Math.sin(elapsed * 1.1 + index) * .08 : 0);
         mark.scale.setScalar(radius * 1.9);
       });
       updateNetwork();

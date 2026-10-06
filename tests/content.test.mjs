@@ -117,6 +117,9 @@ test("portfolio surface keeps its core experience contracts", () => {
   assert.match(canvas, /techOrbitLanes/);
   assert.match(canvas, /anchorRadius/);
   assert.match(canvas, /techPlanetTexture/);
+  assert.match(canvas, /TorusGeometry\(radius \* 1\.42/);
+  assert.match(canvas, /radiusPath = belongsToProject/);
+  assert.match(canvas, /targetY = anchor\.y \+ Math\.sin\(phase\) \* radiusPath \* \(\.7/);
   assert.match(canvas, /techSystem\.rotation\.y/);
   assert.match(read("components/project-sculptures.ts"), /ExtrudeGeometry/);
   assert.match(styles, /prefers-reduced-motion/);
