@@ -11,6 +11,7 @@ test("portfolio surface keeps its core experience contracts", () => {
   const backdrop = read("components/worldline-backdrop.tsx");
   const styles = read("app/globals.css");
   const layout = read("app/layout.tsx");
+  const smoothScroll = read("components/smooth-scroll.tsx");
   const robots = read("app/robots.ts");
   const sitemap = read("app/sitemap.ts");
 
@@ -58,6 +59,8 @@ test("portfolio surface keeps its core experience contracts", () => {
   assert.doesNotMatch(experience, /PhaseBridge/);
   assert.match(experience, /--node-color/);
   assert.match(experience, /maker-orbit-inspector/);
+  assert.match(experience, /SmoothScroll/);
+  assert.match(experience, /data-lenis-prevent/);
   assert.match(experience, /maker-core-portrait/);
   assert.match(experience, /data-active-world=\{activeProject.id\}/);
   assert.match(experience, /client-signal-rail/);
@@ -133,6 +136,10 @@ test("portfolio surface keeps its core experience contracts", () => {
   assert.match(styles, /data-visible="true"/);
   assert.match(styles, /\.maker-tech\.is-linked/);
   assert.match(styles, /\.maker-orbit-inspector/);
+  assert.match(styles, /html\.lenis/);
+  assert.match(smoothScroll, /new Lenis/);
+  assert.match(smoothScroll, /gsap\.ticker/);
+  assert.match(smoothScroll, /lenis\.raf/);
   assert.match(styles, /\.maker-core-portrait/);
   assert.match(styles, /@keyframes maker-portrait-scan/);
   assert.match(styles, /\.star-field--far/);

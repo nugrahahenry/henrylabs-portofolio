@@ -19,6 +19,10 @@
 
 * { box-sizing: border-box; }
 html { scroll-behavior: smooth; background: var(--paper); scroll-padding-top: 84px; }
+html.lenis, html.lenis body { height: auto; }
+html.lenis { scroll-behavior: auto; }
+html.lenis.lenis-stopped { overflow: clip; }
+html.lenis [data-lenis-prevent], html.lenis [data-lenis-prevent-wheel], html.lenis [data-lenis-prevent-touch] { overscroll-behavior: contain; }
 body { margin: 0; background: var(--paper); color: var(--ink); font-family: var(--display); line-height: 1.5; overflow-x: hidden; }
 body::selection { background: var(--ink); color: var(--paper); }
 a { color: inherit; text-decoration: none; }
