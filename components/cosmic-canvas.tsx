@@ -425,7 +425,8 @@ export function CosmicCanvas({ activeId, onSelect, onPrevious, onNext, motionOn,
         const phase = index * 2.37 + angle * (.18 + lane * .03) + elapsed * (.018 + lane * .006);
         const anchor = belongsToProject ? planets[anchorIndex].group.position : { x: 0, y: -.25, z: -1.05 };
         const orbitX = Math.cos(phase) * radiusPath;
-        const safeOrbitX = portrait ? orbitX : Math.min(orbitX, 1.55);
+        const techRailCap = !portrait && anchorIndex === selectedProjectIndex ? .68 : 1.55;
+        const safeOrbitX = portrait ? orbitX : Math.min(orbitX, techRailCap);
         const targetX = anchor.x + safeOrbitX;
         const targetY = anchor.y + Math.sin(phase) * radiusPath * (.7 + lane * .05);
         const targetZ = anchor.z + Math.sin(phase * 1.08) * (.24 + lane * .08);
