@@ -65,6 +65,7 @@ Interactive personal portfolio for Henry Nugraha, now moving from a single-file 
 - Tech satellites now try the same Simple Icons marks used by the accessible stack surface, painted onto the spherical texture with the existing monogram as a failure-safe fallback.
 - Active tech satellites now carry a restrained focus halo and a single moving signal on the selected world's lane, making ownership legible without adding another network of crossing lines.
 - The opening hero now previews the project orbit as a low-opacity silhouette behind the intro copy; labels and dossier controls stay hidden until the world phase so the visual story arrives before the interaction surface.
+- The Maker Orbit's active-link inspector now inherits the selected world's color and uses a restrained re-entry motion when a project is changed, keeping the stack readout connected to the same world language as the constellation.
 - The intro loader is now a quiet launch cue: one Henry mark, the opening sentence, a single progress line, and one status signal replace the former multi-orbit loading scene.
 - Responsive composition is validated at 1440px, 1024px, 768px, 390px, and 360px, with a dedicated short-landscape fallback and touch-safe mobile controls.
 - A 26-record certificate and badge archive uses a signature record, kind filters, accessible detail viewing, and source PDFs where available.
