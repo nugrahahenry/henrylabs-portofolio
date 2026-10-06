@@ -212,7 +212,7 @@ try {
     await expect(page.locator(".project-showcase")).toHaveCount(0);
     await page.getByRole("button", { name: "Open active world" }).click({ force: true });
     await expect(page.locator(".project-showcase")).toContainText("Nalira");
-    await page.getByRole("tab", { name: "Focus Canox" }).click();
+    await page.getByRole("tab", { name: "Focus Canox" }).click({ force: true });
     await expect(page.locator(".project-showcase")).toContainText("Canox");
     await expect(scene).toHaveAttribute("data-linked-tech-count", "3");
     await expect(page.locator(".dossier")).toContainText("Canox");
@@ -238,6 +238,11 @@ try {
     await page.keyboard.press("Escape");
     await page.locator('[role="dialog"]').waitFor({ state: "detached" });
     await expect(page.locator(".certificate-feature-preview")).toBeFocused();
+    await page.locator("#contact").scrollIntoViewIfNeeded();
+    await expect(page.locator("#contact h2")).toBeInViewport();
+    await page.waitForTimeout(500);
+    assert.equal(await page.locator(".contact-section").evaluate((section) => getComputedStyle(section).backgroundColor), "rgba(0, 0, 0, 0)");
+    await page.screenshot({ path: `test-results/${viewport.width}-contact.png` });
     assert.deepEqual(errors, []);
     await page.reload({ waitUntil: "domcontentloaded" });
     await expect(page.locator(".intro-loader")).toHaveClass(/intro-loader--done/);
