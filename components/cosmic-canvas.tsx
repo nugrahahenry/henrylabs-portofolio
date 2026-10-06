@@ -415,7 +415,8 @@ export function CosmicCanvas({ activeId, onSelect, onPrevious, onNext, motionOn,
         const orbitY = Math.sin(phase) * 1.45;
         const orbitZ = Math.sin(phase) * .55;
         const safeOrbitX = portrait ? orbitX : Math.min(orbitX, 1.2);
-        const targetX = selected ? 0 : safeOrbitX;
+        // The dossier owns the right rail on landscape layouts; give the focused world a clear visual bay beside it.
+        const targetX = selected ? (portrait ? 0 : -.58) : safeOrbitX;
         const targetY = selected ? .2 : orbitY;
         const targetZ = selected ? 1.85 : orbitZ;
         if (state.current.motionOn) {
