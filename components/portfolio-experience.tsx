@@ -200,7 +200,7 @@ const copy = {
       contact: "Start a project",
       note: "Open to thoughtful freelance work and the right team.",
     },
-    field: { label: "A living map of HenryLabs", hint: "Drag X/Y · select a world", inspect: "Inspect dossier", open: "Open project" },
+    field: { label: "A living map of HenryLabs", hint: "Drag X/Y · zoom · select a world", inspect: "Inspect dossier", open: "Open project" },
     transition: { eyebrow: "02 / Project field", title: "The signal is live.", body: "Scroll into the systems behind the marks." },
     method: {
       kicker: "The Henry method",
@@ -229,7 +229,7 @@ const copy = {
       contact: "Mulai project",
       note: "Terbuka untuk project freelance dan tim yang tepat.",
     },
-    field: { label: "Peta hidup HenryLabs", hint: "Geser X/Y · pilih sebuah dunia", inspect: "Buka dossier", open: "Buka project" },
+    field: { label: "Peta hidup HenryLabs", hint: "Geser X/Y · zoom · pilih dunia", inspect: "Buka dossier", open: "Buka project" },
     transition: { eyebrow: "02 / Project field", title: "Sinyalnya hidup.", body: "Masuk lebih dalam ke sistem di balik setiap mark." },
     method: {
       kicker: "Cara kerja Henry",

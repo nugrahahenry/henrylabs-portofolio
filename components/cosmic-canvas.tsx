@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import type { MotionValue } from "motion/react";
+import { Minus, Plus, RotateCcw } from "lucide-react";
 import * as THREE from "three";
 import { createProjectSculpture } from "./project-sculptures";
 
@@ -184,14 +185,15 @@ export function CosmicCanvas({ activeId, onSelect, onPrevious, onNext, motionOn,
   const hostRef = useRef<HTMLDivElement>(null);
   const labels = useRef<Array<HTMLButtonElement | null>>([]);
   const selectRef = useRef(onSelect);
-  const state = useRef({ activeId, motionOn });
+  const [viewZoom, setViewZoom] = useState(0);
+  const state = useRef({ activeId, motionOn, viewZoom });
   const wakeRef = useRef<() => void>(() => {});
   const [fallback, setFallback] = useState(false);
 
   useEffect(() => {
-    state.current = { activeId, motionOn };
+    state.current = { activeId, motionOn, viewZoom };
     wakeRef.current();
-  }, [activeId, motionOn]);
+  }, [activeId, motionOn, viewZoom]);
 
   useEffect(() => {
     selectRef.current = onSelect;
@@ -393,7 +395,7 @@ export function CosmicCanvas({ activeId, onSelect, onPrevious, onNext, motionOn,
       const portrait = camera.aspect < .9;
       const halfWidth = portrait ? 3.1 : 4.7;
       const fittedDistance = Math.max(10.5, halfWidth / (Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) * camera.aspect));
-      camera.position.set(0, .05, fittedDistance + (1 - zoom) * 5);
+      camera.position.set(0, .05, fittedDistance + (1 - zoom) * 5 - state.current.viewZoom * 2.7);
       if (state.current.motionOn && !dragging) angle += dt * .055;
       // Orbit positions in a shallow ellipse, keeping the field readable at every angle.
       system.rotation.y = Math.sin(elapsed * .12) * .08;
@@ -516,6 +518,7 @@ export function CosmicCanvas({ activeId, onSelect, onPrevious, onNext, motionOn,
       host.dataset.pitch = pitch.toFixed(3);
       host.dataset.techCount = String(techNodes.length);
       host.dataset.linkedTechCount = String(techPlanets.filter(({ linkedProjectIndexes }) => linkedProjectIndexes.includes(selectedProjectIndex)).length);
+      host.dataset.viewZoom = state.current.viewZoom.toFixed(2);
       if (state.current.motionOn) frame = requestAnimationFrame(render);
     };
     const wake = () => { if (!frame && !disposed) frame = requestAnimationFrame(render); };
@@ -550,7 +553,10 @@ export function CosmicCanvas({ activeId, onSelect, onPrevious, onNext, motionOn,
     };
     const up = (event: PointerEvent) => {
       if (!dragging) return;
-      if (!pointerMoved && pressedPlanet >= 0) selectRef.current(worlds[pressedPlanet].id);
+      if (!pointerMoved && pressedPlanet >= 0) {
+        setViewZoom(.2);
+        selectRef.current(worlds[pressedPlanet].id);
+      }
       dragging = false;
       pointerMoved = false;
       pressedPlanet = -1;
@@ -605,11 +611,16 @@ export function CosmicCanvas({ activeId, onSelect, onPrevious, onNext, motionOn,
     if (event.key === "ArrowRight") { event.preventDefault(); onNext(); }
   }}>
     <canvas aria-hidden="true" />
+    <div className="cosmic-zoom-controls" aria-label="Planet view controls">
+      <button type="button" onClick={() => setViewZoom((value) => Math.min(.45, value + .12))} aria-label="Zoom in on planets" title="Zoom in"><Plus size={14} /></button>
+      <button type="button" onClick={() => setViewZoom((value) => Math.max(0, value - .12))} aria-label="Zoom out of planets" title="Zoom out"><Minus size={14} /></button>
+      <button type="button" onClick={() => setViewZoom(0)} aria-label="Reset planet zoom" title="Reset zoom"><RotateCcw size={13} /></button>
+    </div>
     {worlds.map((world, index) => <button
       ref={(element) => { labels.current[index] = element; }}
       key={world.id} type="button" className="planet-label"
       style={{ "--world-color": world.color } as React.CSSProperties}
-      aria-pressed={activeId === world.id} onClick={() => onSelect(world.id)}>
+      aria-pressed={activeId === world.id} onClick={() => { setViewZoom(.2); onSelect(world.id); }}>
       <span />{world.name}
     </button>)}
   </div>;

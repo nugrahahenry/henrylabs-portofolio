@@ -143,6 +143,10 @@ try {
       });
     }));
     assert.equal(hasPixels, true, "WebGL scene must contain painted pixels");
+    await page.getByRole("button", { name: "Zoom in on planets" }).click();
+    await expect(scene).toHaveAttribute("data-view-zoom", "0.12");
+    await page.getByRole("button", { name: "Reset planet zoom" }).click();
+    await expect(scene).toHaveAttribute("data-view-zoom", "0.00");
     await page.getByRole("button", { name: "Close active world" }).click();
     await expect(page.locator(".project-showcase")).toHaveCount(0);
     await expect(page.getByRole("button", { name: "Open active world" })).toBeVisible();

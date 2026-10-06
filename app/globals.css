@@ -204,6 +204,10 @@ html[data-cursor="quiet"] .cursor-guide { opacity: 0; }
 .cosmic-canvas { position: absolute; inset: 0; touch-action: pan-y; cursor: grab; }
 .cosmic-canvas:active { cursor: grabbing; }
 .cosmic-canvas canvas { display: block; width: 100%; height: 100%; }
+.cosmic-zoom-controls { position: absolute; z-index: 10; left: 24px; bottom: 43px; display: inline-flex; gap: 5px; padding: 4px; border: 1px solid rgba(244,245,239,.18); background: rgba(7,9,27,.5); box-shadow: 0 14px 28px rgba(0,0,0,.18), inset 0 1px 0 rgba(244,245,239,.1); backdrop-filter: blur(8px); }
+.cosmic-zoom-controls button { display: grid; place-items: center; width: 32px; height: 32px; border: 1px solid rgba(244,245,239,.22); background: rgba(7,9,27,.42); color: rgba(244,245,239,.72); cursor: pointer; transition: border-color .25s ease, color .25s ease, background .25s ease, transform .25s ease; }
+.cosmic-zoom-controls button:hover, .cosmic-zoom-controls button:focus-visible { border-color: var(--active-world-color, var(--cyan)); background: rgba(110,231,244,.1); color: var(--paper); transform: translateY(-2px); }
+.cosmic-zoom-controls button:focus-visible { outline: 1px solid var(--active-world-color, var(--cyan)); outline-offset: 3px; }
 .cosmic-canvas[data-fallback="true"] { background: radial-gradient(circle at 50% 47%, rgba(238,103,79,.42), transparent 11%), radial-gradient(circle at 24% 35%, rgba(96,201,176,.2), transparent 14%), radial-gradient(circle at 77% 68%, rgba(101,123,232,.22), transparent 15%); }
 .canvas-hint { position: absolute; right: 25px; bottom: 44px; color: rgba(244,245,239,.4); font-family: var(--mono); font-size: .58rem; letter-spacing: .08em; text-transform: uppercase; }
 .planet-label { position: absolute; z-index: 8; left: 0; top: 0; display: inline-flex; align-items: center; gap: 7px; padding: 5px 7px; border: 1px solid transparent; border-radius: 999px; background: rgba(7,9,27,.58); color: rgba(244,245,239,.64); cursor: pointer; font-family: var(--mono); font-size: .61rem; letter-spacing: .04em; transform: translate(-50%, 0); transition: color .25s ease, background .25s ease, border-color .25s ease; }
@@ -566,7 +570,7 @@ html[data-motion="off"] *, html[data-motion="off"] *::before, html[data-motion="
   .content-section { width: min(100% - 56px, 820px); padding-block: 106px; }
   .signal-inner, .world-chain { width: min(100% - 56px, 820px); }
   .cosmic-frame { aspect-ratio: 1.18; min-height: 640px; }
-  .project-showcase { top: 96px; right: clamp(16px, 3vw, 30px); width: min(292px, 34vw); padding: 15px 15px 17px; border: 1px solid color-mix(in srgb, var(--project-showcase-color, var(--cyan)) 38%, rgba(244,245,239,.18)); background: linear-gradient(135deg, rgba(7,9,27,.86), rgba(7,9,27,.6)); box-shadow: 0 18px 45px rgba(0,0,0,.22); backdrop-filter: blur(10px); text-shadow: none; }
+  .project-showcase { top: 96px; right: clamp(16px, 3vw, 30px); width: min(292px, 34vw); padding: 15px 15px 17px; border: 0; background: transparent; box-shadow: none; backdrop-filter: none; text-shadow: none; }
   .project-showcase::before { display: none; }
   .project-showcase-summary { font-size: .74rem; line-height: 1.46; }
   .work-scroll-track { margin-top: -18px; }
@@ -649,6 +653,11 @@ html[data-motion="off"] *, html[data-motion="off"] *::before, html[data-motion="
   .client-map-core { right: 34%; left: 34%; }
   .client-card .client-proof { gap: 10px 12px; }
   .client-card .client-proof strong { font-size: .66rem; }
+}
+
+@media (max-width: 640px) {
+  .cosmic-zoom-controls { left: 14px; bottom: 12px; }
+  .project-showcase { border: 0; background: transparent; box-shadow: none; backdrop-filter: none; }
 }
 
 /* Worldline: one project constellation carries the reading path from world to method to stack. */
