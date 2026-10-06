@@ -27,6 +27,7 @@ Interactive personal portfolio for Henry Nugraha, now moving from a single-file 
 - The credential archive opens as a denser night shelf on wide screens, with original records staying readable and hover/focus depth revealing which proof item can be inspected.
 - The featured credential now sits in a restrained 3D proof deck: nearby original records drift behind it, then tighten their orbit on hover or keyboard focus.
 - The shared background now reads as a galaxy field: procedural spiral dust, a soft galactic core, and logo-free atmospheric planets sit behind the project constellation so decorative depth does not look like stacked square assets.
+- The first Full Constellation layer now adds five quiet sector satellites for university and client work behind the five interactive main worlds; the evidence sections remain the readable source of truth below.
 - Maker Orbit now acts as a live project-to-stack map: selecting a technology focuses the world that uses it, while the active world's tools brighten and the rest recede.
 - University Builds expose verified GitHub links for POS Z Shoes and LabQ, while RentalMobil.SG stays honestly marked as a local class build.
 - The orbit now carries one connected active-world stage: selecting a planet or using the stage arrows moves its real project mark into the hero position, updates the explanation and stack in place, and keeps the other worlds orbiting around it.

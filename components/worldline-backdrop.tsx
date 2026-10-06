@@ -64,8 +64,10 @@ export function WorldlineBackdrop({ activeId, motionOn, progress }: {
     const field = new THREE.Group();
     const starField = new THREE.Group();
     const planetSystem = new THREE.Group();
+    const sectorSystem = new THREE.Group();
     planetSystem.position.z = -3.2;
-    scene.add(field, starField, planetSystem);
+    sectorSystem.position.z = -4.3;
+    scene.add(field, starField, planetSystem, sectorSystem);
     scene.add(new THREE.AmbientLight(0x9fc4df, 1.15));
     const planetLight = new THREE.PointLight(0xffe5b2, 7, 18, 1.5);
     planetLight.position.set(-2.4, 2.8, 2.8);
@@ -179,6 +181,37 @@ export function WorldlineBackdrop({ activeId, motionOn, progress }: {
       return { pivot, body, ring, highlight, phase, radius, index };
     });
 
+    const sectorNodes = [
+      { color: 0xefc95f, phase: .55, orbit: 2.35, size: .13, ring: true },
+      { color: 0xee674f, phase: 2.15, orbit: 2.6, size: .11, ring: false },
+      { color: 0x6ee7f4, phase: 3.35, orbit: 2.42, size: .12, ring: true },
+      { color: 0xff82c8, phase: 4.65, orbit: 2.7, size: .105, ring: false },
+      { color: 0x9b8cff, phase: 5.45, orbit: 2.5, size: .115, ring: true },
+    ].map(({ color, phase, orbit, size, ring: hasRing }, index) => {
+      const pivot = new THREE.Group();
+      const body = new THREE.Group();
+      const surface = new THREE.Mesh(
+        new THREE.SphereGeometry(size, 16, 12),
+        new THREE.MeshStandardMaterial({ color, emissive: color, emissiveIntensity: .26, metalness: .08, roughness: .72, transparent: true, opacity: .78 }),
+      );
+      const atmosphere = new THREE.Mesh(
+        new THREE.SphereGeometry(size * 1.26, 14, 10),
+        new THREE.MeshBasicMaterial({ color, transparent: true, opacity: .16, side: THREE.BackSide, blending: THREE.AdditiveBlending, depthWrite: false }),
+      );
+      body.add(surface, atmosphere);
+      if (hasRing) {
+        const ring = new THREE.Mesh(
+          new THREE.TorusGeometry(size * 1.5, .005, 5, 24),
+          new THREE.MeshBasicMaterial({ color, transparent: true, opacity: .3, depthWrite: false }),
+        );
+        ring.rotation.set(.68 + index * .08, -.16, .24);
+        body.add(ring);
+      }
+      pivot.add(body);
+      sectorSystem.add(pivot);
+      return { pivot, body, phase, orbit, size, index };
+    });
+
     let visible = true;
     let frame = 0;
     let lastTime = 0;
@@ -227,6 +260,21 @@ export function WorldlineBackdrop({ activeId, motionOn, progress }: {
         body.scale.setScalar(selected ? 1.3 : .9);
         ring.material.opacity = selected ? .64 : .25;
         highlight.material.opacity = selected ? .09 : .045;
+      });
+      const sectorAngle = drift * .026 + scroll * Math.PI * .72;
+      sectorSystem.rotation.y = sectorAngle;
+      sectorSystem.rotation.x = .34 + Math.sin(drift * .018) * .025;
+      sectorSystem.rotation.z = Math.sin(drift * .014) * .018;
+      sectorNodes.forEach(({ pivot, body, phase, orbit, index }) => {
+        const phaseOffset = phase + sectorAngle * (.52 + index * .035);
+        pivot.position.set(
+          Math.cos(phaseOffset) * orbit,
+          Math.sin(phaseOffset) * orbit * .34,
+          Math.sin(phaseOffset * 1.12) * orbit * .2,
+        );
+        body.rotation.y = drift * (.08 + index * .012) + index;
+        body.rotation.z = Math.sin(drift * .14 + index) * .08;
+        body.scale.setScalar(state.current.motionOn ? .9 + Math.sin(drift * .35 + index) * .045 : .9);
       });
       camera.position.x = Math.sin(scroll * Math.PI * 1.15) * .36;
       camera.position.y = Math.cos(scroll * Math.PI * .9) * .18;

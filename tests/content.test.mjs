@@ -106,6 +106,8 @@ test("portfolio surface keeps its core experience contracts", () => {
   assert.match(backdrop, /projectWorlds/);
   assert.match(backdrop, /galaxyDust/);
   assert.match(backdrop, /galaxyCore/);
+  assert.match(backdrop, /sectorSystem/);
+  assert.match(backdrop, /sectorNodes/);
   assert.match(backdrop, /planetSystem\.rotation\.y/);
   assert.match(backdrop, /SphereGeometry/);
   assert.match(canvas, /TechOrbitItem/);
