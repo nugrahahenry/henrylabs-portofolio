@@ -408,7 +408,7 @@ export function CosmicCanvas({ activeId, onSelect, onPrevious, onNext, motionOn,
       system.rotation.x = pitch + Math.sin(elapsed * .09) * .018;
       planets.forEach(({ group, sphere, atmosphere, logoHalo, focusRing, sculpture }, index) => {
         const selected = worlds[index].id === state.current.activeId;
-        const scale = selected ? 2 : .94;
+        const scale = selected ? 2.25 : .94;
         group.scale.setScalar(state.current.motionOn ? THREE.MathUtils.damp(group.scale.x, scale, 7, dt) : scale);
         const phase = orbitPhases[index] + angle;
         const orbitX = Math.cos(phase) * (portrait ? 1.95 : 3.35);
@@ -418,7 +418,7 @@ export function CosmicCanvas({ activeId, onSelect, onPrevious, onNext, motionOn,
         // The dossier owns the right rail on landscape layouts; give the focused world a clear visual bay beside it.
         const targetX = selected ? (portrait ? 0 : -.58) : safeOrbitX;
         const targetY = selected ? .2 : orbitY;
-        const targetZ = selected ? 1.85 : orbitZ;
+        const targetZ = selected ? 2.1 : orbitZ;
         if (state.current.motionOn) {
           group.position.x = THREE.MathUtils.damp(group.position.x, targetX, 6, dt);
           group.position.y = THREE.MathUtils.damp(group.position.y, targetY, 6, dt);
@@ -468,7 +468,7 @@ export function CosmicCanvas({ activeId, onSelect, onPrevious, onNext, motionOn,
         const anchorIndex = linkedProjectIndexes.includes(selectedProjectIndex) ? selectedProjectIndex : linkedProjectIndexes[0] ?? -1;
         const belongsToProject = anchorIndex >= 0;
         const isActiveProjectTool = linkedProjectIndexes.includes(selectedProjectIndex);
-        const anchorRadius = belongsToProject ? (.37 + anchorIndex * .02) * (anchorIndex === selectedProjectIndex ? 2 : .94) : 0;
+        const anchorRadius = belongsToProject ? (.37 + anchorIndex * .02) * (anchorIndex === selectedProjectIndex ? 2.25 : .94) : 0;
         const radiusPath = belongsToProject ? anchorRadius + (anchorIndex === selectedProjectIndex ? .48 + lane * .2 : .24 + lane * .1) + (index % 4) * .035 : 2.55 + lane * .16;
         const phase = index * 2.37 + angle * (.18 + lane * .03) + elapsed * (.018 + lane * .006);
         const anchor = belongsToProject ? planets[anchorIndex].group.position : { x: 0, y: -.25, z: -1.05 };
