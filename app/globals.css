@@ -554,7 +554,8 @@ html[data-motion="off"] *, html[data-motion="off"] *::before, html[data-motion="
   .content-section { width: min(100% - 56px, 820px); padding-block: 106px; }
   .signal-inner, .world-chain { width: min(100% - 56px, 820px); }
   .cosmic-frame { aspect-ratio: 1.18; min-height: 640px; }
-  .project-showcase { top: 104px; right: clamp(20px, 4vw, 38px); width: min(318px, 39vw); }
+  .project-showcase { top: 104px; right: clamp(20px, 4vw, 38px); width: min(318px, 39vw); padding: 16px 17px 18px; border: 1px solid color-mix(in srgb, var(--project-showcase-color, var(--cyan)) 38%, rgba(244,245,239,.18)); background: linear-gradient(135deg, rgba(7,9,27,.84), rgba(7,9,27,.58)); box-shadow: 0 18px 45px rgba(0,0,0,.22); backdrop-filter: blur(10px); text-shadow: none; }
+  .project-showcase::before { right: calc(100% + 12px); width: clamp(70px, 9vw, 135px); }
   .project-showcase-summary { font-size: .76rem; }
   .work-scroll-track { margin-top: -18px; }
   .dossier { min-height: 450px; }
