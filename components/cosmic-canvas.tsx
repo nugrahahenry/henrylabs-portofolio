@@ -312,10 +312,15 @@ export function CosmicCanvas({ activeId, onSelect, onPrevious, onNext, motionOn,
         new THREE.MeshBasicMaterial({ color, transparent: true, opacity: .25, depthWrite: false }),
       );
       ring.rotation.set(.78 + lane * .16, .18 + index * .04, .24 + lane * .22);
-      group.add(surface, atmosphere, ring);
+      const focusHalo = new THREE.Mesh(
+        new THREE.TorusGeometry(radius * 1.78, radius * .032, 5, 32),
+        new THREE.MeshBasicMaterial({ color, transparent: true, opacity: .04, depthWrite: false, blending: THREE.AdditiveBlending }),
+      );
+      focusHalo.rotation.set(.78 + lane * .16, .18 + index * .04, .24 + lane * .22);
+      group.add(surface, atmosphere, ring, focusHalo);
       techSystem.add(group);
       const linkedProjectIndexes = item.projectIds.map((projectId) => projectWorlds.findIndex((world) => world.id === projectId)).filter((projectIndex) => projectIndex >= 0);
-      return { group, surface, atmosphere, ring, radius, index, lane, linkedProjectIndexes };
+      return { group, surface, atmosphere, ring, focusHalo, radius, index, lane, linkedProjectIndexes };
     });
     const techOrbit = new THREE.Group();
     const techOrbitLanes = [1.08, 1.38, 1.7].map((radius, index) => {
@@ -327,6 +332,10 @@ export function CosmicCanvas({ activeId, onSelect, onPrevious, onNext, motionOn,
       return lane;
     });
     system.add(techOrbit);
+    const techSignalMaterial = new THREE.MeshBasicMaterial({ color: 0x78cdbb, transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending });
+    const techSignal = new THREE.Mesh(new THREE.SphereGeometry(.045, 12, 8), techSignalMaterial);
+    techSignal.renderOrder = 2;
+    techOrbit.add(techSignal);
     // A spanning path keeps every world connected without turning the field into a wireframe.
     const networkPairs = [[0, 1], [1, 2], [2, 4], [4, 3]] as const;
     const networkPositions = new Float32Array(networkPairs.length * 6);
@@ -436,13 +445,25 @@ export function CosmicCanvas({ activeId, onSelect, onPrevious, onNext, motionOn,
       const selectedPlanetPosition = selectedProjectIndex >= 0 ? planets[selectedProjectIndex].group.position : new THREE.Vector3();
       techOrbit.position.copy(selectedPlanetPosition);
       techOrbit.visible = selectedProjectIndex >= 0;
+      const activeTechPlanets = techPlanets.filter(({ linkedProjectIndexes }) => linkedProjectIndexes.includes(selectedProjectIndex));
+      const activeLanes = new Set(activeTechPlanets.map(({ lane }) => lane));
       techOrbitLanes.forEach((lane, index) => {
         const material = lane.material as THREE.LineBasicMaterial;
         material.color.set(projectWorlds[selectedProjectIndex]?.color ?? "#78cdbb");
-        material.opacity = state.current.motionOn ? .16 + (index === 1 ? .08 : 0) + Math.sin(elapsed * .8 + index) * .025 : .22;
+        const laneFocus = activeLanes.has(index) ? .1 : 0;
+        material.opacity = state.current.motionOn ? .1 + laneFocus + (index === 1 ? .04 : 0) + Math.sin(elapsed * .8 + index) * .018 : .16 + laneFocus;
         lane.scale.setScalar(1 + (state.current.motionOn ? Math.sin(elapsed * .65 + index) * .025 : 0));
       });
-      techPlanets.forEach(({ group, surface, atmosphere, ring, radius, index, lane, linkedProjectIndexes }) => {
+      techSignal.visible = activeTechPlanets.length > 0;
+      techSignalMaterial.color.set(projectWorlds[selectedProjectIndex]?.color ?? "#78cdbb");
+      techSignalMaterial.opacity = state.current.motionOn ? .55 + Math.sin(elapsed * 2.4) * .16 : .55;
+      if (activeTechPlanets.length > 0) {
+        const signalLane = activeTechPlanets[Math.floor(elapsed * .35) % activeTechPlanets.length]?.lane ?? 0;
+        const signalPhase = elapsed * (.22 + signalLane * .03);
+        const signalRadius = 1.08 + signalLane * .3;
+        techSignal.position.set(Math.cos(signalPhase) * signalRadius, Math.sin(signalPhase) * signalRadius * (.62 + signalLane * .05), Math.sin(signalPhase * 1.08) * (.2 + signalLane * .05));
+      }
+      techPlanets.forEach(({ group, surface, atmosphere, ring, focusHalo, radius, index, lane, linkedProjectIndexes }) => {
         const anchorIndex = linkedProjectIndexes.includes(selectedProjectIndex) ? selectedProjectIndex : linkedProjectIndexes[0] ?? -1;
         const belongsToProject = anchorIndex >= 0;
         const isActiveProjectTool = linkedProjectIndexes.includes(selectedProjectIndex);
@@ -473,6 +494,11 @@ export function CosmicCanvas({ activeId, onSelect, onPrevious, onNext, motionOn,
         atmosphere.material.opacity = (isActiveProjectTool ? .24 : belongsToProject ? .13 : .045) + (state.current.motionOn ? Math.sin(elapsed * .8 + index) * .025 : 0);
         (ring.material as THREE.MeshBasicMaterial).opacity = isActiveProjectTool ? .64 : belongsToProject ? .26 : .07;
         ring.rotation.z = .24 + lane * .22 + elapsed * (.12 + lane * .035);
+        const focusMaterial = focusHalo.material as THREE.MeshBasicMaterial;
+        const focusOpacity = isActiveProjectTool ? .76 : belongsToProject ? .11 : .025;
+        focusMaterial.opacity = state.current.motionOn ? THREE.MathUtils.damp(focusMaterial.opacity, focusOpacity, 8, dt) : focusOpacity;
+        focusHalo.rotation.z = .24 + lane * .22 - elapsed * (.16 + lane * .035);
+        focusHalo.scale.setScalar(isActiveProjectTool && state.current.motionOn ? 1 + Math.sin(elapsed * 2.1 + index) * .08 : 1);
       });
       updateNetwork();
       const signalProgress = (elapsed * .42) % networkPairs.length;
@@ -574,6 +600,8 @@ export function CosmicCanvas({ activeId, onSelect, onPrevious, onNext, motionOn,
       networkMaterial.dispose();
       signal.geometry.dispose();
       signalMaterial.dispose();
+      techSignal.geometry.dispose();
+      techSignalMaterial.dispose();
       renderer.dispose();
       wakeRef.current = () => {};
     };
