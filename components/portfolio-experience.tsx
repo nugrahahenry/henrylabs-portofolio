@@ -378,8 +378,8 @@ function SatelliteReadout({ record, records, language, motionOn, onSelect, onCyc
       </div>
     </div>
     <div className="satellite-index" aria-label={language === "en" ? "Sector projects" : "Project sektor"}>
-      {records.map((item) => <button type="button" aria-label={`Focus ${item.name}`} aria-pressed={item.id === record.id}
-        key={item.id} style={{ "--world-color": item.color } as CSSProperties} onClick={() => onSelect(item.id)}>{item.mark}</button>)}
+      {records.map((item) => { const ItemIcon = item.icon; return <button type="button" aria-label={`Focus ${item.name}`} aria-pressed={item.id === record.id} title={item.name}
+        key={item.id} style={{ "--world-color": item.color } as CSSProperties} onClick={() => onSelect(item.id)}><ItemIcon size={18} aria-hidden="true" /></button>; })}
     </div>
     <div className="project-showcase-identity"><span className="project-showcase-mark"><Icon size={24} /></span>
       <div><span>{record.access[language]}</span><h2>{record.name}</h2></div>

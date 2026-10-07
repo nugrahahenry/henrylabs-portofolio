@@ -1,6 +1,6 @@
 import * as THREE from "three";
 
-type World = "catmoji" | "polara" | "hengs" | "nalira" | "canox";
+type World = "catmoji" | "polara" | "hengs" | "nalira" | "canox" | "rental" | "pos" | "labq" | "yventures" | "soreva";
 
 // Closed, dimensional interpretations of the existing marks, not image billboards.
 export function createProjectSculpture(id: World) {
@@ -86,7 +86,7 @@ export function createProjectSculpture(id: World) {
     root.add(ring);
     ball("#38d7f8", .32, .38, .03, .065);
     root.scale.setScalar(.83);
-  } else {
+  } else if (id === "nalira") {
     solid(polygon([[-.58,.62],[-.38,.62],[.38,-.04],[.38,-.63],[-.58,.25]]), "#1e2b93", .4, 0, .04);
     solid(polygon([[.38,-.04],[.79,.3],[.79,-.02],[.4,-.63]]), "#5858b0", .4, 0, .04);
     solid(polygon([[.38,-.04],[.79,.3],[-.02,.88]]), "#b1b3e8", .4, 0, .04);
@@ -95,6 +95,66 @@ export function createProjectSculpture(id: World) {
     ring.rotation.x = .34;
     root.add(ring);
     root.scale.setScalar(.62);
+  } else if (id === "rental") {
+    const body = solid(polygon([[-.8,-.18],[-.72,.12],[-.48,.16],[-.26,.44],[.3,.44],[.56,.13],[.8,.05],[.8,-.18]]), "#efc95f", .6, 0, .07);
+    body.rotation.y = -.16;
+    for (const side of [-1, 1]) {
+      solid(polygon([[-.39,.16],[-.22,.36],[.03,.36],[.03,.16]]), "#326c81", .012, side * .325, .013);
+      solid(polygon([[.1,.16],[.1,.36],[.27,.36],[.44,.16]]), "#326c81", .012, side * .325, .013);
+      for (const x of [-.51, .5]) {
+        const tire = new THREE.Mesh(new THREE.CylinderGeometry(.19, .19, .14, 24), material("#172235"));
+        tire.rotation.x = Math.PI / 2;
+        tire.position.set(x, -.17, side * .32);
+        root.add(tire);
+        ball("#c8e4e5", x, -.17, side * .402, .09, .09, .025);
+      }
+    }
+    for (const z of [-.19, .19]) ball("#f9f6df", .78, -.005, z, .03, .065, .07);
+    root.rotation.y = -.28;
+  } else if (id === "pos") {
+    ball("#f4f0e7", 0, -.25, 0, .76, .12, .32);
+    ball("#ef8e73", -.12, -.05, 0, .62, .26, .29);
+    ball("#bb534f", .39, .13, 0, .2, .35, .29);
+    ball("#152b38", .37, .36, 0, .14, .09, .21);
+    for (const x of [-.2, -.05, .1]) line([[x, .19, -.18],[x + .08, .22, .18]], "#fff0d9", .02);
+    const receipt = solid(polygon([[-.25,.15],[.22,.15],[.22,.69],[.13,.64],[.04,.7],[-.05,.64],[-.14,.7],[-.25,.64]]), "#f4f0e7", .04, -.35, .015);
+    receipt.rotation.z = -.18;
+    for (const y of [.28, .4, .52]) line([[-.16,y,-.318],[.13,y,-.318]], "#825979", .013);
+    root.rotation.y = -.24;
+  } else if (id === "labq") {
+    const profile = [[0,-.53],[.39,-.53],[.48,-.4],[.19,.15],[.12,.28],[.12,.62],[.16,.64],[.16,.7],[.08,.7],[.08,.28],[.04,.19],[.37,-.39],[.32,-.43],[0,-.43]];
+    const flask = new THREE.Mesh(new THREE.LatheGeometry(profile.map(([x,y]) => new THREE.Vector2(x,y)), 40), new THREE.MeshPhysicalMaterial({ color: "#d7f6ef", transparent: true, opacity: .48, roughness: .15, metalness: .04, side: THREE.DoubleSide }));
+    root.add(flask);
+    const liquid = new THREE.Mesh(new THREE.CylinderGeometry(.29, .37, .24, 32), material("#60c9b0"));
+    liquid.position.y = -.31;
+    root.add(liquid);
+    for (const [x,y,z,s] of [[-.15,-.11,.06,.04],[.08,-.05,-.07,.03],[.03,.09,.04,.025]]) ball("#b9fff1", x,y,z,s);
+    const cap = new THREE.Mesh(new THREE.CylinderGeometry(.18,.18,.08,32), material("#388d89"));
+    cap.position.y = .71;
+    root.add(cap);
+    line([[-.19,-.22,.31],[.1,-.22,.31]], "#f4f0e7", .018);
+  } else if (id === "yventures") {
+    const bubble = polygon([[-.55,-.21],[-.24,-.21],[-.37,-.43],[-.03,-.21],[.5,-.21],[.57,-.12],[.57,.39],[.48,.47],[-.48,.47],[-.57,.38],[-.57,-.12]]);
+    solid(bubble, "#58d2e2", .32, .03, .055);
+    for (const x of [-.25, 0, .25]) ball("#143b52", x,.14,.22,.058);
+    for (const [x,y] of [[-.45,-.59],[0,-.67],[.45,-.59]]) {
+      ball("#ffd56b", x,y,-.1,.1);
+      line([[0,-.15,-.1],[x*.7,-.4,-.1],[x,y,-.1]], "#75e7df", .019);
+    }
+    for (const x of [-.22, .22]) ball("#e3fffa", x,.14,-.17,.04);
+  } else {
+    const fold = new THREE.BufferGeometry();
+    fold.setAttribute("position", new THREE.Float32BufferAttribute([
+      -.72,.32,.15, .76,.2,0, -.07,-.22,.05,
+      -.72,.32,.15, -.07,-.22,.05, -.26,-.1,-.22,
+      -.26,-.1,-.22, .76,.2,0, -.07,-.22,.05,
+      -.07,-.22,.05, .76,.2,0, .03,-.57,.23,
+    ],3));
+    fold.computeVertexNormals();
+    const paper = new THREE.Mesh(fold, new THREE.MeshStandardMaterial({ color: "#ffa5d1", roughness: .32, metalness: .08, side: THREE.DoubleSide }));
+    root.add(paper);
+    line([[-.55,-.52,-.08],[-.36,-.34,-.09],[-.17,-.26,-.09]], "#e3a6ff", .016);
+    for (const [x,y,z,s] of [[-.6,-.55,-.12,.06],[-.34,-.65,.02,.04],[.45,.52,-.1,.05]]) ball("#ffe7a6",x,y,z,s);
   }
   return root;
 }
