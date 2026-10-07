@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { mkdirSync } from "node:fs";
+import { mkdirSync, writeFileSync } from "node:fs";
 import { chromium, expect } from "@playwright/test";
 
 const url = process.env.PORTFOLIO_URL ?? "http://localhost:3002/";
@@ -22,6 +22,35 @@ async function enter(page, name, count) {
   await page.getByRole("button", { name: `Explore ${name} galaxy`, exact: true }).click();
   await expect(page.locator(".cosmic-canvas")).toHaveAttribute("data-flight", "1.000");
   await expect(page.locator(".planet-label")).toHaveCount(count);
+}
+
+async function observeFlight(page) {
+  await page.evaluate(() => {
+    const scene = document.querySelector(".cosmic-canvas");
+    const samples = [];
+    const frames = {};
+    window.__galaxyFlight = new Promise((resolve, reject) => {
+      const timeout = setTimeout(() => reject(new Error("galaxy approach did not settle")), 10000);
+      const sample = () => {
+        const rect = scene.getBoundingClientRect();
+        samples.push({ progress: Number(scene.dataset.flight), pan: Number(scene.dataset.flightPan), scale: Number(scene.dataset.orbitScale), galaxy: Number(scene.dataset.galaxyVisibility), angle: Number(scene.dataset.universeAngle), stage: scene.dataset.flightStage, x: rect.x, y: rect.y, width: rect.width, height: rect.height });
+        const p = Number(scene.dataset.flight);
+        const phase = p > .18 && p < .46 ? "approach" : p > .63 && p < .9 ? "arrival" : null;
+        if (phase && !frames[phase]) {
+          const canvas = scene.querySelector("canvas");
+          const gl = canvas.getContext("webgl2");
+          const pixels = new Uint8Array(gl.drawingBufferWidth * gl.drawingBufferHeight * 4);
+          gl.readPixels(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight, gl.RGBA, gl.UNSIGNED_BYTE, pixels);
+          let painted = 0;
+          for (let i = 3; i < pixels.length; i += 4) if (pixels[i] > 20) painted++;
+          frames[phase] = { painted, image: [1440, 390].includes(innerWidth) ? canvas.toDataURL("image/png") : null };
+        }
+        if (scene.dataset.flight === "1.000") { clearTimeout(timeout); resolve({ samples, frames }); }
+        else requestAnimationFrame(sample);
+      };
+      requestAnimationFrame(sample);
+    });
+  });
 }
 
 try {
@@ -53,10 +82,35 @@ try {
     await page.mouse.move(bounds.x + Number(await label.getAttribute("data-core-x")), bounds.y + Number(await label.getAttribute("data-core-y")));
     await expect(scene).toHaveAttribute("data-hovered-galaxy", "main");
     await expect(label).toHaveAttribute("data-highlighted", "true");
+    const beforeFlight = await scene.boundingBox();
+    await observeFlight(page);
     await page.mouse.click(bounds.x + Number(await label.getAttribute("data-core-x")), bounds.y + Number(await label.getAttribute("data-core-y")));
     await expect(scene).toHaveAttribute("data-view", "orbit");
     await expect(scene).toHaveAttribute("data-flight", "1.000");
+    const { samples: flight, frames } = await page.evaluate(() => window.__galaxyFlight);
+    const approach = flight.filter(({ stage }) => stage === "approach");
+    const arrival = flight.filter(({ stage }) => stage === "arrival");
+    assert.ok(approach.length > 1 && arrival.length > 1, "the journey must expose both real camera stages");
+    assert.ok(approach.every(({ scale, galaxy }) => scale === 0 && galaxy > .97), "the selected galaxy must remain while the local system is hidden");
+    assert.ok(arrival.some(({ scale, galaxy }) => scale > .1 && scale < .9 && galaxy > .1), "dust and local planets must overlap during the shared arrival");
+    const inFlight = flight.filter(({ progress }) => progress > 0 && progress < 1);
+    assert.ok(inFlight.every(({ angle }) => Math.abs(angle - inFlight[0].angle) < .0001), "the approach must not chase a moving galaxy");
+    for (const phase of ["approach", "arrival"]) {
+      assert.ok(frames[phase]?.painted > 100, `${phase} must paint real scene pixels`);
+      if (frames[phase].image) writeFileSync(`test-results/${viewport.width}-flight-${phase}.png`, Buffer.from(frames[phase].image.split(",")[1], "base64"));
+    }
+    if (viewport.width <= 640) for (const sample of flight) {
+      assert.ok(Math.abs(sample.x - beforeFlight.x) < 1 && Math.abs(sample.y - beforeFlight.y) < 1);
+      assert.ok(Math.abs(sample.width - beforeFlight.width) < 1 && Math.abs(sample.height - beforeFlight.height) < 1, "phone viewport must not jump between galaxy and project scenes");
+    }
+    await expect(scene).toHaveAttribute("data-flight-ready", "true");
+    await expect(scene).toHaveAttribute("data-orbit-scale", "1.000");
     await expect(page.locator(".planet-label")).toHaveCount(5);
+    if (viewport.width <= 640) for (const planet of await page.locator(".planet-label").all()) {
+      await expect(planet).toBeInViewport({ ratio: .99 });
+      const box = await planet.boundingBox();
+      assert.ok(box.x >= bounds.x && box.x + box.width <= bounds.x + bounds.width, "all phone project labels must fit the canvas");
+    }
     await expect(scene).toHaveAttribute("data-project-orbits", "4");
     await expect(scene).toHaveAttribute("data-orbit-connectors", "0");
     await expect(scene).toHaveAttribute("data-orbit-center", "catmoji");
@@ -125,6 +179,8 @@ try {
     assert.equal(await page.locator("canvas").count(), 2);
     await universe(page);
     await page.getByRole("button", { name: "Explore HenryLabs galaxy" }).click();
+    await expect(scene).toHaveAttribute("data-flight-ready", "false");
+    await expect(page.getByRole("button", { name: "Open active world" })).toBeHidden();
     await page.getByRole("button", { name: "Back to universe" }).click();
     await expect(scene).toHaveAttribute("data-flight", "0.000");
     await expect(page.locator(".galaxy-label")).toHaveCount(3);
@@ -172,6 +228,8 @@ try {
   await reduced.goto(url);
   await reduced.locator(".intro-loader").waitFor({ state: "hidden" });
   await enter(reduced, "University", 3);
+  await expect(reduced.locator(".cosmic-canvas")).toHaveAttribute("data-flight-stage", "orbit");
+  await expect(reduced.locator(".cosmic-canvas")).toHaveAttribute("data-orbit-scale", "1.000");
   const time = await reduced.locator(".cosmic-canvas").getAttribute("data-time");
   await reduced.waitForTimeout(200);
   assert.equal(await reduced.locator(".cosmic-canvas").getAttribute("data-time"), time);

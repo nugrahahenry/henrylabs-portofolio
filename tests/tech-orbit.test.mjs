@@ -18,10 +18,45 @@ const { techOrbitRadius, sampleTechOrbit, resolveTechOwner } = await loadModule(
 const { createProjectSculpture } = await loadModule("project-sculptures");
 const { sampleOrbit, orbitalSpeed } = await loadModule("orbital-path");
 const { createStellarCore } = await loadModule("stellar-core");
+const { advanceGalaxyFlight, sampleGalaxyFlight } = await loadModule("galaxy-flight");
 const { createDeepSpace } = await loadModule("deep-space");
 const { infallPoint, gravityMaterial, dustWarmth } = await loadModule("gravity-field");
 const { createSpacecraft, spacecraftPose } = await loadModule("spacecraft");
 const { distantStarPoint, dustStreamSource, stellarTwinkle, createDistantStarMaterial, DISTANT_STAR_COUNT, COMPACT_STAR_COUNT, FEEDING_DUST_COUNT } = await loadModule("ambient-field");
+
+test("galaxy approach centers first and reveals the local system without a visibility jump", () => {
+  const pose = { pan: 0, approach: 0, orbitScale: 0, selectedVisibility: 1, otherVisibility: 1 };
+  assert.equal(sampleGalaxyFlight(0, pose), pose);
+  assert.deepEqual(pose, { pan: 0, approach: 0, orbitScale: 0, selectedVisibility: 1, otherVisibility: 1 });
+  sampleGalaxyFlight(.45, pose);
+  assert.ok(pose.pan > .7 && pose.approach < .3);
+  assert.equal(pose.orbitScale, 0);
+  assert.ok(pose.selectedVisibility > .98 && pose.otherVisibility < .2);
+  const previous = { ...pose };
+  for (let p = .46; p <= 1; p += .01) {
+    sampleGalaxyFlight(p, pose);
+    for (const value of Object.values(pose)) assert.ok(value >= 0 && value <= 1);
+    assert.ok(pose.pan >= previous.pan && pose.approach >= previous.approach && pose.orbitScale >= previous.orbitScale);
+    assert.ok(pose.selectedVisibility <= previous.selectedVisibility && pose.otherVisibility <= previous.otherVisibility);
+    assert.ok(pose.orbitScale - previous.orbitScale < .04);
+    Object.assign(previous, pose);
+  }
+  sampleGalaxyFlight(1, pose);
+  assert.deepEqual(pose, { pan: 1, approach: 1, orbitScale: 1, selectedVisibility: 0, otherVisibility: 0 });
+});
+
+test("galaxy flight has a bounded faster return and can reverse at any frame", () => {
+  assert.equal(advanceGalaxyFlight(0, true, 1.1), 1);
+  assert.equal(advanceGalaxyFlight(1, false, .7), 0);
+  assert.equal(advanceGalaxyFlight(.5, true, 0), .5);
+  assert.equal(advanceGalaxyFlight(.5, false, -1), .5);
+  let progress = 0;
+  for (let i = 0; i < 11; i++) progress = advanceGalaxyFlight(progress, true, .03);
+  assert.ok(Math.abs(progress - .3) < 1e-12);
+  const returning = advanceGalaxyFlight(progress, false, .03);
+  assert.ok(returning < progress && progress - returning < .05);
+  assert.ok(advanceGalaxyFlight(returning, true, .03) > returning);
+});
 
 test("every tech lane is a true 3D circle outside its moving owner", () => {
   for (const body of [.34, .83, 1.01]) for (const lane of [0, 1, 2]) {

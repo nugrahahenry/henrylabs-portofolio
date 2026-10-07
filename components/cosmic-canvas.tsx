@@ -5,6 +5,7 @@ import type { MotionValue } from "motion/react";
 import { Minus, Plus, RotateCcw } from "lucide-react";
 import * as THREE from "three";
 import { createGalaxySystem, galaxies, type GalaxyId } from "./galaxy-system";
+import { advanceGalaxyFlight, sampleGalaxyFlight } from "./galaxy-flight";
 import { createPlanetMaps, removeEdgeMatte } from "./planet-materials";
 import { createProjectSculpture } from "./project-sculptures";
 import { resolveTechOwner, sampleTechOrbit, techOrbitRadius } from "./tech-orbit";
@@ -404,11 +405,14 @@ export function CosmicCanvas({ activeId, onSelect, onPrevious, onNext, motionOn,
     let pitch = 0;
     let viewBlend = state.current.view === "universe" ? 0 : 1;
     let universeAngle = 0;
+    const flightPose = { pan: 0, approach: 0, orbitScale: 0, selectedVisibility: 1, otherVisibility: 1 };
+    const mapFrame = host.closest<HTMLElement>(".cosmic-frame");
     const cameraTarget = new THREE.Vector3();
     const projected = new THREE.Vector3();
     const pointer = new THREE.Vector2();
     const raycaster = new THREE.Raycaster();
     const findPlanetAt = (event: PointerEvent) => {
+      if (viewBlend !== (state.current.view === "universe" ? 0 : 1)) return -1;
       const rect = canvas.getBoundingClientRect();
       pointer.set(((event.clientX - rect.left) / rect.width) * 2 - 1, -((event.clientY - rect.top) / rect.height) * 2 + 1);
       raycaster.setFromCamera(pointer, camera);
@@ -435,34 +439,36 @@ export function CosmicCanvas({ activeId, onSelect, onPrevious, onNext, motionOn,
       const zoom = state.current.motionOn ? THREE.MathUtils.smoothstep(progress.get(), .24, .65) : 1;
       const departure = state.current.motionOn ? THREE.MathUtils.smoothstep(progress.get(), .84, 1) : 0;
       const targetBlend = state.current.view === "universe" ? 0 : 1;
-      viewBlend = state.current.motionOn ? THREE.MathUtils.damp(viewBlend, targetBlend, 7, dt) : targetBlend;
-      if (Math.abs(viewBlend - targetBlend) < .003) viewBlend = targetBlend;
+      viewBlend = state.current.motionOn ? advanceGalaxyFlight(viewBlend, targetBlend === 1, dt) : targetBlend;
+      sampleGalaxyFlight(viewBlend, flightPose);
+      const flightReady = viewBlend === targetBlend;
       techSystem.visible = true;
       const portrait = camera.aspect < .9;
       const galaxyFocused = document.activeElement?.classList.contains("galaxy-label");
-      if (state.current.motionOn && state.current.view === "universe" && !dragging && galaxyHover.current < 0 && !galaxyFocused) universeAngle += dt * .025;
+      if (state.current.motionOn && flightReady && state.current.view === "universe" && !dragging && galaxyHover.current < 0 && !galaxyFocused) universeAngle += dt * .025;
       universe.layout(portrait, universeAngle);
       universe.center.material.opacity = .42 * (1 - viewBlend);
       const focus = universe.clusters.find((galaxy) => galaxy.id === sector)!.cluster.position;
-      const halfWidth = portrait ? 3.1 : 4.7;
+      const halfWidth = portrait ? 3.8 : 4.7;
       const fittedDistance = Math.max(10.5, halfWidth / (Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) * camera.aspect));
       const overviewDistance = Math.max(14.5, 4.3 / (Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) * camera.aspect));
-      camera.position.set(focus.x * viewBlend, .05 + focus.y * viewBlend, THREE.MathUtils.lerp(overviewDistance + (1 - zoom) * 3, focus.z + fittedDistance - state.current.viewZoom * 2.7, viewBlend));
+      camera.position.set(focus.x * flightPose.pan, .05 + focus.y * flightPose.pan, THREE.MathUtils.lerp(overviewDistance + (1 - zoom) * 3, focus.z + fittedDistance - state.current.viewZoom * 2.7, flightPose.approach));
       camera.position.z += departure * departure * 26;
-      cameraTarget.set(focus.x * viewBlend, focus.y * viewBlend, focus.z * viewBlend);
+      cameraTarget.set(focus.x * flightPose.pan, focus.y * flightPose.pan, focus.z * flightPose.pan);
       camera.lookAt(cameraTarget);
       system.position.copy(focus);
-      system.scale.setScalar(.12 + viewBlend * .88);
-      system.visible = viewBlend > .65;
+      system.scale.setScalar(Math.max(.0001, flightPose.orbitScale));
+      system.visible = flightPose.orbitScale > .0001;
       Object.entries(sectorPlanets).forEach(([id, family]) => family.forEach(({ group }) => { group.visible = id === sector; }));
       universe.clusters.forEach(({ id, disk, material, nucleus, cloud, dustMaterial }, index) => {
         const highlighted = galaxyHover.current === index || galaxyLabels.current[index] === document.activeElement;
         const emphasis = highlighted ? 1 : 0;
         disk.rotation.y = -.15 + index * .23 + elapsed * (.018 + index * .005);
-        material.opacity = (id === sector ? .95 - viewBlend * .88 : .85 * (1 - viewBlend)) + emphasis * .12 * (1 - viewBlend);
-        nucleus.material.opacity = (.72 + emphasis * .25) * (1 - viewBlend);
-        cloud.material.opacity = THREE.MathUtils.damp(cloud.material.opacity, (.09 + emphasis * .12) * (1 - viewBlend), 8, dt);
-        dustMaterial.opacity = (.62 + emphasis * .12) * (1 - viewBlend);
+        const visibility = id === sector ? flightPose.selectedVisibility : flightPose.otherVisibility;
+        material.opacity = (id === sector ? .07 + visibility * .88 : .85 * visibility) + emphasis * .12 * visibility;
+        nucleus.material.opacity = (.72 + emphasis * .25) * visibility;
+        cloud.material.opacity = (.09 + emphasis * .12) * visibility;
+        dustMaterial.opacity = (.62 + emphasis * .12) * visibility;
         nucleus.scale.setScalar(THREE.MathUtils.damp(nucleus.scale.x, highlighted ? .4 : .28, 8, dt));
         galaxyLabels.current[index]?.setAttribute("data-highlighted", String(highlighted));
       });
@@ -615,7 +621,12 @@ export function CosmicCanvas({ activeId, onSelect, onPrevious, onNext, motionOn,
       host.dataset.worldCount = String(state.current.view === "orbit" ? worlds.length : 0);
       host.dataset.activeWorld = state.current.view === "orbit" ? state.current.activeId : "";
       host.dataset.flight = viewBlend.toFixed(3);
-      host.dataset.flightReady = String(state.current.view === "universe" ? viewBlend < .015 : viewBlend > .985);
+      host.dataset.flightReady = String(flightReady);
+      if (mapFrame) mapFrame.dataset.flightReady = String(flightReady);
+      host.dataset.flightStage = flightReady ? state.current.view : viewBlend < .46 ? "approach" : "arrival";
+      host.dataset.flightPan = flightPose.pan.toFixed(3);
+      host.dataset.orbitScale = flightPose.orbitScale.toFixed(3);
+      host.dataset.galaxyVisibility = flightPose.selectedVisibility.toFixed(3);
       host.dataset.galaxyCount = "3";
       host.dataset.planetSurface = "transparent-identity";
       host.dataset.sculptureWorlds = String(allPlanets.length);
@@ -650,6 +661,7 @@ export function CosmicCanvas({ activeId, onSelect, onPrevious, onNext, motionOn,
     };
     const down = (event: PointerEvent) => {
       if (event.button !== 0) return;
+      if (viewBlend !== (state.current.view === "universe" ? 0 : 1)) return;
       if ((event.target as HTMLElement).closest("button")) return;
       dragging = true;
       pointerMoved = false;
@@ -741,6 +753,7 @@ export function CosmicCanvas({ activeId, onSelect, onPrevious, onNext, motionOn,
 
   return <div ref={hostRef} data-view={view} data-kind={sector === "main" ? "main" : "satellite"} data-world-count={view === "orbit" ? worlds.length : 0} data-active-world={view === "orbit" ? activeId : ""} className={`cosmic-canvas${fallback ? " canvas-fallback" : ""}`} role="group" tabIndex={0} aria-label={view === "universe" ? language === "en" ? "Galaxy map" : "Peta galaksi" : "Project orbit"} onKeyDown={(event) => {
     if (event.key === "Escape" && view === "orbit" && !document.querySelector('[role="dialog"]')) { event.preventDefault(); onUniverse(); return; }
+    if (!fallback && hostRef.current?.dataset.flightReady === "false" && (event.key === "ArrowLeft" || event.key === "ArrowRight")) { event.preventDefault(); return; }
     if (view === "universe") {
       if (event.key === "ArrowRight" || event.key === "ArrowLeft") {
         event.preventDefault();
