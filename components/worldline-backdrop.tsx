@@ -3,8 +3,9 @@
 import { useEffect, useRef } from "react";
 import type { MotionValue } from "motion/react";
 import * as THREE from "three";
-import { projectWorlds, type ProjectId } from "./cosmic-canvas";
+import { planetTexture, projectWorlds, type ProjectId } from "./cosmic-canvas";
 import { gravityMaterial } from "./gravity-field";
+import { advanceGravityAge, gravitySequence, GRAVITY_REST_SECONDS } from "./gravity-sequence";
 
 const projectColors: Record<ProjectId, number> = {
   catmoji: 0xef8e73,
@@ -81,20 +82,21 @@ function createBlackHole() {
   return { group, horizon, diskMaterial, rim, lens };
 }
 
-export function WorldlineBackdrop({ activeId, motionOn, progress, pageProgress }: {
+export function WorldlineBackdrop({ activeId, motionOn, progress, contactProgress, contactVisible }: {
   activeId: ProjectId;
   motionOn: boolean;
   progress: MotionValue<number>;
-  pageProgress: MotionValue<number>;
+  contactProgress: MotionValue<number>;
+  contactVisible: boolean;
 }) {
   const hostRef = useRef<HTMLDivElement>(null);
-  const state = useRef({ activeId, motionOn });
+  const state = useRef({ activeId, motionOn, contactVisible });
   const wakeRef = useRef<() => void>(() => {});
 
   useEffect(() => {
-    state.current = { activeId, motionOn };
+    state.current = { activeId, motionOn, contactVisible };
     wakeRef.current();
-  }, [activeId, motionOn]);
+  }, [activeId, motionOn, contactVisible]);
 
   useEffect(() => {
     const host = hostRef.current;
@@ -103,12 +105,12 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, pageProgress }
 
     let holeStrength = 0;
     const updateChapter = () => {
-      holeStrength = THREE.MathUtils.smoothstep(pageProgress.get(), .8, .98);
+      holeStrength = THREE.MathUtils.smoothstep(contactProgress.get(), 0, .65);
       host.style.setProperty("--black-hole-strength", holeStrength.toFixed(3));
       host.dataset.holeOpacity = holeStrength.toFixed(3);
       wakeRef.current();
     };
-    const unsubscribeChapter = pageProgress.on("change", updateChapter);
+    const unsubscribeChapter = contactProgress.on("change", updateChapter);
     updateChapter();
 
     let renderer: THREE.WebGLRenderer;
@@ -209,6 +211,18 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, pageProgress }
     starField.add(galaxyDust);
 
     const glowTexture = createGlowTexture();
+    const wandererTextures = ["#82b8c4", "#c69b78", "#a9bba0"].map(planetTexture);
+    const wanderer = new THREE.Group();
+    const wandererMaterial = new THREE.MeshStandardMaterial({ map: wandererTextures[0], roughness: .82, metalness: .025, transparent: true });
+    const wandererSurface = new THREE.Mesh(new THREE.SphereGeometry(.5, 32, 24), wandererMaterial);
+    const wandererAtmosphere = new THREE.Mesh(new THREE.SphereGeometry(.55, 24, 16), new THREE.MeshBasicMaterial({ color: "#88c5d1", transparent: true, opacity: .12, side: THREE.BackSide, blending: THREE.AdditiveBlending, depthWrite: false }));
+    const wandererRing = new THREE.Mesh(new THREE.TorusGeometry(.77, .009, 6, 64), new THREE.MeshBasicMaterial({ color: "#d5d9b7", transparent: true, opacity: .35, depthWrite: false }));
+    wandererRing.rotation.set(.85, .18, .3);
+    wanderer.add(wandererSurface, wandererAtmosphere, wandererRing);
+    scene.add(wanderer);
+    const visitorOrigin = new THREE.Vector3();
+    const visitorOffset = new THREE.Vector3();
+    let visitorIndex = -1;
     const galaxyCore = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTexture, color: 0x9b8cff, transparent: true, opacity: .075, blending: THREE.AdditiveBlending, depthWrite: false }));
     galaxyCore.position.set(0, 0, -5.2);
     galaxyCore.scale.set(3.2, 1.35, 1);
@@ -310,10 +324,12 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, pageProgress }
     let frame = 0;
     let lastTime = 0;
     let elapsed = 0;
+    let gravityAge = 0;
     const render = (time: number) => {
       frame = 0;
       if (!visible || document.hidden) return;
-      const dt = Math.min((time - lastTime) / 1000 || 0, .04);
+      const delta = Math.max(0, (time - lastTime) / 1000 || 0);
+      const dt = Math.min(delta, .04);
       lastTime = time;
       const scroll = THREE.MathUtils.clamp(progress.get(), 0, 1);
       planetSystem.visible = THREE.MathUtils.smoothstep(scroll, .035, .14) > 0;
@@ -397,17 +413,20 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, pageProgress }
       const diameter = Math.min(width * .95, height * .8);
       blackHole.group.scale.setScalar(viewHeight * diameter / height);
       blackHole.group.visible = holeStrength > .001;
-      blackHole.diskMaterial.uniforms.uTime.value = drift;
+      blackHole.diskMaterial.uniforms.uTime.value = drift * .35;
       blackHole.diskMaterial.uniforms.uStrength.value = holeStrength;
       blackHole.diskMaterial.uniforms.uResolution.value.set(width * renderer.getPixelRatio(), height * renderer.getPixelRatio());
       blackHole.horizon.material.opacity = holeStrength * .98;
       blackHole.rim.material.opacity = holeStrength * .32;
       blackHole.lens.material.opacity = holeStrength * .14;
       gravityTarget.copy(blackHole.group.position);
-      const pull = state.current.motionOn ? holeStrength : 0;
+      const gravityActive = state.current.motionOn && state.current.contactVisible && holeStrength > .05;
+      gravityAge = advanceGravityAge(gravityAge, delta, gravityActive);
+      const sequence = gravitySequence(gravityAge);
+      const pull = state.current.motionOn ? holeStrength * sequence.fieldPull : 0;
       [starMaterial, galaxyMaterial, streakMaterial].forEach((material) => {
         material.uniforms.uPull.value = pull;
-        material.uniforms.uTime.value = drift;
+        material.uniforms.uTime.value = gravityAge * .18;
         material.uniforms.uScale.value = height * renderer.getPixelRatio() * .5;
       });
       gravityStreaks.visible = pull > .01;
@@ -416,11 +435,37 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, pageProgress }
       planetSystem.rotation.z += pull * pull * 4;
       sectorSystem.scale.copy(planetSystem.scale);
       sectorSystem.position.copy(planetSystem.position);
+      wanderer.visible = gravityActive && sequence.visitorVisible;
+      if (wanderer.visible) {
+        if (visitorIndex !== sequence.index) {
+          visitorIndex = sequence.index;
+          wandererMaterial.map = wandererTextures[visitorIndex % wandererTextures.length];
+        }
+        holeRay.set(-.52, -.7, .5).unproject(camera).sub(camera.position).normalize();
+        visitorOrigin.copy(camera.position).addScaledVector(holeRay, (-4.8 - camera.position.z) / holeRay.z);
+        visitorOffset.copy(visitorOrigin).sub(gravityTarget);
+        const contraction = Math.pow(1 - sequence.progress, 1.3);
+        const angle = Math.atan2(visitorOffset.y, visitorOffset.x) - Math.pow(sequence.progress, 1.6) * Math.PI * 1.2;
+        const radius = Math.hypot(visitorOffset.x, visitorOffset.y) * contraction;
+        wanderer.position.set(gravityTarget.x + Math.cos(angle) * radius, gravityTarget.y + Math.sin(angle) * radius, gravityTarget.z + visitorOffset.z * contraction);
+        wanderer.scale.setScalar(viewHeight * Math.min(width, height) / height * .11 * (1 - sequence.progress * .78));
+        wanderer.rotation.set(.2, gravityAge * .09, sequence.progress * 1.8);
+      }
+      const visitorOpacity = wanderer.visible ? holeStrength * THREE.MathUtils.smoothstep(sequence.progress, 0, .012) * (1 - THREE.MathUtils.smoothstep(sequence.progress, .82, 1)) : 0;
+      wandererMaterial.opacity = visitorOpacity;
+      wandererAtmosphere.material.opacity = visitorOpacity * .12;
+      wandererRing.material.opacity = visitorOpacity * .35;
       host.dataset.holeX = "1.01";
       host.dataset.holeY = String(holeY);
       host.dataset.holeDiameter = diameter.toFixed(1);
       host.dataset.pull = pull.toFixed(3);
       host.dataset.backgroundGalaxies = "3";
+      host.dataset.gravityAge = gravityAge.toFixed(2);
+      host.dataset.gravityActive = String(gravityActive);
+      host.dataset.gravityPhase = sequence.phase;
+      host.dataset.gravityCycle = String(sequence.index);
+      host.dataset.gravityRest = String(GRAVITY_REST_SECONDS);
+      host.dataset.visitorOpacity = visitorOpacity.toFixed(3);
       renderer.render(scene, camera);
       host.dataset.drawCalls = String(renderer.info.render.calls);
       host.dataset.ready = "true";
@@ -460,10 +505,11 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, pageProgress }
         if (mesh.material) (Array.isArray(mesh.material) ? mesh.material : [mesh.material]).forEach((material) => material.dispose());
       });
       glowTexture.dispose();
+      wandererTextures.forEach((texture) => texture.dispose());
       renderer.dispose();
       wakeRef.current = () => {};
     };
-  }, [progress, pageProgress]);
+  }, [progress, contactProgress]);
 
   return <div ref={hostRef} className="worldline-backdrop" aria-hidden="true"><canvas /><span className="black-hole-fallback" /></div>;
 }

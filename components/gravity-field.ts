@@ -16,10 +16,11 @@ export function gravityMaterial(target: THREE.Vector3, size: number, streak = fa
       void main() {
         vec3 source = (modelMatrix * vec4(position, 1.0)).xyz;
         float seed = fract(sin(dot(position.xy, vec2(12.9898, 78.233))) * 43758.5453);
-        float travel = clamp(uPull * (1.18 + seed * .12) - seed * .12 ${streak ? "- aTail * uPull * .025" : ""}, 0.0, 1.0);
+        float influence = smoothstep(.08, .24, seed);
+        float travel = clamp(uPull * influence * (1.18 + seed * .12) - seed * .12 ${streak ? "- aTail * uPull * .025" : ""}, 0.0, 1.0);
         vec3 delta = source - uTarget;
         float contraction = pow(1.0 - travel, 1.5);
-        float angle = atan(delta.y, delta.x) + pow(travel, 1.7) * (7.0 + seed * 2.0) + uTime * .045 * uPull;
+        float angle = atan(delta.y, delta.x) - pow(travel, 1.7) * (7.0 + seed * 2.0) - uTime * .045 * uPull;
         vec3 spiral = vec3(cos(angle), sin(angle), 0.0) * length(delta.xy) * contraction;
         spiral.z = delta.z * contraction - travel * .2;
         vec4 view = viewMatrix * vec4(uTarget + spiral, 1.0);

@@ -39,6 +39,8 @@ try {
     await expect(page.locator(".planet-label")).toHaveCount(0);
     await expect(page.locator(".galaxy-label")).toHaveCount(3);
     await expect(page.locator(".sector-navigation")).toHaveCount(0);
+    const overviewAngle = Number(await scene.getAttribute("data-universe-angle"));
+    await expect.poll(async () => Number(await scene.getAttribute("data-universe-angle"))).toBeGreaterThan(overviewAngle + .003);
     const epoch = await scene.getAttribute("data-renderer-epoch");
     for (const label of await page.locator(".galaxy-label").all()) await expect(label).toBeInViewport({ ratio: .99 });
     await page.screenshot({ path: `test-results/${viewport.width}-three-galaxies.png` });

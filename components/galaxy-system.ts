@@ -27,16 +27,18 @@ export function createGalaxySystem() {
     const tint = new THREE.Color(galaxy.color);
     const coreColor = new THREE.Color("#fff6de");
     const color = new THREE.Color();
+    THREE.MathUtils.seededRandom(1703 + index * 97);
     for (let i = 0; i < 820; i++) {
-      const seed = (i * 137 % 821) / 821;
-      const radius = Math.pow(seed, .72) * 1.62;
-      const angle = i % galaxy.arms * Math.PI * 2 / galaxy.arms + radius * (2.7 + index * .35) + Math.sin(i * 42.1) * .27;
+      const seed = THREE.MathUtils.seededRandom();
+      const bulge = i < 170;
+      const radius = bulge ? Math.pow(seed, .65) * .36 : Math.pow(seed, .72) * 1.62;
+      const angle = bulge ? THREE.MathUtils.seededRandom() * Math.PI * 2 : i % galaxy.arms * Math.PI * 2 / galaxy.arms + radius * (2.7 + index * .35) + (THREE.MathUtils.seededRandom() - .5) * (.35 + seed * .7);
       positions.set([
         Math.cos(angle) * radius,
-        Math.sin(i * 13.3) * (.035 + radius * .045),
+        (THREE.MathUtils.seededRandom() - .5) * (bulge ? .18 : .055 + radius * .065),
         Math.sin(angle) * radius,
       ], i * 3);
-      color.copy(tint).lerp(coreColor, Math.pow(1 - seed, 3) * .88);
+      color.copy(tint).lerp(coreColor, bulge ? .8 : Math.pow(1 - seed, 3) * .7);
       colors.set([color.r, color.g, color.b], i * 3);
     }
     const geometry = new THREE.BufferGeometry();
@@ -46,21 +48,28 @@ export function createGalaxySystem() {
     const points = new THREE.Points(geometry, material);
     disk.add(points);
     const nucleus = new THREE.Sprite(new THREE.SpriteMaterial({ map: texture, color: "#fff6de", transparent: true, opacity: .72, blending: THREE.AdditiveBlending, depthWrite: false }));
-    nucleus.scale.set(.42, .28, 1);
-    disk.add(nucleus);
+    nucleus.scale.set(.28, .2, 1);
+    const cloud = new THREE.Sprite(new THREE.SpriteMaterial({ map: texture, color: galaxy.color, transparent: true, opacity: .09, blending: THREE.AdditiveBlending, depthWrite: false }));
+    cloud.scale.set(1.5, .8, 1);
+    disk.add(cloud, nucleus);
     const hit = new THREE.Mesh(new THREE.SphereGeometry(1.42, 12, 8), new THREE.MeshBasicMaterial({ visible: false }));
     cluster.add(disk, hit);
     group.add(cluster);
-    return { ...galaxy, cluster, disk, material, nucleus, hit };
+    return { ...galaxy, cluster, disk, material, nucleus, cloud, hit };
   });
-  const layout = (portrait: boolean) => {
+  const center = new THREE.Sprite(new THREE.SpriteMaterial({ map: texture, color: "#fff1ca", transparent: true, opacity: .42, blending: THREE.AdditiveBlending, depthWrite: false }));
+  center.scale.set(.22, .22, 1);
+  center.position.z = -.6;
+  group.add(center);
+  const layout = (portrait: boolean, angle: number) => {
     // Keep each nucleus outside the neighboring label's touch target.
-    const positions = portrait ? [[0, 2.9, 0], [-.65, .05, -.4], [.65, -2.9, .15]] : [[-3.2, .85, .2], [2.8, 1.25, -.9], [.7, -2.0, .55]];
+    const positions = portrait ? [[0, 2.9, 0], [2.1, .05, -.4], [.65, -2.9, .15]] : [[-3.2, .85, .2], [2.8, 1.25, -.9], [.7, -2.0, .55]];
     clusters.forEach(({ cluster, disk }, index) => {
-      cluster.position.set(...positions[index] as [number, number, number]);
-      cluster.scale.setScalar(portrait ? .92 : index === 0 ? 1.35 : 1.12);
+      const [x, y, z] = positions[index];
+      cluster.position.set(x * Math.cos(angle) - y * Math.sin(angle), x * Math.sin(angle) + y * Math.cos(angle), z + Math.sin(angle + index) * .2);
+      cluster.scale.setScalar(portrait ? .85 : index === 0 ? 1.35 : 1.12);
       disk.rotation.set([.92, .7, 1.12][index], -.15 + index * .23, -.12 + index * .18);
     });
   };
-  return { group, clusters, texture, layout };
+  return { group, clusters, center, texture, layout };
 }

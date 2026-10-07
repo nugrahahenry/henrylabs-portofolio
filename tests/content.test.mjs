@@ -117,7 +117,10 @@ test("portfolio surface keeps its core experience contracts", () => {
   assert.match(backdrop, /const owner = orbitPlanets\[index\]\.pivot\.position/);
   assert.match(backdrop, /createBlackHole/);
   assert.match(backdrop, /new THREE\.ShaderMaterial/);
-  assert.match(backdrop, /smoothstep\(pageProgress\.get\(\), \.8, \.98\)/);
+  assert.match(backdrop, /smoothstep\(contactProgress\.get\(\), 0, \.65\)/);
+  assert.match(experience, /ref=\{contactRef\} className="contact-section"/);
+  assert.match(backdrop, /advanceGravityAge/);
+  assert.match(canvas, /universeAngle \+= dt \* \.025/);
   assert.match(backdrop, /unsubscribeChapter\(\)/);
   assert.match(styles, /\.black-hole-fallback/);
   assert.doesNotMatch(experience, /className="sector-navigation"/);
