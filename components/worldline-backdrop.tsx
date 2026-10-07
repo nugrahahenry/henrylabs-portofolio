@@ -11,7 +11,7 @@ import { orbitGeometry, orbitalSpeed, sampleOrbit } from "./orbital-path";
 import { createStellarCore } from "./stellar-core";
 import { createDeepSpace } from "./deep-space";
 import { createSpacecraft, spacecraftPose } from "./spacecraft";
-import { COMPACT_STAR_COUNT, DISTANT_STAR_COUNT, FEEDING_DUST_COUNT, distantStarPoint, dustStreamSource } from "./ambient-field";
+import { COMPACT_STAR_COUNT, DISTANT_STAR_COUNT, FEEDING_DUST_COUNT, createDistantStarMaterial, distantStarPoint, dustStreamSource } from "./ambient-field";
 
 function createBlackHole() {
   const group = new THREE.Group();
@@ -181,7 +181,7 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, contactProgres
     const distantGeometry = new THREE.BufferGeometry();
     distantGeometry.setAttribute("position", new THREE.BufferAttribute(distantPositions, 3));
     distantGeometry.setAttribute("color", new THREE.BufferAttribute(distantColors, 3));
-    const distantMaterial = gravityMaterial(gravityTarget, .115);
+    const distantMaterial = createDistantStarMaterial();
     const distantStars = new THREE.Points(distantGeometry, distantMaterial);
     distantStars.frustumCulled = false;
     starField.add(distantStars);
@@ -487,8 +487,11 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, contactProgres
         material.uniforms.uInverseProjection.value.copy(camera.projectionMatrixInverse);
         material.uniforms.uScale.value = height * renderer.getPixelRatio() * .5;
         material.uniforms.uHorizon.value = blackHole.group.scale.x * .5;
+        material.uniforms.uResolution.value.set(width * renderer.getPixelRatio(), height * renderer.getPixelRatio());
       });
       distantMaterial.uniforms.uScale.value = height * renderer.getPixelRatio() * .5;
+      distantMaterial.uniforms.uTime.value = drift;
+      distantMaterial.uniforms.uMotion.value = state.current.motionOn ? 1 : 0;
       planetSystem.scale.setScalar(solarScale * (1 - pull * .94));
       planetSystem.position.copy(solarOrigin).lerp(gravityTarget, pull);
       planetSystem.rotation.z += pull * pull * 4;
@@ -559,7 +562,8 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, contactProgres
       host.dataset.dustSources = "top,left,bottom";
       host.dataset.feedingDustCount = String(flowGeometry.getAttribute("position").count);
       host.dataset.distantStars = String(distantGeometry.drawRange.count);
-      host.dataset.distantStarPull = distantMaterial.uniforms.uPull.value.toFixed(3);
+      host.dataset.distantStarPull = "0.000";
+      host.dataset.starTwinkle = distantMaterial.uniforms.uMotion.value ? "on" : "off";
       host.dataset.upperDustStreaks = String(upperStreakCount);
       const upperPhase = (gravityAge * .05 + flowSeeds[upperProbeIndex]) % 1;
       upperProbe.set(flowPositions[upperProbeIndex * 3], flowPositions[upperProbeIndex * 3 + 1], .5).applyMatrix4(camera.projectionMatrixInverse);

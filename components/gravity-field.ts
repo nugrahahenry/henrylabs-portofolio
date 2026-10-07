@@ -1,5 +1,9 @@
 import * as THREE from "three";
 
+export function dustWarmth(distance: number, horizon: number) {
+  return horizon > 0 ? 1 - THREE.MathUtils.smoothstep(distance, horizon * 1.25, horizon * 3.25) : 0;
+}
+
 export function infallPoint(source: THREE.Vector3, target: THREE.Vector3, travel: number, seed: number, out = new THREE.Vector3(), upper = false) {
   const t = THREE.MathUtils.clamp(travel, 0, 1);
   const x = source.x - target.x, y = source.y - target.y, z = source.z - target.z;
@@ -15,7 +19,7 @@ export function gravityMaterial(target: THREE.Vector3, size: number, streak = fa
   return new THREE.ShaderMaterial({
     uniforms: {
       uTarget: { value: target }, uPull: { value: 0 }, uTime: { value: 0 }, uScale: { value: 1 }, uSize: { value: size }, uHorizon: { value: 0 },
-      ...(stream ? { uCameraWorld: { value: new THREE.Matrix4() }, uInverseProjection: { value: new THREE.Matrix4() } } : {}),
+      ...(stream ? { uCameraWorld: { value: new THREE.Matrix4() }, uInverseProjection: { value: new THREE.Matrix4() }, uResolution: { value: new THREE.Vector2(1, 1) } } : {}),
     },
     vertexShader: `
       attribute vec3 color;
@@ -49,6 +53,7 @@ export function gravityMaterial(target: THREE.Vector3, size: number, streak = fa
         gl_Position = projectionMatrix * view;
         gl_PointSize = clamp(uSize * uScale / max(1.0, -view.z) * (1.0 + uPull * .6) ${stream ? "* mix(1.0, 1.85, aUpper)" : ""}, 1.0, ${sparkle ? "14.0" : "7.0"});
         vColor = color;
+        ${stream ? "float warmth = 1.0 - smoothstep(uHorizon * 1.25, max(.001, uHorizon * 3.25), length(spiral)); vColor = mix(color, vec3(1.0, .76, .44), warmth * uPull * .55);" : ""}
         vFade = (1.0 - smoothstep(.78, .96, ${stream ? "phase" : "travel"})) ${stream ? "* smoothstep(0.0, .10, phase) * uPull" : ""} ${streak ? `* mix(.8, .08, aTail) ${stream ? "" : "* uPull"}` : ""};
         float horizonFade = smoothstep(uHorizon * .85, max(.001, uHorizon * 1.2), length(spiral));
         vFade *= mix(1.0, horizonFade, min(1.0, uPull * 1.8));
@@ -57,9 +62,14 @@ export function gravityMaterial(target: THREE.Vector3, size: number, streak = fa
     fragmentShader: `
       varying vec3 vColor;
       varying float vFade;
+      ${stream ? "uniform vec2 uResolution;" : ""}
       void main() {
         ${streak ? "float mask = 1.0;" : sparkle ? "vec2 p = abs(gl_PointCoord - .5); float core = 1.0 - smoothstep(.015, .21, length(p)); float rays = exp(-min(p.x,p.y) * 65.0) * (1.0 - smoothstep(.05,.5,max(p.x,p.y))); float mask = max(core, rays * .7);" : "float mask = 1.0 - smoothstep(.08, .5, length(gl_PointCoord - .5));"}
-        gl_FragColor = vec4(vColor, mask * vFade * ${streak ? ".54" : ".65"});
+        ${stream ? `vec2 screen = gl_FragCoord.xy / uResolution;
+        vec2 reading = abs((screen - vec2(.5, .54)) / vec2(.44, .34));
+        float outerField = smoothstep(.3, 1.5, pow(reading.x, 4.0) + pow(reading.y, 4.0));
+        float readingGuard = mix(.72, 1.0, outerField);` : ""}
+        gl_FragColor = vec4(vColor, mask * vFade * ${streak ? ".54" : ".65"} ${stream ? "* readingGuard" : ""});
         #include <tonemapping_fragment>
         #include <colorspace_fragment>
       }

@@ -19,9 +19,9 @@ const { createProjectSculpture } = await loadModule("project-sculptures");
 const { sampleOrbit, orbitalSpeed } = await loadModule("orbital-path");
 const { createStellarCore } = await loadModule("stellar-core");
 const { createDeepSpace } = await loadModule("deep-space");
-const { infallPoint, gravityMaterial } = await loadModule("gravity-field");
+const { infallPoint, gravityMaterial, dustWarmth } = await loadModule("gravity-field");
 const { createSpacecraft, spacecraftPose } = await loadModule("spacecraft");
-const { distantStarPoint, dustStreamSource, DISTANT_STAR_COUNT, COMPACT_STAR_COUNT, FEEDING_DUST_COUNT } = await loadModule("ambient-field");
+const { distantStarPoint, dustStreamSource, stellarTwinkle, createDistantStarMaterial, DISTANT_STAR_COUNT, COMPACT_STAR_COUNT, FEEDING_DUST_COUNT } = await loadModule("ambient-field");
 
 test("every tech lane is a true 3D circle outside its moving owner", () => {
   for (const body of [.34, .83, 1.01]) for (const lane of [0, 1, 2]) {
@@ -165,6 +165,32 @@ test("distant stars form a deterministic depth layer without increasing compact 
   assert.ok(points.some((point) => point.z < -38) && points.some((point) => point.z > -20));
   assert.ok(points.some((point) => point.x > 15) && points.some((point) => point.x < -15));
   assert.deepEqual(distantStarPoint(88), points[88]);
+});
+
+test("distant stars shimmer gently without gravity or a reduced-motion brightness clock", () => {
+  for (const seed of [0, .3, .7, 1]) for (let time = 0; time < 120; time++) {
+    assert.ok(stellarTwinkle(seed, time) >= .84 && stellarTwinkle(seed, time) <= 1);
+    assert.equal(stellarTwinkle(seed, time, false), .92);
+  }
+  assert.notEqual(stellarTwinkle(.3, 3), stellarTwinkle(.3, 8));
+  const material = createDistantStarMaterial();
+  assert.doesNotMatch(material.vertexShader, /uPull|uTarget|spiral/);
+  assert.match(material.vertexShader, /uMotion \* \.08/);
+  assert.match(material.vertexShader, /1\.0, 3\.0/);
+  assert.equal(material.depthWrite, false);
+  material.dispose();
+});
+
+test("dust warms only near the horizon while the reading guard never hides its flow", () => {
+  assert.equal(dustWarmth(100, 2), 0);
+  assert.equal(dustWarmth(1, 2), 1);
+  assert.equal(dustWarmth(1, 0), 0);
+  assert.ok(dustWarmth(3, 2) > dustWarmth(5, 2));
+  const material = gravityMaterial(new THREE.Vector3(), .027, false, true);
+  assert.match(material.vertexShader, /mix\(color, vec3\(1\.0, \.76, \.44\)/);
+  assert.match(material.fragmentShader, /mix\(\.72, 1\.0, outerField\)/);
+  assert.ok(material.uniforms.uResolution);
+  material.dispose();
 });
 
 test("the bounded feeding stream includes visible upper, side and lower sources at every aspect ratio", () => {

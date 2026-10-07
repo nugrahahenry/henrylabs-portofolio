@@ -60,6 +60,7 @@ try {
     await expect(background).toHaveAttribute("data-feeding-dust-count", "240");
     await expect(background).toHaveAttribute("data-upper-dust-streaks", "60");
     await expect(background).toHaveAttribute("data-distant-star-pull", "0.000");
+    await expect(background).toHaveAttribute("data-star-twinkle", "on");
     await expect(background).toHaveAttribute("data-distant-stars", viewport.width < 700 ? "1000" : "1800");
     const starPixel = await background.locator("canvas").evaluate((canvas) => new Promise((resolve) => requestAnimationFrame(() => {
       const gl = canvas.getContext("webgl2");
@@ -128,6 +129,7 @@ try {
   await expect(reduced.locator(".worldline-backdrop")).toHaveAttribute("data-pull", "0.000");
   await expect(reduced.locator(".worldline-backdrop")).toHaveAttribute("data-visitor-opacity", "0.000");
   await expect(reduced.locator(".worldline-backdrop")).toHaveAttribute("data-gravity-age", "0.00");
+  await expect(reduced.locator(".worldline-backdrop")).toHaveAttribute("data-star-twinkle", "off");
   const stillTime = await reduced.locator(".worldline-backdrop").getAttribute("data-time");
   await reduced.waitForTimeout(200);
   assert.equal(await reduced.locator(".worldline-backdrop").getAttribute("data-time"), stillTime);
