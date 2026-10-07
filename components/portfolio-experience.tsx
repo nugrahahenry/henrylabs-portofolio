@@ -431,7 +431,7 @@ export function PortfolioExperience() {
   const certificateTriggerRef = useRef<HTMLButtonElement | null>(null);
   const stackVisible = useInView(stackRef, { margin: "150px" });
   const contactVisible = useInView(contactRef, { amount: .15 });
-  const { scrollYProgress: contactProgress } = useScroll({ target: contactRef, offset: ["start 55%", "start 15%"] });
+  const { scrollYProgress: contactProgress } = useScroll({ target: contactRef, offset: ["start 65%", "end end"] });
   const { scrollYProgress: workProgress } = useScroll({ target: workRef, offset: ["start end", "end start"] });
   const { scrollYProgress: methodProgress } = useScroll({ target: methodRef, offset: ["start 85%", "center center"] });
   const { scrollYProgress: worldlineProgress } = useScroll({ target: fieldRef, offset: ["start 72%", "end 30%"] });
@@ -447,12 +447,14 @@ export function PortfolioExperience() {
   const heroCopyY = useTransform(scrollYProgress, [0, 0.28], [0, -58]);
   const fieldScale = useTransform(scrollYProgress, [0.32, 0.65], [0.8, 1]);
   const fieldY = useTransform(scrollYProgress, [0.32, 0.65], [52, 0]);
+  const mapExitOpacity = useTransform(scrollYProgress, [.86, .98], [1, 0]);
+  const mapExitY = useTransform(scrollYProgress, [.86, 1], [0, -44]);
   const backdropScale = useTransform(scrollYProgress, [0, 1], [1, 1.12]);
   const stackStageRotate = useTransform(scrollYProgress, [0, 1], [-3, 3]);
   const stackStageY = useTransform(scrollYProgress, [0, 1], [28, -22]);
   const stackStageScale = useTransform(scrollYProgress, [0, .45, 1], [.94, 1, .96]);
   useMotionValueEvent(scrollYProgress, "change", (value) => {
-    const phase = value < 0.28 ? "intro" : value < 0.5 ? "transition" : "worlds";
+    const phase = value < 0.28 ? "intro" : value < 0.5 ? "transition" : value < .92 ? "worlds" : "departing";
     setHeroPhase((previous) => previous === phase ? previous : phase);
   });
   useMotionValueEvent(methodProgress, "change", (value) => {
@@ -675,8 +677,9 @@ export function PortfolioExperience() {
             <p className="hero-note"><span className="status-light" />{t.hero.note}</p>
           </motion.div>
 
-          {mapView === "orbit" && <button type="button" className="universe-return" onClick={returnToUniverse} aria-label={language === "en" ? "Back to universe" : "Kembali ke semesta"} title={language === "en" ? "Back to universe" : "Kembali ke semesta"}><ArrowLeft size={16} /><span>{language === "en" ? "Universe" : "Semesta"}</span></button>}
+          {mapView === "orbit" && <motion.button type="button" className="universe-return" style={{ opacity: motionOn ? mapExitOpacity : 1 }} inert={motionOn && heroPhase === "departing"} onClick={returnToUniverse} aria-label={language === "en" ? "Back to universe" : "Kembali ke semesta"} title={language === "en" ? "Back to universe" : "Kembali ke semesta"}><ArrowLeft size={16} /><span>{language === "en" ? "Universe" : "Semesta"}</span></motion.button>}
           <motion.div className="cosmic-frame-wrap" data-view={mapView} data-lenis-prevent={showProjectShowcase ? "true" : undefined} inert={motionOn && heroPhase !== "worlds"} style={{ scale: motionOn ? fieldScale : 1, y: motionOn ? fieldY : 0 }}>
+            <motion.div className="map-departure" style={{ opacity: motionOn ? mapExitOpacity : 1, y: motionOn ? mapExitY : 0 }}>
             <div className="cosmic-frame" data-view={mapView} data-sector={activeSector} style={{ "--active-world-color": mapView === "universe" ? "#78cdbb" : focusedWorld.color } as CSSProperties}>
               <div className="frame-topline"><span>{t.field.label}</span><span>{mapView === "universe" ? "03 GALAXIES / 10 WORLDS" : `${focusedWorld.name} / ${activeSector === "main" ? activeProject.status[language] : activeSatellite.access[language]}`}</span></div>
               <CosmicCanvas activeId={activeSector === "main" ? activeId : activeSatellite.id} onSelect={focusOrbitWorld} onPrevious={() => cycleOrbitWorld(-1)} onNext={() => cycleOrbitWorld(1)} motionOn={motionOn} progress={scrollYProgress} techNodes={techNodes} satelliteCatalog={satelliteCatalog} sector={activeSector} view={mapView} language={language} onGalaxySelect={enterGalaxy} onUniverse={returnToUniverse} />
@@ -693,6 +696,7 @@ export function PortfolioExperience() {
               </AnimatePresence>
               <div className="frame-bottomline"><span>{mapView === "universe" ? "03 galaxies / 10 worlds" : `${String(activeSector === "main" ? projects.length : sectorRecords.length).padStart(2, "0")} worlds / 01 maker`}</span><span>{mapView === "orbit" ? <><MousePointer2 size={13} /> {t.field.hint}</> : "HENRY NUGRAHA"}</span></div>
             </div>
+            </motion.div>
           </motion.div>
           <div className="hero-transition" aria-hidden={heroPhase !== "transition"}>
             <div className="hero-transition-card"><span>{t.transition.eyebrow}</span><strong>{t.transition.title}</strong><small>{t.transition.body}</small><i><b /><b /><b /></i></div>

@@ -1,6 +1,6 @@
 import * as THREE from "three";
 
-export function gravityMaterial(target: THREE.Vector3, size: number, streak = false) {
+export function gravityMaterial(target: THREE.Vector3, size: number, streak = false, stream = false) {
   return new THREE.ShaderMaterial({
     uniforms: { uTarget: { value: target }, uPull: { value: 0 }, uTime: { value: 0 }, uScale: { value: 1 }, uSize: { value: size } },
     vertexShader: `
@@ -17,7 +17,7 @@ export function gravityMaterial(target: THREE.Vector3, size: number, streak = fa
         vec3 source = (modelMatrix * vec4(position, 1.0)).xyz;
         float seed = fract(sin(dot(position.xy, vec2(12.9898, 78.233))) * 43758.5453);
         float influence = smoothstep(.08, .24, seed);
-        float travel = clamp(uPull * influence * (1.18 + seed * .12) - seed * .12 ${streak ? "- aTail * uPull * .025" : ""}, 0.0, 1.0);
+        float travel = ${stream ? "fract(uTime * .075 + seed)" : `clamp(uPull * influence * (1.18 + seed * .12) - seed * .12 ${streak ? "- aTail * uPull * .025" : ""}, 0.0, 1.0)`};
         vec3 delta = source - uTarget;
         float contraction = pow(1.0 - travel, 1.5);
         float angle = atan(delta.y, delta.x) - pow(travel, 1.7) * (7.0 + seed * 2.0) - uTime * .045 * uPull;
@@ -27,7 +27,7 @@ export function gravityMaterial(target: THREE.Vector3, size: number, streak = fa
         gl_Position = projectionMatrix * view;
         gl_PointSize = clamp(uSize * uScale / max(1.0, -view.z) * (1.0 + uPull * 1.4), 1.0, 7.0);
         vColor = color;
-        vFade = (1.0 - smoothstep(.82, 1.0, travel)) ${streak ? "* mix(.8, .08, aTail) * uPull" : ""};
+        vFade = (1.0 - smoothstep(.82, 1.0, travel)) ${stream ? "* smoothstep(0.0, .12, travel) * uPull" : streak ? "* mix(.8, .08, aTail) * uPull" : ""};
       }
     `,
     fragmentShader: `

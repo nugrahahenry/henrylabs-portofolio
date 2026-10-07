@@ -56,6 +56,7 @@ try {
     await expect(background).toHaveAttribute("data-hole-opacity", "0.000");
     await expect(background).toHaveAttribute("data-pull", "0.000");
     await scrollToEnd(page);
+    await expect(background).toHaveAttribute("data-hole-growth", "1.000", { timeout: 10000 });
     await expect(page.locator("footer")).toBeInViewport();
     const pixels = await holePixels(page);
     assert.ok(pixels && pixels.center[3] > 160, "event horizon must be painted in the lower-right corner");
@@ -66,7 +67,7 @@ try {
     assert.ok(Number(await background.getAttribute("data-hole-diameter")) > Math.min(viewport.width, viewport.height) * .7);
     await expect(background).toHaveAttribute("data-background-galaxies", "3");
     await expect(background).toHaveAttribute("data-gravity-active", "true");
-    await expect(background).toHaveAttribute("data-gravity-rest", "195");
+    await expect(background).toHaveAttribute("data-gravity-rest", "30");
     assert.ok(Number(await background.getAttribute("data-pull")) < .1, "jumping to Contact must not skip the slow intake");
     assert.ok(Number(await background.getAttribute("data-draw-calls")) < 65, "background must stay within its draw-call budget");
     assert.equal(await background.evaluate((node) => Math.round(node.getBoundingClientRect().height)), viewport.height);

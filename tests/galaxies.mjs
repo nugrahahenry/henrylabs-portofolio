@@ -47,6 +47,9 @@ try {
     const label = page.getByRole("button", { name: "Explore HenryLabs galaxy" });
     const bounds = await scene.boundingBox();
     // Click the 3D core, not its semantic label.
+    await page.mouse.move(bounds.x + Number(await label.getAttribute("data-core-x")), bounds.y + Number(await label.getAttribute("data-core-y")));
+    await expect(scene).toHaveAttribute("data-hovered-galaxy", "main");
+    await expect(label).toHaveAttribute("data-highlighted", "true");
     await page.mouse.click(bounds.x + Number(await label.getAttribute("data-core-x")), bounds.y + Number(await label.getAttribute("data-core-y")));
     await expect(scene).toHaveAttribute("data-view", "orbit");
     await expect(scene).toHaveAttribute("data-flight", "1.000");
@@ -81,6 +84,17 @@ try {
     await expect(page.locator(".galaxy-label")).toHaveCount(3);
     await page.getByRole("button", { name: "Toggle language" }).click();
     await expect(page.getByRole("button", { name: "Jelajahi Kuliah galaksi" })).toBeVisible();
+    const cameraDistance = Number(await scene.getAttribute("data-camera-distance"));
+    await page.locator(".hero-stage").evaluate((hero) => window.scrollTo({ top: scrollY + hero.getBoundingClientRect().top + (hero.offsetHeight - innerHeight) * .94, behavior: "instant" }));
+    await expect(page.locator(".hero-stage")).toHaveAttribute("data-phase", "departing");
+    await expect.poll(async () => Number(await scene.getAttribute("data-departure"))).toBeGreaterThan(.65);
+    assert.ok(Number(await scene.getAttribute("data-camera-distance")) > cameraDistance + 10, "the map must recede in real camera depth");
+    assert.ok(Number(await scene.getAttribute("data-departure")) > .65);
+    assert.equal(await page.locator(".cosmic-frame-wrap").evaluate((node) => node.inert), true);
+    await page.screenshot({ path: `test-results/${viewport.width}-galaxy-departure.png` });
+    await page.locator(".hero-stage").evaluate((hero) => window.scrollTo({ top: scrollY + hero.getBoundingClientRect().top + (hero.offsetHeight - innerHeight) * .7, behavior: "instant" }));
+    await expect(page.locator(".hero-stage")).toHaveAttribute("data-phase", "worlds");
+    await expect(scene).toHaveAttribute("data-departure", "0.000");
     assert.equal(await page.evaluate(() => document.documentElement.scrollWidth), viewport.width);
     assert.deepEqual(errors, []);
     await page.close();

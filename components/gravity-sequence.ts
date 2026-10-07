@@ -1,5 +1,12 @@
 export const GRAVITY_INTAKE_SECONDS = 32;
-export const GRAVITY_REST_SECONDS = 195;
+export const GRAVITY_REST_SECONDS = 30;
+export const GRAVITY_BIRTH_SECONDS = 4;
+
+export function gravityBirth(age: number) {
+  const safeAge = Number.isFinite(age) ? age : 0;
+  const fraction = Math.max(0, Math.min(1, safeAge / GRAVITY_BIRTH_SECONDS));
+  return { growth: fraction * fraction * (3 - 2 * fraction), ready: fraction >= 1 };
+}
 
 export function gravitySequence(age: number) {
   const safeAge = Math.max(0, Number.isFinite(age) ? age : 0);

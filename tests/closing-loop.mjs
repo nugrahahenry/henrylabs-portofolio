@@ -18,30 +18,43 @@ try {
     for (let i = 0; i < 8; i++) await page.clock.fastForward(250);
     const field = page.locator(".worldline-backdrop");
     await expect(field).toHaveAttribute("data-ready", "true");
+    await page.waitForLoadState("load");
     await page.evaluate(() => window.scrollTo({ top: document.documentElement.scrollHeight, behavior: "instant" }));
     // Native intersection notifications need a real browser frame, not just a virtual RAF.
     for (let i = 0; i < 50; i++) {
       await page.clock.fastForward(250);
-      if (await field.getAttribute("data-gravity-active") === "true") break;
+      if (Number(await field.getAttribute("data-birth-age")) > .5) break;
       await new Promise((resolve) => setTimeout(resolve, 20));
     }
+    assert.ok(Number(await field.getAttribute("data-hole-growth")) < .5);
+    await expect(field).toHaveAttribute("data-pull", "0.000");
+    await expect(field).toHaveAttribute("data-visitor-opacity", "0.000");
+    await expect(field).toHaveAttribute("data-feeding-dust", "false");
+    await page.screenshot({ path: `test-results/${viewport.width}-black-hole-birth.png` });
+    for (let i = 0; i < 18; i++) await page.clock.fastForward(250);
     await expect(field).toHaveAttribute("data-gravity-active", "true");
+    await expect(field).toHaveAttribute("data-hole-growth", "1.000");
     async function advanceTo(target) {
       let steps = 0;
       while (Number(await field.getAttribute("data-gravity-age")) < target && steps++ < 1100) await page.clock.fastForward(250);
       assert.ok(steps < 1100, "the closing clock must advance with visible frame time");
     }
     await advanceTo(16);
+    await page.evaluate(() => window.scrollTo({ top: document.documentElement.scrollHeight, behavior: "instant" }));
+    await expect(page.locator("footer")).toBeInViewport();
+    assert.ok(await page.locator("footer").evaluate((node) => Number(getComputedStyle(node).zIndex) > 0), "footer words must paint above the fixed backdrop");
     const pull = Number(await field.getAttribute("data-pull"));
     assert.ok(pull >= .49 && pull <= .55, `mid-intake must be slow and continuous: ${pull}`);
     await page.screenshot({ path: `test-results/${viewport.width}-slow-gravity-middle.png` });
     await advanceTo(32.25);
     await expect(field).toHaveAttribute("data-gravity-phase", "rest");
     await expect(field).toHaveAttribute("data-visitor-opacity", "0.000");
-    await advanceTo(226);
+    await expect(field).toHaveAttribute("data-feeding-dust", "true");
+    await page.screenshot({ path: `test-results/${viewport.width}-black-hole-rest.png` });
+    await advanceTo(61);
     await expect(field).toHaveAttribute("data-gravity-cycle", "0");
     await expect(field).toHaveAttribute("data-gravity-phase", "rest");
-    await advanceTo(230);
+    await advanceTo(65);
     await expect(field).toHaveAttribute("data-gravity-cycle", "1");
     assert.ok(Number(await field.getAttribute("data-visitor-opacity")) > .35, "a different cached planet must appear after the quiet interval");
     await expect(field).toHaveAttribute("data-pull", "1.000");
@@ -55,6 +68,6 @@ try {
     assert.equal(contactHit, true, "the repeat visitor must not block the contact action");
     assert.deepEqual(errors, []);
     await page.close();
-    console.log(`slow gravity and 195-second recurrence passed at ${viewport.width}x${viewport.height}`);
+    console.log(`birth, continuous dust and 30-second recurrence passed at ${viewport.width}x${viewport.height}`);
   }
 } finally { await browser.close(); }
