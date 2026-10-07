@@ -5,7 +5,7 @@ import type { MotionValue } from "motion/react";
 import * as THREE from "three";
 import { projectWorlds, type ProjectId } from "./cosmic-canvas";
 import { createAtmosphere, createPlanetMaps, createPlanetRing, projectPlanetKinds } from "./planet-materials";
-import { gravityMaterial } from "./gravity-field";
+import { gravityMaterial, infallPoint } from "./gravity-field";
 import { advanceGravityAge, gravityApproachAngle, gravityBirth, gravitySequence, gravityVisitors, GRAVITY_REST_SECONDS } from "./gravity-sequence";
 import { orbitGeometry, orbitalSpeed, sampleOrbit } from "./orbital-path";
 import { createStellarCore } from "./stellar-core";
@@ -237,19 +237,48 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, contactProgres
     const flowPositions = new Float32Array(FEEDING_DUST_COUNT * 3);
     const flowColors = new Float32Array(FEEDING_DUST_COUNT * 3);
     const flowSeeds = new Float32Array(FEEDING_DUST_COUNT);
+    const flowUpper = new Float32Array(FEEDING_DUST_COUNT);
     for (let i = 0; i < FEEDING_DUST_COUNT; i++) {
       dustStreamSource(i, ambientPoint).toArray(flowPositions, i * 3);
       galaxyColor.set(galaxyPalette[i % galaxyPalette.length]);
       galaxyColor.toArray(flowColors, i * 3);
       flowSeeds[i] = ((i + .5) * .618033989) % 1;
+      flowUpper[i] = i % 4 < 2 ? 1 : 0;
     }
     flowGeometry.setAttribute("position", new THREE.BufferAttribute(flowPositions, 3));
     flowGeometry.setAttribute("color", new THREE.BufferAttribute(flowColors, 3));
     flowGeometry.setAttribute("aSeed", new THREE.BufferAttribute(flowSeeds, 1));
+    flowGeometry.setAttribute("aUpper", new THREE.BufferAttribute(flowUpper, 1));
     const flowMaterial = gravityMaterial(gravityTarget, .027, false, true);
     const feedingDust = new THREE.Points(flowGeometry, flowMaterial);
     feedingDust.frustumCulled = false;
     scene.add(feedingDust);
+    // Short upper-stream wisps expose movement without adding another particle pool.
+    const upperStreakCount = FEEDING_DUST_COUNT / 4;
+    const upperStreakGeometry = new THREE.BufferGeometry();
+    const upperStreakPositions = new Float32Array(upperStreakCount * 6);
+    const upperStreakColors = new Float32Array(upperStreakCount * 6);
+    const upperStreakSeeds = new Float32Array(upperStreakCount * 2);
+    const upperStreakTails = new Float32Array(upperStreakCount * 2);
+    for (let i = 0; i < upperStreakCount; i++) for (let end = 0; end < 2; end++) {
+      const index = i * 4;
+      upperStreakPositions.set(flowPositions.subarray(index * 3, index * 3 + 3), i * 6 + end * 3);
+      upperStreakColors.set(flowColors.subarray(index * 3, index * 3 + 3), i * 6 + end * 3);
+      upperStreakSeeds[i * 2 + end] = flowSeeds[index];
+      upperStreakTails[i * 2 + end] = end;
+    }
+    upperStreakGeometry.setAttribute("position", new THREE.BufferAttribute(upperStreakPositions, 3));
+    upperStreakGeometry.setAttribute("color", new THREE.BufferAttribute(upperStreakColors, 3));
+    upperStreakGeometry.setAttribute("aSeed", new THREE.BufferAttribute(upperStreakSeeds, 1));
+    upperStreakGeometry.setAttribute("aUpper", new THREE.BufferAttribute(new Float32Array(upperStreakCount * 2).fill(1), 1));
+    upperStreakGeometry.setAttribute("aTail", new THREE.BufferAttribute(upperStreakTails, 1));
+    const upperStreakMaterial = gravityMaterial(gravityTarget, 0, true, true);
+    const upperStreaks = new THREE.LineSegments(upperStreakGeometry, upperStreakMaterial);
+    upperStreaks.frustumCulled = false;
+    scene.add(upperStreaks);
+    const feedingMaterials = [flowMaterial, upperStreakMaterial];
+    const upperProbeIndex = 44;
+    const upperProbe = new THREE.Vector3();
 
     const wandererMaps = ["#82b8c4", "#c69b78", "#a9bba0"].map((color, index) => createPlanetMaps(color, index === 0 ? "ocean" : index === 1 ? "rocky" : "ice", 256, 61 + index * 11));
     const planetTextures: THREE.Texture[] = wandererMaps.flatMap((maps) => maps.textures);
@@ -450,12 +479,15 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, contactProgres
       });
       gravityStreaks.visible = pull > .01;
       feedingDust.visible = gravityActive;
-      flowMaterial.uniforms.uPull.value = gravityActive ? holeStrength * THREE.MathUtils.smoothstep(gravityAge, 0, 2) : 0;
-      flowMaterial.uniforms.uTime.value = gravityAge;
-      flowMaterial.uniforms.uCameraWorld.value.copy(camera.matrixWorld);
-      flowMaterial.uniforms.uInverseProjection.value.copy(camera.projectionMatrixInverse);
-      flowMaterial.uniforms.uScale.value = height * renderer.getPixelRatio() * .5;
-      flowMaterial.uniforms.uHorizon.value = blackHole.group.scale.x * .5;
+      upperStreaks.visible = gravityActive;
+      feedingMaterials.forEach((material) => {
+        material.uniforms.uPull.value = gravityActive ? holeStrength * THREE.MathUtils.smoothstep(gravityAge, 0, 2) : 0;
+        material.uniforms.uTime.value = gravityAge;
+        material.uniforms.uCameraWorld.value.copy(camera.matrixWorld);
+        material.uniforms.uInverseProjection.value.copy(camera.projectionMatrixInverse);
+        material.uniforms.uScale.value = height * renderer.getPixelRatio() * .5;
+        material.uniforms.uHorizon.value = blackHole.group.scale.x * .5;
+      });
       distantMaterial.uniforms.uScale.value = height * renderer.getPixelRatio() * .5;
       planetSystem.scale.setScalar(solarScale * (1 - pull * .94));
       planetSystem.position.copy(solarOrigin).lerp(gravityTarget, pull);
@@ -527,6 +559,15 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, contactProgres
       host.dataset.dustSources = "top,left,bottom";
       host.dataset.feedingDustCount = String(flowGeometry.getAttribute("position").count);
       host.dataset.distantStars = String(distantGeometry.drawRange.count);
+      host.dataset.distantStarPull = distantMaterial.uniforms.uPull.value.toFixed(3);
+      host.dataset.upperDustStreaks = String(upperStreakCount);
+      const upperPhase = (gravityAge * .05 + flowSeeds[upperProbeIndex]) % 1;
+      upperProbe.set(flowPositions[upperProbeIndex * 3], flowPositions[upperProbeIndex * 3 + 1], .5).applyMatrix4(camera.projectionMatrixInverse);
+      upperProbe.multiplyScalar(flowPositions[upperProbeIndex * 3 + 2] / upperProbe.z).applyMatrix4(camera.matrixWorld);
+      infallPoint(upperProbe, gravityTarget, upperPhase, flowSeeds[upperProbeIndex], upperProbe, true).project(camera);
+      host.dataset.upperDustX = ((upperProbe.x * .5 + .5) * width).toFixed(2);
+      host.dataset.upperDustY = ((-upperProbe.y * .5 + .5) * height).toFixed(2);
+      host.dataset.upperDustPhase = upperPhase.toFixed(3);
       host.dataset.absorptionRadius = flowMaterial.uniforms.uHorizon.value.toFixed(3);
       renderer.render(scene, camera);
       let visibleVisitors = 0;

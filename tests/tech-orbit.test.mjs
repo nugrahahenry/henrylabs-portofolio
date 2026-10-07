@@ -109,7 +109,40 @@ test("dust spirals only inward and terminates at the actual horizon center", () 
   const material = gravityMaterial(target, .027, false, true);
   assert.match(material.vertexShader, /horizonFade/);
   assert.doesNotMatch(material.vertexShader, /- uTime \*|travel \* \.2/);
-  assert.match(material.vertexShader, /smoothstep\(0\.0, \.10, travel\)/);
+  assert.match(material.vertexShader, /smoothstep\(0\.0, \.10, phase\)/);
+  material.dispose();
+});
+
+test("upper dust remains visible until horizon absorption instead of curling past the right edge", () => {
+  for (const [width, height] of [[1440, 900], [390, 844], [360, 800], [844, 390]]) {
+    const camera = new THREE.PerspectiveCamera(44, width / height, .1, 100);
+    camera.position.z = 6.8;
+    camera.updateMatrixWorld();
+    const target = new THREE.Vector3(1.02, -.8, .5).unproject(camera).sub(camera.position);
+    target.multiplyScalar((-4.8 - camera.position.z) / target.z).add(camera.position);
+    const viewHeight = 2 * Math.tan(THREE.MathUtils.degToRad(22)) * 11.6;
+    const horizon = viewHeight * Math.min(width * .95, height * .8) / height * .5;
+    for (let i = 0; i < FEEDING_DUST_COUNT; i++) {
+      if (i % 4 >= 2) continue;
+      const normalized = dustStreamSource(i);
+      const source = new THREE.Vector3(normalized.x, normalized.y, .5).applyMatrix4(camera.projectionMatrixInverse);
+      source.multiplyScalar(normalized.z / source.z).applyMatrix4(camera.matrixWorld);
+      let distance = Infinity;
+      for (let step = 1; step <= 90; step++) {
+        const point = infallPoint(source, target, step / 100, ((i + .5) * .618033989) % 1, new THREE.Vector3(), true);
+        const current = point.distanceTo(target);
+        assert.ok(current < distance, "the upper stream must always contract");
+        distance = current;
+        if (current < horizon * 1.2) continue;
+        point.project(camera);
+        assert.ok(Math.abs(point.x) <= 1.02 && Math.abs(point.y) <= 1.02, `upper dust escaped before absorption at ${width}x${height}`);
+      }
+    }
+  }
+  const material = gravityMaterial(new THREE.Vector3(), 0, true, true);
+  assert.match(material.vertexShader, /clamp\(startAngle - 1\.72, 0\.0, \.55\)/);
+  assert.match(material.vertexShader, /phase - aTail \* \.014/);
+  assert.match(material.vertexShader, /smoothstep\(\.78, \.96, phase\)/);
   material.dispose();
 });
 

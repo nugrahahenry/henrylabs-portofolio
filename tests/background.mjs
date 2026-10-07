@@ -58,6 +58,8 @@ try {
     await expect(background).toHaveAttribute("data-dust-flow", "inward");
     await expect(background).toHaveAttribute("data-dust-sources", "top,left,bottom");
     await expect(background).toHaveAttribute("data-feeding-dust-count", "240");
+    await expect(background).toHaveAttribute("data-upper-dust-streaks", "60");
+    await expect(background).toHaveAttribute("data-distant-star-pull", "0.000");
     await expect(background).toHaveAttribute("data-distant-stars", viewport.width < 700 ? "1000" : "1800");
     const starPixel = await background.locator("canvas").evaluate((canvas) => new Promise((resolve) => requestAnimationFrame(() => {
       const gl = canvas.getContext("webgl2");
@@ -90,6 +92,7 @@ try {
     assert.ok(Number(await background.getAttribute("data-hole-diameter")) > Math.min(viewport.width, viewport.height) * .7);
     await expect(background).toHaveAttribute("data-background-galaxies", "3");
     await expect(background).toHaveAttribute("data-gravity-active", "true");
+    await expect(background).toHaveAttribute("data-distant-star-pull", "0.000");
     await expect(background).toHaveAttribute("data-spacecraft-visible", "false");
     await expect(background).toHaveAttribute("data-gravity-rest", "30");
     assert.ok(Number(await background.getAttribute("data-pull")) < .1, "jumping to Contact must not skip the slow intake");

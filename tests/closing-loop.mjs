@@ -4,6 +4,26 @@ import { chromium, expect } from "@playwright/test";
 
 const url = process.env.PORTFOLIO_URL ?? "http://localhost:3002/";
 const browser = await chromium.launch({ headless: true, executablePath: process.env.CHROME_PATH ?? "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe" });
+
+async function upperDustPixel(page) {
+  return page.locator(".worldline-backdrop canvas").evaluate((canvas) => {
+    const gl = canvas.getContext("webgl2");
+    const host = canvas.parentElement;
+    const x = Math.round(Number(host.dataset.upperDustX) / host.clientWidth * gl.drawingBufferWidth);
+    const y = Math.round((1 - Number(host.dataset.upperDustY) / host.clientHeight) * gl.drawingBufferHeight);
+    const pixels = new Uint8Array(9 * 9 * 4);
+    gl.readPixels(x - 4, y - 4, 9, 9, gl.RGBA, gl.UNSIGNED_BYTE, pixels);
+    let center = 0, surrounding = 0, count = 0;
+    for (let row = 0; row < 9; row++) for (let column = 0; column < 9; column++) {
+      const index = (row * 9 + column) * 4;
+      const light = pixels[index] + pixels[index + 1] + pixels[index + 2];
+      if (Math.abs(row - 4) <= 2 && Math.abs(column - 4) <= 2) center = Math.max(center, light);
+      else { surrounding += light; count++; }
+    }
+    return center - surrounding / count;
+  });
+}
+
 try {
   mkdirSync("test-results", { recursive: true });
   for (const viewport of [{ width: 1440, height: 900 }, { width: 390, height: 844 }]) {
@@ -53,7 +73,16 @@ try {
     await expect(field).toHaveAttribute("data-gravity-phase", "rest");
     await expect(field).toHaveAttribute("data-visitor-opacity", "0.000");
     await expect(field).toHaveAttribute("data-feeding-dust", "true");
+    await expect(field).toHaveAttribute("data-distant-star-pull", "0.000");
+    await expect(field).toHaveAttribute("data-upper-dust-streaks", "60");
+    const upperY = Number(await field.getAttribute("data-upper-dust-y"));
+    const upperX = Number(await field.getAttribute("data-upper-dust-x"));
+    assert.ok(upperY > 0 && upperY < viewport.height * .42 && upperX > 0 && upperX < viewport.width, "the upper stream must actually occupy the upper viewport");
+    assert.ok(await upperDustPixel(page) > 8, "an upper dust grain must paint a local highlight, not just expose coordinates");
     await page.screenshot({ path: `test-results/${viewport.width}-black-hole-rest.png` });
+    await advanceTo(33.5);
+    assert.ok(Number(await field.getAttribute("data-upper-dust-y")) > upperY + 5, "the upper dust grain must visibly move downward toward the horizon");
+    assert.ok(await upperDustPixel(page) > 8, "the moving upper grain must remain painted");
     await advanceTo(61);
     await expect(field).toHaveAttribute("data-gravity-cycle", "0");
     await expect(field).toHaveAttribute("data-gravity-phase", "rest");
@@ -63,6 +92,7 @@ try {
     await expect(field).toHaveAttribute("data-visitor-direction", "top");
     assert.ok(Number(await field.getAttribute("data-visitor-opacity")) > .35, "a different cached planet must appear after the quiet interval");
     await expect(field).toHaveAttribute("data-pull", "1.000");
+    await expect(field).toHaveAttribute("data-distant-star-pull", "0.000");
     await page.screenshot({ path: `test-results/${viewport.width}-second-gravity-visitor.png` });
     await advanceTo(78);
     await page.screenshot({ path: `test-results/${viewport.width}-five-gravity-visitors.png` });
