@@ -41,9 +41,9 @@ Interactive personal portfolio for Henry Nugraha, now moving from a single-file 
 - Project dossiers now expose a compact evidence telemetry layer for surface, access, and build state, with restrained hover depth on the authored visual or system map.
 - On mobile, the project field now becomes a real stage-then-dossier sequence so the orbit remains visible before its active-world explanation enters; access labels also distinguish public demos, open source, and private walkthroughs.
 - The project reading path now places `The Henry method` after the project dossier, so the method explains the examples instead of interrupting them.
-- The Henry method now reads as a scroll-filled horizontal signal track on wide screens, with a stacked sequence on mobile and a constellation that shifts with the reading progress.
+- The Henry method uses one scroll-filled signal track, horizontal on wide screens and stacked on mobile. The sequence starts as the section enters the viewport and reaches step 03 before its center passes the middle of the screen; the duplicate lower track is removed.
 - Private client work now has an evidence rail, visible owner stamps, localized signal/ownership fields, and directional entry motion so the real-stakes section has a clearer proof hierarchy.
-- Client cards now render authored signal-flow maps from their actual workflow data, while The Henry method carries a separate three-node scene that moves with scroll progress.
+- Client cards render authored signal-flow maps from their actual workflow data; The Henry method keeps one accessible three-step reading sequence.
 - Private client evidence now reads as a sanitized atlas: authored system maps, owner contribution, shipped layer, context, and privacy boundary are visible without exposing private screenshots or runtime data.
 - Each active world now carries a compact project signature built from its real workflow: three authored stages connect the logo, story, and stack without inventing product screenshots.
 - Google Student Ambassador leads the credential feature; archive opening and closing use Motion enter/exit transitions.

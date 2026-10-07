@@ -77,7 +77,7 @@ try {
     assert.equal(result.starFields, 2);
     assert.ok(result.credentialControlHeights.every((height) => height >= 44), `credential controls must remain touchable: ${result.credentialControlHeights}`);
     assert.equal(result.clientEvidenceMaps, 2);
-    assert.equal(result.methodScenes, 1);
+    assert.equal(result.methodScenes, 0);
     assert.equal(result.projectSignatures, 0);
     assert.equal(result.fieldContinuum, 1);
     assert.equal(result.fieldContinuumOrbits, 3);
@@ -253,6 +253,8 @@ try {
     await expect(reducedPage.locator(".intro-loader")).toHaveClass(/intro-loader--done/);
     await expect(reducedPage.locator(".site-shell")).toHaveAttribute("data-motion", "off");
     await expect(reducedPage.locator(".hero-stage")).toHaveAttribute("data-phase", "all");
+    await expect(reducedPage.locator('#method [aria-current="step"] i')).toHaveText("03");
+    await expect(reducedPage.locator(".method-scene")).toHaveCount(0);
     await reducedPage.close();
     console.log(`browser QA passed at ${viewport.width}x${viewport.height}`);
   }

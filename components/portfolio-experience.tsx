@@ -211,7 +211,6 @@ const copy = {
       title: "Notice the friction.\nShape the useful.",
       body: "The best interface starts before the interface. I look for the awkward handoff, the missing context, and the tiny moment that should feel easier.",
       steps: ["See the friction", "Make the system legible", "Ship the next useful move"],
-      marker: "SIGNAL / 01",
     },
     work: { title: "The work, in context.", body: "The orbit is the index. Select a world to see its friction, flow, and honest build state." },
     caseStudy: { stack: "Stack", signal: "Signal", ownership: "Ownership", evidence: "Evidence", next: "Next move", source: "Read source", private: "Private details stay protected", sequence: ["Friction", "System", "Proof"] },
@@ -240,7 +239,6 @@ const copy = {
       title: "Lihat friksinya.\nBentuk yang berguna.",
       body: "Interface yang baik dimulai sebelum interface. Aku mencari handoff yang canggung, konteks yang hilang, dan momen kecil yang seharusnya terasa lebih mudah.",
       steps: ["Lihat friksinya", "Buat sistemnya terbaca", "Kirim langkah berguna berikutnya"],
-      marker: "SIGNAL / 01",
     },
     work: { title: "Karya, dengan konteks.", body: "Orbit ini adalah index-nya. Pilih sebuah dunia untuk melihat friksi, alur, dan status build secara jujur." },
     caseStudy: { stack: "Stack", signal: "Sinyal", ownership: "Kepemilikan", evidence: "Bukti", next: "Langkah berikutnya", source: "Baca source", private: "Detail privat tetap dilindungi", sequence: ["Friksi", "Sistem", "Bukti"] },
@@ -432,11 +430,9 @@ export function PortfolioExperience() {
   const certificateTriggerRef = useRef<HTMLButtonElement | null>(null);
   const stackVisible = useInView(stackRef, { margin: "150px" });
   const { scrollYProgress: workProgress } = useScroll({ target: workRef, offset: ["start end", "end start"] });
-  const { scrollYProgress: methodProgress } = useScroll({ target: methodRef, offset: ["start start", "end start"] });
+  const { scrollYProgress: methodProgress } = useScroll({ target: methodRef, offset: ["start 85%", "center center"] });
   const { scrollYProgress: worldlineProgress } = useScroll({ target: fieldRef, offset: ["start 72%", "end 30%"] });
   const methodY = useTransform(methodProgress, [0, 1], [42, 0]);
-  const methodSceneScale = useTransform(methodProgress, [0, .5, 1], [.92, 1, 1.04]);
-  const methodSceneY = useTransform(methodProgress, [0, 1], [18, -18]);
   const workArtX = useTransform(workProgress, [0, .35, .72, 1], [-30, 0, 0, 30]);
   const workArtRotate = useTransform(workProgress, [0, .35, .72, 1], [-2.5, 0, 0, 2.5]);
   const workCopyY = useTransform(workProgress, [0, .35, .72, 1], [24, 0, 0, -20]);
@@ -466,6 +462,7 @@ export function PortfolioExperience() {
   });
 
   const t = copy[language];
+  const activeMethodStep = motionOn ? methodStep : 2;
   const activeProject = projects.find((project) => project.id === activeId) ?? projects[0];
   const sectorRecords = activeSector === "university" ? universityRecords : clientRecords;
   const activeSatellite = sectorRecords.find((record) => record.id === (activeSector === "university" ? activeSatellites.university : activeSatellites.client)) ?? sectorRecords[0];
@@ -722,9 +719,17 @@ export function PortfolioExperience() {
               <p className="section-kicker section-kicker-dark">{t.method.kicker} <span className="worldline-context">/ {activeProject.name}</span></p>
               <motion.h2 id="method-title" style={{ y: motionOn ? methodY : 0 }}>{t.method.title.split("\n").map((line) => <span key={line}>{line}</span>)}</motion.h2>
             </div>
-            <div className="signal-copy"><p>{t.method.body}</p><div className="signal-steps" aria-label="The Henry method steps"><motion.span className="signal-progress" aria-hidden="true" style={{ scaleX: motionOn ? methodProgress : 1 }} />{t.method.steps.map((step, index) => <span key={step} className={index === methodStep ? "signal-step--active" : undefined}><i>{String(index + 1).padStart(2, "0")}</i><strong>{step}</strong><small>{index === methodStep ? "current signal" : "next useful move"}</small></span>)}</div></div>
+            <div className="signal-copy">
+              <p>{t.method.body}</p>
+              <div className="signal-steps" aria-label="The Henry method steps">
+                <motion.span className="signal-progress" aria-hidden="true" style={{ scaleX: motionOn ? methodProgress : 1 }} />
+                {t.method.steps.map((step, index) => <span key={step} className={index === activeMethodStep ? "signal-step--active" : undefined} aria-current={index === activeMethodStep ? "step" : undefined}>
+                  <i>{String(index + 1).padStart(2, "0")}</i><strong>{step}</strong>
+                  <small>{index === activeMethodStep ? "current signal" : "next useful move"}</small>
+                </span>)}
+              </div>
+            </div>
           </div>
-          <motion.div className="method-scene" aria-hidden="true" style={{ scale: motionOn ? methodSceneScale : 1, y: motionOn ? methodSceneY : 0 }}><span className="method-scene-label">{t.method.marker} / READING THE SYSTEM</span><div className="method-scene-stage">{t.method.steps.map((step, index) => <span className={cx("method-scene-step", index === methodStep && "is-active")} key={step}><i>{String(index + 1).padStart(2, "0")}</i><strong>{step}</strong></span>)}</div></motion.div>
         </div>
       </section>
 

@@ -1,6 +1,6 @@
 {
   "name": "henrylabs-portfolio",
-  "version": "0.65.0",
+  "version": "0.65.1",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -9,6 +9,7 @@
     "typecheck": "tsc --noEmit",
     "test": "node --test tests/content.test.mjs",
     "test:browser": "node tests/browser.mjs",
+    "test:method": "node tests/method.mjs",
     "test:sectors": "node tests/sectors.mjs"
   },
   "dependencies": {

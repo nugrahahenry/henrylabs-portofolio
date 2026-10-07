@@ -67,7 +67,10 @@ test("portfolio surface keeps its core experience contracts", () => {
   assert.match(experience, /client-owner-stamp/);
   assert.match(experience, /client-evidence-map/);
   assert.match(experience, /NO PRIVATE DATA/);
-  assert.match(experience, /method-scene/);
+  assert.doesNotMatch(experience, /method-scene/);
+  assert.match(experience, /offset: \["start 85%", "center center"\]/);
+  assert.match(experience, /activeMethodStep = motionOn \? methodStep : 2/);
+  assert.match(experience, /aria-current=\{index === activeMethodStep \? "step" : undefined\}/);
   assert.match(experience, /ProjectSignature/);
   assert.match(experience, /project signature/);
   assert.match(experience, /work-scroll-track/);
@@ -172,7 +175,7 @@ test("portfolio surface keeps its core experience contracts", () => {
   assert.match(styles, /\.field-continuum/);
   assert.match(styles, /\.worldline-backdrop \{ position: fixed/);
   assert.match(styles, /@keyframes continuum-orbit-breathe/);
-  assert.match(styles, /\.method-scene-stage/);
+  assert.doesNotMatch(styles, /\.method-scene/);
   assert.match(styles, /\.project-signature/);
   assert.match(styles, /@keyframes signature-pulse/);
   assert.match(styles, /\.work-scroll-track/);
