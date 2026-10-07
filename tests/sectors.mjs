@@ -16,6 +16,15 @@ async function enterOrbit(page) {
   await expect(page.locator(".hero-stage")).toHaveAttribute("data-phase", "worlds");
 }
 
+async function chooseGalaxy(page, name) {
+  if (await page.locator(".cosmic-canvas").getAttribute("data-view") === "orbit") {
+    await page.getByRole("button", { name: "Back to universe" }).click();
+    await expect(page.locator(".cosmic-canvas")).toHaveAttribute("data-flight", "0.000");
+  }
+  await page.getByRole("button", { name: `Explore ${name} galaxy`, exact: true }).click();
+  await expect(page.locator(".cosmic-canvas")).toHaveAttribute("data-flight", "1.000");
+}
+
 async function paintedScene(page) {
   await expect(page.locator(".cosmic-canvas")).toHaveAttribute("data-ready", "true");
   const painted = await page.locator(".cosmic-canvas canvas").evaluate((canvas) => new Promise((resolve) => {
@@ -57,8 +66,7 @@ try {
     page.on("pageerror", (error) => errors.push(error.message));
     await page.goto(url, { waitUntil: "domcontentloaded" });
     await enterOrbit(page);
-    const nav = page.getByRole("group", { name: "Constellation sectors" });
-    await nav.getByRole("button", { name: /University/ }).click();
+    await chooseGalaxy(page, "University");
     const scene = page.locator(".cosmic-canvas");
     await expect(scene).toHaveAttribute("data-world-count", "3");
     await expect(scene).toHaveAttribute("data-tech-count", "0");
@@ -90,7 +98,7 @@ try {
     await waitForAnchorArrival(page, "#academic-3");
     await enterOrbit(page);
     await page.getByRole("button", { name: "Close active world" }).click();
-    await nav.getByRole("button", { name: /Client Work/ }).click();
+    await chooseGalaxy(page, "Client Work");
     await expect(scene).toHaveAttribute("data-world-count", "2");
     await paintedScene(page);
     // A real pointer click on the projected label must select without reopening the panel.
@@ -109,17 +117,18 @@ try {
     await waitForAnchorArrival(page, "#client-2");
     await enterOrbit(page);
     await page.getByRole("button", { name: "Close active world" }).click();
-    await nav.getByRole("button", { name: /HenryLabs/ }).click();
+    await chooseGalaxy(page, "HenryLabs");
     await expect(scene).toHaveAttribute("data-world-count", "5");
     await expect(scene).toHaveAttribute("data-tech-count", "21");
     await expect(scene).toHaveAttribute("data-active-world", "catmoji");
     await paintedScene(page);
     await expect(page.locator(".project-showcase")).toHaveCount(0);
-    await nav.getByRole("button", { name: /University/ }).click();
+    await chooseGalaxy(page, "University");
     await expect(scene).toHaveAttribute("data-active-world", "labq");
     await page.getByRole("button", { name: "Toggle language" }).click();
-    await expect(page.getByRole("group", { name: "Sektor konstelasi" })).toBeVisible();
-    await expect(page.getByRole("button", { name: /Kuliah/ })).toHaveAttribute("aria-pressed", "true");
+    await expect(page.getByRole("button", { name: "Kembali ke semesta" })).toBeVisible();
+    await page.getByRole("button", { name: "Kembali ke semesta" }).click();
+    await expect(page.getByRole("group", { name: "Peta galaksi" })).toBeVisible();
     assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
     assert.deepEqual(errors, []);
     await page.close();
@@ -129,7 +138,7 @@ try {
   const reduced = await browser.newPage({ viewport: { width: 390, height: 844 }, reducedMotion: "reduce" });
   await reduced.goto(url);
   await reduced.locator(".intro-loader").waitFor({ state: "hidden" });
-  await reduced.getByRole("button", { name: /University/ }).click();
+  await reduced.getByRole("button", { name: "Explore University galaxy" }).click();
   await expect(reduced.locator(".cosmic-canvas")).toHaveAttribute("data-world-count", "3");
   const time = await reduced.locator(".cosmic-canvas").getAttribute("data-time");
   await reduced.waitForTimeout(160);
@@ -146,7 +155,7 @@ try {
   });
   await fallback.goto(url);
   await fallback.locator(".intro-loader").waitFor({ state: "hidden" });
-  await fallback.getByRole("button", { name: /Client Work/ }).click();
+  await fallback.getByRole("button", { name: "Explore Client Work galaxy" }).click();
   await expect(fallback.locator(".cosmic-canvas")).toHaveClass(/canvas-fallback/);
   await expect(fallback.locator(".planet-label")).toHaveCount(2);
   await fallback.getByRole("button", { name: "Soreva", exact: true }).click();

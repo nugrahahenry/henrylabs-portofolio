@@ -4,7 +4,7 @@ Interactive personal portfolio for Henry Nugraha, now moving from a single-file 
 
 ## What is inside
 
-- Cosmic scroll opening with a project constellation.
+- Cosmic scroll opening into three separate selectable galaxies, followed by each galaxy's project constellation.
 - A launch-sequence intro with live telemetry, local project marks, and a signal-lock transition into the field.
 - A full-bleed orbit-to-method transition that explains how Henry turns friction into useful work.
 - A five-world signal chain carries the method chapter into Selected Worlds without adding another navigation system.
@@ -27,10 +27,10 @@ Interactive personal portfolio for Henry Nugraha, now moving from a single-file 
 - The credential archive opens as a denser night shelf on wide screens, with original records staying readable and hover/focus depth revealing which proof item can be inspected.
 - The featured credential now sits in a restrained 3D proof deck: nearby original records drift behind it, then tighten their orbit on hover or keyboard focus.
 - The shared background now reads as a galaxy field: procedural spiral dust, a soft galactic core, and logo-free atmospheric planets sit behind the project constellation so decorative depth does not look like stacked square assets.
-- Atmospheric planets now form one restrained constellation with four curved, depth-aware connections and smaller stars orbiting their respective bodies. A shader-lit black hole appears only toward the page close, anchored in the lower-right corner above the footer. It shares the existing renderer, stays behind all controls, and has still-state and no-WebGL alternatives.
+- Atmospheric planets form one restrained constellation with four curved connections and companion stars. The closing black hole is now large enough to extend beyond the lower-right edge. Stars, three background galaxy fields, and short light trails spiral toward it with scroll-driven gravity; reversing scroll restores the field. Foreground evidence and contact controls remain unaffected, with a still reduced-motion close and a static no-WebGL alternative.
 - Five quiet companion stars now orbit the atmospheric background bodies. University and client identity stays in the interactive constellation sectors and their readable evidence sections.
-- Constellation sectors are now selectable: HenryLabs keeps its five branded worlds and project-owned tech satellites, University contains RentalMobil.SG, POS Z Shoes, and LabQ, and Client Work contains Y-Ventures and Soreva. Satellite planets use authored monograms, not invented brand logos. Each sector remembers its last selection; the reading panel stays closed until explicitly opened, and evidence actions target the exact existing project record.
-- The orbit stage now fits the available viewport below the header. Background planet size and orbital distance are independent, preventing decorative bodies from piling up in the center. GPU contexts are released when switching sectors, and readable project controls remain available without WebGL.
+- The map starts with three dimensional spiral galaxies instead of a sector-tab bar. Click their 3D cores or semantic labels to fly into HenryLabs (five worlds), University (three), or Client Work (two). The map reuses one camera and renderer across all categories; a return control and Escape restore the universe overview. Selections are remembered, inspector dismissal persists, and verified source/private evidence routes remain unchanged. University/client planets use authored monograms, not invented brand logos.
+- The orbit stage fits the available viewport below the header, with native scrolling for the optional mobile reading panel. Background body size and orbital distance are independent. Sector geometry is cached in the same GPU context; resources are released when the map unmounts. Readable project controls remain available without WebGL.
 - Maker Orbit now acts as a live project-to-stack map: selecting a technology focuses the world that uses it, while the active world's tools brighten and the rest recede.
 - University Builds expose verified GitHub links for POS Z Shoes and LabQ, while RentalMobil.SG stays honestly marked as a local class build.
 - The orbit now carries one connected active-world stage: selecting a planet or using the stage arrows moves its real project mark into the hero position, updates the explanation and stack in place, and keeps the other worlds orbiting around it.

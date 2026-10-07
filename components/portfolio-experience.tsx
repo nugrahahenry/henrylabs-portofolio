@@ -4,10 +4,10 @@ import { useEffect, useRef, useState } from "react";
 import type { CSSProperties } from "react";
 import {
   ArrowDown,
+  ArrowLeft,
   ArrowUpRight,
   Asterisk,
   Brackets,
-  BriefcaseBusiness,
   CarFront,
   ChevronDown,
   ChevronLeft,
@@ -15,7 +15,6 @@ import {
   Code2,
   FlaskConical,
   Github,
-  GraduationCap,
   Instagram,
   Linkedin,
   LockKeyhole,
@@ -23,7 +22,6 @@ import {
   Menu,
   MessageCircle,
   MousePointer2,
-  Orbit,
   PanelRightOpen,
   ShoppingCart,
   Sparkles,
@@ -34,10 +32,11 @@ import { AnimatePresence, MotionConfig, motion, useInView, useMotionValue, useMo
 import { CosmicCanvas, type OrbitId, type ProjectId, type SatelliteId, type SatelliteWorld } from "./cosmic-canvas";
 import { SmoothScroll } from "./smooth-scroll";
 import { WorldlineBackdrop } from "./worldline-backdrop";
+import type { GalaxyId } from "./galaxy-system";
 
 type Language = "en" | "id";
 type WorldlineStage = "world" | "method" | "stack";
-type Sector = "main" | "university" | "client";
+type Sector = GalaxyId;
 
 const projects: Array<{
   id: ProjectId;
@@ -200,7 +199,7 @@ const copy = {
     hero: {
       title: "I build things I actually see.",
       body: "Product-minded developer turning everyday friction into useful systems, playful interfaces, and honest experiments.",
-      work: "Explore the work",
+      work: "Explore the universe",
       contact: "Start a project",
       note: "Open to thoughtful freelance work and the right team.",
     },
@@ -228,7 +227,7 @@ const copy = {
     hero: {
       title: "Aku membangun hal yang benar-benar kulihat.",
       body: "Developer product-minded yang mengubah rasa penasaran sehari-hari menjadi sistem berguna, interface playful, dan eksperimen jujur.",
-      work: "Jelajahi karya",
+      work: "Jelajahi semesta",
       contact: "Mulai project",
       note: "Terbuka untuk project freelance dan tim yang tepat.",
     },
@@ -297,7 +296,7 @@ const toSatelliteWorld = (record: SatelliteRecord, index: number): SatelliteWorl
 });
 const universityWorlds = universityRecords.map(toSatelliteWorld);
 const clientWorlds = clientRecords.map(toSatelliteWorld);
-const noTechNodes: readonly [] = [];
+const satelliteCatalog = { university: universityWorlds, client: clientWorlds };
 
 const certificates = [
   { title: "Class of 2026 Graduation", issuer: "Google Student Ambassador", kind: "Community", date: "Class of 2026", image: "/assets/certificates/previews/google-student-ambassador.png", source: "/assets/certificates/source/google-student-ambassador.pdf", alt: "Google Student Ambassador Class of 2026 graduation certificate for Henry Nugraha" },
@@ -404,6 +403,7 @@ export function PortfolioExperience() {
   const [language, setLanguage] = useState<Language>("en");
   const [activeId, setActiveId] = useState<ProjectId>("catmoji");
   const [activeSector, setActiveSector] = useState<Sector>("main");
+  const [mapView, setMapView] = useState<"universe" | "orbit">("universe");
   const [activeSatellites, setActiveSatellites] = useState({ university: "rental" as SatelliteId, client: "yventures" as SatelliteId });
   const [activeCertificate, setActiveCertificate] = useState<(typeof certificates)[number] | null>(null);
   const [certificateFilter, setCertificateFilter] = useState<(typeof certificateFilters)[number]>("All");
@@ -468,7 +468,6 @@ export function PortfolioExperience() {
   const sectorRecords = activeSector === "university" ? universityRecords : clientRecords;
   const activeSatellite = sectorRecords.find((record) => record.id === (activeSector === "university" ? activeSatellites.university : activeSatellites.client)) ?? sectorRecords[0];
   const focusedWorld = activeSector === "main" ? activeProject : activeSatellite;
-  const satelliteWorlds = activeSector === "main" ? undefined : activeSector === "university" ? universityWorlds : clientWorlds;
   const filteredCertificates = certificateFilter === "All" ? certificates : certificates.filter((certificate) => certificate.kind === certificateFilter);
   const visibleCertificates = showCertificateArchive ? filteredCertificates : filteredCertificates.slice(0, 5);
   const spotlightPool = visibleCertificates.slice(0, Math.min(5, visibleCertificates.length));
@@ -561,6 +560,8 @@ export function PortfolioExperience() {
 
   const focusProject = (id: ProjectId) => {
     setActiveId(id);
+    setActiveSector("main");
+    setMapView("orbit");
   };
 
   const focusStackProject = (label: string) => {
@@ -568,6 +569,7 @@ export function PortfolioExperience() {
     if (project) {
       setActiveId(project.id);
       setActiveSector("main");
+      setMapView("orbit");
     }
   };
 
@@ -594,6 +596,19 @@ export function PortfolioExperience() {
       const index = sectorRecords.findIndex((record) => record.id === activeSatellite.id);
       selectSatellite(sectorRecords[(index + direction + sectorRecords.length) % sectorRecords.length].id);
     }
+  };
+  const enterGalaxy = (sector: GalaxyId) => {
+    setActiveSector(sector);
+    setMapView("orbit");
+  };
+  const returnToUniverse = () => {
+    setShowProjectShowcase(false);
+    setMapView("universe");
+  };
+  const openGalaxyMap = () => {
+    const hero = heroRef.current;
+    if (!hero) return;
+    window.scrollTo({ top: scrollY + hero.getBoundingClientRect().top + Math.max(0, hero.offsetHeight - innerHeight) * .7, behavior: motionOn ? "smooth" : "instant" });
   };
 
   const cycleSpotlight = (direction: -1 | 1) => {
@@ -643,26 +658,28 @@ export function PortfolioExperience() {
           <span className="star star-1" /><span className="star star-2" /><span className="star star-3" /><span className="star star-4" /><span className="star star-5" />
           <div className="backdrop-arc arc-one" /><div className="backdrop-arc arc-two" />
         </div>
-        <div className="hero-sticky">
+        <div className="hero-sticky" onKeyDownCapture={(event) => {
+          if (event.key !== "Escape" || !showProjectShowcase || document.querySelector('[role="dialog"]')) return;
+          event.preventDefault();
+          event.stopPropagation();
+          setShowProjectShowcase(false);
+          heroRef.current?.querySelector<HTMLElement>(".cosmic-canvas")?.focus({ preventScroll: true });
+        }}>
           <motion.div className="hero-copy" inert={motionOn && heroPhase !== "intro"} style={{ y: motionOn ? heroCopyY : 0 }}>
             <p className="hero-kicker"><span className="live-pulse" /> product-minded developer / Indonesia</p>
             <h1 id="hero-title">{t.hero.title}</h1>
             <p className="hero-body">{t.hero.body}</p>
-            <div className="hero-actions"><a className="button button-bright" href="#work">{t.hero.work}<ArrowDown size={17} /></a><a className="button button-quiet" href="https://wa.me/6289513559554" target="_blank" rel="noreferrer">{t.hero.contact}<ArrowUpRight size={17} /></a></div>
+            <div className="hero-actions"><button type="button" className="button button-bright" onClick={openGalaxyMap}>{t.hero.work}<ArrowDown size={17} /></button><a className="button button-quiet" href="https://wa.me/6289513559554" target="_blank" rel="noreferrer">{t.hero.contact}<ArrowUpRight size={17} /></a></div>
             <p className="hero-note"><span className="status-light" />{t.hero.note}</p>
           </motion.div>
 
-          <motion.div className="cosmic-frame-wrap" inert={motionOn && heroPhase !== "worlds"} style={{ scale: motionOn ? fieldScale : 1, y: motionOn ? fieldY : 0 }}>
-            <div className="cosmic-frame" data-sector={activeSector} style={{ "--active-world-color": focusedWorld.color } as CSSProperties}>
-              <div className="frame-topline"><span>{t.field.label}</span><span>{focusedWorld.name} / {activeSector === "main" ? activeProject.status[language] : activeSatellite.access[language]}</span></div>
-              <div className="sector-navigation" role="group" aria-label={language === "en" ? "Constellation sectors" : "Sektor konstelasi"}>
-                <button type="button" aria-pressed={activeSector === "main"} onClick={() => setActiveSector("main")}><Orbit size={16} /><span>HenryLabs</span><small>05</small></button>
-                <button type="button" aria-pressed={activeSector === "university"} onClick={() => setActiveSector("university")}><GraduationCap size={16} /><span>{language === "en" ? "University" : "Kuliah"}</span><small>03</small></button>
-                <button type="button" aria-pressed={activeSector === "client"} onClick={() => setActiveSector("client")}><BriefcaseBusiness size={16} /><span>{language === "en" ? "Client Work" : "Klien"}</span><small>02</small></button>
-              </div>
-              <CosmicCanvas key={activeSector} activeId={activeSector === "main" ? activeId : activeSatellite.id} onSelect={focusOrbitWorld} onPrevious={() => cycleOrbitWorld(-1)} onNext={() => cycleOrbitWorld(1)} motionOn={motionOn} progress={scrollYProgress} techNodes={activeSector === "main" ? techNodes : noTechNodes} satelliteWorlds={satelliteWorlds} />
+          {mapView === "orbit" && <button type="button" className="universe-return" onClick={returnToUniverse} aria-label={language === "en" ? "Back to universe" : "Kembali ke semesta"} title={language === "en" ? "Back to universe" : "Kembali ke semesta"}><ArrowLeft size={16} /><span>{language === "en" ? "Universe" : "Semesta"}</span></button>}
+          <motion.div className="cosmic-frame-wrap" data-view={mapView} data-lenis-prevent={showProjectShowcase ? "true" : undefined} inert={motionOn && heroPhase !== "worlds"} style={{ scale: motionOn ? fieldScale : 1, y: motionOn ? fieldY : 0 }}>
+            <div className="cosmic-frame" data-view={mapView} data-sector={activeSector} style={{ "--active-world-color": mapView === "universe" ? "#78cdbb" : focusedWorld.color } as CSSProperties}>
+              <div className="frame-topline"><span>{t.field.label}</span><span>{mapView === "universe" ? "03 GALAXIES / 10 WORLDS" : `${focusedWorld.name} / ${activeSector === "main" ? activeProject.status[language] : activeSatellite.access[language]}`}</span></div>
+              <CosmicCanvas activeId={activeSector === "main" ? activeId : activeSatellite.id} onSelect={focusOrbitWorld} onPrevious={() => cycleOrbitWorld(-1)} onNext={() => cycleOrbitWorld(1)} motionOn={motionOn} progress={scrollYProgress} techNodes={techNodes} satelliteCatalog={satelliteCatalog} sector={activeSector} view={mapView} language={language} onGalaxySelect={enterGalaxy} onUniverse={returnToUniverse} />
               <AnimatePresence mode="wait" initial={false}>
-                {showProjectShowcase ? (activeSector === "main" ? <motion.section className="project-showcase" data-lenis-prevent key={activeProject.id} aria-label={`Active project: ${activeProject.name}`} style={{ "--project-showcase-color": activeProject.color } as CSSProperties} initial={motionOn ? { opacity: 0, x: 22 } : false} animate={{ opacity: 1, x: 0 }} exit={motionOn ? { opacity: 0, x: -16 } : undefined} transition={{ duration: motionOn ? .4 : 0, ease: [0.16, 1, 0.3, 1] }}>
+                {mapView === "orbit" && (showProjectShowcase ? (activeSector === "main" ? <motion.section className="project-showcase" data-lenis-prevent key={activeProject.id} aria-label={`Active project: ${activeProject.name}`} style={{ "--project-showcase-color": activeProject.color } as CSSProperties} initial={motionOn ? { opacity: 0, x: 22 } : false} animate={{ opacity: 1, x: 0 }} exit={motionOn ? { opacity: 0, x: -16 } : undefined} transition={{ duration: motionOn ? .4 : 0, ease: [0.16, 1, 0.3, 1] }}>
                   <div className="project-showcase-topline"><span>ACTIVE WORLD / {String(projects.findIndex((project) => project.id === activeProject.id) + 1).padStart(2, "0")}</span><div className="project-showcase-nav"><button type="button" onClick={() => cycleProject(-1)} aria-label="Previous project"><ChevronLeft size={13} /></button><button type="button" onClick={() => cycleProject(1)} aria-label="Next project"><ChevronRight size={13} /></button><button type="button" className="project-showcase-close" onClick={() => setShowProjectShowcase(false)} aria-label="Close active world" title="Close active world"><X size={13} /></button></div></div>
                   <div className="project-showcase-index" role="tablist" aria-label="Project worlds">{projects.map((project, index) => <button type="button" role="tab" aria-selected={activeId === project.id} className={cx(activeId === project.id && "is-active")} style={{ "--world-color": project.color } as CSSProperties} onClick={() => focusProject(project.id)} aria-label={`Focus ${project.name}`} title={project.name} key={project.id}><span className="project-showcase-index-mark"><img src={project.logo} alt="" /></span><span>{String(index + 1).padStart(2, "0")}</span></button>)}</div>
                   <div className="project-showcase-identity"><span className="project-showcase-mark"><img src={activeProject.logo} alt="" /></span><div><span>{activeProject.status[language]} · {activeProject.visibility[language]}</span><h2>{activeProject.name}</h2></div></div>
@@ -670,9 +687,9 @@ export function PortfolioExperience() {
                   <ProjectSignature project={activeProject} language={language} />
                   <div className="project-showcase-stack">{activeProject.stack.slice(0, 4).map((item) => <span key={item}>{item}</span>)}</div>
                   <div className="project-showcase-actions"><button type="button" onClick={openProjectDossier}>{t.field.inspect}<ArrowDown size={14} /></button><a href={activeProject.link} target={activeProject.link.startsWith("http") ? "_blank" : undefined} rel={activeProject.link.startsWith("http") ? "noreferrer" : undefined}>{t.field.open}<ArrowUpRight size={13} /></a></div>
-                </motion.section> : <SatelliteReadout key={activeSatellite.id} record={activeSatellite} records={sectorRecords} language={language} motionOn={motionOn} onSelect={selectSatellite} onCycle={cycleOrbitWorld} onClose={() => setShowProjectShowcase(false)} />) : <motion.button className="project-showcase-reopen" type="button" key="reopen-project-showcase" onClick={() => setShowProjectShowcase(true)} aria-expanded="false" aria-label="Open active world"><span><PanelRightOpen size={15} /> Active world</span><small>{focusedWorld.name}</small></motion.button>}
+                </motion.section> : <SatelliteReadout key={activeSatellite.id} record={activeSatellite} records={sectorRecords} language={language} motionOn={motionOn} onSelect={selectSatellite} onCycle={cycleOrbitWorld} onClose={() => setShowProjectShowcase(false)} />) : <motion.button className="project-showcase-reopen" type="button" key="reopen-project-showcase" onClick={() => setShowProjectShowcase(true)} aria-expanded="false" aria-label="Open active world"><span><PanelRightOpen size={15} /> Active world</span><small>{focusedWorld.name}</small></motion.button>)}
               </AnimatePresence>
-              <div className="frame-bottomline"><span>{activeSector === "main" ? "05 worlds" : `${String(sectorRecords.length).padStart(2, "0")} satellites`} / 01 maker</span><span><MousePointer2 size={13} /> {t.field.hint}</span></div>
+              <div className="frame-bottomline"><span>{mapView === "universe" ? "03 galaxies / 10 worlds" : `${String(activeSector === "main" ? projects.length : sectorRecords.length).padStart(2, "0")} worlds / 01 maker`}</span><span>{mapView === "orbit" ? <><MousePointer2 size={13} /> {t.field.hint}</> : "HENRY NUGRAHA"}</span></div>
             </div>
           </motion.div>
           <div className="hero-transition" aria-hidden={heroPhase !== "transition"}>
@@ -680,7 +697,7 @@ export function PortfolioExperience() {
           </div>
         </div>
         <div className="hero-telemetry" aria-hidden="true"><span>FIELD STATUS <b>LIVE</b></span><span>WORLD COUNT <b>05</b></span><span>MAKER <b>01</b></span></div>
-        <a href="#work" className="scroll-cue"><span>Scroll to enter</span><ArrowDown size={18} /></a>
+        <button type="button" className="scroll-cue" onClick={openGalaxyMap}><span>Scroll to enter</span><ArrowDown size={18} /></button>
       </section>
 
       <div ref={fieldRef} className="field-continuum" data-active-world={activeProject.id} data-worldline-stage={worldlineStage}>

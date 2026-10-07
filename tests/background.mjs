@@ -17,7 +17,7 @@ async function holePixels(page) {
     if (!gl) return resolve(null);
     const width = gl.drawingBufferWidth;
     const height = gl.drawingBufferHeight;
-    const x = Math.round(Number(canvas.parentElement.dataset.holeX) * width);
+    const x = Math.round(Math.min(.95, Number(canvas.parentElement.dataset.holeX)) * width);
     const y = Math.round((1 - Number(canvas.parentElement.dataset.holeY)) * height);
     const center = new Uint8Array(4);
     gl.readPixels(x, y, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, center);
@@ -59,6 +59,10 @@ try {
     assert.ok(pixels.center.slice(0, 3).every((value) => value < 25), `horizon must be dark, not an additive star: ${pixels.center}`);
     assert.ok(pixels.lit > 10, "the disk must have luminous pixels around the dark center");
     assert.ok(Number(await background.getAttribute("data-hole-y")) >= .68);
+    assert.ok(Number(await background.getAttribute("data-hole-x")) > 1, "the enlarged horizon must be cropped by the right boundary");
+    assert.ok(Number(await background.getAttribute("data-hole-diameter")) > Math.min(viewport.width, viewport.height) * .7);
+    await expect(background).toHaveAttribute("data-background-galaxies", "3");
+    await expect(background).toHaveAttribute("data-pull", "1.000");
     assert.ok(Number(await background.getAttribute("data-draw-calls")) < 65, "background must stay within its draw-call budget");
     assert.equal(await background.evaluate((node) => Math.round(node.getBoundingClientRect().height)), viewport.height);
     const time = Number(await background.getAttribute("data-time"));
@@ -66,6 +70,12 @@ try {
     assert.equal(await page.locator("canvas").count(), 2, "background must not add another WebGL renderer");
     assert.equal(await page.evaluate(() => document.documentElement.scrollWidth), viewport.width);
     await page.screenshot({ path: `test-results/${viewport.width}-black-hole-close.png` });
+    await page.evaluate(() => window.scrollTo({ top: (document.documentElement.scrollHeight - innerHeight) * .89, behavior: "instant" }));
+    await expect.poll(async () => Number(await background.getAttribute("data-pull"))).toBeGreaterThan(.45);
+    await expect.poll(async () => Number(await background.getAttribute("data-pull"))).toBeLessThan(.55);
+    await page.screenshot({ path: `test-results/${viewport.width}-gravity-infall.png` });
+    await page.evaluate(() => window.scrollTo({ top: 0, behavior: "instant" }));
+    await expect(background).toHaveAttribute("data-pull", "0.000");
     assert.deepEqual(errors, []);
     await page.close();
     console.log(`background QA passed at ${viewport.width}x${viewport.height}`);
@@ -76,6 +86,7 @@ try {
   await expect(reduced.locator(".site-shell")).toHaveAttribute("data-motion", "off");
   await scrollToEnd(reduced);
   assert.ok(await holePixels(reduced), "reduced motion must retain the terminal landmark");
+  await expect(reduced.locator(".worldline-backdrop")).toHaveAttribute("data-pull", "0.000");
   const stillTime = await reduced.locator(".worldline-backdrop").getAttribute("data-time");
   await reduced.waitForTimeout(200);
   assert.equal(await reduced.locator(".worldline-backdrop").getAttribute("data-time"), stillTime);

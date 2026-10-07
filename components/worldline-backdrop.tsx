@@ -4,6 +4,7 @@ import { useEffect, useRef } from "react";
 import type { MotionValue } from "motion/react";
 import * as THREE from "three";
 import { projectWorlds, type ProjectId } from "./cosmic-canvas";
+import { gravityMaterial } from "./gravity-field";
 
 const projectColors: Record<ProjectId, number> = {
   catmoji: 0xef8e73,
@@ -34,7 +35,7 @@ function createBlackHole() {
   const group = new THREE.Group();
   const horizon = new THREE.Mesh(new THREE.SphereGeometry(.5, 32, 24), new THREE.MeshBasicMaterial({ color: 0x020308, transparent: true }));
   const diskMaterial = new THREE.ShaderMaterial({
-    uniforms: { uTime: { value: 0 }, uStrength: { value: 0 } },
+    uniforms: { uTime: { value: 0 }, uStrength: { value: 0 }, uResolution: { value: new THREE.Vector2(1, 1) } },
     vertexShader: `
       varying vec2 vDisk;
       void main() {
@@ -45,6 +46,7 @@ function createBlackHole() {
     fragmentShader: `
       uniform float uTime;
       uniform float uStrength;
+      uniform vec2 uResolution;
       varying vec2 vDisk;
       void main() {
         float radius = length(vDisk);
@@ -56,7 +58,9 @@ function createBlackHole() {
         float brightness = (.54 + ribbon * .15 + detail * .07) * (.68 + .32 * cos(angle - .7));
         vec3 color = mix(vec3(.20, .52, .66), vec3(.96, .62, .27), heat);
         color = mix(color, vec3(1.0, .96, .82), pow(heat, 3.0));
-        gl_FragColor = vec4(color * (brightness + heat) * 2.1, edge * uStrength * .92);
+        vec2 screen = vec2(gl_FragCoord.x / uResolution.x, 1.0 - gl_FragCoord.y / uResolution.y);
+        float readingMask = clamp(smoothstep(.77, .94, screen.y) + smoothstep(.85, .99, screen.x), 0.0, 1.0);
+        gl_FragColor = vec4(color * (brightness + heat) * 2.1, edge * uStrength * .92 * mix(.12, 1.0, readingMask));
         #include <tonemapping_fragment>
         #include <colorspace_fragment>
       }
@@ -129,6 +133,7 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, pageProgress }
     const blackHole = createBlackHole();
     scene.add(blackHole.group);
     const holeRay = new THREE.Vector3();
+    const gravityTarget = new THREE.Vector3();
     scene.add(new THREE.AmbientLight(0x9fc4df, 1.15));
     const planetLight = new THREE.PointLight(0xffe5b2, 7, 18, 1.5);
     planetLight.position.set(-2.4, 2.8, 2.8);
@@ -152,8 +157,29 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, pageProgress }
     const starGeometry = new THREE.BufferGeometry();
     starGeometry.setAttribute("position", new THREE.BufferAttribute(starPositions, 3));
     starGeometry.setAttribute("color", new THREE.BufferAttribute(starColors, 3));
-    const stars = new THREE.Points(starGeometry, new THREE.PointsMaterial({ vertexColors: true, size: .035, sizeAttenuation: true, transparent: true, opacity: .62, depthWrite: false }));
+    const starMaterial = gravityMaterial(gravityTarget, .035);
+    const stars = new THREE.Points(starGeometry, starMaterial);
+    stars.frustumCulled = false;
     starField.add(stars);
+    const streakGeometry = new THREE.BufferGeometry();
+    const streakPositions = new Float32Array(80 * 6);
+    const streakColors = new Float32Array(80 * 6);
+    const streakTails = new Float32Array(80 * 2);
+    for (let i = 0; i < 80; i++) {
+      const index = (i * 11) % starCount;
+      for (let end = 0; end < 2; end++) {
+        streakPositions.set(starPositions.subarray(index * 3, index * 3 + 3), i * 6 + end * 3);
+        streakColors.set(starColors.subarray(index * 3, index * 3 + 3), i * 6 + end * 3);
+        streakTails[i * 2 + end] = end;
+      }
+    }
+    streakGeometry.setAttribute("position", new THREE.BufferAttribute(streakPositions, 3));
+    streakGeometry.setAttribute("color", new THREE.BufferAttribute(streakColors, 3));
+    streakGeometry.setAttribute("aTail", new THREE.BufferAttribute(streakTails, 1));
+    const streakMaterial = gravityMaterial(gravityTarget, 0, true);
+    const gravityStreaks = new THREE.LineSegments(streakGeometry, streakMaterial);
+    gravityStreaks.frustumCulled = false;
+    starField.add(gravityStreaks);
 
     const galaxyCount = 1180;
     const galaxyPositions = new Float32Array(galaxyCount * 3);
@@ -161,22 +187,25 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, pageProgress }
     const galaxyColor = new THREE.Color();
     const galaxyPalette = ["#d9fbf4", "#6ee7f4", "#9b8cff", "#ff82c8", "#efc95f"];
     for (let i = 0; i < galaxyCount; i++) {
-      const arm = i % 4;
-      const radius = .35 + Math.pow((i * 17 % galaxyCount) / galaxyCount, .63) * 7.2;
-      const twist = radius * .72;
-      const phase = arm * Math.PI / 2 + twist + (i * 13 % 100) / 100 * .65;
+      const galaxyIndex = i % 3;
+      const arms = [3, 2, 4][galaxyIndex];
+      const arm = Math.floor(i / 3) % arms;
+      const radius = .06 + Math.pow((i * 17 % galaxyCount) / galaxyCount, .63) * [3.0, 2.4, 2.7][galaxyIndex];
+      const twist = radius * (1.3 + galaxyIndex * .25);
+      const phase = arm * Math.PI * 2 / arms + twist + (i * 13 % 100) / 100 * .32;
       const thickness = (.12 + radius * .045) * ((i * 29 % 100) / 100 - .5);
-      galaxyPositions[i * 3] = Math.cos(phase) * radius;
-      galaxyPositions[i * 3 + 1] = thickness;
-      galaxyPositions[i * 3 + 2] = -4.4 + Math.sin(phase) * radius * .32 - (i % 11) * .045;
+      galaxyPositions[i * 3] = [-4.0, 3.3, .25][galaxyIndex] + Math.cos(phase) * radius;
+      galaxyPositions[i * 3 + 1] = [1.65, 1.4, -1.65][galaxyIndex] + Math.sin(phase) * radius * .36 + thickness;
+      galaxyPositions[i * 3 + 2] = [-6.8, -7.6, -5.6][galaxyIndex] + Math.sin(phase) * radius * .25;
       galaxyColor.set(galaxyPalette[(i + arm) % galaxyPalette.length]);
       galaxyColors.set([galaxyColor.r, galaxyColor.g, galaxyColor.b], i * 3);
     }
     const galaxyGeometry = new THREE.BufferGeometry();
     galaxyGeometry.setAttribute("position", new THREE.BufferAttribute(galaxyPositions, 3));
     galaxyGeometry.setAttribute("color", new THREE.BufferAttribute(galaxyColors, 3));
-    const galaxyDust = new THREE.Points(galaxyGeometry, new THREE.PointsMaterial({ vertexColors: true, size: .029, sizeAttenuation: true, transparent: true, opacity: .36, depthWrite: false, blending: THREE.AdditiveBlending }));
-    galaxyDust.rotation.x = .72;
+    const galaxyMaterial = gravityMaterial(gravityTarget, .029);
+    const galaxyDust = new THREE.Points(galaxyGeometry, galaxyMaterial);
+    galaxyDust.frustumCulled = false;
     starField.add(galaxyDust);
 
     const glowTexture = createGlowTexture();
@@ -360,21 +389,38 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, pageProgress }
       const width = host.clientWidth;
       const height = host.clientHeight;
       const portrait = width < height;
-      const holeY = height < 620 ? .68 : portrait ? .82 : .8;
-      holeRay.set(portrait ? .72 : .7, 1 - holeY * 2, .5).unproject(camera).sub(camera.position).normalize();
+      const holeY = height < 620 ? .88 : portrait ? .9 : .87;
+      holeRay.set(1.02, 1 - holeY * 2, .5).unproject(camera).sub(camera.position).normalize();
       blackHole.group.position.copy(camera.position).addScaledVector(holeRay, (-4.8 - camera.position.z) / holeRay.z);
       blackHole.group.quaternion.copy(camera.quaternion);
       const viewHeight = 2 * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) * (camera.position.z + 4.8);
-      const diameter = Math.min(width * (portrait ? .38 : .28), height * .38);
-      blackHole.group.scale.setScalar(viewHeight * diameter / height / 3.1);
+      const diameter = Math.min(width * .95, height * .8);
+      blackHole.group.scale.setScalar(viewHeight * diameter / height);
       blackHole.group.visible = holeStrength > .001;
       blackHole.diskMaterial.uniforms.uTime.value = drift;
       blackHole.diskMaterial.uniforms.uStrength.value = holeStrength;
+      blackHole.diskMaterial.uniforms.uResolution.value.set(width * renderer.getPixelRatio(), height * renderer.getPixelRatio());
       blackHole.horizon.material.opacity = holeStrength * .98;
-      blackHole.rim.material.opacity = holeStrength * .9;
-      blackHole.lens.material.opacity = holeStrength * .48;
-      host.dataset.holeX = portrait ? ".86" : ".85";
+      blackHole.rim.material.opacity = holeStrength * .32;
+      blackHole.lens.material.opacity = holeStrength * .14;
+      gravityTarget.copy(blackHole.group.position);
+      const pull = state.current.motionOn ? holeStrength : 0;
+      [starMaterial, galaxyMaterial, streakMaterial].forEach((material) => {
+        material.uniforms.uPull.value = pull;
+        material.uniforms.uTime.value = drift;
+        material.uniforms.uScale.value = height * renderer.getPixelRatio() * .5;
+      });
+      gravityStreaks.visible = pull > .01;
+      planetSystem.scale.setScalar(1 - pull * .94);
+      planetSystem.position.set(gravityTarget.x * pull, gravityTarget.y * pull, THREE.MathUtils.lerp(-3.2, gravityTarget.z, pull));
+      planetSystem.rotation.z += pull * pull * 4;
+      sectorSystem.scale.copy(planetSystem.scale);
+      sectorSystem.position.copy(planetSystem.position);
+      host.dataset.holeX = "1.01";
       host.dataset.holeY = String(holeY);
+      host.dataset.holeDiameter = diameter.toFixed(1);
+      host.dataset.pull = pull.toFixed(3);
+      host.dataset.backgroundGalaxies = "3";
       renderer.render(scene, camera);
       host.dataset.drawCalls = String(renderer.info.render.calls);
       host.dataset.ready = "true";

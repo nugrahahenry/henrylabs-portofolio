@@ -22,7 +22,8 @@ async function clearDragPoint(page, bounds) {
 
 try {
   mkdirSync("test-results", { recursive: true });
-  for (const viewport of [{ width: 1440, height: 900 }, { width: 1024, height: 768 }, { width: 768, height: 1024 }, { width: 390, height: 844 }, { width: 360, height: 800 }]) {
+  const sizes = [{ width: 1440, height: 900 }, { width: 1024, height: 768 }, { width: 768, height: 1024 }, { width: 390, height: 844 }, { width: 360, height: 800 }];
+  for (const viewport of process.argv.includes("--phone") ? sizes.slice(-1) : sizes) {
     const page = await browser.newPage({ viewport, reducedMotion: "no-preference" });
     const errors = [];
     page.on("pageerror", (error) => errors.push(error.message));
@@ -33,6 +34,7 @@ try {
       viewport: innerWidth,
       scrollWidth: document.documentElement.scrollWidth,
       planets: document.querySelectorAll(".planet-label").length,
+      galaxies: document.querySelectorAll(".galaxy-label").length,
       certificates: document.querySelectorAll(".certificate-card").length,
       sourceLinks: document.querySelectorAll("a[href*='/assets/certificates/source/']").length,
       chapterRails: document.querySelectorAll(".chapter-rail").length,
@@ -65,7 +67,8 @@ try {
     }));
     assert.equal(result.viewport, viewport.width);
     assert.equal(result.scrollWidth, viewport.width);
-    assert.equal(result.planets, 5);
+    assert.equal(result.planets, 0);
+    assert.equal(result.galaxies, 3);
     assert.equal(result.certificates, 5);
     assert.equal(result.sourceLinks, 5);
     assert.equal(result.chapterRails, 0);
@@ -168,7 +171,7 @@ try {
     assert.equal(await page.locator(".dossier-art-preview").evaluate((image) => image.complete && image.naturalWidth > 0), true, "Nalira artwork must render");
     assert.equal(await page.locator(".maker-tech.is-linked").count(), 4);
 
-    await page.evaluate(() => window.scrollTo({ top: innerHeight, behavior: "instant" }));
+    await page.locator(".hero-stage").evaluate((hero) => window.scrollTo({ top: scrollY + hero.getBoundingClientRect().top + (hero.offsetHeight - innerHeight) * .7, behavior: "instant" }));
     await expect(page.locator(".hero-stage")).toHaveAttribute("data-phase", "worlds");
     const scene = page.locator(".cosmic-canvas");
     await expect(scene).toHaveAttribute("data-ready", "true");
@@ -213,11 +216,12 @@ try {
     await page.mouse.up();
     await expect.poll(async () => Math.abs(Number(await scene.getAttribute("data-angle")) - beforeDrag)).toBeGreaterThan(.15);
     await page.screenshot({ path: `test-results/${viewport.width}-orbit-drag.png` });
-    const verticalStart = await clearDragPoint(page, bounds);
+    const verticalBounds = await scene.boundingBox();
+    const verticalStart = await clearDragPoint(page, verticalBounds);
     const beforePitch = Number(await scene.getAttribute("data-pitch"));
     await page.mouse.move(verticalStart.x, verticalStart.y);
     await page.mouse.down();
-    await page.mouse.move(verticalStart.x, verticalStart.y + bounds.height * .3, { steps: 8 });
+    await page.mouse.move(verticalStart.x, verticalStart.y + verticalBounds.height * .3, { steps: 8 });
     await page.mouse.up();
     await expect.poll(async () => Math.abs(Number(await scene.getAttribute("data-pitch")) - beforePitch)).toBeGreaterThan(.1);
     const directPlanetLabel = page.locator(".planet-label").nth(1);

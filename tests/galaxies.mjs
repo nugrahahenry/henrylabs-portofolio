@@ -1,0 +1,131 @@
+import assert from "node:assert/strict";
+import { mkdirSync } from "node:fs";
+import { chromium, expect } from "@playwright/test";
+
+const url = process.env.PORTFOLIO_URL ?? "http://localhost:3002/";
+const browser = await chromium.launch({ headless: true, executablePath: process.env.CHROME_PATH ?? "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe" });
+const sizes = [{ width: 1440, height: 900 }, { width: 1024, height: 768 }, { width: 768, height: 1024 }, { width: 390, height: 844 }, { width: 360, height: 800 }, { width: 844, height: 390 }];
+const targets = process.argv.includes("--touch") ? [] : process.argv.includes("--landscape") ? sizes.slice(-1) : process.argv.includes("--phone") ? sizes.slice(3, 5) : sizes;
+
+async function reveal(page) {
+  await page.locator(".intro-loader").waitFor({ state: "hidden" });
+  await page.locator(".hero-stage").evaluate((hero) => window.scrollTo({ top: scrollY + hero.getBoundingClientRect().top + (hero.offsetHeight - innerHeight) * .7, behavior: "instant" }));
+  await expect(page.locator(".hero-stage")).toHaveAttribute("data-phase", "worlds");
+  await expect.poll(() => page.locator(".hero-copy").evaluate((node) => Number(getComputedStyle(node).opacity))).toBe(0);
+}
+async function universe(page) {
+  await page.getByRole("button", { name: "Back to universe" }).click();
+  await expect(page.locator(".cosmic-canvas")).toHaveAttribute("data-flight", "0.000");
+  await expect(page.locator(".galaxy-label")).toHaveCount(3);
+}
+async function enter(page, name, count) {
+  await page.getByRole("button", { name: `Explore ${name} galaxy`, exact: true }).click();
+  await expect(page.locator(".cosmic-canvas")).toHaveAttribute("data-flight", "1.000");
+  await expect(page.locator(".planet-label")).toHaveCount(count);
+}
+
+try {
+  mkdirSync("test-results", { recursive: true });
+  for (const viewport of targets) {
+    const page = await browser.newPage({ viewport });
+    const errors = [];
+    page.on("pageerror", (error) => { errors.push(error.message); console.log("galaxy page error", error.message); });
+    page.on("console", (message) => { if (/Shader Error|THREE.WebGLProgram/.test(message.text())) errors.push(message.text()); });
+    await page.goto(url, { waitUntil: "domcontentloaded" });
+    await reveal(page);
+    const scene = page.locator(".cosmic-canvas");
+    await expect(scene).toHaveAttribute("data-ready", "true");
+    await expect(scene).toHaveAttribute("data-view", "universe");
+    await expect(page.locator(".planet-label")).toHaveCount(0);
+    await expect(page.locator(".galaxy-label")).toHaveCount(3);
+    await expect(page.locator(".sector-navigation")).toHaveCount(0);
+    const epoch = await scene.getAttribute("data-renderer-epoch");
+    for (const label of await page.locator(".galaxy-label").all()) await expect(label).toBeInViewport({ ratio: .99 });
+    await page.screenshot({ path: `test-results/${viewport.width}-three-galaxies.png` });
+    const label = page.getByRole("button", { name: "Explore HenryLabs galaxy" });
+    const bounds = await scene.boundingBox();
+    // Click the 3D core, not its semantic label.
+    await page.mouse.click(bounds.x + Number(await label.getAttribute("data-core-x")), bounds.y + Number(await label.getAttribute("data-core-y")));
+    await expect(scene).toHaveAttribute("data-view", "orbit");
+    await expect(scene).toHaveAttribute("data-flight", "1.000");
+    await expect(page.locator(".planet-label")).toHaveCount(5);
+    await expect(page.locator(".project-showcase")).toHaveCount(0);
+    await page.screenshot({ path: `test-results/${viewport.width}-galaxy-entered.png` });
+    await scene.focus();
+    await page.keyboard.press("Escape");
+    await expect(scene).toHaveAttribute("data-flight", "0.000");
+    await enter(page, "University", 3);
+    await scene.focus();
+    await page.keyboard.press("ArrowRight");
+    await expect(scene).toHaveAttribute("data-active-world", "pos");
+    await universe(page);
+    await enter(page, "Client Work", 2);
+    await page.getByRole("button", { name: "Open active world" }).click();
+    await expect(page.locator(".satellite-readout")).toContainText("Solo by Henry");
+    await scene.focus();
+    await page.keyboard.press("Escape");
+    await expect(page.locator(".project-showcase")).toHaveCount(0);
+    await expect(scene).toHaveAttribute("data-view", "orbit");
+    await universe(page);
+    await enter(page, "University", 3);
+    await expect(scene).toHaveAttribute("data-active-world", "pos");
+    await expect(page.locator(".project-showcase")).toHaveCount(0);
+    assert.equal(await scene.getAttribute("data-renderer-epoch"), epoch, "galaxy selection must reuse its scene and renderer");
+    assert.equal(await page.locator("canvas").count(), 2);
+    await universe(page);
+    await page.getByRole("button", { name: "Explore HenryLabs galaxy" }).click();
+    await page.getByRole("button", { name: "Back to universe" }).click();
+    await expect(scene).toHaveAttribute("data-flight", "0.000");
+    await expect(page.locator(".galaxy-label")).toHaveCount(3);
+    await page.getByRole("button", { name: "Toggle language" }).click();
+    await expect(page.getByRole("button", { name: "Jelajahi Kuliah galaksi" })).toBeVisible();
+    assert.equal(await page.evaluate(() => document.documentElement.scrollWidth), viewport.width);
+    assert.deepEqual(errors, []);
+    await page.close();
+    console.log(`galaxy QA passed at ${viewport.width}x${viewport.height}`);
+  }
+  const touch = await browser.newPage({ viewport: sizes[3], hasTouch: true, isMobile: true });
+  await touch.goto(url);
+  await reveal(touch);
+  const touchScene = touch.locator(".cosmic-canvas");
+  await expect(touchScene).toHaveAttribute("data-ready", "true");
+  const touchCore = touch.getByRole("button", { name: "Explore Client Work galaxy" });
+  const touchBounds = await touchScene.boundingBox();
+  const touchPoint = { x: touchBounds.x + Number(await touchCore.getAttribute("data-core-x")), y: touchBounds.y + Number(await touchCore.getAttribute("data-core-y")) };
+  const touchTarget = await touch.evaluate(({ x, y }) => document.elementFromPoint(x, y)?.outerHTML.slice(0, 200), touchPoint);
+  await touch.screenshot({ path: "test-results/touch-galaxies.png" });
+  await touch.touchscreen.tap(touchPoint.x, touchPoint.y);
+  await expect(touchScene).toHaveAttribute("data-flight", "1.000");
+  if (await touch.locator(".planet-label").count() !== 2) console.log("touch core diagnostic", { touchPoint, touchBounds, touchTarget, world: await touchScene.getAttribute("data-active-world") });
+  await expect(touch.locator(".planet-label")).toHaveCount(2);
+  const sorevaBounds = await touch.getByRole("button", { name: "Soreva", exact: true }).boundingBox();
+  assert.ok(sorevaBounds, "Soreva must have a projected touch target");
+  await touch.touchscreen.tap(sorevaBounds.x + sorevaBounds.width / 2, sorevaBounds.y + sorevaBounds.height / 2);
+  await expect(touchScene).toHaveAttribute("data-active-world", "soreva");
+  await touch.getByRole("button", { name: "Back to universe" }).tap();
+  await expect(touchScene).toHaveAttribute("data-flight", "0.000");
+  await touch.close();
+  console.log("galaxy touch QA passed at 390x844");
+  const reduced = await browser.newPage({ viewport: sizes[3], reducedMotion: "reduce" });
+  await reduced.goto(url);
+  await reduced.locator(".intro-loader").waitFor({ state: "hidden" });
+  await enter(reduced, "University", 3);
+  const time = await reduced.locator(".cosmic-canvas").getAttribute("data-time");
+  await reduced.waitForTimeout(200);
+  assert.equal(await reduced.locator(".cosmic-canvas").getAttribute("data-time"), time);
+  await reduced.close();
+  const fallback = await browser.newPage({ viewport: sizes[3], reducedMotion: "reduce" });
+  await fallback.addInitScript(() => {
+    const original = HTMLCanvasElement.prototype.getContext;
+    HTMLCanvasElement.prototype.getContext = function (kind, ...args) { return String(kind).startsWith("webgl") ? null : original.call(this, kind, ...args); };
+  });
+  await fallback.goto(url);
+  await fallback.locator(".intro-loader").waitFor({ state: "hidden" });
+  await fallback.getByRole("button", { name: "Explore Client Work galaxy" }).click();
+  await expect(fallback.locator(".planet-label")).toHaveCount(2);
+  await fallback.getByRole("button", { name: "Soreva", exact: true }).click();
+  await fallback.getByRole("button", { name: "Open active world" }).click();
+  await expect(fallback.locator(".satellite-readout")).toContainText("Vieri prototype account");
+  await fallback.close();
+  console.log("galaxy reduced-motion and fallback QA passed");
+} finally { await browser.close(); }

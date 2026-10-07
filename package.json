@@ -1,6 +1,6 @@
 {
   "name": "henrylabs-portfolio",
-  "version": "0.66.0",
+  "version": "0.67.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -11,6 +11,7 @@
     "test:browser": "node tests/browser.mjs",
     "test:method": "node tests/method.mjs",
     "test:background": "node tests/background.mjs",
+    "test:galaxies": "node tests/galaxies.mjs",
     "test:sectors": "node tests/sectors.mjs"
   },
   "dependencies": {
