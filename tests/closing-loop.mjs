@@ -104,8 +104,65 @@ try {
       return document.elementFromPoint(rect.x + rect.width / 2, rect.y + rect.height / 2)?.closest("a") === link;
     });
     assert.equal(contactHit, true, "the repeat visitor must not block the contact action");
+    await advanceTo(94.25);
+    const cycle = await field.getAttribute("data-gravity-cycle");
+    const count = "5";
+    await expect(field).toHaveAttribute("data-gravity-phase", "rest");
+    async function retreatTo(value) {
+      await page.locator("#contact").evaluate((contact, p) => {
+        const rect = contact.getBoundingClientRect();
+        const start = scrollY + rect.top - innerHeight * .65;
+        const end = scrollY + rect.bottom - innerHeight;
+        window.scrollTo({ top: start + (end - start) * p + (p === 0 ? -2 : p === 1 ? 2 : 0), behavior: "instant" });
+      }, value);
+      for (let i = 0; i < 80; i++) {
+        await page.clock.fastForward(250);
+        const p = Number(await field.getAttribute("data-closing-presence"));
+        const settled = value === 0 || value === 1 ? p === value : Math.abs(p - value) < .002;
+        if (settled && Math.abs(Number(await field.getAttribute("data-contact-progress")) - value) < .003) return;
+        await new Promise((resolve) => setTimeout(resolve, 10));
+      }
+      assert.fail(`closing return did not settle at ${value}`);
+    }
+    await retreatTo(.7);
+    await expect(field).toHaveAttribute("data-gravity-phase", "return");
+    await expect(field).toHaveAttribute("data-gravity-active", "false");
+    await expect(field).toHaveAttribute("data-gravity-cycle", cycle);
+    await expect(field).toHaveAttribute("data-visitor-count", count);
+    const frozenAge = await field.getAttribute("data-gravity-age");
+    const returningY = Number(await field.getAttribute("data-upper-dust-y"));
+    assert.ok(Number(await field.getAttribute("data-pull")) < .6);
+    assert.ok(Number(await field.getAttribute("data-visible-visitors")) > 0, "the same absorbed orbit must actually re-emerge");
+    assert.ok(await upperDustPixel(page) > 3, "a returning upper grain must remain painted");
+    await expect(field).toHaveAttribute("data-hole-growth", "1.000");
+    await page.screenshot({ path: `test-results/${viewport.width}-black-hole-returning.png` });
+    await retreatTo(.58);
+    assert.equal(await field.getAttribute("data-gravity-age"), frozenAge, "scroll reversal must not advance into another visitor cycle");
+    assert.ok(Number(await field.getAttribute("data-upper-dust-y")) < returningY - 5, "upper dust must actually retrace upward to its source");
+    assert.ok(await upperDustPixel(page) > 3, "the reverse-moving upper grain must still paint pixels");
+    const returnedProgress = Number(await field.getAttribute("data-visitor-progress"));
+    await retreatTo(1);
+    await expect(field).toHaveAttribute("data-gravity-cycle", cycle);
+    await expect(field).toHaveAttribute("data-gravity-active", "true");
+    assert.ok(Number(await field.getAttribute("data-visitor-progress")) > returnedProgress, "scrolling back down must reabsorb the same orbit");
+    await retreatTo(.15);
+    assert.ok(Number(await field.getAttribute("data-hole-growth")) < .4);
+    await expect(field).toHaveAttribute("data-pull", "0.000");
+    await expect(field).toHaveAttribute("data-distant-star-pull", "0.000");
+    assert.ok(Number(await field.getAttribute("data-solar-scale")) > .7, "the original background system must recover its full scale");
+    await page.screenshot({ path: `test-results/${viewport.width}-black-hole-receding.png` });
+    await retreatTo(0);
+    await expect(field).toHaveAttribute("data-hole-opacity", "0.000");
+    await expect(field).toHaveAttribute("data-hole-growth", "0.000");
+    await expect(field).toHaveAttribute("data-gravity-age", "0.00");
+    await expect(field).toHaveAttribute("data-birth-age", "0.00");
+    await expect(field).toHaveAttribute("data-feeding-dust", "false");
+    await page.evaluate(() => window.scrollTo({ top: document.documentElement.scrollHeight, behavior: "instant" }));
+    for (let i = 0; i < 3; i++) await page.clock.fastForward(250);
+    await expect(field).toHaveAttribute("data-gravity-phase", "birth");
+    assert.ok(Number(await field.getAttribute("data-hole-growth")) < .5, "a complete re-entry must grow from a small horizon, not restore the giant hole instantly");
     assert.deepEqual(errors, []);
     await page.close();
-    console.log(`birth, continuous dust and 30-second recurrence passed at ${viewport.width}x${viewport.height}`);
+    console.log(`birth, dust, recurrence and reversible closing passed at ${viewport.width}x${viewport.height}`);
   }
 } finally { await browser.close(); }

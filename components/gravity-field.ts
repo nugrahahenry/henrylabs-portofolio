@@ -19,12 +19,12 @@ export function gravityMaterial(target: THREE.Vector3, size: number, streak = fa
   return new THREE.ShaderMaterial({
     uniforms: {
       uTarget: { value: target }, uPull: { value: 0 }, uTime: { value: 0 }, uScale: { value: 1 }, uSize: { value: size }, uHorizon: { value: 0 },
-      ...(stream ? { uCameraWorld: { value: new THREE.Matrix4() }, uInverseProjection: { value: new THREE.Matrix4() }, uResolution: { value: new THREE.Vector2(1, 1) } } : {}),
+      ...(stream ? { uCameraWorld: { value: new THREE.Matrix4() }, uInverseProjection: { value: new THREE.Matrix4() }, uResolution: { value: new THREE.Vector2(1, 1) }, uTravelScale: { value: 1 } } : {}),
     },
     vertexShader: `
       attribute vec3 color;
       ${streak ? "attribute float aTail;" : ""}
-      ${stream ? "attribute float aSeed; attribute float aUpper; uniform mat4 uCameraWorld; uniform mat4 uInverseProjection;" : ""}
+      ${stream ? "attribute float aSeed; attribute float aUpper; uniform mat4 uCameraWorld; uniform mat4 uInverseProjection; uniform float uTravelScale;" : ""}
       uniform vec3 uTarget;
       uniform float uPull;
       uniform float uTime;
@@ -41,7 +41,7 @@ export function gravityMaterial(target: THREE.Vector3, size: number, streak = fa
         float seed = ${stream ? "aSeed" : "fract(sin(dot(position.xy, vec2(12.9898, 78.233))) * 43758.5453)"};
         float influence = smoothstep(.08, .24, seed);
         ${stream ? "float phase = fract(uTime * .05 + seed);" : ""}
-        float travel = ${stream ? `max(0.0, phase ${streak ? "- aTail * .014" : ""})` : `clamp(uPull * influence * (1.18 + seed * .12) - seed * .12 ${streak ? "- aTail * uPull * .012" : ""}, 0.0, 1.0)`};
+        float travel = ${stream ? `max(0.0, phase ${streak ? "- aTail * .014" : ""}) * uTravelScale` : `clamp(uPull * influence * (1.18 + seed * .12) - seed * .12 ${streak ? "- aTail * uPull * .012" : ""}, 0.0, 1.0)`};
         vec3 delta = source - uTarget;
         float contraction = pow(1.0 - travel, 1.5);
         float startAngle = atan(delta.y, delta.x);
@@ -54,7 +54,7 @@ export function gravityMaterial(target: THREE.Vector3, size: number, streak = fa
         gl_PointSize = clamp(uSize * uScale / max(1.0, -view.z) * (1.0 + uPull * .6) ${stream ? "* mix(1.0, 1.85, aUpper)" : ""}, 1.0, ${sparkle ? "14.0" : "7.0"});
         vColor = color;
         ${stream ? "float warmth = 1.0 - smoothstep(uHorizon * 1.25, max(.001, uHorizon * 3.25), length(spiral)); vColor = mix(color, vec3(1.0, .76, .44), warmth * uPull * .55);" : ""}
-        vFade = (1.0 - smoothstep(.78, .96, ${stream ? "phase" : "travel"})) ${stream ? "* smoothstep(0.0, .10, phase) * uPull" : ""} ${streak ? `* mix(.8, .08, aTail) ${stream ? "" : "* uPull"}` : ""};
+        vFade = (1.0 - smoothstep(.78, .96, ${stream && streak ? "phase * uTravelScale" : "travel"})) ${stream ? "* smoothstep(0.0, .10, phase) * uPull" : ""} ${streak ? `* mix(.8, .08, aTail) ${stream ? "" : "* uPull"}` : ""};
         float horizonFade = smoothstep(uHorizon * .85, max(.001, uHorizon * 1.2), length(spiral));
         vFade *= mix(1.0, horizonFade, min(1.0, uPull * 1.8));
       }

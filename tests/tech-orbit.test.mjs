@@ -177,7 +177,7 @@ test("upper dust remains visible until horizon absorption instead of curling pas
   const material = gravityMaterial(new THREE.Vector3(), 0, true, true);
   assert.match(material.vertexShader, /clamp\(startAngle - 1\.72, 0\.0, \.55\)/);
   assert.match(material.vertexShader, /phase - aTail \* \.014/);
-  assert.match(material.vertexShader, /smoothstep\(\.78, \.96, phase\)/);
+  assert.match(material.vertexShader, /smoothstep\(\.78, \.96, phase \* uTravelScale\)/);
   material.dispose();
 });
 
@@ -226,6 +226,16 @@ test("dust warms only near the horizon while the reading guard never hides its f
   assert.match(material.fragmentShader, /mix\(\.72, 1\.0, outerField\)/);
   assert.ok(material.uniforms.uResolution);
   material.dispose();
+});
+
+test("feeding grains and wisps can retrace their cached spiral without reversing recycle clocks", () => {
+  for (const streak of [false, true]) {
+    const material = gravityMaterial(new THREE.Vector3(), streak ? 0 : .027, streak, true);
+    assert.equal(material.uniforms.uTravelScale.value, 1);
+    assert.match(material.vertexShader, /float travel = max\(0\.0, phase.*\) \* uTravelScale/);
+    assert.match(material.vertexShader, /float phase = fract\(uTime \* \.05 \+ seed\)/);
+    material.dispose();
+  }
 });
 
 test("the bounded feeding stream includes visible upper, side and lower sources at every aspect ratio", () => {

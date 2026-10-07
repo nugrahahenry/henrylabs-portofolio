@@ -5,7 +5,61 @@ import ts from "typescript";
 
 const source = readFileSync(new URL("../components/gravity-sequence.ts", import.meta.url), "utf8");
 const compiled = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.ESNext, target: ts.ScriptTarget.ES2020 } }).outputText;
-const { gravitySequence, gravityBirth, gravityVisitors, gravityApproachAngle, advanceGravityAge, GRAVITY_INTAKE_SECONDS, GRAVITY_REST_SECONDS } = await import(`data:text/javascript;base64,${Buffer.from(compiled).toString("base64")}`);
+const { gravitySequence, gravityBirth, gravityVisitors, gravityApproachAngle, advanceGravityAge, updateClosingScroll, closingReturn, GRAVITY_INTAKE_SECONDS, GRAVITY_REST_SECONDS } = await import(`data:text/javascript;base64,${Buffer.from(compiled).toString("base64")}`);
+
+test("closing return restores objects before shrinking and fading the horizon", () => {
+  assert.deepEqual(closingReturn(1), { infall: 1, growth: 1, opacity: 1 });
+  const middle = closingReturn(.7);
+  assert.ok(middle.infall > 0 && middle.infall < 1);
+  assert.equal(middle.growth, 1);
+  const restored = closingReturn(.4);
+  assert.equal(restored.infall, 0);
+  assert.ok(restored.growth > .9 && restored.opacity === 1);
+  assert.ok(closingReturn(.15).growth < .4);
+  assert.deepEqual(closingReturn(0), { infall: 0, growth: 0, opacity: 0 });
+  assert.deepEqual(closingReturn(NaN), closingReturn(0));
+  const pose = { infall: 0, growth: 0, opacity: 0 };
+  assert.equal(closingReturn(.5, pose), pose);
+});
+
+test("partial scroll reversal preserves encounter progress and can rejoin without teleporting", () => {
+  const state = { peak: 0, presence: 0, returning: false };
+  assert.equal(updateClosingScroll(state, .6, .016, true), state);
+  assert.equal(state.presence, 1);
+  updateClosingScroll(state, 1, .016, true);
+  updateClosingScroll(state, .999, .016, true);
+  assert.equal(state.presence, 1, "subpixel scroll jitter must not pause an active encounter");
+  assert.equal(state.returning, false);
+  const first = updateClosingScroll(state, .6, .016, true).presence;
+  assert.ok(first < 1 && first > .9);
+  assert.equal(state.peak, 1);
+  assert.equal(state.returning, true);
+  for (let i = 0; i < 100; i++) updateClosingScroll(state, .6, .016, true);
+  assert.equal(state.presence, .6);
+  updateClosingScroll(state, .8, .016, true);
+  assert.ok(state.presence > .6 && state.presence < .7);
+  assert.equal(state.peak, 1);
+  for (let i = 0; i < 100; i++) updateClosingScroll(state, 1, .016, true);
+  assert.deepEqual(state, { peak: 1, presence: 1, returning: false });
+});
+
+test("only a complete closing exit clears the encounter and still mode never runs a return clock", () => {
+  const state = { peak: 1, presence: 1, returning: false };
+  updateClosingScroll(state, 0, 240, true);
+  assert.ok(state.presence > .7, "a hidden interval must not erase the return choreography");
+  assert.equal(state.peak, 1);
+  const held = state.presence;
+  updateClosingScroll(state, 0, NaN, true);
+  assert.equal(state.presence, held);
+  for (let i = 0; i < 100; i++) updateClosingScroll(state, 0, .016, true);
+  assert.deepEqual(state, { peak: 0, presence: 0, returning: false });
+  updateClosingScroll(state, .3, .016, true);
+  assert.deepEqual(state, { peak: .3, presence: 1, returning: false });
+  updateClosingScroll(state, .15, .016, false);
+  assert.equal(state.presence, .5);
+  updateClosingScroll(state, 0, .016, false);
+  assert.deepEqual(state, { peak: 0, presence: 0, returning: false });
+});
 
 test("gravity has a slow intake and thirty quiet seconds between visitors", () => {
   assert.equal(GRAVITY_INTAKE_SECONDS, 32);

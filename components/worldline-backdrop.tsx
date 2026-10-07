@@ -6,7 +6,7 @@ import * as THREE from "three";
 import { projectWorlds, type ProjectId } from "./cosmic-canvas";
 import { createAtmosphere, createPlanetMaps, createPlanetRing, projectPlanetKinds } from "./planet-materials";
 import { gravityMaterial, infallPoint } from "./gravity-field";
-import { advanceGravityAge, gravityApproachAngle, gravityBirth, gravitySequence, gravityVisitors, GRAVITY_REST_SECONDS } from "./gravity-sequence";
+import { advanceGravityAge, closingReturn, updateClosingScroll, gravityApproachAngle, gravityBirth, gravitySequence, gravityVisitors, GRAVITY_REST_SECONDS } from "./gravity-sequence";
 import { orbitGeometry, orbitalSpeed, sampleOrbit } from "./orbital-path";
 import { createStellarCore } from "./stellar-core";
 import { createDeepSpace } from "./deep-space";
@@ -87,11 +87,14 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, contactProgres
     if (!host || !canvas) return;
 
     let holeStrength = 0;
+    let enhanced = false;
     const updateChapter = () => {
       holeStrength = THREE.MathUtils.smoothstep(contactProgress.get(), 0, .15);
-      host.style.setProperty("--black-hole-strength", holeStrength.toFixed(3));
-      host.style.setProperty("--hole-growth", THREE.MathUtils.smoothstep(contactProgress.get(), 0, .65).toFixed(3));
-      host.dataset.holeOpacity = holeStrength.toFixed(3);
+      if (!enhanced) {
+        host.style.setProperty("--black-hole-strength", holeStrength.toFixed(3));
+        host.style.setProperty("--hole-growth", THREE.MathUtils.smoothstep(contactProgress.get(), 0, .65).toFixed(3));
+        host.dataset.holeOpacity = holeStrength.toFixed(3);
+      }
       wakeRef.current();
     };
     const unsubscribeChapter = contactProgress.on("change", updateChapter);
@@ -105,6 +108,7 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, contactProgres
       return unsubscribeChapter;
     }
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1));
+    enhanced = true;
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
     renderer.toneMappingExposure = 1.1;
@@ -371,14 +375,20 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, contactProgres
     let elapsed = 0;
     let birthAge = 0;
     let gravityAge = 0;
+    const closing = { peak: 0, presence: 0, returning: false };
+    const retreatPose = { infall: 0, growth: 0, opacity: 0 };
     let solarVisibility = 1;
     const render = (time: number) => {
       frame = 0;
-      if (!visible || document.hidden) return;
+      if (!visible || document.hidden || !enhanced) return;
       const delta = Math.max(0, (time - lastTime) / 1000 || 0);
       const dt = Math.min(delta, .04);
       lastTime = time;
       const scroll = THREE.MathUtils.clamp(progress.get(), 0, 1);
+      updateClosingScroll(closing, contactProgress.get(), dt, state.current.motionOn);
+      const retreat = closingReturn(closing.presence, retreatPose);
+      if (closing.peak === 0) { birthAge = 0; gravityAge = 0; }
+      const holeOpacity = THREE.MathUtils.smoothstep(closing.peak, 0, .15) * retreat.opacity;
       planetSystem.visible = true;
       if (state.current.motionOn) elapsed += dt;
       const drift = state.current.motionOn ? elapsed : 0;
@@ -432,7 +442,7 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, contactProgres
       const width = host.clientWidth;
       const height = host.clientHeight;
       const shipPose = spacecraftPose(drift, state.current.motionOn);
-      spacecraft.group.visible = shipPose.visible && holeStrength < .05;
+      spacecraft.group.visible = shipPose.visible && holeOpacity < .05;
       if (spacecraft.group.visible) {
         holeRay.set(shipPose.x, shipPose.y, .5).unproject(camera).sub(camera.position).normalize();
         spacecraft.group.position.copy(camera.position).addScaledVector(holeRay, (shipPose.depth - camera.position.z) / holeRay.z);
@@ -445,29 +455,34 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, contactProgres
       }
       const portrait = width < height;
       const holeY = height < 620 ? .88 : portrait ? .9 : .87;
-      const contactActive = state.current.motionOn && state.current.contactVisible && holeStrength > .05;
+      const contactActive = state.current.motionOn && state.current.contactVisible && holeStrength > .05 && !closing.returning && closing.presence === 1;
       birthAge = advanceGravityAge(birthAge, delta, contactActive);
       const birth = state.current.motionOn ? gravityBirth(birthAge) : { growth: 1, ready: true };
-      const holeX = THREE.MathUtils.lerp(.92, 1.01, birth.growth);
+      const holeGrowth = birth.growth * retreat.growth;
+      const holeX = THREE.MathUtils.lerp(.92, 1.01, holeGrowth);
       holeRay.set(holeX * 2 - 1, 1 - holeY * 2, .5).unproject(camera).sub(camera.position).normalize();
       blackHole.group.position.copy(camera.position).addScaledVector(holeRay, (-4.8 - camera.position.z) / holeRay.z);
       blackHole.group.quaternion.copy(camera.quaternion);
       const viewHeight = 2 * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) * (camera.position.z + 4.8);
       const diameter = Math.min(width * .95, height * .8);
-      blackHole.group.scale.setScalar(viewHeight * diameter / height * (.08 + birth.growth * .92));
-      blackHole.group.visible = holeStrength > .001;
+      blackHole.group.scale.setScalar(viewHeight * diameter / height * (.08 + holeGrowth * .92));
+      blackHole.group.visible = holeOpacity > .001;
       blackHole.diskMaterial.uniforms.uTime.value = drift * .35;
-      blackHole.diskMaterial.uniforms.uStrength.value = holeStrength;
+      blackHole.diskMaterial.uniforms.uStrength.value = holeOpacity;
       blackHole.diskMaterial.uniforms.uResolution.value.set(width * renderer.getPixelRatio(), height * renderer.getPixelRatio());
-      blackHole.horizon.material.opacity = holeStrength * .98;
-      blackHole.rim.material.opacity = holeStrength * .56;
-      blackHole.lens.material.opacity = holeStrength * .32;
+      blackHole.horizon.material.opacity = holeOpacity * .98;
+      blackHole.rim.material.opacity = holeOpacity * .56;
+      blackHole.lens.material.opacity = holeOpacity * .32;
       gravityTarget.copy(blackHole.group.position);
       const gravityActive = contactActive && birth.ready;
       gravityAge = advanceGravityAge(gravityAge, delta, gravityActive);
       const sequence = gravitySequence(gravityAge);
       const visitorGroup = gravityVisitors(sequence.index);
-      const pull = state.current.motionOn ? holeStrength * sequence.fieldPull : 0;
+      const visitorProgress = sequence.progress * retreat.infall;
+      const pull = state.current.motionOn ? holeOpacity * sequence.fieldPull * retreat.infall : 0;
+      const returning = state.current.motionOn && closing.returning && birth.ready && holeOpacity > .001;
+      const restoring = state.current.motionOn && closing.presence < 1 && birth.ready && holeOpacity > .001;
+      const streamVisible = birth.ready && state.current.motionOn && holeOpacity > .001 && (gravityActive || returning || closing.presence < 1);
       deepSpace.material.uniforms.uTime.value = drift;
       deepSpace.material.uniforms.uPull.value = pull;
       deepSpace.material.uniforms.uTarget.value.copy(gravityTarget);
@@ -475,13 +490,14 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, contactProgres
         material.uniforms.uPull.value = pull;
         material.uniforms.uTime.value = gravityAge * .18;
         material.uniforms.uScale.value = height * renderer.getPixelRatio() * .5;
-        material.uniforms.uHorizon.value = holeStrength > .05 ? blackHole.group.scale.x * .5 : 0;
+        material.uniforms.uHorizon.value = holeOpacity > .05 ? blackHole.group.scale.x * .5 : 0;
       });
       gravityStreaks.visible = pull > .01;
-      feedingDust.visible = gravityActive;
-      upperStreaks.visible = gravityActive;
+      feedingDust.visible = streamVisible;
+      upperStreaks.visible = streamVisible;
       feedingMaterials.forEach((material) => {
-        material.uniforms.uPull.value = gravityActive ? holeStrength * THREE.MathUtils.smoothstep(gravityAge, 0, 2) : 0;
+        material.uniforms.uPull.value = streamVisible ? holeOpacity * THREE.MathUtils.smoothstep(gravityAge, 0, 2) * retreat.infall : 0;
+        material.uniforms.uTravelScale.value = retreat.infall;
         material.uniforms.uTime.value = gravityAge;
         material.uniforms.uCameraWorld.value.copy(camera.matrixWorld);
         material.uniforms.uInverseProjection.value.copy(camera.projectionMatrixInverse);
@@ -496,7 +512,7 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, contactProgres
       planetSystem.position.copy(solarOrigin).lerp(gravityTarget, pull);
       planetSystem.rotation.z += pull * pull * 4;
       stellarLight.intensity = 34 * (1 - pull);
-      wanderer.visible = gravityActive && sequence.visitorVisible;
+      wanderer.visible = gravityActive && sequence.visitorVisible || restoring && visitorProgress > 0;
       if (wanderer.visible) {
         if (visitorIndex !== sequence.index) {
           visitorIndex = sequence.index;
@@ -510,14 +526,14 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, contactProgres
         holeRay.set(visitorGroup.direction === "left" ? -1.12 : -.3, visitorGroup.direction === "left" ? .25 : 1.12, .5).unproject(camera).sub(camera.position).normalize();
         visitorOrigin.copy(camera.position).addScaledVector(holeRay, (-4.8 - camera.position.z) / holeRay.z);
         visitorOffset.copy(visitorOrigin).sub(gravityTarget);
-        const contraction = Math.pow(1 - sequence.progress, 1.3);
-        const angle = gravityApproachAngle(Math.atan2(visitorOffset.y, visitorOffset.x), sequence.progress);
+        const contraction = Math.pow(1 - visitorProgress, 1.3);
+        const angle = gravityApproachAngle(Math.atan2(visitorOffset.y, visitorOffset.x), visitorProgress);
         const radius = Math.hypot(visitorOffset.x, visitorOffset.y) * contraction;
         wanderer.position.set(gravityTarget.x + Math.cos(angle) * radius, gravityTarget.y + Math.sin(angle) * radius, gravityTarget.z + visitorOffset.z * contraction);
-        wanderer.scale.setScalar(viewHeight * Math.min(width, height) / height * .14 * (1 - sequence.progress * .78));
-        wanderer.rotation.set(.18, gravityAge * .04, sequence.progress * .7);
+        wanderer.scale.setScalar(viewHeight * Math.min(width, height) / height * .14 * (1 - visitorProgress * .78));
+        wanderer.rotation.set(.18, gravityAge * .04, visitorProgress * .7);
       }
-      const visitorOpacity = wanderer.visible ? holeStrength * THREE.MathUtils.smoothstep(sequence.progress, 0, .012) * (1 - THREE.MathUtils.smoothstep(sequence.progress, .82, 1)) : 0;
+      const visitorOpacity = wanderer.visible ? holeOpacity * THREE.MathUtils.smoothstep(visitorProgress, 0, .012) * (1 - THREE.MathUtils.smoothstep(visitorProgress, .82, 1)) : 0;
       visitors.forEach((visitor, index) => {
         visitor.group.visible = index < visitorGroup.count;
         const radius = .55 + index * .18;
@@ -532,7 +548,15 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, contactProgres
       visitorStar.material.uniforms.uOpacity.value = visitorOpacity;
       visitorStar.aura.material.uniforms.uOpacity.value = visitorOpacity * .4;
       visitorLight.intensity = 5 * wanderer.scale.x ** 2;
-      host.style.setProperty("--hole-growth", birth.growth.toFixed(3));
+      host.style.setProperty("--black-hole-strength", holeOpacity.toFixed(3));
+      host.style.setProperty("--hole-growth", holeGrowth.toFixed(3));
+      host.dataset.holeOpacity = holeOpacity.toFixed(3);
+      host.dataset.closingPresence = closing.presence.toFixed(3);
+      host.dataset.closingReturning = String(returning);
+      host.dataset.contactProgress = contactProgress.get().toFixed(3);
+      host.dataset.visitorProgress = visitorProgress.toFixed(3);
+      host.dataset.dustTravelScale = flowMaterial.uniforms.uTravelScale.value.toFixed(3);
+      host.dataset.solarScale = planetSystem.scale.x.toFixed(3);
       host.dataset.holeX = holeX.toFixed(3);
       host.dataset.holeY = String(holeY);
       host.dataset.holeDiameter = diameter.toFixed(1);
@@ -545,10 +569,10 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, contactProgres
       host.dataset.stellarY = ((-projectedStar.y * .5 + .5) * height).toFixed(1);
       host.dataset.gravityAge = gravityAge.toFixed(2);
       host.dataset.birthAge = birthAge.toFixed(2);
-      host.dataset.holeGrowth = birth.growth.toFixed(3);
+      host.dataset.holeGrowth = holeGrowth.toFixed(3);
       host.dataset.feedingDust = String(feedingDust.visible);
       host.dataset.gravityActive = String(gravityActive);
-      host.dataset.gravityPhase = birth.ready ? sequence.phase : "birth";
+      host.dataset.gravityPhase = returning ? "return" : birth.ready ? sequence.phase : "birth";
       host.dataset.gravityCycle = String(sequence.index);
       host.dataset.gravityRest = String(GRAVITY_REST_SECONDS);
       host.dataset.visitorOpacity = visitorOpacity.toFixed(3);
@@ -558,7 +582,7 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, contactProgres
       host.dataset.backgroundSource = "volumetric-3d";
       host.dataset.spacecraftVisible = String(spacecraft.group.visible);
       host.dataset.brightStars = "18";
-      host.dataset.dustFlow = "inward";
+      host.dataset.dustFlow = returning ? "outward-return" : "inward";
       host.dataset.dustSources = "top,left,bottom";
       host.dataset.feedingDustCount = String(flowGeometry.getAttribute("position").count);
       host.dataset.distantStars = String(distantGeometry.drawRange.count);
@@ -568,7 +592,7 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, contactProgres
       const upperPhase = (gravityAge * .05 + flowSeeds[upperProbeIndex]) % 1;
       upperProbe.set(flowPositions[upperProbeIndex * 3], flowPositions[upperProbeIndex * 3 + 1], .5).applyMatrix4(camera.projectionMatrixInverse);
       upperProbe.multiplyScalar(flowPositions[upperProbeIndex * 3 + 2] / upperProbe.z).applyMatrix4(camera.matrixWorld);
-      infallPoint(upperProbe, gravityTarget, upperPhase, flowSeeds[upperProbeIndex], upperProbe, true).project(camera);
+      infallPoint(upperProbe, gravityTarget, upperPhase * retreat.infall, flowSeeds[upperProbeIndex], upperProbe, true).project(camera);
       host.dataset.upperDustX = ((upperProbe.x * .5 + .5) * width).toFixed(2);
       host.dataset.upperDustY = ((-upperProbe.y * .5 + .5) * height).toFixed(2);
       host.dataset.upperDustPhase = upperPhase.toFixed(3);
@@ -601,7 +625,7 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, contactProgres
     const intersection = new IntersectionObserver(([entry]) => { visible = entry.isIntersecting; if (visible) wake(); }, { rootMargin: "100% 0px" });
     intersection.observe(visibilityTarget);
     const unsubscribe = progress.on("change", wake);
-    const contextLost = (event: Event) => { event.preventDefault(); host.dataset.fallback = "true"; cancelAnimationFrame(frame); };
+    const contextLost = (event: Event) => { event.preventDefault(); enhanced = false; host.dataset.fallback = "true"; cancelAnimationFrame(frame); updateChapter(); };
     canvas.addEventListener("webglcontextlost", contextLost);
     document.addEventListener("visibilitychange", wake);
     resize();
