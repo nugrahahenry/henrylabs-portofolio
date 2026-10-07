@@ -10,7 +10,7 @@ import { advanceGravityAge, closingReturn, updateClosingScroll, gravityApproachA
 import { orbitGeometry, orbitalSpeed, sampleOrbit } from "./orbital-path";
 import { createStellarCore } from "./stellar-core";
 import { createDeepSpace } from "./deep-space";
-import { createSpacecraft, spacecraftPose } from "./spacecraft";
+import { createSpacecraft, spacecraftPose, routeSpacecraft, PURSUIT_DELAY } from "./spacecraft";
 import { COMPACT_STAR_COUNT, DISTANT_STAR_COUNT, FEEDING_DUST_COUNT, createDistantStarMaterial, distantStarPoint, dustStreamSource } from "./ambient-field";
 
 function createBlackHole() {
@@ -116,8 +116,13 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, contactProgres
     const scene = new THREE.Scene();
     const deepSpace = createDeepSpace();
     scene.add(deepSpace.volume);
-    const spacecraft = createSpacecraft();
-    scene.add(spacecraft.group);
+    const flights = [createSpacecraft(), createSpacecraft("scout")].map((model) => ({ model, pose: spacecraftPose(0, false, model.kind), safe: { x: 0, y: .65, visible: false, clearance: 0 }, heading: 0, radius: 0 }));
+    flights.forEach(({ model }) => scene.add(model.group));
+    const flightObstacles = Array.from({ length: 12 }, () => ({ x: 0, y: 0, radius: 0 }));
+    const flightWorld = new THREE.Vector3(), flightView = new THREE.Vector3();
+    const heroCopy = document.querySelector<HTMLElement>(".hero-copy");
+    const heroKicker = document.querySelector<HTMLElement>(".hero-kicker");
+    let headerHeight = 76;
     const camera = new THREE.PerspectiveCamera(44, 1, .1, 100);
     const starField = new THREE.Group();
     const planetSystem = new THREE.Group();
@@ -331,7 +336,7 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, contactProgres
       planetSystem.add(pivot);
       const cloud = maps.cloud ? new THREE.Mesh(new THREE.SphereGeometry(radius * 1.012, 24, 16), new THREE.MeshStandardMaterial({ map: maps.cloud, transparent: true, opacity: .65, depthWrite: false, roughness: 1 })) : null;
       if (cloud) body.add(cloud);
-      return { pivot, body, surface, atmosphere, ring, cloud, phase, orbitRadius: 1.45 + index * .64, index };
+      return { pivot, body, surface, atmosphere, ring, cloud, radius, phase, orbitRadius: 1.45 + index * .64, index };
     });
 
     const solarOrbits = orbitPlanets.map(({ orbitRadius }, index) => {
@@ -441,18 +446,6 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, contactProgres
       // Screen-space anchoring keeps the terminal landmark out of the hero and reading center.
       const width = host.clientWidth;
       const height = host.clientHeight;
-      const shipPose = spacecraftPose(drift, state.current.motionOn);
-      spacecraft.group.visible = shipPose.visible && holeOpacity < .05;
-      if (spacecraft.group.visible) {
-        holeRay.set(shipPose.x, shipPose.y, .5).unproject(camera).sub(camera.position).normalize();
-        spacecraft.group.position.copy(camera.position).addScaledVector(holeRay, (shipPose.depth - camera.position.z) / holeRay.z);
-        const shipHeight = 2 * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) * (camera.position.z - shipPose.depth);
-        spacecraft.group.scale.setScalar(shipHeight / height * Math.min(54, Math.min(width, height) * .08) / .56);
-        spacecraft.group.rotation.set(.24, .35, shipPose.roll);
-        spacecraft.hull.opacity = shipPose.opacity;
-        spacecraft.glass.opacity = shipPose.opacity * .7;
-        spacecraft.light.opacity = shipPose.opacity;
-      }
       const portrait = width < height;
       const holeY = height < 620 ? .88 : portrait ? .9 : .87;
       const contactActive = state.current.motionOn && state.current.contactVisible && holeStrength > .05 && !closing.returning && closing.presence === 1;
@@ -512,6 +505,64 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, contactProgres
       planetSystem.position.copy(solarOrigin).lerp(gravityTarget, pull);
       planetSystem.rotation.z += pull * pull * 4;
       stellarLight.intensity = 34 * (1 - pull);
+      // Project real bodies into one height-normalized clearance space, including visible rings.
+      flights.forEach(({ model, pose }) => spacecraftPose(drift, state.current.motionOn, model.kind, pose));
+      const flightAllowed = holeOpacity < .05 && !state.current.mapActive;
+      const flightActive = flightAllowed && flights.some(({ pose }) => pose.visible);
+      const tangent = Math.tan(THREE.MathUtils.degToRad(camera.fov / 2));
+      const obstacle = (object: THREE.Object3D, radius: number, index: number) => {
+        object.getWorldPosition(flightWorld);
+        flightView.copy(flightWorld).applyMatrix4(camera.matrixWorldInverse);
+        flightWorld.project(camera);
+        flightObstacles[index].x = flightWorld.x * camera.aspect;
+        flightObstacles[index].y = flightWorld.y;
+        flightObstacles[index].radius = radius / (tangent * Math.max(.1, -flightView.z)) * 1.12;
+      };
+      if (flightActive) {
+        planetSystem.updateWorldMatrix(true, true);
+        obstacle(stellarCore.group, .63 * planetSystem.scale.x, 0);
+        orbitPlanets.forEach(({ body, radius, ring }, index) => obstacle(body, radius * body.scale.x * planetSystem.scale.x * (ring.visible ? 1.93 : 1.3), index + 1));
+        sectorNodes.forEach(({ body, size }, index) => {
+          if (sectorSystem.visible) obstacle(body, size * body.scale.x * planetSystem.scale.x * 1.26, index + 6);
+          else { flightObstacles[index + 6].x = 100; flightObstacles[index + 6].radius = 0; }
+        });
+      }
+      flightObstacles[11].radius = 0;
+      flightObstacles[11].x = 100;
+      const readingEdge = flightActive && heroCopy && !heroCopy.inert && heroKicker ? heroKicker.getBoundingClientRect().top : null;
+      flights.forEach((flight, index) => {
+        const { model, pose, safe } = flight;
+        model.group.visible = false;
+        if (!flightAllowed || !pose.visible) return;
+        const compactIntro = readingEdge !== null && width < 640;
+        const widthRatio = compactIntro ? model.kind === "ufo" ? .11 : .13 : model.kind === "ufo" ? .14 : .17;
+        const baseSize = Math.min(model.kind === "ufo" ? 84 : 92, Math.min(width, height) * widthRatio);
+        const size = readingEdge === null ? baseSize : Math.min(baseSize, Math.max(0, readingEdge - headerHeight - 24) * model.span / (model.radius * 2 * 1.12));
+        const radius = size * model.radius / model.span / height * 2 * 1.12;
+        const previousX = safe.x, previousY = safe.y;
+        const desired = state.current.motionOn ? THREE.MathUtils.damp(previousY, pose.y, 5, dt) : pose.y;
+        const floor = readingEdge === null ? .18 : 1 - (readingEdge - radius * height / 2 - 12) / height * 2;
+        routeSpacecraft(pose.x * camera.aspect, desired, radius, flightObstacles, floor, 1 - (headerHeight + radius * height / 2 + 10) / height * 2, safe);
+        model.group.visible = safe.visible && size >= 28;
+        flight.radius = radius;
+        if (model.group.visible) {
+          holeRay.set(safe.x / camera.aspect, safe.y, .5).unproject(camera).sub(camera.position).normalize();
+          model.group.position.copy(camera.position).addScaledVector(holeRay, (pose.depth - camera.position.z) / holeRay.z);
+          const shipHeight = 2 * tangent * (camera.position.z - pose.depth);
+          model.group.scale.setScalar(shipHeight / height * size / model.span);
+          const bank = state.current.motionOn ? THREE.MathUtils.clamp(Math.atan2(safe.y - previousY, Math.max(.001, safe.x - previousX)), -.42, .42) : 0;
+          flight.heading = state.current.motionOn ? THREE.MathUtils.damp(flight.heading, bank, 7, dt) : 0;
+          model.group.rotation.set(model.kind === "ufo" ? .55 : .65, model.kind === "ufo" ? drift * .04 : .14, pose.roll + flight.heading);
+          model.hull.opacity = pose.opacity; model.trim.opacity = pose.opacity;
+          model.glass.opacity = pose.opacity * .84; model.light.opacity = pose.opacity;
+          model.flame.opacity = pose.opacity * (state.current.motionOn ? .44 + Math.sin(drift * 7) * .04 : .2);
+          if (index === 0) { flightObstacles[11].x = safe.x; flightObstacles[11].y = safe.y; flightObstacles[11].radius = radius; }
+        }
+        host.dataset[model.kind === "ufo" ? "ufoX" : "scoutX"] = ((safe.x / camera.aspect * .5 + .5) * width).toFixed(2);
+        host.dataset[model.kind === "ufo" ? "ufoY" : "scoutY"] = ((-safe.y * .5 + .5) * height).toFixed(2);
+        host.dataset[model.kind === "ufo" ? "ufoClearance" : "scoutClearance"] = safe.clearance.toFixed(4);
+        host.dataset[model.kind === "ufo" ? "ufoRadius" : "scoutRadius"] = (radius * height / 2).toFixed(2);
+      });
       wanderer.visible = gravityActive && sequence.visitorVisible || restoring && visitorProgress > 0;
       if (wanderer.visible) {
         if (visitorIndex !== sequence.index) {
@@ -580,7 +631,10 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, contactProgres
       host.dataset.visitorCapacity = "5";
       host.dataset.visitorDirection = visitorGroup.direction;
       host.dataset.backgroundSource = "volumetric-3d";
-      host.dataset.spacecraftVisible = String(spacecraft.group.visible);
+      host.dataset.spacecraftVisible = String(flights[0].model.group.visible);
+      host.dataset.scoutVisible = String(flights[1].model.group.visible);
+      host.dataset.spacecraftCapacity = "2";
+      host.dataset.pursuitDelay = String(PURSUIT_DELAY);
       host.dataset.brightStars = "18";
       host.dataset.dustFlow = returning ? "outward-return" : "inward";
       host.dataset.dustSources = "top,left,bottom";
@@ -612,6 +666,7 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, contactProgres
     const wake = () => { if (!frame) frame = requestAnimationFrame(render); };
     wakeRef.current = wake;
     const resize = () => {
+      headerHeight = document.querySelector(".site-header")?.getBoundingClientRect().bottom ?? 76;
       camera.aspect = host.clientWidth / Math.max(1, host.clientHeight);
       camera.updateProjectionMatrix();
       renderer.setSize(host.clientWidth, host.clientHeight, false);

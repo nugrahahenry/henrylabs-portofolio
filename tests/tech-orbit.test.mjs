@@ -11,7 +11,8 @@ async function loadModule(name) {
   const source = readFileSync(new URL(`../components/${name}.ts`, import.meta.url), "utf8");
   const compiled = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.ESNext, target: ts.ScriptTarget.ES2020 } }).outputText
     .replace('from "three"', `from ${JSON.stringify(pathToFileURL(require.resolve("three")).href)}`)
-    .replace('from "three/addons/math/ImprovedNoise.js"', `from ${JSON.stringify(pathToFileURL(require.resolve("three/addons/math/ImprovedNoise.js")).href)}`);
+    .replace('from "three/addons/math/ImprovedNoise.js"', `from ${JSON.stringify(pathToFileURL(require.resolve("three/addons/math/ImprovedNoise.js")).href)}`)
+    .replace('from "three/addons/utils/BufferGeometryUtils.js"', `from ${JSON.stringify(pathToFileURL(require.resolve("three/addons/utils/BufferGeometryUtils.js")).href)}`);
   return import(`data:text/javascript;base64,${Buffer.from(compiled).toString("base64")}`);
 }
 const { techOrbitRadius, sampleTechOrbit, resolveTechOwner } = await loadModule("tech-orbit");
@@ -21,7 +22,7 @@ const { createStellarCore } = await loadModule("stellar-core");
 const { advanceGalaxyFlight, sampleGalaxyFlight } = await loadModule("galaxy-flight");
 const { createDeepSpace } = await loadModule("deep-space");
 const { infallPoint, gravityMaterial, dustWarmth } = await loadModule("gravity-field");
-const { createSpacecraft, spacecraftPose } = await loadModule("spacecraft");
+const { createSpacecraft, spacecraftPose, routeSpacecraft, PURSUIT_DELAY, SPACECRAFT_PERIOD } = await loadModule("spacecraft");
 const { distantStarPoint, dustStreamSource, stellarTwinkle, createDistantStarMaterial, DISTANT_STAR_COUNT, COMPACT_STAR_COUNT, FEEDING_DUST_COUNT } = await loadModule("ambient-field");
 
 test("galaxy approach centers first and reveals the local system without a visibility jump", () => {
@@ -181,15 +182,46 @@ test("upper dust remains visible until horizon absorption instead of curling pas
   material.dispose();
 });
 
-test("one bounded dimensional spacecraft has a quiet repeat and still alternative", () => {
-  const craft = createSpacecraft();
-  assert.equal(craft.group.children.length, 4);
-  assert.equal(craft.group.children[3].count, 6);
+test("a bounded metallic UFO and scout share a delayed pursuit and still alternative", () => {
+  for (const kind of ["ufo", "scout"]) {
+    const craft = createSpacecraft(kind);
+    assert.ok(craft.group.children.length <= 7);
+    assert.ok(craft.span > .5 && craft.radius > .3);
+    assert.ok(craft.hull.metalness > .5 && craft.glass.clearcoat === 1);
+    let vertices = 0;
+    craft.group.traverse((object) => {
+      if (object.geometry) { vertices += object.geometry.getAttribute("position").count; object.geometry.dispose(); }
+      if (object.isInstancedMesh) object.dispose();
+    });
+    assert.ok(vertices > 1500 && vertices < 20000, "mechanical detail must remain bounded and cached");
+    for (const material of [craft.hull, craft.trim, craft.glass, craft.light, craft.flame]) material.dispose();
+    assert.deepEqual(spacecraftPose(3, false, kind), spacecraftPose(40, false, kind));
+  }
   assert.equal(spacecraftPose(3, true).visible, true);
+  assert.equal(spacecraftPose(3, true, "scout").visible, false);
+  assert.equal(spacecraftPose(8, true, "scout").visible, true);
   assert.equal(spacecraftPose(40, true).visible, false);
-  assert.deepEqual(spacecraftPose(3, false), spacecraftPose(40, false));
-  craft.group.traverse((object) => { object.geometry?.dispose(); });
-  craft.hull.dispose(); craft.glass.dispose(); craft.light.dispose(); craft.group.children[3].dispose();
+  assert.equal(SPACECRAFT_PERIOD, 112);
+  assert.equal(PURSUIT_DELAY, 4.8);
+  for (let t = 6; t < 18; t += .25) assert.ok(spacecraftPose(t, true).x > spacecraftPose(t, true, "scout").x);
+  assert.deepEqual(spacecraftPose(8, true), spacecraftPose(120, true));
+});
+
+test("flight lanes clear overlapping projected planet/ring exclusions or hide safely", () => {
+  const obstacles = [{ x: -.5, y: .58, radius: .14 }, { x: .2, y: .68, radius: .24 }, { x: .45, y: .46, radius: .12 }];
+  const point = { x: 0, y: .64, visible: false, clearance: 0 };
+  for (const aspect of [.46, .69, 1.3, 2.2]) for (let i = 0; i < 160; i++) {
+    const x = (-1.1 + i / 159 * 2.2) * aspect;
+    assert.equal(routeSpacecraft(x, point.y, .1, obstacles, .18, .74, point), point);
+    if (point.visible) {
+      assert.ok(point.y >= .18 && point.y <= .74);
+      for (const obstacle of obstacles) assert.ok(Math.hypot(point.x - obstacle.x, point.y - obstacle.y) - obstacle.radius - .1 >= .0349);
+    }
+  }
+  routeSpacecraft(0, .6, .1, [{ x: 0, y: .5, radius: 1 }], .18, .74, point);
+  assert.equal(point.visible, false);
+  routeSpacecraft(0, .6, .1, [], .8, .2, point);
+  assert.equal(point.visible, false);
 });
 
 test("distant stars form a deterministic depth layer without increasing compact density", () => {

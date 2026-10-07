@@ -95,6 +95,7 @@ try {
     await expect(background).toHaveAttribute("data-gravity-active", "true");
     await expect(background).toHaveAttribute("data-distant-star-pull", "0.000");
     await expect(background).toHaveAttribute("data-spacecraft-visible", "false");
+    await expect(background).toHaveAttribute("data-scout-visible", "false");
     await expect(background).toHaveAttribute("data-gravity-rest", "30");
     assert.ok(Number(await background.getAttribute("data-pull")) < .1, "jumping to Contact must not skip the slow intake");
     assert.ok(Number(await background.getAttribute("data-draw-calls")) < 65, "background must stay within its draw-call budget");
