@@ -54,6 +54,8 @@ try {
     await expect(background).toHaveAttribute("data-central-star", "true");
     await expect(background).toHaveAttribute("data-background-source", "volumetric-3d");
     await expect(background).toHaveAttribute("data-visitor-capacity", "5");
+    await expect(background).toHaveAttribute("data-bright-stars", "18");
+    await expect(background).toHaveAttribute("data-dust-flow", "inward");
     const starPixel = await background.locator("canvas").evaluate((canvas) => new Promise((resolve) => requestAnimationFrame(() => {
       const gl = canvas.getContext("webgl2");
       const host = canvas.parentElement;
@@ -85,6 +87,7 @@ try {
     assert.ok(Number(await background.getAttribute("data-hole-diameter")) > Math.min(viewport.width, viewport.height) * .7);
     await expect(background).toHaveAttribute("data-background-galaxies", "3");
     await expect(background).toHaveAttribute("data-gravity-active", "true");
+    await expect(background).toHaveAttribute("data-spacecraft-visible", "false");
     await expect(background).toHaveAttribute("data-gravity-rest", "30");
     assert.ok(Number(await background.getAttribute("data-pull")) < .1, "jumping to Contact must not skip the slow intake");
     assert.ok(Number(await background.getAttribute("data-draw-calls")) < 65, "background must stay within its draw-call budget");

@@ -150,7 +150,14 @@ test("portfolio surface keeps its core experience contracts", () => {
   assert.match(backdrop, /planetSystem\.rotation\.y/);
   assert.match(backdrop, /SphereGeometry/);
   assert.match(canvas, /TechOrbitItem/);
-  assert.match(canvas, /projectIds: readonly ProjectId\[\]/);
+  assert.match(canvas, /projectIds: readonly OrbitId\[\]/);
+  assert.match(experience, /stack: \["PHP", "MySQL"\]/);
+  assert.match(experience, /stack: \["C#", "WinForms"\]/);
+  assert.match(experience, /stack: \["Java", "Android", "Laravel", "PostgreSQL"\]/);
+  assert.match(experience, /yventures: \["n8n"\]/);
+  assert.match(experience, /soreva: \["Node.js", "Next.js", "React", "TypeScript"\]/);
+  assert.match(backdrop, /createSpacecraft/);
+  assert.match(read("components/gravity-field.ts"), /horizonFade/);
   assert.match(canvas, /linkedProjectIndexes/);
   assert.match(canvas, /selectedProjectIndex/);
   assert.doesNotMatch(canvas, /safeOrbitX/);

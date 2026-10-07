@@ -259,11 +259,12 @@ const stackGroups = [
 const techNodes = stackGroups.flatMap((group) => group.items.map(([label, slug, color]) => ({ label, slug, color, projectIds: projects.filter((project) => project.stack.includes(label)).map((project) => project.id as ProjectId) })));
 
 const academicProjects = [
-  { title: "RentalMobil.SG", tag: "OOP · Semester 2", body: "A car-rental web system with vehicle catalog, authentication, booking, payment confirmation, user area, and admin operations.", signal: "Model → reserve → confirm", output: "Booking flow", stack: ["Java", "OOP", "Rental"], color: "#efc95f", icon: CarFront, linkLabel: "Class build · local" },
-  { title: "POS Z Shoes", tag: "APBDS · Semester 3", body: "A point-of-sale system with product, supplier, purchase, customer transaction, return, dashboard, and reporting flows.", signal: "Stock → sale → report", output: "Business flow", stack: ["Analysis", "POS", "Reporting"], color: "#ef8e73", icon: ShoppingCart, link: "https://github.com/nugrahahenry/POS_APBDS", linkLabel: "View source" },
-  { title: "LabQ", tag: "Mobile & Web · Semester 4", body: "A digital health laboratory platform connecting patients, lab staff, and admins from registration to test results.", signal: "Register → test → result", output: "Health workflow", stack: ["React", "Web", "Mobile"], color: "#60c9b0", icon: FlaskConical, link: "https://github.com/nugrahahenry/labQ-Android", linkLabel: "View source" },
+  { title: "RentalMobil.SG", tag: "OOP · Semester 2", body: "A car-rental web system with vehicle catalog, authentication, booking, payment confirmation, user area, and admin operations.", signal: "Model → reserve → confirm", output: "Booking flow", stack: ["PHP", "MySQL"], color: "#efc95f", icon: CarFront, linkLabel: "Class build · local" },
+  { title: "POS Z Shoes", tag: "APBDS · Semester 3", body: "A point-of-sale system with product, supplier, purchase, customer transaction, return, dashboard, and reporting flows.", signal: "Stock → sale → report", output: "Business flow", stack: ["C#", "WinForms"], color: "#ef8e73", icon: ShoppingCart, link: "https://github.com/nugrahahenry/POS_APBDS", linkLabel: "View source" },
+  { title: "LabQ", tag: "Mobile & Web · Semester 4", body: "A digital health laboratory platform connecting patients, lab staff, and admins from registration to test results.", signal: "Register → test → result", output: "Health workflow", stack: ["Java", "Android", "Laravel", "PostgreSQL"], color: "#60c9b0", icon: FlaskConical, link: "https://github.com/nugrahahenry/labQ-Android", linkLabel: "View source" },
 ];
 
+const clientStacks = { yventures: ["n8n"], soreva: ["Node.js", "Next.js", "React", "TypeScript"] };
 const clientProjects = [
   { title: "Y-Ventures chatbot", icon: MessageCircle, body: "n8n-based vendor-matching chatbot for event planning, grounded in researched vendor data with filtering, price sorting, and quote calculation.", context: { en: "Event planning / vendor discovery", id: "Perencanaan event / pencarian vendor" }, ownership: { en: "Solo by Henry · private", id: "Dibangun sendiri Henry · privat" }, output: { en: "Matching + quote path", id: "Pencocokan + alur quote" }, boundary: { en: "Private data omitted", id: "Data privat tidak ditampilkan" }, signal: { en: "Research → match → quote", id: "Riset → cocokkan → quote" }, color: "#6ee7f4" },
   { title: "Soreva Autonomous Content", icon: Instagram, body: "Social-media content automation for grounded discovery, editorial generation, branded media, review, scheduling, and controlled publishing.", context: { en: "Social content operations", id: "Operasional konten sosial" }, ownership: { en: "Henry solo build + Vieri prototype account", id: "Build Henry + akun prototype Vieri" }, output: { en: "Discovery → review → publishing", id: "Discovery → review → publishing" }, boundary: { en: "Prototype account by Vieri", id: "Akun prototype oleh Vieri" }, signal: { en: "Discover → review → publish", id: "Temukan → review → publish" }, color: "#ff82c8" },
@@ -282,6 +283,7 @@ const universityRecords = academicProjects.map((project, index) => ({
 }));
 const clientRecords = clientProjects.map((project, index) => ({
   ...project,
+  stack: clientStacks[index === 0 ? "yventures" : "soreva"],
   id: (["yventures", "soreva"] as const)[index],
   mark: ["YV", "SC"][index],
   name: ["Y-Ventures", "Soreva"][index],
@@ -297,6 +299,18 @@ const toSatelliteWorld = (record: SatelliteRecord, index: number): SatelliteWorl
 const universityWorlds = universityRecords.map(toSatelliteWorld);
 const clientWorlds = clientRecords.map(toSatelliteWorld);
 const satelliteCatalog = { university: universityWorlds, client: clientWorlds };
+const orbitSources = [
+  ...projects.map(({ id, stack }) => ({ id: id as OrbitId, stack })),
+  ...universityRecords.map(({ id, stack }) => ({ id, stack })),
+  ...clientRecords.map(({ id }) => ({ id, stack: clientStacks[id] })),
+];
+const orbitTechRegistry = [...stackGroups.flatMap((group) => group.items),
+  ["MySQL", "mysql", "4479a1"], ["WinForms", "dotnet", "825ce5"],
+  ["Android", "android", "3ddc84"], ["PostgreSQL", "postgresql", "4169e1"],
+];
+const orbitTechNodes = orbitTechRegistry.map(([label, slug, color]) => ({ label, slug, color,
+  projectIds: orbitSources.filter((world) => world.stack.includes(label)).map((world) => world.id),
+}));
 
 const certificates = [
   { title: "Class of 2026 Graduation", issuer: "Google Student Ambassador", kind: "Community", date: "Class of 2026", image: "/assets/certificates/previews/google-student-ambassador.png", source: "/assets/certificates/source/google-student-ambassador.pdf", alt: "Google Student Ambassador Class of 2026 graduation certificate for Henry Nugraha" },
@@ -680,7 +694,7 @@ export function PortfolioExperience() {
             <motion.div className="map-departure" style={{ opacity: motionOn ? mapExitOpacity : 1, y: motionOn ? mapExitY : 0 }}>
             <div className="cosmic-frame" data-view={mapView} data-sector={activeSector} style={{ "--active-world-color": mapView === "universe" ? "#78cdbb" : focusedWorld.color } as CSSProperties}>
               <div className="frame-topline"><span>{t.field.label}</span><span>{mapView === "universe" ? "03 GALAXIES / 10 WORLDS" : `${focusedWorld.name} / ${activeSector === "main" ? activeProject.status[language] : activeSatellite.access[language]}`}</span></div>
-              <CosmicCanvas activeId={activeSector === "main" ? activeId : activeSatellite.id} onSelect={focusOrbitWorld} onPrevious={() => cycleOrbitWorld(-1)} onNext={() => cycleOrbitWorld(1)} motionOn={motionOn} progress={scrollYProgress} techNodes={techNodes} satelliteCatalog={satelliteCatalog} sector={activeSector} view={mapView} language={language} readingOpen={showProjectShowcase} onGalaxySelect={enterGalaxy} onUniverse={returnToUniverse} />
+              <CosmicCanvas activeId={activeSector === "main" ? activeId : activeSatellite.id} onSelect={focusOrbitWorld} onPrevious={() => cycleOrbitWorld(-1)} onNext={() => cycleOrbitWorld(1)} motionOn={motionOn} progress={scrollYProgress} techNodes={orbitTechNodes} satelliteCatalog={satelliteCatalog} sector={activeSector} view={mapView} language={language} readingOpen={showProjectShowcase} onGalaxySelect={enterGalaxy} onUniverse={returnToUniverse} />
               <AnimatePresence mode="wait" initial={false}>
                 {mapView === "orbit" && (showProjectShowcase ? (activeSector === "main" ? <motion.section className="project-showcase" data-lenis-prevent key={activeProject.id} aria-label={`Active project: ${activeProject.name}`} style={{ "--project-showcase-color": activeProject.color } as CSSProperties} initial={motionOn ? { opacity: 0, x: 22 } : false} animate={{ opacity: 1, x: 0 }} exit={motionOn ? { opacity: 0, x: -16 } : undefined} transition={{ duration: motionOn ? .4 : 0, ease: [0.16, 1, 0.3, 1] }}>
                   <div className="project-showcase-topline"><span>ACTIVE WORLD / {String(projects.findIndex((project) => project.id === activeProject.id) + 1).padStart(2, "0")}</span><div className="project-showcase-nav"><button type="button" onClick={() => cycleProject(-1)} aria-label="Previous project"><ChevronLeft size={13} /></button><button type="button" onClick={() => cycleProject(1)} aria-label="Next project"><ChevronRight size={13} /></button><button type="button" className="project-showcase-close" onClick={() => setShowProjectShowcase(false)} aria-label="Close active world" title="Close active world"><X size={13} /></button></div></div>

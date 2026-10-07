@@ -82,7 +82,7 @@ try {
     assert.equal(result.makerActiveWorld, "catmoji");
     assert.equal(result.academicSourceLinks, 2);
     assert.equal(result.academicCards, 3);
-    assert.equal(result.academicStackChips, 9);
+    assert.equal(result.academicStackChips, 8);
     assert.equal(result.showcaseWorlds, 0);
     assert.equal(result.continuumNodes, 5);
     assert.equal(result.continuumRouteStages, 3);
@@ -175,7 +175,7 @@ try {
     await expect(page.locator(".hero-stage")).toHaveAttribute("data-phase", "worlds");
     const scene = page.locator(".cosmic-canvas");
     await expect(scene).toHaveAttribute("data-ready", "true");
-    await expect(scene).toHaveAttribute("data-tech-count", "21");
+    await expect(scene).toHaveAttribute("data-tech-count", "15");
     await expect(scene).toHaveAttribute("data-linked-tech-count", "4");
     const angle = Number(await scene.getAttribute("data-angle"));
     await expect.poll(async () => Number(await scene.getAttribute("data-angle"))).toBeGreaterThan(angle + .02);

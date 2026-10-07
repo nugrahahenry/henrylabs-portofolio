@@ -10,8 +10,9 @@ export function techOrbitRadius(bodyRadius: number, lane: number) {
   return bodyRadius + .36 + lane * .22;
 }
 
-export function resolveTechOwner(owners: readonly number[], selected: number) {
-  return owners.includes(selected) ? selected : owners[0] ?? -1;
+export function resolveTechOwner(owners: readonly number[], selected: number, available?: readonly number[]) {
+  const candidates = available ? owners.filter((owner) => available.includes(owner)) : owners;
+  return candidates.includes(selected) ? selected : candidates[0] ?? -1;
 }
 
 // The same tilted circle drives the drawn lane, its moons, and the travelling signal.

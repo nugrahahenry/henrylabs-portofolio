@@ -16,7 +16,7 @@ export type SatelliteId = "rental" | "pos" | "labq" | "yventures" | "soreva";
 export type OrbitId = ProjectId | SatelliteId;
 export type SatelliteWorld = { id: SatelliteId; name: string; color: string; mark: string; x: number; y: number; z: number };
 type OrbitWorld = { id: OrbitId; name: string; color: string; logo?: string; mark?: string; x: number; y: number; z: number };
-export type TechOrbitItem = { label: string; slug: string; color: string; projectIds: readonly ProjectId[] };
+export type TechOrbitItem = { label: string; slug: string; color: string; projectIds: readonly OrbitId[] };
 
 export const projectWorlds = [
   { id: "catmoji", name: "Catmoji", x: -3.2, y: 1.15, z: .2, color: "#ef8e73", logo: "catmoji.png" },
@@ -302,7 +302,7 @@ export function CosmicCanvas({ activeId, onSelect, onPrevious, onNext, motionOn,
         });
       }
       system.add(group);
-      return { group, sphere, atmosphere, aura, logoHalo, focusRing, sculpture, orbitBlend: 1, orbitFrom: new THREE.Vector3() };
+      return { group, sphere, atmosphere, aura, logoHalo, focusRing, sculpture, radius, orbitBlend: 1, orbitFrom: new THREE.Vector3() };
     });
     const sectorPlanets = {
       main: allPlanets.slice(0, mainCount),
@@ -353,10 +353,10 @@ export function CosmicCanvas({ activeId, onSelect, onPrevious, onNext, motionOn,
       focusHalo.rotation.set(.78 + lane * .16, .18 + index * .04, .24 + lane * .22);
       group.add(surface, atmosphere, ring, focusHalo);
       techSystem.add(group);
-      const linkedProjectIndexes = item.projectIds.map((projectId) => projectWorlds.findIndex((world) => world.id === projectId)).filter((projectIndex) => projectIndex >= 0);
+      const linkedProjectIndexes = item.projectIds.map((projectId) => allWorlds.findIndex((world) => world.id === projectId)).filter((projectIndex) => projectIndex >= 0);
       return { group, surface, atmosphere, ring, focusHalo, radius, index, lane, linkedProjectIndexes, owner: linkedProjectIndexes[0] ?? -1, handoff: 1, handoffFrom: new THREE.Vector3() };
     });
-    const techOrbitFrames = projectWorlds.map((world) => {
+    const techOrbitFrames = allWorlds.map((world) => {
       const group = new THREE.Group();
       const techOrbitLanes = [0, 1, 2].map((laneIndex) => {
         const points = Array.from({ length: 128 }, (_, i) => sampleTechOrbit(1, laneIndex, i / 128 * Math.PI * 2));
@@ -377,6 +377,7 @@ export function CosmicCanvas({ activeId, onSelect, onPrevious, onNext, motionOn,
     techSignal.renderOrder = 2;
     techSystem.add(techSignal);
     const orbitTarget = new THREE.Vector3();
+    const sectorOwnerIndexes = Object.fromEntries(Object.entries(sectorWorlds).map(([id, worlds]) => [id, worlds.map((world) => allWorlds.findIndex((candidate) => candidate.id === world.id))])) as Record<GalaxyId, number[]>;
     const projectOrbits = Array.from({ length: 5 }, (_, index) => {
       const line = new THREE.LineLoop(orbitGeometry(.06 + index * .012), new THREE.LineBasicMaterial({ color: 0x74dfe2, transparent: true, opacity: .1, depthWrite: false }));
       system.add(line);
@@ -436,7 +437,7 @@ export function CosmicCanvas({ activeId, onSelect, onPrevious, onNext, motionOn,
       const targetBlend = state.current.view === "universe" ? 0 : 1;
       viewBlend = state.current.motionOn ? THREE.MathUtils.damp(viewBlend, targetBlend, 7, dt) : targetBlend;
       if (Math.abs(viewBlend - targetBlend) < .003) viewBlend = targetBlend;
-      techSystem.visible = sector === "main";
+      techSystem.visible = true;
       const portrait = camera.aspect < .9;
       const galaxyFocused = document.activeElement?.classList.contains("galaxy-label");
       if (state.current.motionOn && state.current.view === "universe" && !dragging && galaxyHover.current < 0 && !galaxyFocused) universeAngle += dt * .025;
@@ -514,14 +515,16 @@ export function CosmicCanvas({ activeId, onSelect, onPrevious, onNext, motionOn,
         focusRing.rotation.z = elapsed * (state.current.motionOn ? (selected ? .18 : -.035) : 0);
         focusRing.scale.setScalar(state.current.motionOn && selected ? 1 + Math.sin(elapsed * 2.4 + index) * .045 : 1);
       });
-      const selectedProjectIndex = sector === "main" ? worlds.findIndex((world) => world.id === state.current.activeId) : -1;
+      const selectedProjectIndex = allWorlds.findIndex((world) => world.id === state.current.activeId);
+      const availableOwners = sectorOwnerIndexes[sector];
+      let visibleTechCount = 0;
       const activeTechPlanets = techPlanets.filter(({ linkedProjectIndexes }) => linkedProjectIndexes.includes(selectedProjectIndex));
       const activeLanes = new Set(activeTechPlanets.map(({ lane }) => lane));
       techOrbitFrames.forEach(({ group, techOrbitLanes }, ownerIndex) => {
-        const owner = sectorPlanets.main[ownerIndex].group;
+        const owner = allPlanets[ownerIndex].group;
         group.position.copy(owner.position);
         group.rotation.y = elapsed * .025 + ownerIndex * .15;
-        const bodyRadius = (.37 + ownerIndex * .02) * owner.scale.x;
+        const bodyRadius = allPlanets[ownerIndex].radius * owner.scale.x;
         techOrbitLanes.forEach((lane, laneIndex) => {
           lane.scale.setScalar(techOrbitRadius(bodyRadius, laneIndex));
           lane.visible = ownerIndex === selectedProjectIndex && activeLanes.has(laneIndex);
@@ -529,21 +532,23 @@ export function CosmicCanvas({ activeId, onSelect, onPrevious, onNext, motionOn,
         });
       });
       techSignal.visible = activeTechPlanets.length > 0;
-      techSignalMaterial.color.set(worlds[selectedProjectIndex]?.color ?? "#78cdbb");
+      techSignalMaterial.color.set(allWorlds[selectedProjectIndex]?.color ?? "#78cdbb");
       techSignalMaterial.opacity = state.current.motionOn ? .55 + Math.sin(elapsed * 2.4) * .16 : .55;
       if (activeTechPlanets.length > 0) {
         const frame = techOrbitFrames[selectedProjectIndex];
         if (techSignal.parent !== frame.group) frame.group.add(techSignal);
         const signalLane = activeTechPlanets[Math.floor(elapsed * .35) % activeTechPlanets.length]?.lane ?? 0;
         const signalPhase = elapsed * (.22 + signalLane * .03);
-        const bodyRadius = (.37 + selectedProjectIndex * .02) * sectorPlanets.main[selectedProjectIndex].group.scale.x;
+        const bodyRadius = allPlanets[selectedProjectIndex].radius * allPlanets[selectedProjectIndex].group.scale.x;
         sampleTechOrbit(techOrbitRadius(bodyRadius, signalLane), signalLane, signalPhase, techSignal.position);
       }
       let orbitError = 0;
       let transfers = 0;
       techPlanets.forEach((moon) => {
         const { group, surface, atmosphere, ring, focusHalo, index, lane, linkedProjectIndexes } = moon;
-        const anchorIndex = resolveTechOwner(linkedProjectIndexes, selectedProjectIndex);
+        const anchorIndex = resolveTechOwner(linkedProjectIndexes, selectedProjectIndex, availableOwners);
+        group.visible = anchorIndex >= 0 || linkedProjectIndexes.length === 0 && sector === "main";
+        if (group.visible) visibleTechCount++;
         const belongsToProject = anchorIndex >= 0;
         const isActiveProjectTool = linkedProjectIndexes.includes(selectedProjectIndex);
         const frame = belongsToProject ? techOrbitFrames[anchorIndex].group : sharedTechOrbit;
@@ -553,14 +558,14 @@ export function CosmicCanvas({ activeId, onSelect, onPrevious, onNext, motionOn,
           moon.handoff = state.current.motionOn ? 0 : 1;
           moon.owner = anchorIndex;
         }
-        const anchorRadius = belongsToProject ? (.37 + anchorIndex * .02) * sectorPlanets.main[anchorIndex].group.scale.x : 0;
+        const anchorRadius = belongsToProject ? allPlanets[anchorIndex].radius * allPlanets[anchorIndex].group.scale.x : 0;
         const radiusPath = belongsToProject ? techOrbitRadius(anchorRadius, lane) : 2.55 + lane * .16;
         const phase = index * 2.37 + elapsed * (belongsToProject ? .24 + lane * .035 : .065);
         sampleTechOrbit(radiusPath, lane, phase, orbitTarget);
         moon.handoff = Math.min(1, moon.handoff + dt / .8);
         if (moon.handoff < 1 && state.current.motionOn) {
           group.position.copy(moon.handoffFrom).lerp(orbitTarget, 1 - Math.pow(1 - moon.handoff, 3));
-          transfers++;
+          if (group.visible) transfers++;
         } else group.position.copy(orbitTarget);
         if (belongsToProject && moon.handoff >= 1) orbitError = Math.max(orbitError, Math.abs(group.position.length() - radiusPath));
         group.rotation.y = elapsed * (.16 + lane * .04) + index;
@@ -604,7 +609,7 @@ export function CosmicCanvas({ activeId, onSelect, onPrevious, onNext, motionOn,
       host.dataset.time = elapsed.toFixed(2);
       host.dataset.angle = angle.toFixed(3);
       host.dataset.pitch = pitch.toFixed(3);
-      host.dataset.techCount = String(state.current.view === "orbit" && sector === "main" ? techNodes.length : 0);
+      host.dataset.techCount = String(state.current.view === "orbit" ? visibleTechCount : 0);
       host.dataset.linkedTechCount = String(state.current.view === "orbit" ? techPlanets.filter(({ linkedProjectIndexes }) => linkedProjectIndexes.includes(selectedProjectIndex)).length : 0);
       host.dataset.viewZoom = state.current.viewZoom.toFixed(2);
       host.dataset.worldCount = String(state.current.view === "orbit" ? worlds.length : 0);
@@ -734,7 +739,7 @@ export function CosmicCanvas({ activeId, onSelect, onPrevious, onNext, motionOn,
     };
   }, [progress, satelliteCatalog, techNodes]);
 
-  return <div ref={hostRef} data-view={view} data-kind={sector === "main" ? "main" : "satellite"} data-world-count={view === "orbit" ? worlds.length : 0} data-active-world={view === "orbit" ? activeId : ""} data-tech-count={view === "orbit" && sector === "main" ? techNodes.length : 0} className={`cosmic-canvas${fallback ? " canvas-fallback" : ""}`} role="group" tabIndex={0} aria-label={view === "universe" ? language === "en" ? "Galaxy map" : "Peta galaksi" : "Project orbit"} onKeyDown={(event) => {
+  return <div ref={hostRef} data-view={view} data-kind={sector === "main" ? "main" : "satellite"} data-world-count={view === "orbit" ? worlds.length : 0} data-active-world={view === "orbit" ? activeId : ""} className={`cosmic-canvas${fallback ? " canvas-fallback" : ""}`} role="group" tabIndex={0} aria-label={view === "universe" ? language === "en" ? "Galaxy map" : "Peta galaksi" : "Project orbit"} onKeyDown={(event) => {
     if (event.key === "Escape" && view === "orbit" && !document.querySelector('[role="dialog"]')) { event.preventDefault(); onUniverse(); return; }
     if (view === "universe") {
       if (event.key === "ArrowRight" || event.key === "ArrowLeft") {

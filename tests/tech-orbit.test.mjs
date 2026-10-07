@@ -19,6 +19,8 @@ const { createProjectSculpture } = await loadModule("project-sculptures");
 const { sampleOrbit, orbitalSpeed } = await loadModule("orbital-path");
 const { createStellarCore } = await loadModule("stellar-core");
 const { createDeepSpace } = await loadModule("deep-space");
+const { infallPoint, gravityMaterial } = await loadModule("gravity-field");
+const { createSpacecraft, spacecraftPose } = await loadModule("spacecraft");
 
 test("every tech lane is a true 3D circle outside its moving owner", () => {
   for (const body of [.34, .83, 1.01]) for (const lane of [0, 1, 2]) {
@@ -37,6 +39,9 @@ test("shared tools prefer the selected verified owner and unmapped tools stay un
   assert.equal(resolveTechOwner([0, 1, 4], 1), 1);
   assert.equal(resolveTechOwner([0, 1], 3), 0);
   assert.equal(resolveTechOwner([], 0), -1);
+  assert.equal(resolveTechOwner([0, 9], 8, [8, 9]), 9);
+  assert.equal(resolveTechOwner([0, 9], 9, [8, 9]), 9);
+  assert.equal(resolveTechOwner([0, 1], 8, [8, 9]), -1);
 });
 
 test("all ten worlds have bounded dimensional identity sculptures", () => {
@@ -87,4 +92,33 @@ test("deep space is a bounded real density volume with deterministic cached voxe
   assert.match(a.material.fragmentShader, /i < 16/);
   assert.equal(a.material.depthWrite, false);
   for (const item of [a, b]) { item.texture.dispose(); item.material.dispose(); item.volume.geometry.dispose(); }
+});
+
+test("dust spirals only inward and terminates at the actual horizon center", () => {
+  const target = new THREE.Vector3(3, -2, -4.8);
+  for (const source of [new THREE.Vector3(-5, 3, -7), new THREE.Vector3(1, 6, -9)]) for (const seed of [0, .4, .9]) {
+    let distance = Infinity;
+    for (let i = 0; i <= 100; i++) {
+      const current = infallPoint(source, target, i / 100, seed).distanceTo(target);
+      assert.ok(current <= distance + 1e-10);
+      distance = current;
+    }
+    assert.equal(distance, 0);
+  }
+  const material = gravityMaterial(target, .027, false, true);
+  assert.match(material.vertexShader, /horizonFade/);
+  assert.doesNotMatch(material.vertexShader, /- uTime \*|travel \* \.2/);
+  assert.match(material.vertexShader, /smoothstep\(0\.0, \.10, travel\)/);
+  material.dispose();
+});
+
+test("one bounded dimensional spacecraft has a quiet repeat and still alternative", () => {
+  const craft = createSpacecraft();
+  assert.equal(craft.group.children.length, 4);
+  assert.equal(craft.group.children[3].count, 6);
+  assert.equal(spacecraftPose(3, true).visible, true);
+  assert.equal(spacecraftPose(40, true).visible, false);
+  assert.deepEqual(spacecraftPose(3, false), spacecraftPose(40, false));
+  craft.group.traverse((object) => { object.geometry?.dispose(); });
+  craft.hull.dispose(); craft.glass.dispose(); craft.light.dispose(); craft.group.children[3].dispose();
 });

@@ -10,6 +10,7 @@ import { advanceGravityAge, gravityApproachAngle, gravityBirth, gravitySequence,
 import { orbitGeometry, orbitalSpeed, sampleOrbit } from "./orbital-path";
 import { createStellarCore } from "./stellar-core";
 import { createDeepSpace } from "./deep-space";
+import { createSpacecraft, spacecraftPose } from "./spacecraft";
 
 function createBlackHole() {
   const group = new THREE.Group();
@@ -110,6 +111,8 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, contactProgres
     const scene = new THREE.Scene();
     const deepSpace = createDeepSpace();
     scene.add(deepSpace.volume);
+    const spacecraft = createSpacecraft();
+    scene.add(spacecraft.group);
     const camera = new THREE.PerspectiveCamera(44, 1, .1, 100);
     const starField = new THREE.Group();
     const planetSystem = new THREE.Group();
@@ -154,6 +157,18 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, contactProgres
     const stars = new THREE.Points(starGeometry, starMaterial);
     stars.frustumCulled = false;
     starField.add(stars);
+    const brightPositions = new Float32Array(18 * 3);
+    const brightColors = new Float32Array(18 * 3);
+    for (let i = 0; i < 18; i++) {
+      const index = (i * 47 + 11) % starCount;
+      brightPositions.set(starPositions.subarray(index * 3, index * 3 + 3), i * 3);
+      brightColors.set(starColors.subarray(index * 3, index * 3 + 3), i * 3);
+    }
+    const brightGeometry = new THREE.BufferGeometry();
+    brightGeometry.setAttribute("position", new THREE.BufferAttribute(brightPositions, 3));
+    brightGeometry.setAttribute("color", new THREE.BufferAttribute(brightColors, 3));
+    const brightMaterial = gravityMaterial(gravityTarget, .16, false, false, true);
+    starField.add(new THREE.Points(brightGeometry, brightMaterial));
     const streakGeometry = new THREE.BufferGeometry();
     const streakPositions = new Float32Array(80 * 6);
     const streakColors = new Float32Array(80 * 6);
@@ -368,6 +383,18 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, contactProgres
       // Screen-space anchoring keeps the terminal landmark out of the hero and reading center.
       const width = host.clientWidth;
       const height = host.clientHeight;
+      const shipPose = spacecraftPose(drift, state.current.motionOn);
+      spacecraft.group.visible = shipPose.visible && holeStrength < .05;
+      if (spacecraft.group.visible) {
+        holeRay.set(shipPose.x, shipPose.y, .5).unproject(camera).sub(camera.position).normalize();
+        spacecraft.group.position.copy(camera.position).addScaledVector(holeRay, (shipPose.depth - camera.position.z) / holeRay.z);
+        const shipHeight = 2 * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) * (camera.position.z - shipPose.depth);
+        spacecraft.group.scale.setScalar(shipHeight / height * Math.min(54, Math.min(width, height) * .08) / .56);
+        spacecraft.group.rotation.set(.24, .35, shipPose.roll);
+        spacecraft.hull.opacity = shipPose.opacity;
+        spacecraft.glass.opacity = shipPose.opacity * .7;
+        spacecraft.light.opacity = shipPose.opacity;
+      }
       const portrait = width < height;
       const holeY = height < 620 ? .88 : portrait ? .9 : .87;
       const contactActive = state.current.motionOn && state.current.contactVisible && holeStrength > .05;
@@ -396,16 +423,18 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, contactProgres
       deepSpace.material.uniforms.uTime.value = drift;
       deepSpace.material.uniforms.uPull.value = pull;
       deepSpace.material.uniforms.uTarget.value.copy(gravityTarget);
-      [starMaterial, galaxyMaterial, streakMaterial].forEach((material) => {
+      [starMaterial, galaxyMaterial, streakMaterial, brightMaterial].forEach((material) => {
         material.uniforms.uPull.value = pull;
         material.uniforms.uTime.value = gravityAge * .18;
         material.uniforms.uScale.value = height * renderer.getPixelRatio() * .5;
+        material.uniforms.uHorizon.value = holeStrength > .05 ? blackHole.group.scale.x * .5 : 0;
       });
       gravityStreaks.visible = pull > .01;
       feedingDust.visible = gravityActive;
       flowMaterial.uniforms.uPull.value = gravityActive ? holeStrength * THREE.MathUtils.smoothstep(gravityAge, 0, 2) : 0;
       flowMaterial.uniforms.uTime.value = gravityAge;
       flowMaterial.uniforms.uScale.value = height * renderer.getPixelRatio() * .5;
+      flowMaterial.uniforms.uHorizon.value = blackHole.group.scale.x * .5;
       planetSystem.scale.setScalar(solarScale * (1 - pull * .94));
       planetSystem.position.copy(solarOrigin).lerp(gravityTarget, pull);
       planetSystem.rotation.z += pull * pull * 4;
@@ -470,6 +499,10 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, contactProgres
       host.dataset.visitorCapacity = "5";
       host.dataset.visitorDirection = visitorGroup.direction;
       host.dataset.backgroundSource = "volumetric-3d";
+      host.dataset.spacecraftVisible = String(spacecraft.group.visible);
+      host.dataset.brightStars = "18";
+      host.dataset.dustFlow = "inward";
+      host.dataset.absorptionRadius = flowMaterial.uniforms.uHorizon.value.toFixed(3);
       renderer.render(scene, camera);
       let visibleVisitors = 0;
       if (wanderer.visible && visitorOpacity > .1) visitors.forEach((visitor, index) => {
@@ -488,6 +521,7 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, contactProgres
       camera.aspect = host.clientWidth / Math.max(1, host.clientHeight);
       camera.updateProjectionMatrix();
       renderer.setSize(host.clientWidth, host.clientHeight, false);
+      deepSpace.material.uniforms.uResolution.value.set(host.clientWidth * renderer.getPixelRatio(), host.clientHeight * renderer.getPixelRatio());
       wake();
     };
     const observer = new ResizeObserver(resize);
@@ -511,6 +545,7 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, contactProgres
       document.removeEventListener("visibilitychange", wake);
       scene.traverse((object) => {
         const mesh = object as THREE.Mesh;
+        if (object instanceof THREE.InstancedMesh) object.dispose();
         mesh.geometry?.dispose();
         if (mesh.material) (Array.isArray(mesh.material) ? mesh.material : [mesh.material]).forEach((material) => material.dispose());
       });
