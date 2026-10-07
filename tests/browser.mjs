@@ -168,7 +168,7 @@ try {
     await page.getByRole("button", { name: /Focus Nalira through Supabase/ }).click({ force: true });
     await expect(page.locator(".maker-orbit-inspector")).toContainText("Nalira");
     await expect(page.locator(".dossier-art-preview")).toHaveAttribute("src", "/assets/projects/nalira-ambient.svg");
-    assert.equal(await page.locator(".dossier-art-preview").evaluate((image) => image.complete && image.naturalWidth > 0), true, "Nalira artwork must render");
+    await expect.poll(() => page.locator(".dossier-art-preview").evaluate((image) => image.complete && image.naturalWidth > 0), { message: "Nalira artwork must render" }).toBe(true);
     assert.equal(await page.locator(".maker-tech.is-linked").count(), 4);
 
     await page.locator(".hero-stage").evaluate((hero) => window.scrollTo({ top: scrollY + hero.getBoundingClientRect().top + (hero.offsetHeight - innerHeight) * .7, behavior: "instant" }));

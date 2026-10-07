@@ -449,7 +449,6 @@ export function PortfolioExperience() {
   const fieldY = useTransform(scrollYProgress, [0.32, 0.65], [52, 0]);
   const mapExitOpacity = useTransform(scrollYProgress, [.86, .98], [1, 0]);
   const mapExitY = useTransform(scrollYProgress, [.86, 1], [0, -44]);
-  const backdropScale = useTransform(scrollYProgress, [0, 1], [1, 1.12]);
   const stackStageRotate = useTransform(scrollYProgress, [0, 1], [-3, 3]);
   const stackStageY = useTransform(scrollYProgress, [0, 1], [28, -22]);
   const stackStageScale = useTransform(scrollYProgress, [0, .45, 1], [.94, 1, .96]);
@@ -624,7 +623,7 @@ export function PortfolioExperience() {
     <MotionConfig reducedMotion={motionOn ? "never" : "always"} transition={{ duration: motionOn ? 0.55 : 0, ease: [0.16, 1, 0.3, 1] }}>
     <main className="site-shell" data-motion={motionOn ? "on" : "off"}>
       <SmoothScroll enabled={motionOn} />
-      <WorldlineBackdrop activeId={activeProject.id} motionOn={motionOn} progress={worldlineProgress} contactProgress={contactProgress} contactVisible={contactVisible} />
+      <WorldlineBackdrop activeId={activeProject.id} motionOn={motionOn} progress={worldlineProgress} contactProgress={contactProgress} contactVisible={contactVisible} mapActive={heroPhase === "worlds"} />
       <motion.div className={cx("intro-loader", introDone && "intro-loader--done")} aria-hidden={introDone}>
         <div className="loader-content">
           <div className="loader-meta"><span>HENRYLABS / USEFUL WORLDS</span><span>0{Math.min(loadingStep + 1, 4)} / 04</span></div>
@@ -657,7 +656,6 @@ export function PortfolioExperience() {
 
       <section ref={heroRef} className="hero-stage" id="top" aria-labelledby="hero-title" data-phase={motionOn ? heroPhase : "all"}>
         <div className="space-backdrop" aria-hidden="true">
-          <motion.img src="/assets/background/cosmic-nebula.png" alt="" style={{ scale: motionOn ? backdropScale : 1 }} />
           <span className="star-field star-field--far" /><span className="star-field star-field--near" />
           <span className="star star-1" /><span className="star star-2" /><span className="star star-3" /><span className="star star-4" /><span className="star star-5" />
           <div className="backdrop-arc arc-one" /><div className="backdrop-arc arc-two" />
@@ -682,7 +680,7 @@ export function PortfolioExperience() {
             <motion.div className="map-departure" style={{ opacity: motionOn ? mapExitOpacity : 1, y: motionOn ? mapExitY : 0 }}>
             <div className="cosmic-frame" data-view={mapView} data-sector={activeSector} style={{ "--active-world-color": mapView === "universe" ? "#78cdbb" : focusedWorld.color } as CSSProperties}>
               <div className="frame-topline"><span>{t.field.label}</span><span>{mapView === "universe" ? "03 GALAXIES / 10 WORLDS" : `${focusedWorld.name} / ${activeSector === "main" ? activeProject.status[language] : activeSatellite.access[language]}`}</span></div>
-              <CosmicCanvas activeId={activeSector === "main" ? activeId : activeSatellite.id} onSelect={focusOrbitWorld} onPrevious={() => cycleOrbitWorld(-1)} onNext={() => cycleOrbitWorld(1)} motionOn={motionOn} progress={scrollYProgress} techNodes={techNodes} satelliteCatalog={satelliteCatalog} sector={activeSector} view={mapView} language={language} onGalaxySelect={enterGalaxy} onUniverse={returnToUniverse} />
+              <CosmicCanvas activeId={activeSector === "main" ? activeId : activeSatellite.id} onSelect={focusOrbitWorld} onPrevious={() => cycleOrbitWorld(-1)} onNext={() => cycleOrbitWorld(1)} motionOn={motionOn} progress={scrollYProgress} techNodes={techNodes} satelliteCatalog={satelliteCatalog} sector={activeSector} view={mapView} language={language} readingOpen={showProjectShowcase} onGalaxySelect={enterGalaxy} onUniverse={returnToUniverse} />
               <AnimatePresence mode="wait" initial={false}>
                 {mapView === "orbit" && (showProjectShowcase ? (activeSector === "main" ? <motion.section className="project-showcase" data-lenis-prevent key={activeProject.id} aria-label={`Active project: ${activeProject.name}`} style={{ "--project-showcase-color": activeProject.color } as CSSProperties} initial={motionOn ? { opacity: 0, x: 22 } : false} animate={{ opacity: 1, x: 0 }} exit={motionOn ? { opacity: 0, x: -16 } : undefined} transition={{ duration: motionOn ? .4 : 0, ease: [0.16, 1, 0.3, 1] }}>
                   <div className="project-showcase-topline"><span>ACTIVE WORLD / {String(projects.findIndex((project) => project.id === activeProject.id) + 1).padStart(2, "0")}</span><div className="project-showcase-nav"><button type="button" onClick={() => cycleProject(-1)} aria-label="Previous project"><ChevronLeft size={13} /></button><button type="button" onClick={() => cycleProject(1)} aria-label="Next project"><ChevronRight size={13} /></button><button type="button" className="project-showcase-close" onClick={() => setShowProjectShowcase(false)} aria-label="Close active world" title="Close active world"><X size={13} /></button></div></div>

@@ -45,6 +45,9 @@ try {
     assert.ok(await page.locator("footer").evaluate((node) => Number(getComputedStyle(node).zIndex) > 0), "footer words must paint above the fixed backdrop");
     const pull = Number(await field.getAttribute("data-pull"));
     assert.ok(pull >= .49 && pull <= .55, `mid-intake must be slow and continuous: ${pull}`);
+    await expect(field).toHaveAttribute("data-visitor-count", "3");
+    await expect(field).toHaveAttribute("data-visitor-direction", "left");
+    assert.ok(Number(await field.getAttribute("data-visible-visitors")) > 0, "the arriving orbit must actually enter the viewport");
     await page.screenshot({ path: `test-results/${viewport.width}-slow-gravity-middle.png` });
     await advanceTo(32.25);
     await expect(field).toHaveAttribute("data-gravity-phase", "rest");
@@ -56,9 +59,14 @@ try {
     await expect(field).toHaveAttribute("data-gravity-phase", "rest");
     await advanceTo(65);
     await expect(field).toHaveAttribute("data-gravity-cycle", "1");
+    await expect(field).toHaveAttribute("data-visitor-count", "5");
+    await expect(field).toHaveAttribute("data-visitor-direction", "top");
     assert.ok(Number(await field.getAttribute("data-visitor-opacity")) > .35, "a different cached planet must appear after the quiet interval");
     await expect(field).toHaveAttribute("data-pull", "1.000");
     await page.screenshot({ path: `test-results/${viewport.width}-second-gravity-visitor.png` });
+    await advanceTo(78);
+    await page.screenshot({ path: `test-results/${viewport.width}-five-gravity-visitors.png` });
+    assert.ok(Number(await field.getAttribute("data-visible-visitors")) > 0, "the five-planet orbit must enter from above");
     assert.ok(Number(await field.getAttribute("data-draw-calls")) < 65);
     assert.equal(await page.locator("canvas").count(), 2);
     const contactHit = await page.locator('#contact a[href*="wa.me"]').evaluate((link) => {

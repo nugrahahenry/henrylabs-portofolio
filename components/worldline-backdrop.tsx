@@ -6,32 +6,10 @@ import * as THREE from "three";
 import { projectWorlds, type ProjectId } from "./cosmic-canvas";
 import { createAtmosphere, createPlanetMaps, createPlanetRing, projectPlanetKinds } from "./planet-materials";
 import { gravityMaterial } from "./gravity-field";
-import { advanceGravityAge, gravityBirth, gravitySequence, GRAVITY_REST_SECONDS } from "./gravity-sequence";
-
-const projectColors: Record<ProjectId, number> = {
-  catmoji: 0xef8e73,
-  nalira: 0x78cdbb,
-  canox: 0x8ea2d5,
-  hengs: 0xebcd89,
-  polara: 0xd5a7c8,
-};
-
-function createGlowTexture() {
-  const canvas = document.createElement("canvas");
-  canvas.width = 128;
-  canvas.height = 128;
-  const context = canvas.getContext("2d")!;
-  const gradient = context.createRadialGradient(64, 64, 0, 64, 64, 64);
-  gradient.addColorStop(0, "rgba(255,255,255,.9)");
-  gradient.addColorStop(.16, "rgba(255,255,255,.34)");
-  gradient.addColorStop(.48, "rgba(110,231,244,.1)");
-  gradient.addColorStop(1, "rgba(110,231,244,0)");
-  context.fillStyle = gradient;
-  context.fillRect(0, 0, 128, 128);
-  const texture = new THREE.CanvasTexture(canvas);
-  texture.colorSpace = THREE.SRGBColorSpace;
-  return texture;
-}
+import { advanceGravityAge, gravityApproachAngle, gravityBirth, gravitySequence, gravityVisitors, GRAVITY_REST_SECONDS } from "./gravity-sequence";
+import { orbitGeometry, orbitalSpeed, sampleOrbit } from "./orbital-path";
+import { createStellarCore } from "./stellar-core";
+import { createDeepSpace } from "./deep-space";
 
 function createBlackHole() {
   const group = new THREE.Group();
@@ -84,21 +62,22 @@ function createBlackHole() {
   return { group, horizon, diskMaterial, rim, lens };
 }
 
-export function WorldlineBackdrop({ activeId, motionOn, progress, contactProgress, contactVisible }: {
+export function WorldlineBackdrop({ activeId, motionOn, progress, contactProgress, contactVisible, mapActive }: {
   activeId: ProjectId;
   motionOn: boolean;
   progress: MotionValue<number>;
   contactProgress: MotionValue<number>;
   contactVisible: boolean;
+  mapActive: boolean;
 }) {
   const hostRef = useRef<HTMLDivElement>(null);
-  const state = useRef({ activeId, motionOn, contactVisible });
+  const state = useRef({ activeId, motionOn, contactVisible, mapActive });
   const wakeRef = useRef<() => void>(() => {});
 
   useEffect(() => {
-    state.current = { activeId, motionOn, contactVisible };
+    state.current = { activeId, motionOn, contactVisible, mapActive };
     wakeRef.current();
-  }, [activeId, motionOn, contactVisible]);
+  }, [activeId, motionOn, contactVisible, mapActive]);
 
   useEffect(() => {
     const host = hostRef.current;
@@ -123,26 +102,33 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, contactProgres
       host.dataset.fallback = "true";
       return unsubscribeChapter;
     }
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.35));
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1));
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
     renderer.toneMappingExposure = 1.1;
 
     const scene = new THREE.Scene();
+    const deepSpace = createDeepSpace();
+    scene.add(deepSpace.volume);
     const camera = new THREE.PerspectiveCamera(44, 1, .1, 100);
-    const field = new THREE.Group();
     const starField = new THREE.Group();
     const planetSystem = new THREE.Group();
     const sectorSystem = new THREE.Group();
     planetSystem.position.z = -3.2;
-    sectorSystem.position.z = -4.3;
-    scene.add(field, starField, planetSystem, sectorSystem);
+    planetSystem.add(sectorSystem);
+    scene.add(starField, planetSystem);
+    const stellarCore = createStellarCore(.42);
+    const stellarLight = new THREE.PointLight(0xffe1b1, 34, 18, 2);
+    planetSystem.add(stellarCore.group, stellarLight);
+    const solarOrigin = new THREE.Vector3();
+    const solarTarget = new THREE.Vector3();
+    const projectedStar = new THREE.Vector3();
     const blackHole = createBlackHole();
     scene.add(blackHole.group);
     const holeRay = new THREE.Vector3();
     const gravityTarget = new THREE.Vector3();
     scene.add(new THREE.AmbientLight(0x9fc4df, .14));
-    const planetLight = new THREE.DirectionalLight(0xfff1da, 3);
+    const planetLight = new THREE.DirectionalLight(0xfff1da, .45);
     planetLight.position.set(-4, 5, 7);
     scene.add(planetLight);
 
@@ -150,7 +136,7 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, contactProgres
     const starPositions = new Float32Array(starCount * 3);
     const starColors = new Float32Array(starCount * 3);
     const starColor = new THREE.Color();
-    const palette = ["#d9fbf4", "#6ee7f4", "#efc95f", "#ff82c8", "#9b8cff"];
+    const palette = ["#dceafa", "#f4f1da", "#adc3e0", "#ffe2b4", "#edf4f5"];
     for (let i = 0; i < starCount; i++) {
       const arm = i % 3;
       const radius = 2.2 + ((i * 37) % 100) / 100 * 8.5;
@@ -231,51 +217,43 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, contactProgres
     feedingDust.frustumCulled = false;
     starField.add(feedingDust);
 
-    const glowTexture = createGlowTexture();
     const wandererMaps = ["#82b8c4", "#c69b78", "#a9bba0"].map((color, index) => createPlanetMaps(color, index === 0 ? "ocean" : index === 1 ? "rocky" : "ice", 256, 61 + index * 11));
     const planetTextures: THREE.Texture[] = wandererMaps.flatMap((maps) => maps.textures);
     const wanderer = new THREE.Group();
-    const wandererMaterial = new THREE.MeshStandardMaterial({ map: wandererMaps[0].map, bumpMap: wandererMaps[0].bump, bumpScale: .017, roughness: .86, metalness: 0, transparent: true });
-    const wandererSurface = new THREE.Mesh(new THREE.SphereGeometry(.5, 32, 24), wandererMaterial);
-    const wandererAtmosphere = createAtmosphere(.5, "#88c5d1");
-    const { ring: wandererRing, texture: wandererRingTexture } = createPlanetRing(.5);
-    planetTextures.push(wandererRingTexture);
-    wanderer.add(wandererSurface, wandererAtmosphere, wandererRing);
+    const visitors = Array.from({ length: 5 }, (_, index) => {
+      const group = new THREE.Group();
+      const radius = .15 + index % 3 * .025;
+      const maps = wandererMaps[index % 3];
+      const material = new THREE.MeshStandardMaterial({ map: maps.map, bumpMap: maps.bump, bumpScale: .009, roughness: .86, metalness: 0, transparent: true });
+      const surface = new THREE.Mesh(new THREE.SphereGeometry(radius, 24, 18), material);
+      const atmosphere = createAtmosphere(radius, "#88c5d1");
+      const { ring, texture } = createPlanetRing(radius);
+      planetTextures.push(texture);
+      group.add(surface, atmosphere, ring);
+      wanderer.add(group);
+      return { group, surface, material, atmosphere, ring };
+    });
+    const visitorStar = createStellarCore(.24);
+    const visitorLight = new THREE.PointLight(0xffe1bd, 5, 8, 2);
+    wanderer.add(visitorStar.group, visitorLight);
     scene.add(wanderer);
     const visitorOrigin = new THREE.Vector3();
     const visitorOffset = new THREE.Vector3();
+    const visitorOrbit = new THREE.Vector3();
+    const projectedVisitor = new THREE.Vector3();
     let visitorIndex = -1;
-    const galaxyCore = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTexture, color: 0x9b8cff, transparent: true, opacity: .075, blending: THREE.AdditiveBlending, depthWrite: false }));
-    galaxyCore.position.set(0, 0, -5.2);
-    galaxyCore.scale.set(3.2, 1.35, 1);
-    field.add(galaxyCore);
-    const haze = [
-      { x: -3.6, y: 1.2, z: -5.8, scale: 5.8, color: 0x4366c7, opacity: .11 },
-      { x: 3.8, y: -.2, z: -7.4, scale: 6.8, color: 0xd457a2, opacity: .1 },
-      { x: -.8, y: -2.2, z: -9.2, scale: 5.4, color: 0x1fa5b2, opacity: .08 },
-    ].map(({ x, y, z, scale, color, opacity }) => {
-      const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTexture, color, transparent: true, opacity, blending: THREE.AdditiveBlending, depthWrite: false }));
-      sprite.position.set(x, y, z);
-      sprite.scale.set(scale, scale * .72, 1);
-      field.add(sprite);
-      return sprite;
-    });
-    const activeGlow = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTexture, color: projectColors[activeId], transparent: true, opacity: .09, blending: THREE.AdditiveBlending, depthWrite: false }));
-    activeGlow.position.set(.8, .65, -3.8);
-    activeGlow.scale.set(3.8, 3.8, 1);
-    field.add(activeGlow);
 
     const orbitPlanets = projectWorlds.map((world, index) => {
       const pivot = new THREE.Group();
       const body = new THREE.Group();
-      const radius = .16 + (index % 2) * .025;
+      const radius = [.2, .24, .19, .32, .22][index];
       const phase = [2.75, 1.4, .18, 4.2, 5.2][index];
       const kind = projectPlanetKinds[index];
       const maps = createPlanetMaps(world.color, kind, 256, 7 + index * 17);
       planetTextures.push(...maps.textures);
       const surface = new THREE.Mesh(
         new THREE.SphereGeometry(radius, 24, 16),
-        new THREE.MeshStandardMaterial({ map: maps.map, bumpMap: maps.bump, bumpScale: kind === "gas" ? .001 : .009, metalness: 0, roughness: kind === "ocean" ? .62 : .96 }),
+        new THREE.MeshStandardMaterial({ map: maps.map, bumpMap: maps.bump, bumpScale: kind === "gas" ? .001 : .009, metalness: 0, roughness: kind === "ocean" ? .62 : .96, transparent: true }),
       );
       const atmosphere = createAtmosphere(radius, "#93b4d1");
       const { ring, texture: ringTexture } = createPlanetRing(radius);
@@ -286,29 +264,18 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, contactProgres
       planetSystem.add(pivot);
       const cloud = maps.cloud ? new THREE.Mesh(new THREE.SphereGeometry(radius * 1.012, 24, 16), new THREE.MeshStandardMaterial({ map: maps.cloud, transparent: true, opacity: .65, depthWrite: false, roughness: 1 })) : null;
       if (cloud) body.add(cloud);
-      return { pivot, body, ring, cloud, phase, orbitRadius: 3.6 + index * .38, index };
+      return { pivot, body, surface, atmosphere, ring, cloud, phase, orbitRadius: 1.45 + index * .64, index };
     });
 
-    const constellationPairs = [[0, 1], [1, 2], [2, 4], [4, 3]];
-    const constellationLinks = constellationPairs.map(([from, to]) => {
-      const positions = new Float32Array(25 * 3);
-      const colors = new Float32Array(25 * 3);
-      const colorFrom = new THREE.Color(projectWorlds[from].color);
-      const colorTo = new THREE.Color(projectWorlds[to].color);
-      const mixed = new THREE.Color();
-      for (let i = 0; i < 25; i++) {
-        mixed.copy(colorFrom).lerp(colorTo, i / 24);
-        colors.set([mixed.r, mixed.g, mixed.b], i * 3);
-      }
-      const geometry = new THREE.BufferGeometry();
-      geometry.setAttribute("position", new THREE.BufferAttribute(positions, 3).setUsage(THREE.DynamicDrawUsage));
-      geometry.setAttribute("color", new THREE.BufferAttribute(colors, 3));
-      const line = new THREE.Line(geometry, new THREE.LineBasicMaterial({ vertexColors: true, transparent: true, opacity: .16, depthWrite: false }));
-      line.frustumCulled = false;
+    const solarOrbits = orbitPlanets.map(({ orbitRadius }, index) => {
+      const line = new THREE.LineLoop(orbitGeometry(.08 + index * .015), new THREE.LineBasicMaterial({ color: 0xa7b7bd, transparent: true, opacity: .065, depthWrite: false }));
+      line.scale.setScalar(orbitRadius);
       planetSystem.add(line);
-      return { from, to, positions, geometry, line };
+      return line;
     });
-    host.dataset.constellationLinks = String(constellationLinks.length);
+    host.dataset.constellationLinks = "0";
+    host.dataset.solarOrbits = String(solarOrbits.length);
+    host.dataset.centralStar = "true";
 
     const sectorNodes = [
       { color: 0xefc95f, phase: .55, orbit: .42, size: .045 },
@@ -319,18 +286,17 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, contactProgres
     ].map(({ color, phase, orbit, size }, index) => {
       const pivot = new THREE.Group();
       const body = new THREE.Group();
+      const maps = createPlanetMaps("#a6b2b1", "rocky", 128, 101 + index * 7);
+      planetTextures.push(...maps.textures);
       const surface = new THREE.Mesh(
         new THREE.SphereGeometry(size, 16, 12),
-        new THREE.MeshBasicMaterial({ color, transparent: true, opacity: .65 }),
+        new THREE.MeshStandardMaterial({ map: maps.map, bumpMap: maps.bump, bumpScale: .002, roughness: 1 }),
       );
       const atmosphere = new THREE.Mesh(
         new THREE.SphereGeometry(size * 1.26, 14, 10),
         new THREE.MeshBasicMaterial({ color, transparent: true, opacity: .16, side: THREE.BackSide, blending: THREE.AdditiveBlending, depthWrite: false }),
       );
       body.add(surface, atmosphere);
-      const sparkle = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTexture, color, transparent: true, opacity: .22, blending: THREE.AdditiveBlending, depthWrite: false }));
-      sparkle.scale.setScalar(size * 5);
-      body.add(sparkle);
       pivot.add(body);
       sectorSystem.add(pivot);
       return { pivot, body, phase, orbit, size, index };
@@ -342,6 +308,7 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, contactProgres
     let elapsed = 0;
     let birthAge = 0;
     let gravityAge = 0;
+    let solarVisibility = 1;
     const render = (time: number) => {
       frame = 0;
       if (!visible || document.hidden) return;
@@ -349,65 +316,45 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, contactProgres
       const dt = Math.min(delta, .04);
       lastTime = time;
       const scroll = THREE.MathUtils.clamp(progress.get(), 0, 1);
-      planetSystem.visible = THREE.MathUtils.smoothstep(scroll, .035, .14) > 0;
+      planetSystem.visible = true;
       if (state.current.motionOn) elapsed += dt;
-      const color = projectColors[state.current.activeId];
-      (activeGlow.material as THREE.SpriteMaterial).color.setHex(color);
       const drift = state.current.motionOn ? elapsed : 0;
-      field.rotation.y = drift * .008 + scroll * .12;
-      field.rotation.x = Math.sin(drift * .018) * .018 + (scroll - .5) * .045;
       starField.rotation.y = drift * .004 + scroll * .08;
       stars.rotation.z = Math.sin(drift * .02) * .018;
       galaxyDust.rotation.y = drift * .006 + scroll * .035;
       galaxyDust.rotation.z = Math.sin(drift * .012) * .018;
-      galaxyCore.material.opacity = state.current.motionOn ? .065 + Math.sin(drift * .22) * .012 : .07;
-      activeGlow.material.opacity = state.current.motionOn ? .07 + Math.sin(drift * 1.2) * .018 : .08;
-      haze.forEach((sprite, index) => {
-        sprite.position.x += state.current.motionOn ? Math.sin(drift * .04 + index) * .0005 : 0;
-        sprite.material.opacity = [ .11, .1, .08 ][index] + (state.current.motionOn ? Math.sin(drift * .16 + index) * .012 : 0);
-      });
-      const orbitAngle = drift * .045 + scroll * Math.PI * 1.6;
-      planetSystem.rotation.y = orbitAngle;
-      planetSystem.rotation.x = .2 + Math.sin(scroll * Math.PI * 1.4) * .17;
+      const solarPortrait = camera.aspect < .9;
+      const solarScale = solarPortrait ? .8 : 1;
+      solarOrigin.set(solarPortrait ? .72 : 2.8, (solarPortrait ? 2.5 : 2.7) - scroll * 2.2, -3.2);
+      solarVisibility = state.current.motionOn ? THREE.MathUtils.damp(solarVisibility, state.current.mapActive ? .28 : 1, 5, dt) : state.current.mapActive ? .28 : 1;
+      planetSystem.rotation.y = Math.sin(drift * .016) * .08 + scroll * .22;
+      planetSystem.rotation.x = Math.sin(scroll * Math.PI * 1.4) * .12;
       planetSystem.rotation.z = Math.sin(drift * .012) * .018;
-      orbitPlanets.forEach(({ pivot, body, ring, cloud, phase, orbitRadius, index }) => {
-        const phaseOffset = phase + orbitAngle * (.7 + index * .04);
-        pivot.position.set(
-          Math.cos(phaseOffset) * orbitRadius,
-          Math.sin(phaseOffset) * orbitRadius * .44,
-          Math.sin(phaseOffset) * orbitRadius * .32,
-        );
+      stellarCore.material.uniforms.uTime.value = drift;
+      stellarCore.material.uniforms.uOpacity.value = solarVisibility;
+      stellarCore.aura.material.uniforms.uTime.value = drift;
+      stellarCore.aura.material.uniforms.uOpacity.value = .55 * solarVisibility;
+      stellarCore.surface.rotation.y = drift * .018;
+      orbitPlanets.forEach(({ pivot, body, surface, atmosphere, ring, cloud, phase, orbitRadius, index }) => {
+        const phaseOffset = phase + drift * orbitalSpeed(orbitRadius) + scroll * .45;
+        sampleOrbit(orbitRadius, phaseOffset, .08 + index * .015, pivot.position);
         body.rotation.y = drift * (.12 + index * .01) + index;
         body.rotation.z = Math.sin(drift * .18 + index) * .12;
         const selected = projectWorlds[index].id === state.current.activeId;
         body.scale.setScalar(selected ? 1.3 : .9);
-        ring.material.opacity = selected ? .9 : .7;
-        if (cloud) cloud.rotation.y = drift * .013;
+        surface.material.opacity = solarVisibility;
+        atmosphere.material.uniforms.uOpacity.value = .6 * solarVisibility;
+        ring.material.opacity = (selected ? .9 : .7) * solarVisibility;
+        if (cloud) { cloud.rotation.y = drift * .013; cloud.material.opacity = .65 * solarVisibility; }
       });
-      constellationLinks.forEach(({ from, to, positions, geometry, line }) => {
-        const a = orbitPlanets[from].pivot.position;
-        const b = orbitPlanets[to].pivot.position;
-        for (let i = 0; i < 25; i++) {
-          const t = i / 24;
-          positions[i * 3] = THREE.MathUtils.lerp(a.x, b.x, t);
-          positions[i * 3 + 1] = THREE.MathUtils.lerp(a.y, b.y, t) + Math.sin(t * Math.PI) * .14;
-          positions[i * 3 + 2] = THREE.MathUtils.lerp(a.z, b.z, t) - Math.sin(t * Math.PI) * .4;
-        }
-        geometry.attributes.position.needsUpdate = true;
-        line.material.opacity = planetSystem.visible ? .14 : 0;
-      });
+      solarOrbits.forEach((line) => { line.material.opacity = .065 * solarVisibility; });
+      sectorSystem.visible = solarVisibility > .6;
       const sectorAngle = drift * .026 + scroll * Math.PI * .72;
-      sectorSystem.rotation.copy(planetSystem.rotation);
-      sectorSystem.position.copy(planetSystem.position);
-      sectorSystem.visible = planetSystem.visible;
       sectorNodes.forEach(({ pivot, body, phase, orbit, index }) => {
         const owner = orbitPlanets[index].pivot.position;
         const phaseOffset = phase + sectorAngle + drift * .08;
-        pivot.position.set(
-          owner.x + Math.cos(phaseOffset) * orbit,
-          owner.y + Math.sin(phaseOffset) * orbit * .6,
-          owner.z + Math.sin(phaseOffset) * orbit * .35,
-        );
+        sampleOrbit(orbit, phaseOffset, .05, solarTarget);
+        pivot.position.copy(owner).add(solarTarget);
         body.rotation.y = drift * (.08 + index * .012) + index;
         body.rotation.z = Math.sin(drift * .14 + index) * .08;
         body.scale.setScalar(state.current.motionOn ? .9 + Math.sin(drift * .35 + index) * .045 : .9);
@@ -444,7 +391,11 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, contactProgres
       const gravityActive = contactActive && birth.ready;
       gravityAge = advanceGravityAge(gravityAge, delta, gravityActive);
       const sequence = gravitySequence(gravityAge);
+      const visitorGroup = gravityVisitors(sequence.index);
       const pull = state.current.motionOn ? holeStrength * sequence.fieldPull : 0;
+      deepSpace.material.uniforms.uTime.value = drift;
+      deepSpace.material.uniforms.uPull.value = pull;
+      deepSpace.material.uniforms.uTarget.value.copy(gravityTarget);
       [starMaterial, galaxyMaterial, streakMaterial].forEach((material) => {
         material.uniforms.uPull.value = pull;
         material.uniforms.uTime.value = gravityAge * .18;
@@ -455,34 +406,46 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, contactProgres
       flowMaterial.uniforms.uPull.value = gravityActive ? holeStrength * THREE.MathUtils.smoothstep(gravityAge, 0, 2) : 0;
       flowMaterial.uniforms.uTime.value = gravityAge;
       flowMaterial.uniforms.uScale.value = height * renderer.getPixelRatio() * .5;
-      planetSystem.scale.setScalar(1 - pull * .94);
-      planetSystem.position.set(gravityTarget.x * pull, gravityTarget.y * pull, THREE.MathUtils.lerp(-3.2, gravityTarget.z, pull));
+      planetSystem.scale.setScalar(solarScale * (1 - pull * .94));
+      planetSystem.position.copy(solarOrigin).lerp(gravityTarget, pull);
       planetSystem.rotation.z += pull * pull * 4;
-      sectorSystem.scale.copy(planetSystem.scale);
-      sectorSystem.position.copy(planetSystem.position);
+      stellarLight.intensity = 34 * (1 - pull);
       wanderer.visible = gravityActive && sequence.visitorVisible;
       if (wanderer.visible) {
         if (visitorIndex !== sequence.index) {
           visitorIndex = sequence.index;
-          const maps = wandererMaps[visitorIndex % wandererMaps.length];
-          wandererMaterial.map = maps.map;
-          wandererMaterial.bumpMap = maps.bump;
-          wandererRing.visible = visitorIndex % 3 === 2;
+          visitors.forEach((visitor, index) => {
+            const maps = wandererMaps[(visitorIndex + index) % wandererMaps.length];
+            visitor.material.map = maps.map;
+            visitor.material.bumpMap = maps.bump;
+            visitor.ring.visible = (visitorIndex + index) % 3 === 2;
+          });
         }
-        holeRay.set(-.52, -.7, .5).unproject(camera).sub(camera.position).normalize();
+        holeRay.set(visitorGroup.direction === "left" ? -1.12 : -.3, visitorGroup.direction === "left" ? .25 : 1.12, .5).unproject(camera).sub(camera.position).normalize();
         visitorOrigin.copy(camera.position).addScaledVector(holeRay, (-4.8 - camera.position.z) / holeRay.z);
         visitorOffset.copy(visitorOrigin).sub(gravityTarget);
         const contraction = Math.pow(1 - sequence.progress, 1.3);
-        const angle = Math.atan2(visitorOffset.y, visitorOffset.x) - Math.pow(sequence.progress, 1.6) * Math.PI * 1.2;
+        const angle = gravityApproachAngle(Math.atan2(visitorOffset.y, visitorOffset.x), sequence.progress);
         const radius = Math.hypot(visitorOffset.x, visitorOffset.y) * contraction;
         wanderer.position.set(gravityTarget.x + Math.cos(angle) * radius, gravityTarget.y + Math.sin(angle) * radius, gravityTarget.z + visitorOffset.z * contraction);
-        wanderer.scale.setScalar(viewHeight * Math.min(width, height) / height * .11 * (1 - sequence.progress * .78));
-        wanderer.rotation.set(.2, gravityAge * .09, sequence.progress * 1.8);
+        wanderer.scale.setScalar(viewHeight * Math.min(width, height) / height * .14 * (1 - sequence.progress * .78));
+        wanderer.rotation.set(.18, gravityAge * .04, sequence.progress * .7);
       }
       const visitorOpacity = wanderer.visible ? holeStrength * THREE.MathUtils.smoothstep(sequence.progress, 0, .012) * (1 - THREE.MathUtils.smoothstep(sequence.progress, .82, 1)) : 0;
-      wandererMaterial.opacity = visitorOpacity;
-      wandererAtmosphere.material.uniforms.uOpacity.value = visitorOpacity * .6;
-      wandererRing.material.opacity = visitorOpacity * .7;
+      visitors.forEach((visitor, index) => {
+        visitor.group.visible = index < visitorGroup.count;
+        const radius = .55 + index * .18;
+        sampleOrbit(radius, index * 2.4 + gravityAge * orbitalSpeed(radius) * .35, .08, visitorOrbit);
+        visitor.group.position.copy(visitorOrbit);
+        visitor.surface.rotation.y = gravityAge * .12 + index;
+        visitor.material.opacity = visitorOpacity;
+        visitor.atmosphere.material.uniforms.uOpacity.value = visitorOpacity * .6;
+        visitor.ring.material.opacity = visitorOpacity * .7;
+      });
+      visitorStar.material.uniforms.uTime.value = gravityAge;
+      visitorStar.material.uniforms.uOpacity.value = visitorOpacity;
+      visitorStar.aura.material.uniforms.uOpacity.value = visitorOpacity * .4;
+      visitorLight.intensity = 5 * wanderer.scale.x ** 2;
       host.style.setProperty("--hole-growth", birth.growth.toFixed(3));
       host.dataset.holeX = holeX.toFixed(3);
       host.dataset.holeY = String(holeY);
@@ -490,6 +453,10 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, contactProgres
       host.dataset.pull = pull.toFixed(3);
       host.dataset.backgroundGalaxies = "3";
       host.dataset.planetSurface = "opaque-terrain";
+      host.dataset.solarVisibility = solarVisibility.toFixed(3);
+      stellarCore.group.getWorldPosition(projectedStar).project(camera);
+      host.dataset.stellarX = ((projectedStar.x * .5 + .5) * width).toFixed(1);
+      host.dataset.stellarY = ((-projectedStar.y * .5 + .5) * height).toFixed(1);
       host.dataset.gravityAge = gravityAge.toFixed(2);
       host.dataset.birthAge = birthAge.toFixed(2);
       host.dataset.holeGrowth = birth.growth.toFixed(3);
@@ -499,7 +466,17 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, contactProgres
       host.dataset.gravityCycle = String(sequence.index);
       host.dataset.gravityRest = String(GRAVITY_REST_SECONDS);
       host.dataset.visitorOpacity = visitorOpacity.toFixed(3);
+      host.dataset.visitorCount = String(wanderer.visible ? visitorGroup.count : 0);
+      host.dataset.visitorCapacity = "5";
+      host.dataset.visitorDirection = visitorGroup.direction;
+      host.dataset.backgroundSource = "volumetric-3d";
       renderer.render(scene, camera);
+      let visibleVisitors = 0;
+      if (wanderer.visible && visitorOpacity > .1) visitors.forEach((visitor, index) => {
+        visitor.group.getWorldPosition(projectedVisitor).project(camera);
+        if (index < visitorGroup.count && Math.abs(projectedVisitor.x) < 1 && Math.abs(projectedVisitor.y) < 1 && projectedVisitor.z < 1) visibleVisitors++;
+      });
+      host.dataset.visibleVisitors = String(visibleVisitors);
       host.dataset.drawCalls = String(renderer.info.render.calls);
       host.dataset.ready = "true";
       host.dataset.time = drift.toFixed(2);
@@ -537,7 +514,7 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, contactProgres
         mesh.geometry?.dispose();
         if (mesh.material) (Array.isArray(mesh.material) ? mesh.material : [mesh.material]).forEach((material) => material.dispose());
       });
-      glowTexture.dispose();
+      deepSpace.texture.dispose();
       planetTextures.forEach((texture) => texture.dispose());
       renderer.dispose();
       wakeRef.current = () => {};

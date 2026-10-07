@@ -2,6 +2,16 @@ export const GRAVITY_INTAKE_SECONDS = 32;
 export const GRAVITY_REST_SECONDS = 30;
 export const GRAVITY_BIRTH_SECONDS = 4;
 
+export function gravityVisitors(index: number) {
+  const cycle = Math.max(0, Math.floor(Number.isFinite(index) ? index : 0));
+  return { count: [3, 5, 3, 5, 5][cycle % 5], direction: cycle % 2 === 0 ? "left" as const : "top" as const };
+}
+
+export function gravityApproachAngle(entryAngle: number, progress: number) {
+  // Approach the cropped horizon from its visible upper-left quadrant on every aspect ratio.
+  return entryAngle + (Math.PI * .58 - entryAngle) * Math.pow(Math.max(0, Math.min(1, progress)), 1.5);
+}
+
 export function gravityBirth(age: number) {
   const safeAge = Number.isFinite(age) ? age : 0;
   const fraction = Math.max(0, Math.min(1, safeAge / GRAVITY_BIRTH_SECONDS));

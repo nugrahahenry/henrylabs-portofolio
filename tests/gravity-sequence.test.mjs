@@ -5,7 +5,7 @@ import ts from "typescript";
 
 const source = readFileSync(new URL("../components/gravity-sequence.ts", import.meta.url), "utf8");
 const compiled = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.ESNext, target: ts.ScriptTarget.ES2020 } }).outputText;
-const { gravitySequence, gravityBirth, advanceGravityAge, GRAVITY_INTAKE_SECONDS, GRAVITY_REST_SECONDS } = await import(`data:text/javascript;base64,${Buffer.from(compiled).toString("base64")}`);
+const { gravitySequence, gravityBirth, gravityVisitors, gravityApproachAngle, advanceGravityAge, GRAVITY_INTAKE_SECONDS, GRAVITY_REST_SECONDS } = await import(`data:text/javascript;base64,${Buffer.from(compiled).toString("base64")}`);
 
 test("gravity has a slow intake and thirty quiet seconds between visitors", () => {
   assert.equal(GRAVITY_INTAKE_SECONDS, 32);
@@ -42,4 +42,23 @@ test("closing clock pauses outside contact, during reduced motion and hidden int
   assert.equal(advanceGravityAge(12, -1, true), 12);
   assert.equal(advanceGravityAge(12, NaN, true), 12);
   assert.equal(gravitySequence(Infinity).progress, 0);
+});
+
+test("closing arrivals reuse three or five planets and alternate left and top", () => {
+  assert.deepEqual(gravityVisitors(0), { count: 3, direction: "left" });
+  assert.deepEqual(gravityVisitors(1), { count: 5, direction: "top" });
+  for (let i = 0; i < 100; i++) assert.ok([3, 5].includes(gravityVisitors(i).count));
+  assert.deepEqual(gravityVisitors(NaN), gravityVisitors(0));
+  assert.deepEqual(gravityVisitors(-1), gravityVisitors(0));
+});
+
+test("both entry paths remain on the visible upper-left side of the horizon", () => {
+  for (const angle of [1.65, 2.0, 2.7, 3.0]) {
+    assert.equal(gravityApproachAngle(angle, 0), angle);
+    assert.ok(Math.abs(gravityApproachAngle(angle, 1) - Math.PI * .58) < 1e-12);
+    for (let i = 0; i <= 100; i++) {
+      const approach = gravityApproachAngle(angle, i / 100);
+      assert.ok(Math.cos(approach) < 0 && Math.sin(approach) > 0);
+    }
+  }
 });

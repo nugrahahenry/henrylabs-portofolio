@@ -39,6 +39,8 @@ try {
   for (const viewport of viewports) {
     const page = await browser.newPage({ viewport });
     const errors = [];
+    const bitmapBackdrops = [];
+    page.on("request", (request) => { if (request.url().includes("cosmic-nebula.png")) bitmapBackdrops.push(request.url()); });
     page.on("pageerror", (error) => errors.push(error.message));
     page.on("console", (message) => { if (/THREE.WebGLProgram|Shader Error|VALIDATE_STATUS/.test(message.text())) errors.push(message.text()); });
     await page.goto(url, { waitUntil: "domcontentloaded" });
@@ -47,7 +49,22 @@ try {
     await expect(background).toHaveAttribute("data-ready", "true");
     await expect(background).toHaveAttribute("data-planet-surface", "opaque-terrain");
     await expect(background).toHaveAttribute("data-hole-opacity", "0.000");
-    await expect(background).toHaveAttribute("data-constellation-links", "4");
+    await expect(background).toHaveAttribute("data-constellation-links", "0");
+    await expect(background).toHaveAttribute("data-solar-orbits", "5");
+    await expect(background).toHaveAttribute("data-central-star", "true");
+    await expect(background).toHaveAttribute("data-background-source", "volumetric-3d");
+    await expect(background).toHaveAttribute("data-visitor-capacity", "5");
+    const starPixel = await background.locator("canvas").evaluate((canvas) => new Promise((resolve) => requestAnimationFrame(() => {
+      const gl = canvas.getContext("webgl2");
+      const host = canvas.parentElement;
+      const x = Math.round(Number(host.dataset.stellarX) / host.clientWidth * gl.drawingBufferWidth);
+      const y = Math.round((1 - Number(host.dataset.stellarY) / host.clientHeight) * gl.drawingBufferHeight);
+      const pixel = new Uint8Array(4);
+      gl.readPixels(x, y, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, pixel);
+      resolve([...pixel]);
+    })));
+    assert.ok(starPixel[0] > 60 && starPixel[3] > 220, "the opening must contain a painted luminous stellar surface");
+    await page.screenshot({ path: `test-results/${viewport.width}-solar-opening.png` });
     assert.equal(await background.evaluate((node) => getComputedStyle(node).pointerEvents), "none");
     await page.locator("#method").evaluate((section) => window.scrollTo({ top: scrollY + section.getBoundingClientRect().top + section.offsetHeight / 2 - innerHeight / 2, behavior: "instant" }));
     await expect(page.locator('#method [aria-current="step"] i')).toHaveText("03");
@@ -89,6 +106,7 @@ try {
     await scrollToEnd(page);
     await expect.poll(async () => Number(await background.getAttribute("data-gravity-age"))).toBeGreaterThan(Number(pausedAge));
     assert.deepEqual(errors, []);
+    assert.deepEqual(bitmapBackdrops, [], "the production background must not request a PNG plate");
     await page.close();
     console.log(`background QA passed at ${viewport.width}x${viewport.height}`);
   }

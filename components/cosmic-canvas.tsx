@@ -8,6 +8,8 @@ import { createGalaxySystem, galaxies, type GalaxyId } from "./galaxy-system";
 import { createPlanetMaps, removeEdgeMatte } from "./planet-materials";
 import { createProjectSculpture } from "./project-sculptures";
 import { resolveTechOwner, sampleTechOrbit, techOrbitRadius } from "./tech-orbit";
+import { orbitGeometry, orbitalSpeed, sampleOrbit } from "./orbital-path";
+import { createStellarAura } from "./stellar-core";
 
 export type ProjectId = "catmoji" | "nalira" | "canox" | "hengs" | "polara";
 export type SatelliteId = "rental" | "pos" | "labq" | "yventures" | "soreva";
@@ -165,7 +167,7 @@ function techPlanetSurfaceTexture(item: TechOrbitItem) {
   return { texture, bump: maps.bump, sourceTexture: maps.map, paintLogo };
 }
 
-export function CosmicCanvas({ activeId, onSelect, onPrevious, onNext, motionOn, progress, techNodes, satelliteCatalog, sector, view, language, onGalaxySelect, onUniverse }: {
+export function CosmicCanvas({ activeId, onSelect, onPrevious, onNext, motionOn, progress, techNodes, satelliteCatalog, sector, view, language, readingOpen, onGalaxySelect, onUniverse }: {
   activeId: OrbitId;
   onSelect: (id: OrbitId) => void;
   onPrevious: () => void;
@@ -177,6 +179,7 @@ export function CosmicCanvas({ activeId, onSelect, onPrevious, onNext, motionOn,
   sector: GalaxyId;
   view: "universe" | "orbit";
   language: "en" | "id";
+  readingOpen: boolean;
   onGalaxySelect: (id: GalaxyId) => void;
   onUniverse: () => void;
 }) {
@@ -187,7 +190,7 @@ export function CosmicCanvas({ activeId, onSelect, onPrevious, onNext, motionOn,
   const selectRef = useRef(onSelect);
   const galaxySelectRef = useRef(onGalaxySelect);
   const [viewZoom, setViewZoom] = useState(0);
-  const state = useRef({ activeId, motionOn, viewZoom, sector, view });
+  const state = useRef({ activeId, motionOn, viewZoom, sector, view, readingOpen });
   const focusRequest = useRef<"universe" | "orbit" | null>(null);
   const wakeRef = useRef<() => void>(() => {});
   const [fallback, setFallback] = useState(false);
@@ -196,9 +199,9 @@ export function CosmicCanvas({ activeId, onSelect, onPrevious, onNext, motionOn,
 
   useEffect(() => {
     if (state.current.view !== view) focusRequest.current = view;
-    state.current = { activeId, motionOn, viewZoom, sector, view };
+    state.current = { activeId, motionOn, viewZoom, sector, view, readingOpen };
     wakeRef.current();
-  }, [activeId, motionOn, viewZoom, sector, view]);
+  }, [activeId, motionOn, viewZoom, sector, view, readingOpen]);
 
   useEffect(() => {
     selectRef.current = onSelect;
@@ -265,7 +268,8 @@ export function CosmicCanvas({ activeId, onSelect, onPrevious, onNext, motionOn,
       const radius = .37 + index * .02;
       const sphereMaterial = new THREE.MeshStandardMaterial({ map: texture, color: "#ffffff", metalness: .08, roughness: .45, transparent: true, opacity: .12, depthWrite: false });
       const sphere = new THREE.Mesh(new THREE.SphereGeometry(radius, 48, 32), sphereMaterial);
-      const atmosphere = new THREE.Mesh(new THREE.SphereGeometry(radius * 1.08, 32, 20), new THREE.MeshBasicMaterial({ color: world.color, transparent: true, opacity: .12, side: THREE.BackSide, blending: THREE.AdditiveBlending, depthWrite: false }));
+      const aura = createStellarAura(radius, world.color);
+      const atmosphere = aura.shell;
       const logoHalo = new THREE.Mesh(new THREE.TorusGeometry(radius * 1.18, .009, 8, 72), new THREE.MeshBasicMaterial({ color: world.color, transparent: true, opacity: .24, depthWrite: false }));
       logoHalo.rotation.x = .35;
       const focusRing = new THREE.Mesh(
@@ -298,7 +302,7 @@ export function CosmicCanvas({ activeId, onSelect, onPrevious, onNext, motionOn,
         });
       }
       system.add(group);
-      return { group, sphere, atmosphere, logoHalo, focusRing, sculpture };
+      return { group, sphere, atmosphere, aura, logoHalo, focusRing, sculpture, orbitBlend: 1, orbitFrom: new THREE.Vector3() };
     });
     const sectorPlanets = {
       main: allPlanets.slice(0, mainCount),
@@ -373,34 +377,16 @@ export function CosmicCanvas({ activeId, onSelect, onPrevious, onNext, motionOn,
     techSignal.renderOrder = 2;
     techSystem.add(techSignal);
     const orbitTarget = new THREE.Vector3();
-    // A spanning path keeps every world connected without turning the field into a wireframe.
-    const sectorPairs: Record<GalaxyId, readonly (readonly [number, number])[]> = {
-      main: [[0, 1], [1, 2], [2, 4], [4, 3]],
-      university: satelliteCatalog.university.slice(1).map((_, index) => [index, index + 1] as const),
-      client: satelliteCatalog.client.slice(1).map((_, index) => [index, index + 1] as const),
-    };
-    const networkPositions = new Float32Array(4 * 6);
-    const networkGeometry = new THREE.BufferGeometry();
-    networkGeometry.setAttribute("position", new THREE.BufferAttribute(networkPositions, 3));
-    const networkMaterial = new THREE.LineBasicMaterial({ color: 0x74dfe2, transparent: true, opacity: .15, depthWrite: false });
-    const network = new THREE.LineSegments(networkGeometry, networkMaterial);
-    network.renderOrder = 1;
-    system.add(network);
-    const signalMaterial = new THREE.MeshBasicMaterial({ color: 0xffd46d, transparent: true, opacity: .9 });
-    const signal = new THREE.Mesh(new THREE.SphereGeometry(.045, 16, 10), signalMaterial);
-    signal.renderOrder = 2;
-    system.add(signal);
-    const networkStart = new THREE.Vector3();
-    const networkEnd = new THREE.Vector3();
-    const updateNetwork = (planets: typeof allPlanets, networkPairs: readonly (readonly [number, number])[]) => {
-      networkPairs.forEach(([start, end], index) => {
-        const from = planets[start].group.position;
-        const to = planets[end].group.position;
-        networkPositions.set([from.x, from.y, from.z, to.x, to.y, to.z], index * 6);
-      });
-      networkGeometry.attributes.position.needsUpdate = true;
-      networkGeometry.setDrawRange(0, networkPairs.length * 2);
-    };
+    const projectOrbits = Array.from({ length: 5 }, (_, index) => {
+      const line = new THREE.LineLoop(orbitGeometry(.06 + index * .012), new THREE.LineBasicMaterial({ color: 0x74dfe2, transparent: true, opacity: .1, depthWrite: false }));
+      system.add(line);
+      return line;
+    });
+    const focusAnchor = new THREE.Vector3(0, .15, 2.1);
+    const projectTarget = new THREE.Vector3();
+    let orbitLayoutScale = 1;
+    let lastFocusedId = state.current.activeId;
+    let lastSector = state.current.sector;
 
     let visible = true;
     let frame = 0;
@@ -445,7 +431,6 @@ export function CosmicCanvas({ activeId, onSelect, onPrevious, onNext, motionOn,
       const sector = state.current.sector;
       const worlds = sectorWorlds[sector];
       const planets = sectorPlanets[sector];
-      const networkPairs = sectorPairs[sector];
       const zoom = state.current.motionOn ? THREE.MathUtils.smoothstep(progress.get(), .24, .65) : 1;
       const departure = state.current.motionOn ? THREE.MathUtils.smoothstep(progress.get(), .84, 1) : 0;
       const targetBlend = state.current.view === "universe" ? 0 : 1;
@@ -481,35 +466,47 @@ export function CosmicCanvas({ activeId, onSelect, onPrevious, onNext, motionOn,
         galaxyLabels.current[index]?.setAttribute("data-highlighted", String(highlighted));
       });
       if (state.current.motionOn && !dragging && state.current.view === "orbit") angle += dt * .055;
-      // Orbit positions in a shallow ellipse, keeping the field readable at every angle.
+      // The active identity is the system's star; siblings follow its complete orbital paths.
       system.rotation.y = Math.sin(elapsed * .12) * .08;
       system.rotation.x = pitch + Math.sin(elapsed * .09) * .018;
-      planets.forEach(({ group, sphere, atmosphere, logoHalo, focusRing, sculpture }, index) => {
+      const activeIndex = Math.max(0, worlds.findIndex((world) => world.id === state.current.activeId));
+      const railOpen = !portrait && state.current.readingOpen;
+      focusAnchor.x = state.current.motionOn ? THREE.MathUtils.damp(focusAnchor.x, railOpen ? -1.4 : 0, 7, dt) : railOpen ? -1.4 : 0;
+      orbitLayoutScale = state.current.motionOn ? THREE.MathUtils.damp(orbitLayoutScale, railOpen ? .72 : 1, 7, dt) : railOpen ? .72 : 1;
+      if (lastFocusedId !== state.current.activeId || lastSector !== sector) {
+        planets.forEach((planet) => { planet.orbitFrom.copy(planet.group.position).sub(focusAnchor); planet.orbitBlend = state.current.motionOn ? 0 : 1; });
+        lastFocusedId = state.current.activeId;
+        lastSector = sector;
+      }
+      let projectOrbitError = 0;
+      projectOrbits.forEach((line, index) => { line.visible = index < planets.length && index !== activeIndex; });
+      planets.forEach((planet, index) => {
+        const { group, sphere, atmosphere, aura, logoHalo, focusRing, sculpture } = planet;
         const selected = worlds[index].id === state.current.activeId;
         const scale = selected ? 2.25 : .94;
         group.scale.setScalar(state.current.motionOn ? THREE.MathUtils.damp(group.scale.x, scale, 7, dt) : scale);
-        const phase = (sector === "main" ? orbitPhases[index] : index * Math.PI * 2 / worlds.length + .8) + angle;
-        const orbitX = Math.cos(phase) * (portrait ? 1.95 : 3.35);
-        const orbitY = Math.sin(phase) * 1.45;
-        const orbitZ = Math.sin(phase) * .55;
-        const safeOrbitX = portrait ? orbitX : Math.min(orbitX, 1.2);
-        // The dossier owns the right rail on landscape layouts; give the focused world a clear visual bay beside it.
-        const targetX = selected ? (portrait ? 0 : -.58) : safeOrbitX;
-        const targetY = selected ? .2 : orbitY;
-        const targetZ = selected ? 2.1 : orbitZ;
-        if (state.current.motionOn) {
-          group.position.x = THREE.MathUtils.damp(group.position.x, targetX, 6, dt);
-          group.position.y = THREE.MathUtils.damp(group.position.y, targetY, 6, dt);
-          group.position.z = THREE.MathUtils.damp(group.position.z, targetZ, 6, dt);
-        } else {
-          group.position.set(targetX, targetY, targetZ);
-        }
+        const rank = (index - activeIndex + worlds.length) % worlds.length - 1;
+        const orbitRadius = ((portrait ? 1.98 : 2.35) + Math.max(0, rank) * (portrait ? .31 : .37)) * orbitLayoutScale;
+        const phase = (sector === "main" ? orbitPhases[index] : index * Math.PI * 2 / worlds.length + .8) + angle + elapsed * orbitalSpeed(orbitRadius) * .45;
+        const line = projectOrbits[index];
+        line.position.copy(focusAnchor);
+        line.scale.setScalar(orbitRadius);
+        line.material.color.set(worlds[activeIndex].color);
+        line.material.opacity = .075 + (index % 2) * .025;
+        if (selected) projectTarget.set(0, 0, 0);
+        else sampleOrbit(orbitRadius, phase, .06 + index * .012, projectTarget);
+        planet.orbitBlend = Math.min(1, planet.orbitBlend + dt / .85);
+        group.position.copy(planet.orbitBlend < 1 ? planet.orbitFrom : projectTarget);
+        if (planet.orbitBlend < 1) group.position.lerp(projectTarget, 1 - Math.pow(1 - planet.orbitBlend, 3));
+        group.position.add(focusAnchor);
+        if (planet.orbitBlend >= 1) projectOrbitError = Math.max(projectOrbitError, group.position.distanceTo(projectTarget.add(focusAnchor)));
         sphere.rotation.y = -system.rotation.y + index * .12 + elapsed * .08;
         sphere.rotation.x = Math.sin(elapsed * .18 + index) * .035;
         atmosphere.rotation.y = -elapsed * .05;
         sculpture.rotation.y = elapsed * (.11 + index * .008) + angle * .22;
         sculpture.rotation.x = Math.sin(elapsed * .16 + index) * .04;
-        atmosphere.material.opacity = selected ? .2 : .12;
+        aura.material.uniforms.uOpacity.value = selected ? .42 : .09;
+        aura.material.uniforms.uTime.value = elapsed;
         logoHalo.rotation.z = elapsed * (state.current.motionOn ? .08 : 0);
         const focusMaterial = focusRing.material as THREE.MeshBasicMaterial;
         const targetOpacity = selected ? .42 : .025;
@@ -581,15 +578,6 @@ export function CosmicCanvas({ activeId, onSelect, onPrevious, onNext, motionOn,
         focusHalo.rotation.z = .24 + lane * .22 - elapsed * (.16 + lane * .035);
         focusHalo.scale.setScalar(isActiveProjectTool && state.current.motionOn ? 1 + Math.sin(elapsed * 2.1 + index) * .08 : 1);
       });
-      updateNetwork(planets, networkPairs);
-      const signalProgress = (elapsed * .42) % networkPairs.length;
-      const signalPair = Math.floor(signalProgress);
-      const signalT = signalProgress - signalPair;
-      const [signalStart, signalEnd] = networkPairs[signalPair];
-      networkStart.copy(planets[signalStart].group.position);
-      networkEnd.copy(planets[signalEnd].group.position);
-      signal.position.lerpVectors(networkStart, networkEnd, signalT);
-      signalMaterial.opacity = state.current.motionOn ? .78 + Math.sin(elapsed * 3.2) * .16 : .78;
       renderer.render(scene, camera);
       universe.clusters.forEach(({ cluster }, index) => {
         cluster.getWorldPosition(projected);
@@ -628,6 +616,10 @@ export function CosmicCanvas({ activeId, onSelect, onPrevious, onNext, motionOn,
       host.dataset.sculptureWorlds = String(allPlanets.length);
       host.dataset.techOrbitError = orbitError.toFixed(6);
       host.dataset.techTransfers = String(transfers);
+      host.dataset.orbitCenter = worlds[activeIndex].id;
+      host.dataset.projectOrbits = String(planets.length - 1);
+      host.dataset.orbitConnectors = "0";
+      host.dataset.projectOrbitError = projectOrbitError.toFixed(6);
       host.dataset.drawCalls = String(renderer.info.render.calls);
       host.dataset.universeAngle = universeAngle.toFixed(4);
       host.dataset.departure = departure.toFixed(3);
@@ -733,10 +725,6 @@ export function CosmicCanvas({ activeId, onSelect, onPrevious, onNext, motionOn,
       });
       textures.forEach((texture) => texture.dispose());
       techTextures.forEach((texture) => texture.dispose());
-      networkGeometry.dispose();
-      networkMaterial.dispose();
-      signal.geometry.dispose();
-      signalMaterial.dispose();
       techSignal.geometry.dispose();
       techSignalMaterial.dispose();
       // React Strict Mode reuses a connected canvas during its effect audit.
