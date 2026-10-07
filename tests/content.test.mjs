@@ -112,6 +112,14 @@ test("portfolio surface keeps its core experience contracts", () => {
   assert.match(backdrop, /sectorSystem/);
   assert.match(backdrop, /sectorNodes/);
   assert.match(backdrop, /orbitRadius: 3\.6/);
+  assert.match(backdrop, /constellationLinks/);
+  assert.match(backdrop, /constellationPairs = \[\[0, 1\], \[1, 2\], \[2, 4\], \[4, 3\]\]/);
+  assert.match(backdrop, /const owner = orbitPlanets\[index\]\.pivot\.position/);
+  assert.match(backdrop, /createBlackHole/);
+  assert.match(backdrop, /new THREE\.ShaderMaterial/);
+  assert.match(backdrop, /smoothstep\(pageProgress\.get\(\), \.8, \.98\)/);
+  assert.match(backdrop, /unsubscribeChapter\(\)/);
+  assert.match(styles, /\.black-hole-fallback/);
   assert.match(experience, /sector-navigation/);
   assert.match(experience, /SatelliteReadout/);
   assert.match(experience, /anchor: `academic-/);

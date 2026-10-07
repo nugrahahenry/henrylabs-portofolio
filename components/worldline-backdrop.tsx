@@ -30,10 +30,58 @@ function createGlowTexture() {
   return texture;
 }
 
-export function WorldlineBackdrop({ activeId, motionOn, progress }: {
+function createBlackHole() {
+  const group = new THREE.Group();
+  const horizon = new THREE.Mesh(new THREE.SphereGeometry(.5, 32, 24), new THREE.MeshBasicMaterial({ color: 0x020308, transparent: true }));
+  const diskMaterial = new THREE.ShaderMaterial({
+    uniforms: { uTime: { value: 0 }, uStrength: { value: 0 } },
+    vertexShader: `
+      varying vec2 vDisk;
+      void main() {
+        vDisk = position.xy;
+        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+      }
+    `,
+    fragmentShader: `
+      uniform float uTime;
+      uniform float uStrength;
+      varying vec2 vDisk;
+      void main() {
+        float radius = length(vDisk);
+        float angle = atan(vDisk.y, vDisk.x);
+        float edge = smoothstep(.56, .65, radius) * (1.0 - smoothstep(1.08, 1.55, radius));
+        float ribbon = sin(radius * 54.0 - angle * 3.0 + uTime * .7);
+        float detail = sin(radius * 113.0 + angle * 7.0 - uTime * 1.1);
+        float heat = pow(clamp(1.55 - radius, 0.0, 1.0), 1.8);
+        float brightness = (.54 + ribbon * .15 + detail * .07) * (.68 + .32 * cos(angle - .7));
+        vec3 color = mix(vec3(.20, .52, .66), vec3(.96, .62, .27), heat);
+        color = mix(color, vec3(1.0, .96, .82), pow(heat, 3.0));
+        gl_FragColor = vec4(color * (brightness + heat) * 2.1, edge * uStrength * .92);
+        #include <tonemapping_fragment>
+        #include <colorspace_fragment>
+      }
+    `,
+    transparent: true, side: THREE.DoubleSide, depthWrite: false, blending: THREE.AdditiveBlending,
+  });
+  const disk = new THREE.Mesh(new THREE.RingGeometry(.56, 1.55, 96, 4), diskMaterial);
+  disk.rotation.set(1.16, 0, -.16);
+  const rim = new THREE.Mesh(new THREE.TorusGeometry(.515, .014, 8, 96), new THREE.MeshBasicMaterial({ color: 0xffe8b8, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }));
+  // A bent upper arc connects the near disk to its lensed far side.
+  const lens = new THREE.Mesh(new THREE.TorusGeometry(.72, .025, 8, 72, Math.PI), new THREE.MeshBasicMaterial({ color: 0xe6ddc2, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }));
+  lens.scale.y = .8;
+  lens.position.z = -.3;
+  horizon.renderOrder = 1;
+  disk.renderOrder = 2;
+  rim.renderOrder = 3;
+  group.add(horizon, disk, rim, lens);
+  return { group, horizon, diskMaterial, rim, lens };
+}
+
+export function WorldlineBackdrop({ activeId, motionOn, progress, pageProgress }: {
   activeId: ProjectId;
   motionOn: boolean;
   progress: MotionValue<number>;
+  pageProgress: MotionValue<number>;
 }) {
   const hostRef = useRef<HTMLDivElement>(null);
   const state = useRef({ activeId, motionOn });
@@ -49,12 +97,22 @@ export function WorldlineBackdrop({ activeId, motionOn, progress }: {
     const canvas = host?.querySelector("canvas");
     if (!host || !canvas) return;
 
+    let holeStrength = 0;
+    const updateChapter = () => {
+      holeStrength = THREE.MathUtils.smoothstep(pageProgress.get(), .8, .98);
+      host.style.setProperty("--black-hole-strength", holeStrength.toFixed(3));
+      host.dataset.holeOpacity = holeStrength.toFixed(3);
+      wakeRef.current();
+    };
+    const unsubscribeChapter = pageProgress.on("change", updateChapter);
+    updateChapter();
+
     let renderer: THREE.WebGLRenderer;
     try {
       renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true, preserveDrawingBuffer: true, powerPreference: "low-power" });
     } catch {
       host.dataset.fallback = "true";
-      return;
+      return unsubscribeChapter;
     }
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.35));
     renderer.outputColorSpace = THREE.SRGBColorSpace;
@@ -68,6 +126,9 @@ export function WorldlineBackdrop({ activeId, motionOn, progress }: {
     planetSystem.position.z = -3.2;
     sectorSystem.position.z = -4.3;
     scene.add(field, starField, planetSystem, sectorSystem);
+    const blackHole = createBlackHole();
+    scene.add(blackHole.group);
+    const holeRay = new THREE.Vector3();
     scene.add(new THREE.AmbientLight(0x9fc4df, 1.15));
     const planetLight = new THREE.PointLight(0xffe5b2, 7, 18, 1.5);
     planetLight.position.set(-2.4, 2.8, 2.8);
@@ -139,26 +200,14 @@ export function WorldlineBackdrop({ activeId, motionOn, progress }: {
     activeGlow.scale.set(3.8, 3.8, 1);
     field.add(activeGlow);
 
-    const lanes = [
-      { radius: 3.6, yScale: .48, z: -4.2, color: 0xff82c8, opacity: .07, rotation: -.42 },
-    ].map(({ radius, yScale, z, color, opacity, rotation }) => {
-      const curve = new THREE.EllipseCurve(0, 0, radius, radius * yScale, 0, Math.PI * 2, false, rotation);
-      const geometry = new THREE.BufferGeometry().setFromPoints(curve.getPoints(160));
-      const line = new THREE.LineLoop(geometry, new THREE.LineBasicMaterial({ color, transparent: true, opacity, depthWrite: false }));
-      line.position.z = z;
-      line.rotation.x = .78;
-      field.add(line);
-      return line;
-    });
-
     const orbitPlanets = projectWorlds.map((world, index) => {
       const pivot = new THREE.Group();
       const body = new THREE.Group();
-      const radius = .24 + (index % 2) * .035;
+      const radius = .16 + (index % 2) * .025;
       const phase = [2.75, 1.4, .18, 4.2, 5.2][index];
       const surface = new THREE.Mesh(
         new THREE.SphereGeometry(radius, 24, 16),
-        new THREE.MeshStandardMaterial({ color: world.color, emissive: world.color, emissiveIntensity: .2, metalness: .12, roughness: .62, transparent: true, opacity: .9 }),
+        new THREE.MeshStandardMaterial({ color: world.color, emissive: world.color, emissiveIntensity: .14, metalness: .12, roughness: .62, transparent: true, opacity: .72 }),
       );
       const atmosphere = new THREE.Mesh(
         new THREE.SphereGeometry(radius * 1.16, 20, 14),
@@ -181,32 +230,48 @@ export function WorldlineBackdrop({ activeId, motionOn, progress }: {
       return { pivot, body, ring, highlight, phase, orbitRadius: 3.6 + index * .38, index };
     });
 
+    const constellationPairs = [[0, 1], [1, 2], [2, 4], [4, 3]];
+    const constellationLinks = constellationPairs.map(([from, to]) => {
+      const positions = new Float32Array(25 * 3);
+      const colors = new Float32Array(25 * 3);
+      const colorFrom = new THREE.Color(projectWorlds[from].color);
+      const colorTo = new THREE.Color(projectWorlds[to].color);
+      const mixed = new THREE.Color();
+      for (let i = 0; i < 25; i++) {
+        mixed.copy(colorFrom).lerp(colorTo, i / 24);
+        colors.set([mixed.r, mixed.g, mixed.b], i * 3);
+      }
+      const geometry = new THREE.BufferGeometry();
+      geometry.setAttribute("position", new THREE.BufferAttribute(positions, 3).setUsage(THREE.DynamicDrawUsage));
+      geometry.setAttribute("color", new THREE.BufferAttribute(colors, 3));
+      const line = new THREE.Line(geometry, new THREE.LineBasicMaterial({ vertexColors: true, transparent: true, opacity: .16, depthWrite: false }));
+      line.frustumCulled = false;
+      planetSystem.add(line);
+      return { from, to, positions, geometry, line };
+    });
+    host.dataset.constellationLinks = String(constellationLinks.length);
+
     const sectorNodes = [
-      { color: 0xefc95f, phase: .55, orbit: 2.35, size: .13, ring: true },
-      { color: 0xee674f, phase: 2.15, orbit: 2.6, size: .11, ring: false },
-      { color: 0x6ee7f4, phase: 3.35, orbit: 2.42, size: .12, ring: true },
-      { color: 0xff82c8, phase: 4.65, orbit: 2.7, size: .105, ring: false },
-      { color: 0x9b8cff, phase: 5.45, orbit: 2.5, size: .115, ring: true },
-    ].map(({ color, phase, orbit, size, ring: hasRing }, index) => {
+      { color: 0xefc95f, phase: .55, orbit: .42, size: .045 },
+      { color: 0xee674f, phase: 2.15, orbit: .5, size: .04 },
+      { color: 0x6ee7f4, phase: 3.35, orbit: .48, size: .05 },
+      { color: 0xff82c8, phase: 4.65, orbit: .56, size: .035 },
+      { color: 0x9b8cff, phase: 5.45, orbit: .44, size: .04 },
+    ].map(({ color, phase, orbit, size }, index) => {
       const pivot = new THREE.Group();
       const body = new THREE.Group();
       const surface = new THREE.Mesh(
         new THREE.SphereGeometry(size, 16, 12),
-        new THREE.MeshStandardMaterial({ color, emissive: color, emissiveIntensity: .26, metalness: .08, roughness: .72, transparent: true, opacity: .78 }),
+        new THREE.MeshBasicMaterial({ color, transparent: true, opacity: .65 }),
       );
       const atmosphere = new THREE.Mesh(
         new THREE.SphereGeometry(size * 1.26, 14, 10),
         new THREE.MeshBasicMaterial({ color, transparent: true, opacity: .16, side: THREE.BackSide, blending: THREE.AdditiveBlending, depthWrite: false }),
       );
       body.add(surface, atmosphere);
-      if (hasRing) {
-        const ring = new THREE.Mesh(
-          new THREE.TorusGeometry(size * 1.5, .005, 5, 24),
-          new THREE.MeshBasicMaterial({ color, transparent: true, opacity: .3, depthWrite: false }),
-        );
-        ring.rotation.set(.68 + index * .08, -.16, .24);
-        body.add(ring);
-      }
+      const sparkle = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTexture, color, transparent: true, opacity: .22, blending: THREE.AdditiveBlending, depthWrite: false }));
+      sparkle.scale.setScalar(size * 5);
+      body.add(sparkle);
       pivot.add(body);
       sectorSystem.add(pivot);
       return { pivot, body, phase, orbit, size, index };
@@ -239,10 +304,6 @@ export function WorldlineBackdrop({ activeId, motionOn, progress }: {
         sprite.position.x += state.current.motionOn ? Math.sin(drift * .04 + index) * .0005 : 0;
         sprite.material.opacity = [ .11, .1, .08 ][index] + (state.current.motionOn ? Math.sin(drift * .16 + index) * .012 : 0);
       });
-      lanes.forEach((lane, index) => {
-        lane.rotation.z = (index % 2 ? -.42 : .28) + Math.sin(drift * .02 + index) * .018;
-      });
-
       const orbitAngle = drift * .045 + scroll * Math.PI * 1.6;
       planetSystem.rotation.y = orbitAngle;
       planetSystem.rotation.x = .2 + Math.sin(scroll * Math.PI * 1.4) * .17;
@@ -261,16 +322,29 @@ export function WorldlineBackdrop({ activeId, motionOn, progress }: {
         ring.material.opacity = selected ? .64 : .25;
         highlight.material.opacity = selected ? .09 : .045;
       });
+      constellationLinks.forEach(({ from, to, positions, geometry, line }) => {
+        const a = orbitPlanets[from].pivot.position;
+        const b = orbitPlanets[to].pivot.position;
+        for (let i = 0; i < 25; i++) {
+          const t = i / 24;
+          positions[i * 3] = THREE.MathUtils.lerp(a.x, b.x, t);
+          positions[i * 3 + 1] = THREE.MathUtils.lerp(a.y, b.y, t) + Math.sin(t * Math.PI) * .14;
+          positions[i * 3 + 2] = THREE.MathUtils.lerp(a.z, b.z, t) - Math.sin(t * Math.PI) * .4;
+        }
+        geometry.attributes.position.needsUpdate = true;
+        line.material.opacity = planetSystem.visible ? .14 : 0;
+      });
       const sectorAngle = drift * .026 + scroll * Math.PI * .72;
-      sectorSystem.rotation.y = sectorAngle;
-      sectorSystem.rotation.x = .34 + Math.sin(drift * .018) * .025;
-      sectorSystem.rotation.z = Math.sin(drift * .014) * .018;
+      sectorSystem.rotation.copy(planetSystem.rotation);
+      sectorSystem.position.copy(planetSystem.position);
+      sectorSystem.visible = planetSystem.visible;
       sectorNodes.forEach(({ pivot, body, phase, orbit, index }) => {
-        const phaseOffset = phase + sectorAngle * (.52 + index * .035);
+        const owner = orbitPlanets[index].pivot.position;
+        const phaseOffset = phase + sectorAngle + drift * .08;
         pivot.position.set(
-          Math.cos(phaseOffset) * orbit,
-          Math.sin(phaseOffset) * orbit * .34,
-          Math.sin(phaseOffset * 1.12) * orbit * .2,
+          owner.x + Math.cos(phaseOffset) * orbit,
+          owner.y + Math.sin(phaseOffset) * orbit * .6,
+          owner.z + Math.sin(phaseOffset) * orbit * .35,
         );
         body.rotation.y = drift * (.08 + index * .012) + index;
         body.rotation.z = Math.sin(drift * .14 + index) * .08;
@@ -280,7 +354,29 @@ export function WorldlineBackdrop({ activeId, motionOn, progress }: {
       camera.position.y = Math.cos(scroll * Math.PI * .9) * .18;
       camera.position.z = 6.8 - scroll * .42;
       camera.lookAt(0, 0, -3.8);
+      camera.updateMatrixWorld();
+
+      // Screen-space anchoring keeps the terminal landmark out of the hero and reading center.
+      const width = host.clientWidth;
+      const height = host.clientHeight;
+      const portrait = width < height;
+      const holeY = height < 620 ? .68 : portrait ? .82 : .8;
+      holeRay.set(portrait ? .72 : .7, 1 - holeY * 2, .5).unproject(camera).sub(camera.position).normalize();
+      blackHole.group.position.copy(camera.position).addScaledVector(holeRay, (-4.8 - camera.position.z) / holeRay.z);
+      blackHole.group.quaternion.copy(camera.quaternion);
+      const viewHeight = 2 * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) * (camera.position.z + 4.8);
+      const diameter = Math.min(width * (portrait ? .38 : .28), height * .38);
+      blackHole.group.scale.setScalar(viewHeight * diameter / height / 3.1);
+      blackHole.group.visible = holeStrength > .001;
+      blackHole.diskMaterial.uniforms.uTime.value = drift;
+      blackHole.diskMaterial.uniforms.uStrength.value = holeStrength;
+      blackHole.horizon.material.opacity = holeStrength * .98;
+      blackHole.rim.material.opacity = holeStrength * .9;
+      blackHole.lens.material.opacity = holeStrength * .48;
+      host.dataset.holeX = portrait ? ".86" : ".85";
+      host.dataset.holeY = String(holeY);
       renderer.render(scene, camera);
+      host.dataset.drawCalls = String(renderer.info.render.calls);
       host.dataset.ready = "true";
       host.dataset.time = drift.toFixed(2);
       if (state.current.motionOn) frame = requestAnimationFrame(render);
@@ -309,6 +405,7 @@ export function WorldlineBackdrop({ activeId, motionOn, progress }: {
       observer.disconnect();
       intersection.disconnect();
       unsubscribe();
+      unsubscribeChapter();
       canvas.removeEventListener("webglcontextlost", contextLost);
       document.removeEventListener("visibilitychange", wake);
       scene.traverse((object) => {
@@ -320,7 +417,7 @@ export function WorldlineBackdrop({ activeId, motionOn, progress }: {
       renderer.dispose();
       wakeRef.current = () => {};
     };
-  }, [progress]);
+  }, [progress, pageProgress]);
 
-  return <div ref={hostRef} className="worldline-backdrop" aria-hidden="true"><canvas /></div>;
+  return <div ref={hostRef} className="worldline-backdrop" aria-hidden="true"><canvas /><span className="black-hole-fallback" /></div>;
 }

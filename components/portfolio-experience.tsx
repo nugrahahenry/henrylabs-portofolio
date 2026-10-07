@@ -429,6 +429,7 @@ export function PortfolioExperience() {
   const certificateModalRef = useRef<HTMLDivElement>(null);
   const certificateTriggerRef = useRef<HTMLButtonElement | null>(null);
   const stackVisible = useInView(stackRef, { margin: "150px" });
+  const { scrollYProgress: pageProgress } = useScroll();
   const { scrollYProgress: workProgress } = useScroll({ target: workRef, offset: ["start end", "end start"] });
   const { scrollYProgress: methodProgress } = useScroll({ target: methodRef, offset: ["start 85%", "center center"] });
   const { scrollYProgress: worldlineProgress } = useScroll({ target: fieldRef, offset: ["start 72%", "end 30%"] });
@@ -604,7 +605,7 @@ export function PortfolioExperience() {
     <MotionConfig reducedMotion={motionOn ? "never" : "always"} transition={{ duration: motionOn ? 0.55 : 0, ease: [0.16, 1, 0.3, 1] }}>
     <main className="site-shell" data-motion={motionOn ? "on" : "off"}>
       <SmoothScroll enabled={motionOn} />
-      <WorldlineBackdrop activeId={activeProject.id} motionOn={motionOn} progress={worldlineProgress} />
+      <WorldlineBackdrop activeId={activeProject.id} motionOn={motionOn} progress={worldlineProgress} pageProgress={pageProgress} />
       <motion.div className={cx("intro-loader", introDone && "intro-loader--done")} aria-hidden={introDone}>
         <div className="loader-content">
           <div className="loader-meta"><span>HENRYLABS / USEFUL WORLDS</span><span>0{Math.min(loadingStep + 1, 4)} / 04</span></div>

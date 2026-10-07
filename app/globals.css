@@ -654,10 +654,13 @@ html[data-motion="off"] *, html[data-motion="off"] *::before, html[data-motion="
 .field-continuum .stack-section { background: transparent; }
 .field-continuum .stack-intro { padding-top: 90px; padding-bottom: 42px; }
 .field-continuum .maker-orbit { padding-top: 10px; }
-.worldline-backdrop { position: fixed; z-index: 0; inset: 0; width: 100%; height: max(100vh, 520px); height: max(100svh, 520px); overflow: hidden; background: #080c23 url('/assets/background/cosmic-nebula.png') center / cover; opacity: .78; pointer-events: none; }
+.worldline-backdrop { position: fixed; z-index: 0; inset: 0; width: 100%; height: 100vh; height: 100svh; overflow: hidden; background: #080c23 url('/assets/background/cosmic-nebula.png') center / cover; opacity: .78; pointer-events: none; }
 .worldline-backdrop::after { content: ""; position: absolute; inset: 0; background: radial-gradient(ellipse at 50% 42%, transparent 0 22%, rgba(7,9,27,.08) 54%, rgba(7,9,27,.54) 100%); pointer-events: none; }
-.worldline-backdrop canvas { display: block; width: 100%; height: 100%; opacity: .95; mix-blend-mode: screen; }
+.worldline-backdrop canvas { display: block; width: 100%; height: 100%; opacity: .95; }
 .worldline-backdrop[data-fallback="true"] canvas { display: none; }
+.black-hole-fallback { display: none; position: absolute; right: 5%; bottom: 16%; width: clamp(120px, 22vw, 280px); aspect-ratio: 2.3; border-radius: 50%; background: radial-gradient(ellipse, transparent 32%, rgba(255,232,184,.5) 35%, rgba(204,152,79,.22) 42%, transparent 58%); transform: rotate(-9deg); opacity: var(--black-hole-strength, 0); pointer-events: none; }
+.black-hole-fallback::after { content: ""; position: absolute; left: 36%; top: 18%; width: 29%; aspect-ratio: 1; border-radius: 50%; background: #020308; border: 1px solid rgba(255,232,184,.5); }
+.worldline-backdrop[data-fallback="true"] .black-hole-fallback { display: block; }
 .field-continuum-visual { position: absolute; z-index: 0; top: 0; right: -10vw; width: min(90vw, 1240px); height: 100%; min-height: 2800px; overflow: hidden; opacity: .82; pointer-events: none; }
 .field-continuum-glow { position: absolute; top: 24%; right: 18%; width: 42%; aspect-ratio: 1; border-radius: 50%; background: radial-gradient(circle, rgba(110,231,244,.09), transparent 68%); filter: blur(24px); }
 .field-continuum-orbit { position: absolute; display: block; border: 1px solid rgba(110,231,244,.15); border-radius: 50%; transform-origin: center; opacity: .28; animation: continuum-orbit-breathe 18s ease-in-out infinite alternate; transition: border-color .8s ease, box-shadow .8s ease, opacity .8s ease; }

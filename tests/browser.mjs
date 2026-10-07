@@ -9,6 +9,17 @@ const browser = await chromium.launch({
   ...(existsSync(executablePath) ? { executablePath } : {}),
 });
 
+async function clearDragPoint(page, bounds) {
+  return page.evaluate((rect) => {
+    for (const y of [.18, .3, .42]) for (const x of [.16, .3, .44]) {
+      const point = { x: rect.x + rect.width * x, y: rect.y + rect.height * y };
+      const target = document.elementFromPoint(point.x, point.y);
+      if (target?.closest(".cosmic-canvas") && !target.closest("button, a")) return point;
+    }
+    throw new Error("no unobstructed canvas area for orbit drag");
+  }, bounds);
+}
+
 try {
   mkdirSync("test-results", { recursive: true });
   for (const viewport of [{ width: 1440, height: 900 }, { width: 1024, height: 768 }, { width: 768, height: 1024 }, { width: 390, height: 844 }, { width: 360, height: 800 }]) {
@@ -186,23 +197,27 @@ try {
     await page.getByRole("button", { name: "Open active world" }).click();
     await expect(page.getByRole("button", { name: "Close active world" })).toBeVisible();
     await expect(page.locator(".project-showcase-index [role='tab']")).toHaveCount(5);
+    await expect.poll(() => page.locator(".project-showcase").evaluate((panel) => Number(getComputedStyle(panel).opacity))).toBe(1);
+    await expect(page.getByRole("button", { name: "Close active world" })).toBeInViewport({ ratio: 1 });
     await page.getByRole("button", { name: "Close active world" }).click();
     await expect(page.locator(".project-showcase")).toHaveCount(0);
     await expect(page.getByRole("button", { name: "Open active world" })).toBeVisible();
     await page.screenshot({ path: `test-results/${viewport.width}-orbit.png` });
 
     const bounds = await scene.boundingBox();
+    const horizontalStart = await clearDragPoint(page, bounds);
     const beforeDrag = Number(await scene.getAttribute("data-angle"));
-    await page.mouse.move(bounds.x + bounds.width * .35, bounds.y + bounds.height * .35);
+    await page.mouse.move(horizontalStart.x, horizontalStart.y);
     await page.mouse.down();
-    await page.mouse.move(bounds.x + bounds.width * .7, bounds.y + bounds.height * .35, { steps: 8 });
+    await page.mouse.move(horizontalStart.x + bounds.width * .3, horizontalStart.y, { steps: 8 });
     await page.mouse.up();
     await expect.poll(async () => Math.abs(Number(await scene.getAttribute("data-angle")) - beforeDrag)).toBeGreaterThan(.15);
     await page.screenshot({ path: `test-results/${viewport.width}-orbit-drag.png` });
+    const verticalStart = await clearDragPoint(page, bounds);
     const beforePitch = Number(await scene.getAttribute("data-pitch"));
-    await page.mouse.move(bounds.x + bounds.width * .52, bounds.y + bounds.height * .35);
+    await page.mouse.move(verticalStart.x, verticalStart.y);
     await page.mouse.down();
-    await page.mouse.move(bounds.x + bounds.width * .52, bounds.y + bounds.height * .72, { steps: 8 });
+    await page.mouse.move(verticalStart.x, verticalStart.y + bounds.height * .3, { steps: 8 });
     await page.mouse.up();
     await expect.poll(async () => Math.abs(Number(await scene.getAttribute("data-pitch")) - beforePitch)).toBeGreaterThan(.1);
     const directPlanetLabel = page.locator(".planet-label").nth(1);
