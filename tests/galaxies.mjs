@@ -35,6 +35,8 @@ try {
     await reveal(page);
     const scene = page.locator(".cosmic-canvas");
     await expect(scene).toHaveAttribute("data-ready", "true");
+    await expect(scene).toHaveAttribute("data-branded-worlds", "5");
+    await expect(scene).toHaveAttribute("data-planet-surface", "opaque-terrain");
     await expect(scene).toHaveAttribute("data-view", "universe");
     await expect(page.locator(".planet-label")).toHaveCount(0);
     await expect(page.locator(".galaxy-label")).toHaveCount(3);

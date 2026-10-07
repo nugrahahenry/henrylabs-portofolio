@@ -100,7 +100,11 @@ test("portfolio surface keeps its core experience contracts", () => {
   assert.match(canvas, /orbitPhases/);
   assert.match(canvas, /planetSurfaceTexture/);
   assert.match(canvas, /TorusGeometry/);
-  assert.match(canvas, /createProjectSculpture/);
+  assert.match(canvas, /createPlanetMaps/);
+  assert.match(canvas, /bumpMap: maps\.bump/);
+  assert.match(canvas, /createAtmosphere/);
+  assert.match(canvas, /ACESFilmicToneMapping/);
+  assert.doesNotMatch(canvas, /sphereMaterial\.opacity = \.15/);
   assert.match(canvas, /networkPairs/);
   assert.match(canvas, /A spanning path keeps every world connected/);
   assert.match(canvas, /\[\[0, 1\], \[1, 2\], \[2, 4\], \[4, 3\]\]/);

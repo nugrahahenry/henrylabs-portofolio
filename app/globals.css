@@ -116,7 +116,7 @@ html[data-cursor="quiet"] .cursor-guide { opacity: 0; }
 .star-3 { top: 65%; left: 13%; color: var(--paper); animation-delay: -2.2s; }
 .star-4 { top: 77%; left: 77%; width: 4px; height: 4px; color: var(--pink); animation-delay: -.6s; }
 .star-5 { top: 46%; left: 52%; color: var(--violet); animation-delay: -2.7s; }
-.backdrop-arc { position: absolute; border: 1px solid rgba(110,231,244,.13); border-radius: 50%; transform: rotate(-17deg); animation: slow-drift 28s linear infinite; }
+.backdrop-arc { display: none; }
 .arc-one { inset: 13% 6% 19% 4%; }
 .arc-two { inset: 27% 18% 25% 26%; border-color: rgba(255,130,200,.1); transform: rotate(31deg); animation-direction: reverse; animation-duration: 38s; }
 .hero-copy { position: absolute; inset: 0; display: flex; align-items: center; flex-direction: column; justify-content: center; padding: 95px 25px 40px; text-align: center; }
@@ -156,7 +156,7 @@ html[data-cursor="quiet"] .cursor-guide { opacity: 0; }
 
 .cosmic-frame-wrap { position: absolute; inset: 0; display: grid; place-items: center; padding: 88px 8px 45px; pointer-events: none; }
 .cosmic-frame { position: relative; width: min(1180px, 100%); aspect-ratio: 1.32; min-height: 590px; overflow: hidden; border: 0; border-radius: 0; background: transparent; box-shadow: 0 0 75px color-mix(in srgb, var(--active-world-color, var(--cyan)) 9%, transparent); backdrop-filter: none; pointer-events: auto; }
-.cosmic-frame::before { content: ""; position: absolute; z-index: 2; inset: 9%; border: 1px solid color-mix(in srgb, var(--active-world-color, var(--cyan)) 26%, rgba(244,245,239,.12)); border-radius: 50% 44% 50% 43%; transform: rotate(-16deg); pointer-events: none; transition: border-color .6s ease, box-shadow .6s ease; box-shadow: 0 0 30px color-mix(in srgb, var(--active-world-color, var(--cyan)) 8%, transparent); }
+.cosmic-frame::before { display: none; }
 .cosmic-frame::after { content: ""; position: absolute; z-index: 2; inset: 0; background: radial-gradient(circle at 50% 50%, transparent 0 37%, rgba(7,9,27,.18) 71%, rgba(7,9,27,.52) 100%); pointer-events: none; }
 .frame-topline, .frame-bottomline { position: absolute; z-index: 5; left: 25px; right: 25px; display: flex; align-items: center; justify-content: space-between; color: rgba(244,245,239,.56); font-family: var(--mono); font-size: .62rem; letter-spacing: .08em; text-transform: uppercase; }
 .frame-topline { top: 22px; }

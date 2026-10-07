@@ -45,6 +45,7 @@ try {
     await page.locator(".intro-loader").waitFor({ state: "hidden" });
     const background = page.locator(".worldline-backdrop");
     await expect(background).toHaveAttribute("data-ready", "true");
+    await expect(background).toHaveAttribute("data-planet-surface", "opaque-terrain");
     await expect(background).toHaveAttribute("data-hole-opacity", "0.000");
     await expect(background).toHaveAttribute("data-constellation-links", "4");
     assert.equal(await background.evaluate((node) => getComputedStyle(node).pointerEvents), "none");

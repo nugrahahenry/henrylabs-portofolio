@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { ImprovedNoise } from "three/addons/math/ImprovedNoise.js";
 
 export type GalaxyId = "main" | "university" | "client";
 export const galaxies = [
@@ -6,6 +7,41 @@ export const galaxies = [
   { id: "university", name: { en: "University", id: "Kuliah" }, count: 3, color: "#ebcd89", arms: 2 },
   { id: "client", name: { en: "Client Work", id: "Client Work" }, count: 2, color: "#d5a7c8", arms: 4 },
 ] as const;
+
+function galaxyDustTexture(arms: number, color: string, seed: number) {
+  const width = 384;
+  const canvas = document.createElement("canvas");
+  canvas.width = canvas.height = width;
+  const data = new Uint8ClampedArray(width * width * 4);
+  const noise = new ImprovedNoise();
+  const tint = new THREE.Color(color).getHex(THREE.SRGBColorSpace);
+  const outer = [(tint >> 16) & 255, (tint >> 8) & 255, tint & 255];
+  for (let y = 0; y < width; y++) for (let x = 0; x < width; x++) {
+    const sx = x / (width - 1) * 2 - 1;
+    const sy = y / (width - 1) * 2 - 1;
+    const radius = Math.hypot(sx, sy);
+    const offset = (y * width + x) * 4;
+    if (radius >= .97) continue;
+    const clumps = noise.noise(sx * 9 + seed, sy * 9, seed * .3);
+    const grain = noise.noise(sx * 47 + seed, sy * 47, seed);
+    const phase = Math.atan2(sy, sx) - radius * (4.5 + seed * .04);
+    const arm = Math.pow(.5 + .5 * Math.cos(phase * arms + clumps * 1.6), 6);
+    const bulge = Math.exp(-radius * radius * 54);
+    const dustLane = 1 - Math.pow(.5 + .5 * Math.sin(phase * arms + .7 + clumps), 18) * .6;
+    const edge = 1 - THREE.MathUtils.smoothstep(radius, .72, .97);
+    const light = (bulge * .84 + arm * (.19 + clumps * .12 + grain * .045) + .025) * dustLane * edge;
+    data.set([
+      THREE.MathUtils.lerp(outer[0], 255, bulge),
+      THREE.MathUtils.lerp(outer[1], 228, bulge),
+      THREE.MathUtils.lerp(outer[2], 185, bulge),
+      THREE.MathUtils.clamp(light * 255, 0, 255),
+    ], offset);
+  }
+  canvas.getContext("2d")!.putImageData(new ImageData(data, width, width), 0, 0);
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  return texture;
+}
 
 export function createGalaxySystem() {
   const stamp = document.createElement("canvas");
@@ -19,6 +55,7 @@ export function createGalaxySystem() {
   context.fillRect(0, 0, 32, 32);
   const texture = new THREE.CanvasTexture(stamp);
   const group = new THREE.Group();
+  const textures: THREE.Texture[] = [texture];
   const clusters = galaxies.map((galaxy, index) => {
     const cluster = new THREE.Group();
     const disk = new THREE.Group();
@@ -44,9 +81,15 @@ export function createGalaxySystem() {
     const geometry = new THREE.BufferGeometry();
     geometry.setAttribute("position", new THREE.BufferAttribute(positions, 3));
     geometry.setAttribute("color", new THREE.BufferAttribute(colors, 3));
-    const material = new THREE.PointsMaterial({ map: texture, vertexColors: true, size: .085, sizeAttenuation: true, transparent: true, opacity: .9, depthWrite: false, blending: THREE.AdditiveBlending });
+    const material = new THREE.PointsMaterial({ map: texture, vertexColors: true, size: .043, sizeAttenuation: true, transparent: true, opacity: .9, depthWrite: false, blending: THREE.AdditiveBlending });
     const points = new THREE.Points(geometry, material);
     disk.add(points);
+    const dustMap = galaxyDustTexture(galaxy.arms, galaxy.color, 17 + index * 13);
+    textures.push(dustMap);
+    const dustMaterial = new THREE.MeshBasicMaterial({ map: dustMap, transparent: true, opacity: .62, side: THREE.DoubleSide, depthWrite: false, blending: THREE.AdditiveBlending });
+    const dust = new THREE.Mesh(new THREE.PlaneGeometry(3.3, 3.3), dustMaterial);
+    dust.rotation.x = -Math.PI / 2;
+    disk.add(dust);
     const nucleus = new THREE.Sprite(new THREE.SpriteMaterial({ map: texture, color: "#fff6de", transparent: true, opacity: .72, blending: THREE.AdditiveBlending, depthWrite: false }));
     nucleus.scale.set(.28, .2, 1);
     const cloud = new THREE.Sprite(new THREE.SpriteMaterial({ map: texture, color: galaxy.color, transparent: true, opacity: .09, blending: THREE.AdditiveBlending, depthWrite: false }));
@@ -55,7 +98,7 @@ export function createGalaxySystem() {
     const hit = new THREE.Mesh(new THREE.SphereGeometry(1.42, 12, 8), new THREE.MeshBasicMaterial({ visible: false }));
     cluster.add(disk, hit);
     group.add(cluster);
-    return { ...galaxy, cluster, disk, material, nucleus, cloud, hit };
+    return { ...galaxy, cluster, disk, material, nucleus, cloud, hit, dustMaterial };
   });
   const center = new THREE.Sprite(new THREE.SpriteMaterial({ map: texture, color: "#fff1ca", transparent: true, opacity: .42, blending: THREE.AdditiveBlending, depthWrite: false }));
   center.scale.set(.22, .22, 1);
@@ -71,5 +114,5 @@ export function createGalaxySystem() {
       disk.rotation.set([.92, .7, 1.12][index], -.15 + index * .23, -.12 + index * .18);
     });
   };
-  return { group, clusters, center, texture, layout };
+  return { group, clusters, center, textures, layout };
 }

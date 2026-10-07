@@ -3,7 +3,8 @@
 import { useEffect, useRef } from "react";
 import type { MotionValue } from "motion/react";
 import * as THREE from "three";
-import { planetTexture, projectWorlds, type ProjectId } from "./cosmic-canvas";
+import { projectWorlds, type ProjectId } from "./cosmic-canvas";
+import { createAtmosphere, createPlanetMaps, createPlanetRing, projectPlanetKinds } from "./planet-materials";
 import { gravityMaterial } from "./gravity-field";
 import { advanceGravityAge, gravityBirth, gravitySequence, GRAVITY_REST_SECONDS } from "./gravity-sequence";
 
@@ -124,6 +125,8 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, contactProgres
     }
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.35));
     renderer.outputColorSpace = THREE.SRGBColorSpace;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.1;
 
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(44, 1, .1, 100);
@@ -138,9 +141,9 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, contactProgres
     scene.add(blackHole.group);
     const holeRay = new THREE.Vector3();
     const gravityTarget = new THREE.Vector3();
-    scene.add(new THREE.AmbientLight(0x9fc4df, 1.15));
-    const planetLight = new THREE.PointLight(0xffe5b2, 7, 18, 1.5);
-    planetLight.position.set(-2.4, 2.8, 2.8);
+    scene.add(new THREE.AmbientLight(0x9fc4df, .14));
+    const planetLight = new THREE.DirectionalLight(0xfff1da, 3);
+    planetLight.position.set(-4, 5, 7);
     scene.add(planetLight);
 
     const starCount = 980;
@@ -229,13 +232,14 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, contactProgres
     starField.add(feedingDust);
 
     const glowTexture = createGlowTexture();
-    const wandererTextures = ["#82b8c4", "#c69b78", "#a9bba0"].map(planetTexture);
+    const wandererMaps = ["#82b8c4", "#c69b78", "#a9bba0"].map((color, index) => createPlanetMaps(color, index === 0 ? "ocean" : index === 1 ? "rocky" : "ice", 256, 61 + index * 11));
+    const planetTextures: THREE.Texture[] = wandererMaps.flatMap((maps) => maps.textures);
     const wanderer = new THREE.Group();
-    const wandererMaterial = new THREE.MeshStandardMaterial({ map: wandererTextures[0], roughness: .82, metalness: .025, transparent: true });
+    const wandererMaterial = new THREE.MeshStandardMaterial({ map: wandererMaps[0].map, bumpMap: wandererMaps[0].bump, bumpScale: .017, roughness: .86, metalness: 0, transparent: true });
     const wandererSurface = new THREE.Mesh(new THREE.SphereGeometry(.5, 32, 24), wandererMaterial);
-    const wandererAtmosphere = new THREE.Mesh(new THREE.SphereGeometry(.55, 24, 16), new THREE.MeshBasicMaterial({ color: "#88c5d1", transparent: true, opacity: .12, side: THREE.BackSide, blending: THREE.AdditiveBlending, depthWrite: false }));
-    const wandererRing = new THREE.Mesh(new THREE.TorusGeometry(.77, .009, 6, 64), new THREE.MeshBasicMaterial({ color: "#d5d9b7", transparent: true, opacity: .35, depthWrite: false }));
-    wandererRing.rotation.set(.85, .18, .3);
+    const wandererAtmosphere = createAtmosphere(.5, "#88c5d1");
+    const { ring: wandererRing, texture: wandererRingTexture } = createPlanetRing(.5);
+    planetTextures.push(wandererRingTexture);
     wanderer.add(wandererSurface, wandererAtmosphere, wandererRing);
     scene.add(wanderer);
     const visitorOrigin = new THREE.Vector3();
@@ -266,29 +270,23 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, contactProgres
       const body = new THREE.Group();
       const radius = .16 + (index % 2) * .025;
       const phase = [2.75, 1.4, .18, 4.2, 5.2][index];
+      const kind = projectPlanetKinds[index];
+      const maps = createPlanetMaps(world.color, kind, 256, 7 + index * 17);
+      planetTextures.push(...maps.textures);
       const surface = new THREE.Mesh(
         new THREE.SphereGeometry(radius, 24, 16),
-        new THREE.MeshStandardMaterial({ color: world.color, emissive: world.color, emissiveIntensity: .14, metalness: .12, roughness: .62, transparent: true, opacity: .72 }),
+        new THREE.MeshStandardMaterial({ map: maps.map, bumpMap: maps.bump, bumpScale: kind === "gas" ? .001 : .009, metalness: 0, roughness: kind === "ocean" ? .62 : .96 }),
       );
-      const atmosphere = new THREE.Mesh(
-        new THREE.SphereGeometry(radius * 1.16, 20, 14),
-        new THREE.MeshBasicMaterial({ color: world.color, transparent: true, opacity: .15, side: THREE.BackSide, blending: THREE.AdditiveBlending, depthWrite: false }),
-      );
-      const ring = new THREE.Mesh(
-        new THREE.TorusGeometry(radius * 1.42, .008, 6, 36),
-        new THREE.MeshBasicMaterial({ color: world.color, transparent: true, opacity: .25, depthWrite: false }),
-      );
-      ring.rotation.set(.72, -.2, .2);
+      const atmosphere = createAtmosphere(radius, "#93b4d1");
+      const { ring, texture: ringTexture } = createPlanetRing(radius);
+      planetTextures.push(ringTexture);
+      ring.visible = kind === "gas";
       body.add(surface, atmosphere, ring);
       pivot.add(body);
       planetSystem.add(pivot);
-      const highlight = new THREE.Mesh(
-        new THREE.SphereGeometry(radius * .72, 16, 12),
-        new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: .045, blending: THREE.AdditiveBlending, depthWrite: false }),
-      );
-      highlight.position.set(-radius * .28, radius * .32, radius * .7);
-      body.add(highlight);
-      return { pivot, body, ring, highlight, phase, orbitRadius: 3.6 + index * .38, index };
+      const cloud = maps.cloud ? new THREE.Mesh(new THREE.SphereGeometry(radius * 1.012, 24, 16), new THREE.MeshStandardMaterial({ map: maps.cloud, transparent: true, opacity: .65, depthWrite: false, roughness: 1 })) : null;
+      if (cloud) body.add(cloud);
+      return { pivot, body, ring, cloud, phase, orbitRadius: 3.6 + index * .38, index };
     });
 
     const constellationPairs = [[0, 1], [1, 2], [2, 4], [4, 3]];
@@ -372,7 +370,7 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, contactProgres
       planetSystem.rotation.y = orbitAngle;
       planetSystem.rotation.x = .2 + Math.sin(scroll * Math.PI * 1.4) * .17;
       planetSystem.rotation.z = Math.sin(drift * .012) * .018;
-      orbitPlanets.forEach(({ pivot, body, ring, highlight, phase, orbitRadius, index }) => {
+      orbitPlanets.forEach(({ pivot, body, ring, cloud, phase, orbitRadius, index }) => {
         const phaseOffset = phase + orbitAngle * (.7 + index * .04);
         pivot.position.set(
           Math.cos(phaseOffset) * orbitRadius,
@@ -383,8 +381,8 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, contactProgres
         body.rotation.z = Math.sin(drift * .18 + index) * .12;
         const selected = projectWorlds[index].id === state.current.activeId;
         body.scale.setScalar(selected ? 1.3 : .9);
-        ring.material.opacity = selected ? .64 : .25;
-        highlight.material.opacity = selected ? .09 : .045;
+        ring.material.opacity = selected ? .9 : .7;
+        if (cloud) cloud.rotation.y = drift * .013;
       });
       constellationLinks.forEach(({ from, to, positions, geometry, line }) => {
         const a = orbitPlanets[from].pivot.position;
@@ -466,7 +464,10 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, contactProgres
       if (wanderer.visible) {
         if (visitorIndex !== sequence.index) {
           visitorIndex = sequence.index;
-          wandererMaterial.map = wandererTextures[visitorIndex % wandererTextures.length];
+          const maps = wandererMaps[visitorIndex % wandererMaps.length];
+          wandererMaterial.map = maps.map;
+          wandererMaterial.bumpMap = maps.bump;
+          wandererRing.visible = visitorIndex % 3 === 2;
         }
         holeRay.set(-.52, -.7, .5).unproject(camera).sub(camera.position).normalize();
         visitorOrigin.copy(camera.position).addScaledVector(holeRay, (-4.8 - camera.position.z) / holeRay.z);
@@ -480,14 +481,15 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, contactProgres
       }
       const visitorOpacity = wanderer.visible ? holeStrength * THREE.MathUtils.smoothstep(sequence.progress, 0, .012) * (1 - THREE.MathUtils.smoothstep(sequence.progress, .82, 1)) : 0;
       wandererMaterial.opacity = visitorOpacity;
-      wandererAtmosphere.material.opacity = visitorOpacity * .12;
-      wandererRing.material.opacity = visitorOpacity * .35;
+      wandererAtmosphere.material.uniforms.uOpacity.value = visitorOpacity * .6;
+      wandererRing.material.opacity = visitorOpacity * .7;
       host.style.setProperty("--hole-growth", birth.growth.toFixed(3));
       host.dataset.holeX = holeX.toFixed(3);
       host.dataset.holeY = String(holeY);
       host.dataset.holeDiameter = diameter.toFixed(1);
       host.dataset.pull = pull.toFixed(3);
       host.dataset.backgroundGalaxies = "3";
+      host.dataset.planetSurface = "opaque-terrain";
       host.dataset.gravityAge = gravityAge.toFixed(2);
       host.dataset.birthAge = birthAge.toFixed(2);
       host.dataset.holeGrowth = birth.growth.toFixed(3);
@@ -536,7 +538,7 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, contactProgres
         if (mesh.material) (Array.isArray(mesh.material) ? mesh.material : [mesh.material]).forEach((material) => material.dispose());
       });
       glowTexture.dispose();
-      wandererTextures.forEach((texture) => texture.dispose());
+      planetTextures.forEach((texture) => texture.dispose());
       renderer.dispose();
       wakeRef.current = () => {};
     };

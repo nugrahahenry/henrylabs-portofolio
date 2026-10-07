@@ -4,8 +4,8 @@ import { useEffect, useRef, useState } from "react";
 import type { MotionValue } from "motion/react";
 import { Minus, Plus, RotateCcw } from "lucide-react";
 import * as THREE from "three";
-import { createProjectSculpture } from "./project-sculptures";
 import { createGalaxySystem, galaxies, type GalaxyId } from "./galaxy-system";
+import { createAtmosphere, createPlanetMaps, createPlanetRing, projectPlanetKinds, removeEdgeMatte } from "./planet-materials";
 
 export type ProjectId = "catmoji" | "nalira" | "canox" | "hengs" | "polara";
 export type SatelliteId = "rental" | "pos" | "labq" | "yventures" | "soreva";
@@ -24,17 +24,8 @@ export const projectWorlds = [
 
 const orbitPhases = [130, 60, 0, 210, 300].map(THREE.MathUtils.degToRad);
 
-function satelliteTexture(color: string, mark: string) {
-  const canvas = document.createElement("canvas");
-  canvas.width = 512;
-  canvas.height = 256;
+function satelliteTexture(canvas: HTMLCanvasElement, mark: string) {
   const ctx = canvas.getContext("2d")!;
-  ctx.fillStyle = color;
-  ctx.fillRect(0, 0, 512, 256);
-  for (let y = 0; y < 256; y++) {
-    ctx.fillStyle = `rgba(7,9,27,${.2 + Math.sin(y * .12) * .07 + Math.cos(y * .031) * .1})`;
-    ctx.fillRect(0, y, 512, 1);
-  }
   ctx.font = "700 48px Arial, sans-serif";
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
@@ -45,75 +36,44 @@ function satelliteTexture(color: string, mark: string) {
   return texture;
 }
 
-export function planetTexture(color: string) {
-  const surface = document.createElement("canvas");
-  surface.width = 256;
-  surface.height = 128;
-  const context = surface.getContext("2d")!;
-  context.fillStyle = color;
-  context.fillRect(0, 0, 256, 128);
-  for (let y = 0; y < 128; y++) {
-    context.fillStyle = `rgba(24,20,24,${.08 + Math.sin(y * .4) * .065 + Math.cos(y * .87) * .025})`;
-    context.fillRect(0, y, 256, 1);
-  }
-  const texture = new THREE.CanvasTexture(surface);
-  texture.colorSpace = THREE.SRGBColorSpace;
-  return texture;
+function projectMarkSilhouette(image: HTMLImageElement) {
+  const canvas = document.createElement("canvas");
+  const width = image.naturalWidth || image.width;
+  const height = image.naturalHeight || image.height;
+  const scale = 256 / Math.max(width, height);
+  canvas.width = Math.max(1, Math.round(width * scale));
+  canvas.height = Math.max(1, Math.round(height * scale));
+  const context = canvas.getContext("2d")!;
+  context.drawImage(image, 0, 0, canvas.width, canvas.height);
+  const pixels = context.getImageData(0, 0, canvas.width, canvas.height);
+  // Only a uniform, edge-connected fill is removed; enclosed light details survive.
+  removeEdgeMatte(pixels.data, canvas.width, canvas.height);
+  context.putImageData(pixels, 0, 0);
+  return canvas;
 }
 
-function planetSurfaceTexture(image: HTMLImageElement, color: string) {
-  const surface = document.createElement("canvas");
-  surface.width = 768;
-  surface.height = 384;
+function planetSurfaceTexture(image: HTMLImageElement, surface: HTMLCanvasElement) {
   const context = surface.getContext("2d")!;
-  const gradient = context.createLinearGradient(0, 0, 768, 384);
-  gradient.addColorStop(0, color);
-  gradient.addColorStop(.5, "#151a3a");
-  gradient.addColorStop(1, color);
-  context.fillStyle = gradient;
-  context.fillRect(0, 0, 768, 384);
-  for (let y = 28; y < 384; y += 24) {
-    context.fillStyle = `rgba(255,255,255,${.035 + Math.sin(y * .11) * .02})`;
-    context.fillRect(0, y, 768, 6);
-  }
-
-  const imageWidth = image.naturalWidth || image.width;
-  const imageHeight = image.naturalHeight || image.height;
+  const silhouette = projectMarkSilhouette(image);
+  const imageWidth = silhouette.width;
+  const imageHeight = silhouette.height;
   const drawLogo = (centerX: number, centerY: number, size: number, opacity: number, rotation: number) => {
     context.save();
     context.globalAlpha = opacity;
     context.translate(centerX, centerY);
     context.rotate(rotation);
-    const glow = context.createRadialGradient(-size * .18, -size * .2, size * .08, 0, 0, size * .66);
-    glow.addColorStop(0, "rgba(255,255,255,.95)");
-    glow.addColorStop(.42, color);
-    glow.addColorStop(1, "rgba(7,9,27,0)");
-    context.fillStyle = glow;
-    context.beginPath();
-    context.arc(0, 0, size * .67, 0, Math.PI * 2);
-    context.fill();
-    const frame = size * .84;
-    context.beginPath();
-    context.roundRect(-frame / 2, -frame / 2, frame, frame, size * .12);
-    context.clip();
     const scale = Math.min(size / imageWidth, size / imageHeight);
     const width = imageWidth * scale;
     const height = imageHeight * scale;
-    context.drawImage(image, -width / 2, -height / 2, width, height);
+    context.drawImage(silhouette, -width / 2, -height / 2, width, height);
     context.restore();
-    context.strokeStyle = `rgba(244,245,239,${Math.min(.8, opacity)})`;
-    context.lineWidth = 2.5;
-    context.beginPath();
-    context.roundRect(centerX - frame / 2, centerY - frame / 2, frame, frame, size * .12);
-    context.stroke();
   };
 
-  // Repeat the real mark across longitudes and latitudes so the sphere keeps its identity while tumbling.
-  drawLogo(384, 192, 174, 1, 0);
-  drawLogo(128, 104, 112, .62, -.12);
-  drawLogo(640, 104, 112, .62, .12);
-  drawLogo(128, 286, 96, .46, .1);
-  drawLogo(640, 286, 96, .46, -.1);
+  // The real mark is part of the opaque surface, not an object inside a glass shell.
+  drawLogo(128, 128, 122, .96, 0);
+  drawLogo(384, 128, 122, .96, 0);
+  drawLogo(256, 68, 65, .7, -.12);
+  drawLogo(256, 193, 65, .7, .12);
   const texture = new THREE.CanvasTexture(surface);
   texture.colorSpace = THREE.SRGBColorSpace;
   texture.wrapS = THREE.RepeatWrapping;
@@ -131,23 +91,12 @@ function techMark(label: string) {
 }
 
 function techPlanetSurfaceTexture(item: TechOrbitItem) {
-  const surface = document.createElement("canvas");
-  surface.width = 512;
-  surface.height = 256;
-  const context = surface.getContext("2d")!;
   const color = `#${item.color}`;
-  const gradient = context.createLinearGradient(0, 0, 512, 256);
-  gradient.addColorStop(0, "#080c23");
-  gradient.addColorStop(.24, color);
-  gradient.addColorStop(.5, "rgba(244,245,239,.48)");
-  gradient.addColorStop(.76, color);
-  gradient.addColorStop(1, "#080c23");
-  context.fillStyle = gradient;
-  context.fillRect(0, 0, 512, 256);
-  for (let y = 21; y < 256; y += 22) {
-    context.fillStyle = `rgba(244,245,239,${.05 + Math.sin(y * .19) * .02})`;
-    context.fillRect(0, y, 512, 5);
-  }
+  const seed = Array.from(item.label).reduce((sum, character) => sum + character.charCodeAt(0), 0) % 127;
+  const maps = createPlanetMaps(color, "rocky", 256, seed);
+  const surface = maps.map.image as HTMLCanvasElement;
+  const context = surface.getContext("2d")!;
+  context.scale(.5, .5);
   const drawMark = (centerX: number, centerY: number, size: number, opacity: number) => {
     context.save();
     context.globalAlpha = opacity;
@@ -194,7 +143,7 @@ function techPlanetSurfaceTexture(item: TechOrbitItem) {
     drawImageMark(434, 94, 42, .48);
     texture.needsUpdate = true;
   };
-  return { texture, paintLogo };
+  return { texture, bump: maps.bump, sourceTexture: maps.map, paintLogo };
 }
 
 export function CosmicCanvas({ activeId, onSelect, onPrevious, onNext, motionOn, progress, techNodes, satelliteCatalog, sector, view, language, onGalaxySelect, onUniverse }: {
@@ -251,18 +200,20 @@ export function CosmicCanvas({ activeId, onSelect, onPrevious, onNext, motionOn,
     host.dataset.rendererEpoch = String(++rendererEpoch.current);
     setFallback(false);
     renderer.outputColorSpace = THREE.SRGBColorSpace;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.1;
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(40, 1, .1, 100);
     const system = new THREE.Group();
     scene.add(system);
     const universe = createGalaxySystem();
     scene.add(universe.group);
-    scene.add(new THREE.AmbientLight(0xd8ebec, 2));
-    const sunlight = new THREE.PointLight(0xffe8bc, 24, 25, 1.2);
-    sunlight.position.set(-1.5, 3, 5);
+    scene.add(new THREE.AmbientLight(0xa9c3df, .12));
+    const sunlight = new THREE.DirectionalLight(0xfff1da, 3);
+    sunlight.position.set(-4, 5, 7);
     scene.add(sunlight);
-    const fill = new THREE.DirectionalLight(0xb4d9dc, 2);
-    fill.position.set(3, -1, 3);
+    const fill = new THREE.DirectionalLight(0x7ba4d4, .18);
+    fill.position.set(3, -1, -4);
     scene.add(fill);
 
     const starPositions = new Float32Array(900 * 3);
@@ -275,8 +226,10 @@ export function CosmicCanvas({ activeId, onSelect, onPrevious, onNext, motionOn,
     scene.add(stars);
     const loader = new THREE.TextureLoader();
     loader.setCrossOrigin("anonymous");
-    const textures: THREE.Texture[] = [universe.texture];
+    const textures: THREE.Texture[] = universe.textures;
     let disposed = false;
+    let brandedWorlds = 0;
+    host.dataset.brandedWorlds = "0";
     const sectorWorlds: Record<GalaxyId, readonly OrbitWorld[]> = { main: projectWorlds, ...satelliteCatalog };
     const allWorlds: readonly OrbitWorld[] = [...projectWorlds, ...satelliteCatalog.university, ...satelliteCatalog.client];
     const mainCount = projectWorlds.length;
@@ -286,44 +239,42 @@ export function CosmicCanvas({ activeId, onSelect, onPrevious, onNext, motionOn,
       const index = isMain ? worldIndex : worldIndex < mainCount + universityCount ? worldIndex - mainCount : worldIndex - mainCount - universityCount;
       const group = new THREE.Group();
       group.position.set(world.x, world.y, world.z);
-      const texture = world.mark ? satelliteTexture(world.color, world.mark) : planetTexture(world.color);
-      textures.push(texture);
+      const kind = isMain ? projectPlanetKinds[index] : projectPlanetKinds[worldIndex % 5];
+      const maps = createPlanetMaps(world.color, kind, 512, 7 + worldIndex * 17);
+      textures.push(...maps.textures);
+      const texture = world.mark ? satelliteTexture(maps.map.image, world.mark) : maps.map;
+      if (world.mark) textures.push(texture);
       const radius = .37 + index * .02;
-      const sphereMaterial = new THREE.MeshStandardMaterial({ map: texture, color: "#ffffff", metalness: .08, roughness: .72, transparent: true, opacity: isMain ? .2 : 1 });
+      const sphereMaterial = new THREE.MeshStandardMaterial({ map: texture, bumpMap: maps.bump, bumpScale: kind === "gas" ? .002 : .013, color: "#ffffff", metalness: 0, roughness: kind === "ocean" ? .62 : .9 });
       const sphere = new THREE.Mesh(new THREE.SphereGeometry(radius, 48, 32), sphereMaterial);
-      const atmosphere = new THREE.Mesh(
-        new THREE.SphereGeometry(radius * 1.08, 32, 20),
-        new THREE.MeshBasicMaterial({ color: world.color, transparent: true, opacity: .14, side: THREE.BackSide, blending: THREE.AdditiveBlending }),
-      );
-      const logoHalo = new THREE.Mesh(
-        new THREE.TorusGeometry(radius * 1.18, .012, 8, 72),
-        new THREE.MeshBasicMaterial({ color: world.color, transparent: true, opacity: .3, depthWrite: false }),
-      );
-      logoHalo.rotation.x = .35;
+      const atmosphere = createAtmosphere(radius, kind === "rocky" ? "#e3a084" : "#8cb6dc");
+      const { ring: logoHalo, texture: ringTexture } = createPlanetRing(radius);
+      textures.push(ringTexture);
+      logoHalo.visible = kind === "gas";
       const focusRing = new THREE.Mesh(
-        new THREE.TorusGeometry(radius * 1.42, .018, 8, 72),
+        new THREE.TorusGeometry(radius * 1.42, .004, 8, 72),
         new THREE.MeshBasicMaterial({ color: world.color, transparent: true, opacity: 0, depthWrite: false }),
       );
       focusRing.rotation.set(.72, -.18, .25);
-      const sculpture = isMain ? createProjectSculpture(world.id as ProjectId) : new THREE.Group();
-      sculpture.scale.multiplyScalar(radius * 1.05);
-      group.add(sphere, atmosphere, logoHalo, focusRing, sculpture);
+      const cloud = maps.cloud ? new THREE.Mesh(new THREE.SphereGeometry(radius * 1.012, 32, 24), new THREE.MeshStandardMaterial({ map: maps.cloud, transparent: true, opacity: .7, depthWrite: false, roughness: 1 })) : null;
+      group.add(sphere, atmosphere, logoHalo, focusRing);
+      if (cloud) group.add(cloud);
       if (world.logo) {
         const logoTexture = loader.load(`/assets/brand/${world.logo}`, (loaded) => {
-          const surfaceTexture = planetSurfaceTexture(loaded.image, world.color);
+          const surfaceTexture = planetSurfaceTexture(loaded.image, maps.map.image);
           logoTexture.dispose();
           if (disposed) surfaceTexture.dispose();
           else {
             textures.push(surfaceTexture);
             sphereMaterial.map = surfaceTexture;
-            sphereMaterial.opacity = .15;
             sphereMaterial.needsUpdate = true;
+            host.dataset.brandedWorlds = String(++brandedWorlds);
             wakeRef.current();
           }
         });
       }
       system.add(group);
-      return { group, sphere, atmosphere, logoHalo, focusRing, sculpture };
+      return { group, sphere, atmosphere, logoHalo, focusRing, cloud };
     });
     const sectorPlanets = {
       main: allPlanets.slice(0, mainCount),
@@ -345,7 +296,7 @@ export function CosmicCanvas({ activeId, onSelect, onPrevious, onNext, motionOn,
       const color = `#${item.color}`;
       const techSurface = techPlanetSurfaceTexture(item);
       const texture = techSurface.texture;
-      techTextures.push(texture);
+      techTextures.push(texture, techSurface.bump, techSurface.sourceTexture);
       loader.load(`https://cdn.simpleicons.org/${item.slug}/${item.color}`, (loaded) => {
         if (!disposed) {
           techSurface.paintLogo(loaded.image);
@@ -355,7 +306,7 @@ export function CosmicCanvas({ activeId, onSelect, onPrevious, onNext, motionOn,
       }, undefined, () => {});
       const surface = new THREE.Mesh(
         new THREE.SphereGeometry(radius, 16, 12),
-        new THREE.MeshStandardMaterial({ map: texture, color: "#ffffff", emissive: color, emissiveIntensity: .22, metalness: .14, roughness: .66, transparent: true, opacity: .82 }),
+        new THREE.MeshStandardMaterial({ map: texture, bumpMap: techSurface.bump, bumpScale: .002, color: "#ffffff", emissive: color, emissiveIntensity: .015, metalness: 0, roughness: .9 }),
       );
       const atmosphere = new THREE.Mesh(
         new THREE.SphereGeometry(radius * 1.22, 12, 10),
@@ -366,6 +317,7 @@ export function CosmicCanvas({ activeId, onSelect, onPrevious, onNext, motionOn,
         new THREE.MeshBasicMaterial({ color, transparent: true, opacity: .25, depthWrite: false }),
       );
       ring.rotation.set(.78 + lane * .16, .18 + index * .04, .24 + lane * .22);
+      ring.visible = lane === 2;
       const focusHalo = new THREE.Mesh(
         new THREE.TorusGeometry(radius * 1.78, radius * .032, 5, 32),
         new THREE.MeshBasicMaterial({ color, transparent: true, opacity: .04, depthWrite: false, blending: THREE.AdditiveBlending }),
@@ -443,7 +395,7 @@ export function CosmicCanvas({ activeId, onSelect, onPrevious, onNext, motionOn,
       pointer.set(((event.clientX - rect.left) / rect.width) * 2 - 1, -((event.clientY - rect.top) / rect.height) * 2 + 1);
       raycaster.setFromCamera(pointer, camera);
       const planetGroups = state.current.view === "universe" ? universe.clusters.map(({ hit }) => hit) : sectorGroups[state.current.sector];
-      const hit = raycaster.intersectObjects(planetGroups, true)[0];
+      const hit = raycaster.intersectObjects(planetGroups, true).find(({ object }) => object.visible);
       if (!hit) return -1;
       let object: THREE.Object3D | null = hit.object;
       while (object) {
@@ -486,13 +438,14 @@ export function CosmicCanvas({ activeId, onSelect, onPrevious, onNext, motionOn,
       system.scale.setScalar(.12 + viewBlend * .88);
       system.visible = viewBlend > .65;
       Object.entries(sectorPlanets).forEach(([id, family]) => family.forEach(({ group }) => { group.visible = id === sector; }));
-      universe.clusters.forEach(({ id, disk, material, nucleus, cloud }, index) => {
+      universe.clusters.forEach(({ id, disk, material, nucleus, cloud, dustMaterial }, index) => {
         const highlighted = galaxyHover.current === index || galaxyLabels.current[index] === document.activeElement;
         const emphasis = highlighted ? 1 : 0;
         disk.rotation.y = -.15 + index * .23 + elapsed * (.018 + index * .005);
         material.opacity = (id === sector ? .95 - viewBlend * .88 : .85 * (1 - viewBlend)) + emphasis * .12 * (1 - viewBlend);
         nucleus.material.opacity = (.72 + emphasis * .25) * (1 - viewBlend);
         cloud.material.opacity = THREE.MathUtils.damp(cloud.material.opacity, (.09 + emphasis * .12) * (1 - viewBlend), 8, dt);
+        dustMaterial.opacity = (.62 + emphasis * .12) * (1 - viewBlend);
         nucleus.scale.setScalar(THREE.MathUtils.damp(nucleus.scale.x, highlighted ? .4 : .28, 8, dt));
         galaxyLabels.current[index]?.setAttribute("data-highlighted", String(highlighted));
       });
@@ -500,7 +453,7 @@ export function CosmicCanvas({ activeId, onSelect, onPrevious, onNext, motionOn,
       // Orbit positions in a shallow ellipse, keeping the field readable at every angle.
       system.rotation.y = Math.sin(elapsed * .12) * .08;
       system.rotation.x = pitch + Math.sin(elapsed * .09) * .018;
-      planets.forEach(({ group, sphere, atmosphere, logoHalo, focusRing, sculpture }, index) => {
+      planets.forEach(({ group, sphere, atmosphere, logoHalo, focusRing, cloud }, index) => {
         const selected = worlds[index].id === state.current.activeId;
         const scale = selected ? 2.25 : .94;
         group.scale.setScalar(state.current.motionOn ? THREE.MathUtils.damp(group.scale.x, scale, 7, dt) : scale);
@@ -522,13 +475,12 @@ export function CosmicCanvas({ activeId, onSelect, onPrevious, onNext, motionOn,
         }
         sphere.rotation.y = -system.rotation.y + index * .12 + elapsed * .08;
         sphere.rotation.x = Math.sin(elapsed * .18 + index) * .035;
-        sculpture.rotation.y = elapsed * (.11 + index * .008) + angle * .22;
-        sculpture.rotation.x = Math.sin(elapsed * .16 + index) * .04;
         atmosphere.rotation.y = -elapsed * .05;
-        atmosphere.material.opacity = selected ? .2 : .12;
+        atmosphere.material.uniforms.uOpacity.value = selected ? .7 : .45;
+        if (cloud) cloud.rotation.y = sphere.rotation.y + elapsed * .012;
         logoHalo.rotation.z = elapsed * (state.current.motionOn ? .08 : 0);
         const focusMaterial = focusRing.material as THREE.MeshBasicMaterial;
-        const targetOpacity = selected ? .76 : .035;
+        const targetOpacity = selected ? .42 : .025;
         focusMaterial.opacity = state.current.motionOn ? THREE.MathUtils.damp(focusMaterial.opacity, targetOpacity, 8, dt) : targetOpacity;
         focusRing.rotation.z = elapsed * (state.current.motionOn ? (selected ? .18 : -.035) : 0);
         focusRing.scale.setScalar(state.current.motionOn && selected ? 1 + Math.sin(elapsed * 2.4 + index) * .045 : 1);
@@ -583,14 +535,13 @@ export function CosmicCanvas({ activeId, onSelect, onPrevious, onNext, motionOn,
         const pulse = state.current.motionOn ? 1 + Math.sin(elapsed * 1.7 + index) * .05 : 1;
         group.scale.setScalar(pulse * (isActiveProjectTool ? 1.2 : belongsToProject ? .96 : .72));
         const surfaceMaterial = surface.material as THREE.MeshStandardMaterial;
-        surfaceMaterial.opacity = isActiveProjectTool ? .98 : belongsToProject ? .68 : .24;
-        surfaceMaterial.emissiveIntensity = isActiveProjectTool ? .42 : belongsToProject ? .24 : .12;
+        surfaceMaterial.emissiveIntensity = isActiveProjectTool ? .045 : belongsToProject ? .015 : 0;
         surface.scale.setScalar(1);
         atmosphere.material.opacity = (isActiveProjectTool ? .24 : belongsToProject ? .13 : .045) + (state.current.motionOn ? Math.sin(elapsed * .8 + index) * .025 : 0);
         (ring.material as THREE.MeshBasicMaterial).opacity = isActiveProjectTool ? .64 : belongsToProject ? .26 : .07;
         ring.rotation.z = .24 + lane * .22 + elapsed * (.12 + lane * .035);
         const focusMaterial = focusHalo.material as THREE.MeshBasicMaterial;
-        const focusOpacity = isActiveProjectTool ? .76 : belongsToProject ? .11 : .025;
+        const focusOpacity = isActiveProjectTool ? .3 : belongsToProject ? .065 : .015;
         focusMaterial.opacity = state.current.motionOn ? THREE.MathUtils.damp(focusMaterial.opacity, focusOpacity, 8, dt) : focusOpacity;
         focusHalo.rotation.z = .24 + lane * .22 - elapsed * (.16 + lane * .035);
         focusHalo.scale.setScalar(isActiveProjectTool && state.current.motionOn ? 1 + Math.sin(elapsed * 2.1 + index) * .08 : 1);
@@ -620,9 +571,10 @@ export function CosmicCanvas({ activeId, onSelect, onPrevious, onNext, motionOn,
       });
       planets.forEach(({ group }, index) => {
         group.getWorldPosition(projected);
+        const depth = Math.max(.1, projected.distanceTo(camera.position));
         projected.project(camera);
         const label = labels.current[index];
-        const radiusPixels = (.37 + index * .02) * group.scale.x * host.clientHeight / (2 * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) * (camera.position.z - focus.z));
+        const radiusPixels = (.37 + index * .02) * group.scale.x * host.clientHeight / (2 * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) * depth);
         if (label) label.style.transform = `translate(-50%, 0) translate(${(projected.x * .5 + .5) * host.clientWidth}px, ${(-projected.y * .5 + .5) * host.clientHeight + radiusPixels + 8}px)`;
       });
       host.dataset.ready = "true";
@@ -637,6 +589,8 @@ export function CosmicCanvas({ activeId, onSelect, onPrevious, onNext, motionOn,
       host.dataset.flight = viewBlend.toFixed(3);
       host.dataset.flightReady = String(state.current.view === "universe" ? viewBlend < .015 : viewBlend > .985);
       host.dataset.galaxyCount = "3";
+      host.dataset.planetSurface = "opaque-terrain";
+      host.dataset.drawCalls = String(renderer.info.render.calls);
       host.dataset.universeAngle = universeAngle.toFixed(4);
       host.dataset.departure = departure.toFixed(3);
       host.dataset.cameraDistance = camera.position.z.toFixed(2);
