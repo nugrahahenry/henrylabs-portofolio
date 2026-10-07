@@ -11,10 +11,14 @@ export function infallPoint(source: THREE.Vector3, target: THREE.Vector3, travel
 
 export function gravityMaterial(target: THREE.Vector3, size: number, streak = false, stream = false, sparkle = false) {
   return new THREE.ShaderMaterial({
-    uniforms: { uTarget: { value: target }, uPull: { value: 0 }, uTime: { value: 0 }, uScale: { value: 1 }, uSize: { value: size }, uHorizon: { value: 0 } },
+    uniforms: {
+      uTarget: { value: target }, uPull: { value: 0 }, uTime: { value: 0 }, uScale: { value: 1 }, uSize: { value: size }, uHorizon: { value: 0 },
+      ...(stream ? { uCameraWorld: { value: new THREE.Matrix4() }, uInverseProjection: { value: new THREE.Matrix4() } } : {}),
+    },
     vertexShader: `
       attribute vec3 color;
       ${streak ? "attribute float aTail;" : ""}
+      ${stream ? "attribute float aSeed; uniform mat4 uCameraWorld; uniform mat4 uInverseProjection;" : ""}
       uniform vec3 uTarget;
       uniform float uPull;
       uniform float uTime;
@@ -24,8 +28,11 @@ export function gravityMaterial(target: THREE.Vector3, size: number, streak = fa
       varying vec3 vColor;
       varying float vFade;
       void main() {
-        vec3 source = (modelMatrix * vec4(position, 1.0)).xyz;
-        float seed = fract(sin(dot(position.xy, vec2(12.9898, 78.233))) * 43758.5453);
+        ${stream ? `vec4 sourceRay = uInverseProjection * vec4(position.xy, .5, 1.0);
+        vec3 viewSource = sourceRay.xyz / sourceRay.w;
+        viewSource *= position.z / viewSource.z;
+        vec3 source = (uCameraWorld * vec4(viewSource, 1.0)).xyz;` : "vec3 source = (modelMatrix * vec4(position, 1.0)).xyz;"}
+        float seed = ${stream ? "aSeed" : "fract(sin(dot(position.xy, vec2(12.9898, 78.233))) * 43758.5453)"};
         float influence = smoothstep(.08, .24, seed);
         float travel = ${stream ? "fract(uTime * .05 + seed)" : `clamp(uPull * influence * (1.18 + seed * .12) - seed * .12 ${streak ? "- aTail * uPull * .012" : ""}, 0.0, 1.0)`};
         vec3 delta = source - uTarget;

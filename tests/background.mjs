@@ -56,6 +56,9 @@ try {
     await expect(background).toHaveAttribute("data-visitor-capacity", "5");
     await expect(background).toHaveAttribute("data-bright-stars", "18");
     await expect(background).toHaveAttribute("data-dust-flow", "inward");
+    await expect(background).toHaveAttribute("data-dust-sources", "top,left,bottom");
+    await expect(background).toHaveAttribute("data-feeding-dust-count", "240");
+    await expect(background).toHaveAttribute("data-distant-stars", viewport.width < 700 ? "1000" : "1800");
     const starPixel = await background.locator("canvas").evaluate((canvas) => new Promise((resolve) => requestAnimationFrame(() => {
       const gl = canvas.getContext("webgl2");
       const host = canvas.parentElement;

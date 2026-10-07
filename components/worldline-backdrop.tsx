@@ -11,6 +11,7 @@ import { orbitGeometry, orbitalSpeed, sampleOrbit } from "./orbital-path";
 import { createStellarCore } from "./stellar-core";
 import { createDeepSpace } from "./deep-space";
 import { createSpacecraft, spacecraftPose } from "./spacecraft";
+import { COMPACT_STAR_COUNT, DISTANT_STAR_COUNT, FEEDING_DUST_COUNT, distantStarPoint, dustStreamSource } from "./ambient-field";
 
 function createBlackHole() {
   const group = new THREE.Group();
@@ -169,6 +170,21 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, contactProgres
     brightGeometry.setAttribute("color", new THREE.BufferAttribute(brightColors, 3));
     const brightMaterial = gravityMaterial(gravityTarget, .16, false, false, true);
     starField.add(new THREE.Points(brightGeometry, brightMaterial));
+    const distantPositions = new Float32Array(DISTANT_STAR_COUNT * 3);
+    const distantColors = new Float32Array(DISTANT_STAR_COUNT * 3);
+    const ambientPoint = new THREE.Vector3();
+    for (let i = 0; i < DISTANT_STAR_COUNT; i++) {
+      distantStarPoint(i, ambientPoint).toArray(distantPositions, i * 3);
+      starColor.set(palette[i % palette.length]).multiplyScalar(.42 + i % 7 * .055);
+      starColor.toArray(distantColors, i * 3);
+    }
+    const distantGeometry = new THREE.BufferGeometry();
+    distantGeometry.setAttribute("position", new THREE.BufferAttribute(distantPositions, 3));
+    distantGeometry.setAttribute("color", new THREE.BufferAttribute(distantColors, 3));
+    const distantMaterial = gravityMaterial(gravityTarget, .115);
+    const distantStars = new THREE.Points(distantGeometry, distantMaterial);
+    distantStars.frustumCulled = false;
+    starField.add(distantStars);
     const streakGeometry = new THREE.BufferGeometry();
     const streakPositions = new Float32Array(80 * 6);
     const streakColors = new Float32Array(80 * 6);
@@ -218,19 +234,22 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, contactProgres
 
     // One recycled GPU stream keeps the close alive during the planet's quiet interval.
     const flowGeometry = new THREE.BufferGeometry();
-    const flowPositions = new Float32Array(160 * 3);
-    const flowColors = new Float32Array(160 * 3);
-    for (let i = 0; i < 160; i++) {
-      const index = (i * 7) % galaxyCount;
-      flowPositions.set(galaxyPositions.subarray(index * 3, index * 3 + 3), i * 3);
-      flowColors.set(galaxyColors.subarray(index * 3, index * 3 + 3), i * 3);
+    const flowPositions = new Float32Array(FEEDING_DUST_COUNT * 3);
+    const flowColors = new Float32Array(FEEDING_DUST_COUNT * 3);
+    const flowSeeds = new Float32Array(FEEDING_DUST_COUNT);
+    for (let i = 0; i < FEEDING_DUST_COUNT; i++) {
+      dustStreamSource(i, ambientPoint).toArray(flowPositions, i * 3);
+      galaxyColor.set(galaxyPalette[i % galaxyPalette.length]);
+      galaxyColor.toArray(flowColors, i * 3);
+      flowSeeds[i] = ((i + .5) * .618033989) % 1;
     }
     flowGeometry.setAttribute("position", new THREE.BufferAttribute(flowPositions, 3));
     flowGeometry.setAttribute("color", new THREE.BufferAttribute(flowColors, 3));
+    flowGeometry.setAttribute("aSeed", new THREE.BufferAttribute(flowSeeds, 1));
     const flowMaterial = gravityMaterial(gravityTarget, .027, false, true);
     const feedingDust = new THREE.Points(flowGeometry, flowMaterial);
     feedingDust.frustumCulled = false;
-    starField.add(feedingDust);
+    scene.add(feedingDust);
 
     const wandererMaps = ["#82b8c4", "#c69b78", "#a9bba0"].map((color, index) => createPlanetMaps(color, index === 0 ? "ocean" : index === 1 ? "rocky" : "ice", 256, 61 + index * 11));
     const planetTextures: THREE.Texture[] = wandererMaps.flatMap((maps) => maps.textures);
@@ -433,8 +452,11 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, contactProgres
       feedingDust.visible = gravityActive;
       flowMaterial.uniforms.uPull.value = gravityActive ? holeStrength * THREE.MathUtils.smoothstep(gravityAge, 0, 2) : 0;
       flowMaterial.uniforms.uTime.value = gravityAge;
+      flowMaterial.uniforms.uCameraWorld.value.copy(camera.matrixWorld);
+      flowMaterial.uniforms.uInverseProjection.value.copy(camera.projectionMatrixInverse);
       flowMaterial.uniforms.uScale.value = height * renderer.getPixelRatio() * .5;
       flowMaterial.uniforms.uHorizon.value = blackHole.group.scale.x * .5;
+      distantMaterial.uniforms.uScale.value = height * renderer.getPixelRatio() * .5;
       planetSystem.scale.setScalar(solarScale * (1 - pull * .94));
       planetSystem.position.copy(solarOrigin).lerp(gravityTarget, pull);
       planetSystem.rotation.z += pull * pull * 4;
@@ -502,6 +524,9 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, contactProgres
       host.dataset.spacecraftVisible = String(spacecraft.group.visible);
       host.dataset.brightStars = "18";
       host.dataset.dustFlow = "inward";
+      host.dataset.dustSources = "top,left,bottom";
+      host.dataset.feedingDustCount = String(flowGeometry.getAttribute("position").count);
+      host.dataset.distantStars = String(distantGeometry.drawRange.count);
       host.dataset.absorptionRadius = flowMaterial.uniforms.uHorizon.value.toFixed(3);
       renderer.render(scene, camera);
       let visibleVisitors = 0;
@@ -521,6 +546,7 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, contactProgres
       camera.aspect = host.clientWidth / Math.max(1, host.clientHeight);
       camera.updateProjectionMatrix();
       renderer.setSize(host.clientWidth, host.clientHeight, false);
+      distantGeometry.setDrawRange(0, host.clientWidth < 700 ? COMPACT_STAR_COUNT : DISTANT_STAR_COUNT);
       deepSpace.material.uniforms.uResolution.value.set(host.clientWidth * renderer.getPixelRatio(), host.clientHeight * renderer.getPixelRatio());
       wake();
     };

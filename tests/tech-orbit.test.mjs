@@ -21,6 +21,7 @@ const { createStellarCore } = await loadModule("stellar-core");
 const { createDeepSpace } = await loadModule("deep-space");
 const { infallPoint, gravityMaterial } = await loadModule("gravity-field");
 const { createSpacecraft, spacecraftPose } = await loadModule("spacecraft");
+const { distantStarPoint, dustStreamSource, DISTANT_STAR_COUNT, COMPACT_STAR_COUNT, FEEDING_DUST_COUNT } = await loadModule("ambient-field");
 
 test("every tech lane is a true 3D circle outside its moving owner", () => {
   for (const body of [.34, .83, 1.01]) for (const lane of [0, 1, 2]) {
@@ -121,4 +122,38 @@ test("one bounded dimensional spacecraft has a quiet repeat and still alternativ
   assert.deepEqual(spacecraftPose(3, false), spacecraftPose(40, false));
   craft.group.traverse((object) => { object.geometry?.dispose(); });
   craft.hull.dispose(); craft.glass.dispose(); craft.light.dispose(); craft.group.children[3].dispose();
+});
+
+test("distant stars form a deterministic depth layer without increasing compact density", () => {
+  assert.equal(DISTANT_STAR_COUNT, 1800);
+  assert.equal(COMPACT_STAR_COUNT, 1000);
+  const points = Array.from({ length: DISTANT_STAR_COUNT }, (_, i) => distantStarPoint(i));
+  assert.ok(points.every((point) => point.z <= -18 && point.z >= -40));
+  assert.ok(points.some((point) => point.z < -38) && points.some((point) => point.z > -20));
+  assert.ok(points.some((point) => point.x > 15) && points.some((point) => point.x < -15));
+  assert.deepEqual(distantStarPoint(88), points[88]);
+});
+
+test("the bounded feeding stream includes visible upper, side and lower sources at every aspect ratio", () => {
+  assert.equal(FEEDING_DUST_COUNT, 240);
+  const sources = Array.from({ length: FEEDING_DUST_COUNT }, (_, i) => dustStreamSource(i));
+  assert.equal(sources.filter((_, i) => i % 4 < 2).length, 120);
+  for (const aspect of [1440 / 900, 390 / 844, 844 / 390]) {
+    const camera = new THREE.PerspectiveCamera(44, aspect, .1, 100);
+    camera.position.set(.3, -.1, 6.4);
+    camera.lookAt(0, 0, -3.8);
+    camera.updateMatrixWorld();
+    for (let i = 0; i < sources.length; i++) {
+      const source = sources[i];
+      const ray = new THREE.Vector3(source.x, source.y, .5).applyMatrix4(camera.projectionMatrixInverse);
+      ray.multiplyScalar(source.z / ray.z).applyMatrix4(camera.matrixWorld).project(camera);
+      assert.ok(Math.abs(ray.x - source.x) < 1e-10 && Math.abs(ray.y - source.y) < 1e-10);
+      assert.ok(Math.abs(ray.x) < 1 && Math.abs(ray.y) < 1, "sources must start inside the visible sky");
+      if (i % 4 < 2) assert.ok(ray.y > .63, "half of the pool must enter from the upper sky");
+    }
+  }
+  const material = gravityMaterial(new THREE.Vector3(), .027, false, true);
+  assert.match(material.vertexShader, /uInverseProjection \* vec4\(position.xy/);
+  assert.match(material.vertexShader, /float seed = aSeed/);
+  material.dispose();
 });
