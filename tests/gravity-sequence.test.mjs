@@ -5,7 +5,17 @@ import ts from "typescript";
 
 const source = readFileSync(new URL("../components/gravity-sequence.ts", import.meta.url), "utf8");
 const compiled = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.ESNext, target: ts.ScriptTarget.ES2020 } }).outputText;
-const { gravitySequence, gravityBirth, gravityVisitors, gravityApproachAngle, advanceGravityAge, updateClosingScroll, closingReturn, GRAVITY_INTAKE_SECONDS, GRAVITY_REST_SECONDS } = await import(`data:text/javascript;base64,${Buffer.from(compiled).toString("base64")}`);
+const { gravitySequence, gravityBirth, gravityVisitors, gravityVisitorEntry, gravityApproachAngle, advanceGravityAge, updateClosingScroll, closingReturn, GRAVITY_INTAKE_SECONDS, GRAVITY_REST_SECONDS } = await import(`data:text/javascript;base64,${Buffer.from(compiled).toString("base64")}`);
+
+test("arrivals originate in distant upper-middle space, not beside the cropped horizon", () => {
+  for (let index = 0; index < 5; index++) {
+    const entry = gravityVisitorEntry(index);
+    const x = (entry.x + 1) / 2, y = (1 - entry.y) / 2;
+    assert.ok(x >= .3 && x <= .6 && y >= .15 && y <= .3);
+    assert.ok(Math.hypot(x - 1.01, y - .9) > .75);
+    assert.ok(entry.z < -4.8, "the incoming system starts behind the horizon's camera plane");
+  }
+});
 
 test("closing return restores objects before shrinking and fading the horizon", () => {
   assert.deepEqual(closingReturn(1), { infall: 1, growth: 1, opacity: 1 });

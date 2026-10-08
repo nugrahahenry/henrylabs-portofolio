@@ -72,6 +72,11 @@ try {
       while (Number(await field.getAttribute("data-gravity-age")) < target && steps++ < 1100) await page.clock.fastForward(250);
       assert.ok(steps < 1100, "the closing clock must advance with visible frame time");
     }
+    await advanceTo(3);
+    assert.ok(Number(await field.getAttribute("data-visitor-entry-y")) < .3);
+    assert.ok(Number(await field.getAttribute("data-visitor-entry-x")) > .3);
+    assert.ok(Number(await field.getAttribute("data-visible-visitors")) > 0, "the distant group must already be visible before it approaches the hole");
+    await page.screenshot({ path: `test-results/${viewport.width}-distant-arrival.png` });
     await advanceTo(16);
     await page.evaluate(() => window.scrollTo({ top: document.documentElement.scrollHeight, behavior: "instant" }));
     await expect(page.locator("footer")).toBeInViewport();

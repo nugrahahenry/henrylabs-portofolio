@@ -36,6 +36,12 @@ export function gravityVisitors(index: number) {
   return { count: [3, 5, 3, 5, 5][cycle % 5], direction: cycle % 2 === 0 ? "left" as const : "top" as const };
 }
 
+export function gravityVisitorEntry(index: number) {
+  // Normalized camera coordinates: visible upper-middle space, well outside the horizon.
+  const top = gravityVisitors(index).direction === "top";
+  return { x: top ? .08 : -.32, y: top ? .66 : .5, z: -7.5 };
+}
+
 export function gravityApproachAngle(entryAngle: number, progress: number) {
   // Approach the cropped horizon from its visible upper-left quadrant on every aspect ratio.
   return entryAngle + (Math.PI * .58 - entryAngle) * Math.pow(Math.max(0, Math.min(1, progress)), 1.5);

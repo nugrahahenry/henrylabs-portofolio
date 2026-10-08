@@ -6,7 +6,7 @@ import * as THREE from "three";
 import { projectWorlds, type ProjectId } from "./cosmic-canvas";
 import { createAtmosphere, createPlanetMaps, createPlanetRing, projectPlanetKinds } from "./planet-materials";
 import { gravityMaterial, infallPoint } from "./gravity-field";
-import { advanceGravityAge, closingReturn, updateClosingScroll, gravityApproachAngle, gravityBirth, gravitySequence, gravityVisitors, GRAVITY_REST_SECONDS } from "./gravity-sequence";
+import { advanceGravityAge, closingReturn, updateClosingScroll, gravityApproachAngle, gravityBirth, gravitySequence, gravityVisitors, gravityVisitorEntry, GRAVITY_REST_SECONDS } from "./gravity-sequence";
 import { orbitGeometry, orbitalSpeed, sampleOrbit } from "./orbital-path";
 import { createStellarCore } from "./stellar-core";
 import { createDeepSpace } from "./deep-space";
@@ -503,6 +503,7 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, contactProgres
       gravityAge = advanceGravityAge(gravityAge, delta, gravityActive);
       const sequence = gravitySequence(gravityAge);
       const visitorGroup = gravityVisitors(sequence.index);
+      const visitorEntry = gravityVisitorEntry(sequence.index);
       const visitorProgress = sequence.progress * retreat.infall;
       const pull = state.current.motionOn ? holeOpacity * sequence.fieldPull * retreat.infall : 0;
       const returning = state.current.motionOn && closing.returning && birth.ready && holeOpacity > .001;
@@ -709,8 +710,8 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, contactProgres
             visitor.ring.visible = (visitorIndex + index) % 3 === 2;
           });
         }
-        holeRay.set(visitorGroup.direction === "left" ? -1.12 : -.3, visitorGroup.direction === "left" ? .25 : 1.12, .5).unproject(camera).sub(camera.position).normalize();
-        visitorOrigin.copy(camera.position).addScaledVector(holeRay, (-4.8 - camera.position.z) / holeRay.z);
+        holeRay.set(visitorEntry.x, visitorEntry.y, .5).unproject(camera).sub(camera.position).normalize();
+        visitorOrigin.copy(camera.position).addScaledVector(holeRay, (visitorEntry.z - camera.position.z) / holeRay.z);
         visitorOffset.copy(visitorOrigin).sub(gravityTarget);
         const contraction = Math.pow(1 - visitorProgress, 1.3);
         const angle = gravityApproachAngle(Math.atan2(visitorOffset.y, visitorOffset.x), visitorProgress);
@@ -777,6 +778,8 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, contactProgres
       host.dataset.visitorCount = String(wanderer.visible ? visitorGroup.count : 0);
       host.dataset.visitorCapacity = "5";
       host.dataset.visitorDirection = visitorGroup.direction;
+      host.dataset.visitorEntryX = ((visitorEntry.x + 1) / 2).toFixed(3);
+      host.dataset.visitorEntryY = ((1 - visitorEntry.y) / 2).toFixed(3);
       host.dataset.backgroundSource = "volumetric-3d";
       host.dataset.spacecraftVisible = String(flights[0].model.group.visible);
       host.dataset.scoutVisible = String(flights[1].model.group.visible);

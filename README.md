@@ -1,6 +1,6 @@
 <div align="center">
 
-# StarGod Portfolio v0.85.0
+# StarGod Portfolio v0.86.0
 
 **I build things I actually see.**
 
@@ -29,7 +29,7 @@ Enter a living map of **HenryLabs**, **University**, and **Client Work**. Choose
 
 Beyond the map: one preview following the selected project, then Henry himself. A crowned StarGod portrait opens locally under the cursor to reveal Henry in a dark suit: sunglasses, clear glasses, then his unobscured face. The approved portraits share one composition; this is a layered photographic reveal, not a rotatable head model. Four appearance controls also work with touch, keyboard, or reduced motion.
 
-Twenty-five technologies surround the portrait, grouped into Build, Interface, and Systems. Select a tool to see the projects that use it. Scroll further and the orbit recedes as original credentials rise around the same figure. Home no longer repeats a separate technology chapter and certificate shelf; the full project and credential collections live in their own libraries. Compact screens use a readable sequence with floating tool icons and complete documents.
+Twenty-five technologies surround the portrait as lit 3D satellites, grouped into Build, Interface, and Systems. Tools pass in front of and behind Henry; select one to see the projects that use it. Scroll further and the orbit recedes as original credentials rise around the same anchored figure. This exchange also works in tablet and phone windows. Short landscape screens and reduced motion retain a readable sequence. Home no longer repeats a separate technology chapter and certificate shelf; the full collections live in their own libraries.
 
 A continuous Three.js universe connects the journey, from distant stars and nebulae to a reversible black-hole encounter at Contact. Natural background planets remain in orbit throughout the reading sections, moving into a smaller peripheral composition rather than disappearing. A metallic UFO and its pursuing scout add a small story along the way: banking through real depth, missed tracer shots, a luminous wormhole, the UFO entering first, and the scout following. After the portal closes, thirty quiet seconds pass before the next encounter. The scene pauses outside its clear flight areas and respects reduced motion.
 
@@ -131,7 +131,7 @@ This portfolio is **actively being developed**. Hosting is deferred. The project
 | `/projects/[slug]` | A shared detail page for each project |
 | `/credentials` | All 26 original learning records |
 
-Content lives in `content/`; catalog pages and orbital reading actions share those records. Reading pages share one quiet volumetric nebula and distant-star field, without the project-map or cinematic scenes. Motion pauses when hidden and stays still with reduced motion; a dark fallback keeps content readable without WebGL. Home keeps its existing two-renderer setup. Certificate lists use lightweight, uncropped WebP previews, while the viewer preserves full-resolution originals. To regenerate the previews from the public source images, use `node scripts/credential-thumbnails.mjs` with the installed dependencies and Node 24. Route and accessibility checks: `npm run test:libraries`; galaxy integration: `npm run test:sectors`.
+Content lives in `content/`; catalog pages and orbital reading actions share those records. Reading pages share one quiet volumetric nebula and distant-star field, without the project-map or cinematic scenes. Motion pauses when hidden and stays still with reduced motion; a dark fallback keeps content readable without WebGL. The maker's small 3D scene exists only during its visible technology phase, with the upper galaxy animation paused; it releases its renderer before credentials and Contact. Certificate lists use lightweight, uncropped WebP previews, while the viewer preserves full-resolution originals. To regenerate the previews from the public source images, use `node scripts/credential-thumbnails.mjs` with the installed dependencies and Node 24. Route and accessibility checks: `npm run test:libraries`; galaxy integration: `npm run test:sectors`; portrait choreography: `npm run test:maker`.
 
 <details>
 <summary>About the README visuals</summary>
