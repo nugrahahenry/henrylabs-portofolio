@@ -10,7 +10,7 @@ import { advanceGravityAge, closingReturn, updateClosingScroll, gravityApproachA
 import { orbitGeometry, orbitalSpeed, sampleOrbit } from "./orbital-path";
 import { createStellarCore } from "./stellar-core";
 import { createDeepSpace } from "./deep-space";
-import { createSpacecraft, spacecraftPose, routeSpacecraft, flightPresence, createPursuitBolts, pursuitPulse, pursuitMiss, clearShot, createWormhole, wormholePresence, WORMHOLE_X, PURSUIT_DELAY, SPACECRAFT_PERIOD } from "./spacecraft";
+import { createSpacecraft, spacecraftPose, routeSpacecraft, flightPresence, createPursuitBolts, pursuitPulse, pursuitMiss, clearShot, createWormhole, wormholePresence, advancePursuit, pursuitEnd, WORMHOLE_X, PURSUIT_DELAY, COMPACT_PURSUIT_DELAY, PURSUIT_REST } from "./spacecraft";
 import { COMPACT_STAR_COUNT, DISTANT_STAR_COUNT, FEEDING_DUST_COUNT, createDistantStarMaterial, distantStarPoint, dustStreamSource } from "./ambient-field";
 
 function createBlackHole() {
@@ -117,7 +117,13 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, contactProgres
     const deepSpace = createDeepSpace();
     scene.add(deepSpace.volume);
     const flights = [createSpacecraft(), createSpacecraft("scout")].map((model) => ({ model, pose: spacecraftPose(0, false, model.kind), safe: { x: 0, y: .65, visible: false, clearance: 0 }, candidate: { x: 0, y: .65, visible: false, clearance: 0 }, heading: 0, radius: 0, presence: 0, retired: false, portalEntry: null as boolean | null, cycle: -1 }));
-    flights.forEach(({ model }) => scene.add(model.group));
+    flights.forEach(({ model }) => { model.group.traverse(object => object.layers.set(1)); scene.add(model.group); });
+    // Ship-only studio lighting reveals the hull without bleaching the surrounding universe.
+    const craftKey = new THREE.DirectionalLight(0xe3f5ff, 3.2);
+    craftKey.position.set(-3, 5, 7); craftKey.layers.set(1);
+    const craftFill = new THREE.HemisphereLight(0x93cbec, 0x322535, 1.5);
+    craftFill.layers.set(1);
+    scene.add(craftKey, craftFill);
     const bolts = createPursuitBolts();
     scene.add(bolts);
     const wormhole = createWormhole();
@@ -132,8 +138,12 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, contactProgres
     const flightWorld = new THREE.Vector3(), flightView = new THREE.Vector3();
     const heroCopy = document.querySelector<HTMLElement>(".hero-copy");
     const heroKicker = document.querySelector<HTMLElement>(".hero-kicker");
+    const methodSteps = document.querySelector<HTMLElement>("#method .signal-steps");
+    const stackKicker = document.querySelector<HTMLElement>("#stack .section-kicker");
+    let bandDirty = true, bandTop = 0, bandBottom = 0;
     let headerHeight = 76;
     const camera = new THREE.PerspectiveCamera(44, 1, .1, 100);
+    camera.layers.enable(1);
     const starField = new THREE.Group();
     const planetSystem = new THREE.Group();
     const sectorSystem = new THREE.Group();
@@ -388,7 +398,7 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, contactProgres
     let frame = 0;
     let lastTime = 0;
     let elapsed = 0;
-    let flightAge = 0;
+    const pursuit = { age: 0, cycle: 0, delay: PURSUIT_DELAY, interrupted: false };
     let birthAge = 0;
     let gravityAge = 0;
     const closing = { peak: 0, presence: 0, returning: false };
@@ -520,12 +530,21 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, contactProgres
       planetSystem.rotation.z += pull * pull * 4;
       stellarLight.intensity = 34 * (1 - pull);
       // Project real bodies into one height-normalized clearance space, including visible rings.
-      const compactFlight = camera.aspect < .9 || height < 620;
-      const portalX = compactFlight && width >= 640 ? .48 : WORMHOLE_X;
-      const flightDelay = compactFlight ? 12.5 : PURSUIT_DELAY;
+      const compactFlight = width < 1100 || camera.aspect < .9 || height < 620;
+      const portalX = compactFlight ? .48 : WORMHOLE_X;
+      const requestedDelay = compactFlight ? COMPACT_PURSUIT_DELAY : PURSUIT_DELAY;
       const compactOpening = compactFlight && heroCopy && !heroCopy.inert;
-      const flightAllowed = holeOpacity < .05 && !state.current.mapActive && !compactOpening && (!readingChapter || solarVisibility < .05);
-      if (state.current.motionOn && flightAllowed) flightAge += dt;
+      if (bandDirty) {
+        bandTop = Math.max(headerHeight + 16, (methodSteps?.getBoundingClientRect().bottom ?? height) + 16);
+        bandBottom = Math.min(height - 24, (stackKicker?.getBoundingClientRect().top ?? 0) - 16);
+        bandDirty = false;
+      }
+      const readingLane = readingChapter && bandBottom - bandTop >= 120;
+      const laneCenter = 1 - (bandTop + bandBottom) / height;
+      const chapterAllowsFlight = holeOpacity < .05 && !state.current.mapActive && !compactOpening && (!readingChapter || readingLane && solarVisibility < .05);
+      advancePursuit(pursuit, dt, Boolean(chapterAllowsFlight), state.current.motionOn, requestedDelay, portalOpacity < .001 && flights.every(flight => flight.presence < .001));
+      const flightAllowed = chapterAllowsFlight && !pursuit.interrupted && pursuit.delay === requestedDelay;
+      const flightAge = pursuit.age, flightDelay = pursuit.delay;
       flights.forEach(({ model, pose }) => spacecraftPose(flightAge, state.current.motionOn, model.kind, pose, flightDelay));
       const flightActive = flights.some(({ pose, presence }) => pose.visible && flightAllowed || presence > 0);
       const tangent = Math.tan(THREE.MathUtils.degToRad(camera.fov / 2));
@@ -553,10 +572,11 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, contactProgres
       const readingEdge = (flightActive || portalOpacity > 0) && heroCopy && !heroCopy.inert && heroKicker ? heroKicker.getBoundingClientRect().top : null;
       const portalPixels = Math.min(38, width * .105, readingEdge === null ? 38 : Math.max(0, readingEdge - headerHeight - 28) / 3);
       const portalRadius = portalPixels / height * 2;
-      const portalFloor = compactFlight ? -1 + portalRadius + 32 / height : readingEdge === null ? .18 : 1 - (readingEdge - portalRadius * height / 2 - 12) / height * 2;
-      const cycle = Math.floor(flightAge / SPACECRAFT_PERIOD);
+      const portalFloor = readingLane ? 1 - (bandBottom - portalPixels) / height * 2 : compactFlight ? -1 + portalRadius + 32 / height : readingEdge === null ? .18 : 1 - (readingEdge - portalRadius * height / 2 - 12) / height * 2;
+      const portalCeiling = readingLane ? 1 - (bandTop + portalPixels) / height * 2 : compactFlight ? -.6 : 1 - (headerHeight + portalPixels + 10) / height * 2;
+      const cycle = pursuit.cycle;
       if (portalCycle !== cycle) { portalCycle = cycle; portalSafe.visible = false; }
-      routeSpacecraft(portalX * camera.aspect, portalOpacity > .01 ? portalSafe.y : compactFlight ? -.78 : .64, portalRadius, celestialObstacles, portalFloor, compactFlight ? -.6 : 1 - (headerHeight + portalRadius * height / 2 + 10) / height * 2, portalCandidate);
+      routeSpacecraft(portalX * camera.aspect, readingLane ? laneCenter : portalOpacity > .01 ? portalSafe.y : compactFlight ? -.78 : .64, portalRadius, celestialObstacles, portalFloor, portalCeiling, portalCandidate);
       if (portalOpacity < .01 || portalCandidate.visible && Math.abs(portalCandidate.y - portalSafe.y) < .1) Object.assign(portalSafe, portalCandidate);
       const portalClear = portalPixels >= 24 && portalSafe.visible && celestialObstacles.every(body => Math.hypot(portalSafe.x - body.x, portalSafe.y - body.y) >= portalRadius + body.radius + .02);
       const portalTarget = flightAllowed && portalClear ? wormholePresence(flightAge, state.current.motionOn, flightDelay) : 0;
@@ -579,7 +599,7 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, contactProgres
       host.dataset.wormholeClear = String(portalClear);
       flights.forEach((flight, index) => {
         const { model, pose, safe, candidate } = flight;
-        const cycle = Math.floor(flightAge / SPACECRAFT_PERIOD);
+        const cycle = pursuit.cycle;
         if (cycle !== flight.cycle) { flight.cycle = cycle; flight.retired = false; flight.portalEntry = null; }
         if (!state.current.motionOn) flight.retired = false;
         pose.x = -1.15 + (pose.x + 1.15) / (WORMHOLE_X + 1.15) * (portalX + 1.15);
@@ -592,15 +612,20 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, contactProgres
         }
         const compactIntro = readingEdge !== null && width < 640;
         const widthRatio = compactIntro ? model.kind === "ufo" ? .11 : .13 : model.kind === "ufo" ? .14 : .17;
-        const baseSize = Math.min(model.kind === "ufo" ? 64 : 72, Math.min(width, height) * widthRatio);
-        const size = readingEdge === null ? baseSize : Math.min(baseSize, Math.max(0, readingEdge - headerHeight - 24) * model.span / (model.radius * 2 * 1.12));
-        const radius = size * model.radius / model.span / height * 2 * 1.12 * pose.scale;
+        const baseSize = Math.min(model.kind === "ufo" ? 76 : 90, Math.min(width, height) * widthRatio);
+        const peakPerspective = (camera.position.z + 2.8) / (camera.position.z + .7);
+        const availableHeight = readingLane ? bandBottom - bandTop - 8 : readingEdge === null ? Infinity : Math.max(0, readingEdge - headerHeight - 30);
+        const size = Math.min(baseSize, availableHeight * model.span / (model.radius * 2 * 1.12 * peakPerspective));
+        const perspective = (camera.position.z + 2.8) / (camera.position.z - pose.depth);
+        const projectedSize = size * perspective;
+        const radius = projectedSize * model.radius / model.span / height * 2 * 1.12 * pose.scale;
         const previousX = safe.x, previousY = safe.y;
-        const cruisingY = compactFlight ? (model.kind === "ufo" ? -.84 : -.62) + Math.sin(drift * .5) * .015 : pose.y;
+        const cruisingY = readingLane ? laneCenter + (model.kind === "ufo" ? -.025 : .025) : compactFlight ? (model.kind === "ufo" ? -.84 : -.62) + Math.sin(drift * .5) * .015 : pose.y;
         const routeY = flight.portalEntry ? THREE.MathUtils.lerp(cruisingY, portalSafe.y, THREE.MathUtils.smoothstep(pose.entry, .4, 1)) : cruisingY;
         const desired = state.current.motionOn ? THREE.MathUtils.damp(previousY, routeY, 5, dt) : routeY;
-        const floor = compactFlight ? -1 + radius + 32 / height : readingEdge === null ? .18 : 1 - (readingEdge - radius * height / 2 - 12) / height * 2;
-        routeSpacecraft(pose.x * camera.aspect, desired, radius, flightObstacles, floor, compactFlight ? -.6 : 1 - (headerHeight + radius * height / 2 + 10) / height * 2, candidate);
+        const floor = readingLane ? 1 - bandBottom / height * 2 + radius : compactFlight ? -1 + radius + 32 / height : readingEdge === null ? .18 : 1 - (readingEdge - radius * height / 2 - 12) / height * 2;
+        const ceiling = readingLane ? 1 - bandTop / height * 2 - radius : compactFlight ? -.6 : 1 - (headerHeight + radius * height / 2 + 10) / height * 2;
+        routeSpacecraft(pose.x * camera.aspect, desired, radius, flightObstacles, floor, ceiling, candidate);
         const continuous = flight.presence < .05 || Math.hypot(candidate.x - safe.x, candidate.y - safe.y) < .24;
         const canFly = flightAllowed && pose.visible && candidate.visible && size >= 28 && continuous;
         // Finish one graceful exit at the last safe pose; never flicker back within this pass.
@@ -616,11 +641,11 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, contactProgres
           flight.radius = radius;
           holeRay.set(safe.x / camera.aspect, safe.y, .5).unproject(camera).sub(camera.position).normalize();
           model.group.position.copy(camera.position).addScaledVector(holeRay, (pose.depth - camera.position.z) / holeRay.z);
-          const shipHeight = 2 * tangent * (camera.position.z - pose.depth);
+          const shipHeight = 2 * tangent * (camera.position.z + 2.8);
           model.group.scale.setScalar(shipHeight / height * size / model.span * pose.scale);
           const bank = state.current.motionOn ? THREE.MathUtils.clamp(Math.atan2(safe.y - previousY, Math.max(.001, safe.x - previousX)), -.42, .42) : 0;
           flight.heading = state.current.motionOn ? THREE.MathUtils.damp(flight.heading, bank, 7, dt) : 0;
-          model.group.rotation.set((model.kind === "ufo" ? .55 : .65) + Math.sin(drift * .8) * .035 * Number(state.current.motionOn), model.kind === "ufo" ? drift * .04 : .14 + flight.heading * .3, pose.roll + flight.heading);
+          model.group.rotation.set((model.kind === "ufo" ? .55 : .52) + pose.roll + flight.heading * .35, model.kind === "ufo" ? drift * .10 : pose.yaw, pose.pitch + flight.heading * .45);
         }
         model.hull.opacity = flight.presence; model.trim.opacity = flight.presence;
         model.glass.opacity = flight.presence * .84; model.light.opacity = flight.presence;
@@ -633,6 +658,8 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, contactProgres
         host.dataset[model.kind === "ufo" ? "ufoY" : "scoutY"] = ((-safe.y * .5 + .5) * height).toFixed(2);
         host.dataset[model.kind === "ufo" ? "ufoClearance" : "scoutClearance"] = safe.clearance.toFixed(4);
         host.dataset[model.kind === "ufo" ? "ufoRadius" : "scoutRadius"] = (flight.radius * height / 2).toFixed(2);
+        host.dataset[`${model.kind}Depth`] = pose.depth.toFixed(3);
+        host.dataset[`${model.kind}Yaw`] = model.group.rotation.y.toFixed(3);
       });
       let visibleBolts = 0;
       const [lead, scout] = flights;
@@ -641,7 +668,7 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, contactProgres
       for (let index = 0; index < 3; index++) {
         pursuitMiss(scout.safe, shotTarget, index, shotEnd);
         const clear = canShoot && clearShot(scout.safe, shotEnd, flightObstacles);
-        const pulse = clear ? pursuitPulse(flightAge, index) : -1;
+        const pulse = clear ? pursuitPulse(flightAge, index, flightDelay) : -1;
         const size = pulse < 0 ? 0 : Math.sin(pulse * Math.PI);
         boltPose.scale.set(size, size * .24, size);
         if (size > 0) {
@@ -736,6 +763,12 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, contactProgres
       host.dataset.spacecraftCapacity = "2";
       host.dataset.pursuitDelay = String(flightDelay);
       host.dataset.flightTime = flightAge.toFixed(2);
+      host.dataset.flightCycle = String(pursuit.cycle);
+      host.dataset.pursuitRest = String(PURSUIT_REST);
+      host.dataset.flightBand = String(readingLane);
+      host.dataset.flightBandTop = bandTop.toFixed(2);
+      host.dataset.flightBandBottom = bandBottom.toFixed(2);
+      host.dataset.pursuitPhase = pursuit.interrupted ? "retiring" : flightAge >= pursuitEnd(flightDelay) ? "rest" : flightAllowed ? "flying" : "paused";
       host.dataset.brightStars = "18";
       host.dataset.dustFlow = returning ? "outward-return" : "inward";
       host.dataset.dustSources = "top,left,bottom";
@@ -767,6 +800,7 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, contactProgres
     const wake = () => { if (!frame) frame = requestAnimationFrame(render); };
     wakeRef.current = wake;
     const resize = () => {
+      bandDirty = true;
       headerHeight = document.querySelector(".site-header")?.getBoundingClientRect().bottom ?? 76;
       camera.aspect = host.clientWidth / Math.max(1, host.clientHeight);
       camera.updateProjectionMatrix();
@@ -777,6 +811,10 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, contactProgres
     };
     const observer = new ResizeObserver(resize);
     observer.observe(host);
+    if (methodSteps) observer.observe(methodSteps);
+    if (stackKicker) observer.observe(stackKicker);
+    const updateFlightBand = () => { bandDirty = true; wake(); };
+    window.addEventListener("scroll", updateFlightBand, { passive: true });
     const visibilityTarget = host.parentElement ?? host;
     const intersection = new IntersectionObserver(([entry]) => { visible = entry.isIntersecting; if (visible) wake(); }, { rootMargin: "100% 0px" });
     intersection.observe(visibilityTarget);
@@ -794,6 +832,7 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, contactProgres
       unsubscribeChapter();
       canvas.removeEventListener("webglcontextlost", contextLost);
       document.removeEventListener("visibilitychange", wake);
+      window.removeEventListener("scroll", updateFlightBand);
       scene.traverse((object) => {
         const mesh = object as THREE.Mesh;
         if (object instanceof THREE.InstancedMesh) object.dispose();

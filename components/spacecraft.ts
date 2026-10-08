@@ -2,16 +2,37 @@ import * as THREE from "three";
 import { mergeGeometries } from "three/addons/utils/BufferGeometryUtils.js";
 
 export type SpacecraftKind = "ufo" | "scout";
-export type SpacecraftPose = { visible: boolean; x: number; y: number; depth: number; roll: number; opacity: number; entry: number; scale: number };
+export type SpacecraftPose = { visible: boolean; x: number; y: number; depth: number; roll: number; pitch: number; yaw: number; opacity: number; entry: number; scale: number };
 export type FlightObstacle = { x: number; y: number; radius: number };
 export type SafeFlightPoint = { x: number; y: number; visible: boolean; clearance: number };
 export const PURSUIT_DELAY = 4.8;
-export const SPACECRAFT_PERIOD = 112;
+export const COMPACT_PURSUIT_DELAY = 10;
+export const PURSUIT_REST = 30;
+export const pursuitEnd = (delay = PURSUIT_DELAY) => 20.7 + delay;
+// The next UFO appears at +.6, exactly thirty seconds after the portal closes.
+export const pursuitPeriod = (delay = PURSUIT_DELAY) => pursuitEnd(delay) + PURSUIT_REST - .6;
+export type PursuitClock = { age: number; cycle: number; delay: number; interrupted: boolean };
+
+export function advancePursuit(clock: PursuitClock, dt: number, allowed: boolean, motionOn: boolean, delay: number, settled: boolean) {
+  if (!motionOn) return;
+  if (clock.age === 0 && settled) clock.delay = delay;
+  if (clock.delay !== delay || !allowed && clock.age > .6 && clock.age < pursuitEnd(clock.delay)) clock.interrupted = true;
+  if (clock.interrupted) {
+    if (!settled) return;
+    clock.delay = delay;
+    clock.age = pursuitEnd(delay);
+    clock.interrupted = false;
+  }
+  if (!allowed) return;
+  clock.age += Number.isFinite(dt) ? THREE.MathUtils.clamp(dt, 0, .04) : 0;
+  const period = pursuitPeriod(clock.delay);
+  if (clock.age >= period) { clock.age -= period; clock.cycle++; }
+}
 // Keep the rendezvous in the open left sky, away from the natural system on the right.
 export const WORMHOLE_X = -.42;
 
 export function wormholePresence(age: number, motionOn: boolean, delay = PURSUIT_DELAY) {
-  const time = Math.max(0, age) % SPACECRAFT_PERIOD;
+  const time = Math.max(0, age) % pursuitPeriod(delay);
   return motionOn ? THREE.MathUtils.smoothstep(time, 13.5, 15.3) * (1 - THREE.MathUtils.smoothstep(time, 18.9 + delay, 20.7 + delay)) : 0;
 }
 
@@ -30,8 +51,8 @@ export function flightPresence(current: number, target: number, dt: number) {
   return current + THREE.MathUtils.clamp(target - current, -step, step);
 }
 
-export function pursuitPulse(age: number, index: number) {
-  const encounter = age % SPACECRAFT_PERIOD;
+export function pursuitPulse(age: number, index: number, delay = PURSUIT_DELAY) {
+  const encounter = age % pursuitPeriod(delay);
   if (encounter < 7.2 || encounter > 17) return -1;
   const phase = ((encounter - 7.2) % 4.6 - index * .48) / .85;
   return phase >= 0 && phase <= 1 ? phase : -1;
@@ -57,14 +78,17 @@ export function createPursuitBolts() {
   return mesh;
 }
 
-export function spacecraftPose(age: number, motionOn: boolean, kind: SpacecraftKind = "ufo", out: SpacecraftPose = { visible: false, x: 0, y: 0, depth: 0, roll: 0, opacity: 0, entry: 0, scale: 1 }, delay = PURSUIT_DELAY) {
-  const t = ((Math.max(0, Number.isFinite(age) ? age : 0) % SPACECRAFT_PERIOD) - .6 - (kind === "scout" ? delay : 0)) / 18;
+export function spacecraftPose(age: number, motionOn: boolean, kind: SpacecraftKind = "ufo", out: SpacecraftPose = { visible: false, x: 0, y: 0, depth: 0, roll: 0, pitch: 0, yaw: 0, opacity: 0, entry: 0, scale: 1 }, delay = PURSUIT_DELAY) {
+  const t = ((Math.max(0, Number.isFinite(age) ? age : 0) % pursuitPeriod(delay)) - .6 - (kind === "scout" ? delay : 0)) / 18;
+  const travel = THREE.MathUtils.clamp(t, 0, 1), arc = Math.sin(travel * Math.PI);
   out.visible = motionOn ? t > 0 && t < 1 : true;
   out.entry = motionOn ? THREE.MathUtils.smoothstep(t, .82, 1) : 0;
   out.x = motionOn ? -1.15 + THREE.MathUtils.clamp(t, 0, 1) * (1.15 + WORMHOLE_X) : kind === "ufo" ? -.46 : -.75;
   out.y = motionOn ? .61 + Math.sin(t * Math.PI) * .10 + Math.sin(t * Math.PI * 4) * .035 * (1 - out.entry) : kind === "ufo" ? .68 : .43;
-  out.depth = -2.8 + (motionOn ? Math.sin(t * Math.PI) * .45 - out.entry * 4 : 0);
-  out.roll = motionOn ? Math.sin(t * Math.PI * 4) * .16 * (1 - out.entry) : -.08;
+  out.depth = -2.8 + (motionOn ? arc * 2.1 - out.entry * 4 : 0);
+  out.roll = motionOn ? Math.sin(travel * Math.PI * 2) * .30 * (1 - out.entry) : -.08;
+  out.pitch = motionOn ? Math.cos(travel * Math.PI * 2) * .12 * (1 - out.entry) : .08;
+  out.yaw = motionOn ? -.38 + travel * .65 + out.entry * 1.05 : -.3;
   out.scale = 1 - out.entry * .96;
   out.opacity = motionOn ? THREE.MathUtils.smoothstep(t, 0, .09) * (1 - THREE.MathUtils.smoothstep(out.entry, .75, 1)) : .72;
   return out;
@@ -137,7 +161,7 @@ function packed(parts: THREE.BufferGeometry[]) {
 
 export function createSpacecraft(kind: SpacecraftKind = "ufo") {
   const group = new THREE.Group();
-  const hull = new THREE.MeshStandardMaterial({ color: kind === "ufo" ? "#a9b6bf" : "#c6c8bd", metalness: .64, roughness: .31, emissive: "#283a43", emissiveIntensity: .28, transparent: true });
+  const hull = new THREE.MeshStandardMaterial({ color: kind === "ufo" ? "#a9b6bf" : "#d1d5d5", metalness: .48, roughness: .34, emissive: "#18232a", emissiveIntensity: .12, transparent: true });
   const trim = new THREE.MeshStandardMaterial({ color: "#28363d", metalness: .48, roughness: .42, transparent: true });
   const glass = new THREE.MeshPhysicalMaterial({ color: "#719ba6", metalness: .18, roughness: .10, clearcoat: 1, clearcoatRoughness: .08, transparent: true, opacity: .84 });
   const light = new THREE.MeshBasicMaterial({ color: kind === "ufo" ? "#ffd59c" : "#a4ecff", transparent: true });
@@ -174,13 +198,17 @@ export function createSpacecraft(kind: SpacecraftKind = "ufo") {
     wings.moveTo(.18, 0); wings.lineTo(-.18, .16); wings.lineTo(-.44, .45); wings.lineTo(-.45, .25); wings.lineTo(-.24, 0);
     wings.lineTo(-.45, -.25); wings.lineTo(-.44, -.45); wings.lineTo(-.18, -.16); wings.closePath();
     const wingGeometry = new THREE.ExtrudeGeometry(wings, { depth: .032, bevelEnabled: true, bevelThickness: .006, bevelSize: .006, bevelSegments: 1, steps: 1 }).rotateX(-Math.PI / 2).translate(0, -.02, 0);
+    const fuselage = [[0, -.36], [.085, -.35], [.13, -.24], [.11, .12], [.075, .36], [.015, .58], [0, .60]].map(([r, x]) => new THREE.Vector2(r, x));
+    const fin = new THREE.Shape();
+    fin.moveTo(-.38, .06); fin.lineTo(-.36, .26); fin.lineTo(-.14, .10); fin.closePath();
     group.add(new THREE.Mesh(packed([
-      new THREE.CylinderGeometry(.10, .145, .62, 12).rotateZ(-Math.PI / 2),
-      new THREE.ConeGeometry(.105, .32, 12).rotateZ(-Math.PI / 2).translate(.42, 0, 0), wingGeometry,
+      new THREE.LatheGeometry(fuselage, 24).rotateZ(-Math.PI / 2), wingGeometry,
+      new THREE.ExtrudeGeometry(fin, { depth: .022, bevelEnabled: true, bevelThickness: .006, bevelSize: .006, bevelSegments: 1, steps: 1 }).translate(0, 0, -.011),
       ...[-.24, .24].map((z) => new THREE.CylinderGeometry(.075, .09, .24, 16).rotateZ(Math.PI / 2).translate(-.38, 0, z)),
     ]), hull));
     group.add(new THREE.Mesh(packed([
       new THREE.BoxGeometry(.34, .016, .055).translate(-.13, .124, 0),
+      ...[-.24, .24].map(z => new THREE.CylinderGeometry(.055, .055, .19, 16).rotateZ(Math.PI / 2).translate(-.42, 0, z)),
       ...[-.24, .24].map((z) => new THREE.TorusGeometry(.082, .012, 8, 24).rotateY(Math.PI / 2).translate(-.51, 0, z)),
     ]), trim));
     const cockpit = new THREE.Mesh(new THREE.SphereGeometry(.12, 24, 12), glass);

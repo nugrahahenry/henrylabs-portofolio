@@ -22,7 +22,7 @@ const { createStellarCore } = await loadModule("stellar-core");
 const { advanceGalaxyFlight, sampleGalaxyFlight } = await loadModule("galaxy-flight");
 const { createDeepSpace } = await loadModule("deep-space");
 const { infallPoint, gravityMaterial, dustWarmth } = await loadModule("gravity-field");
-const { createSpacecraft, spacecraftPose, routeSpacecraft, flightPresence, pursuitPulse, pursuitMiss, wormholePresence, createWormhole, clearShot, PURSUIT_DELAY, SPACECRAFT_PERIOD } = await loadModule("spacecraft");
+const { createSpacecraft, spacecraftPose, routeSpacecraft, flightPresence, pursuitPulse, pursuitMiss, wormholePresence, createWormhole, clearShot, advancePursuit, pursuitEnd, pursuitPeriod, PURSUIT_DELAY, PURSUIT_REST } = await loadModule("spacecraft");
 const { distantStarPoint, dustStreamSource, stellarTwinkle, createDistantStarMaterial, DISTANT_STAR_COUNT, COMPACT_STAR_COUNT, FEEDING_DUST_COUNT } = await loadModule("ambient-field");
 
 test("galaxy approach centers first and reveals the local system without a visibility jump", () => {
@@ -187,7 +187,7 @@ test("a bounded metallic UFO and scout share a delayed pursuit and still alterna
     const craft = createSpacecraft(kind);
     assert.ok(craft.group.children.length <= 7);
     assert.ok(craft.span > .5 && craft.radius > .3);
-    assert.ok(craft.hull.metalness > .5 && craft.glass.clearcoat === 1);
+    assert.ok(craft.hull.metalness >= .4 && craft.glass.clearcoat === 1);
     let vertices = 0;
     craft.group.traverse((object) => {
       if (object.geometry) { vertices += object.geometry.getAttribute("position").count; object.geometry.dispose(); }
@@ -201,10 +201,11 @@ test("a bounded metallic UFO and scout share a delayed pursuit and still alterna
   assert.equal(spacecraftPose(3, true, "scout").visible, false);
   assert.equal(spacecraftPose(8, true, "scout").visible, true);
   assert.equal(spacecraftPose(40, true).visible, false);
-  assert.equal(SPACECRAFT_PERIOD, 112);
+  assert.equal(PURSUIT_REST, 30);
   assert.equal(PURSUIT_DELAY, 4.8);
   for (let t = 6; t < 18; t += .25) assert.ok(spacecraftPose(t, true).x > spacecraftPose(t, true, "scout").x);
-  assert.deepEqual(spacecraftPose(8, true), spacecraftPose(120, true));
+  const first = spacecraftPose(8, true), repeat = spacecraftPose(8 + pursuitPeriod(), true);
+  for (const key of Object.keys(first)) typeof first[key] === "number" ? assert.ok(Math.abs(first[key] - repeat[key]) < 1e-10) : assert.equal(first[key], repeat[key]);
 });
 
 test("flight opacity retreats over multiple frames even after a long tab suspension", () => {
@@ -225,7 +226,7 @@ test("pursuit shots travel in bounded bursts and respect intervening planet silh
   for (let i = 0; i < 3; i++) {
     const age = 7.2 + i * .48 + .4;
     assert.ok(pursuitPulse(age, i) > 0 && pursuitPulse(age, i) < 1);
-    assert.ok(Math.abs(pursuitPulse(age, i) - pursuitPulse(age + 112, i)) < 1e-10);
+    assert.ok(Math.abs(pursuitPulse(age, i) - pursuitPulse(age + pursuitPeriod(), i)) < 1e-10);
   }
   const start = { x: -1, y: .5 }, end = { x: 1, y: .5 };
   assert.equal(clearShot(start, end, [{ x: 0, y: .5, radius: .2 }]), false);
@@ -281,7 +282,7 @@ test("every pursuit tracer misses the entire UFO silhouette, not just its center
 });
 
 test("portrait pursuit spacing keeps the portal open for the delayed scout", () => {
-  for (const delay of [4.8, 12.5]) {
+  for (const delay of [4.8, 10, 12.5]) {
     const end = .6 + 18 + delay;
     assert.equal(spacecraftPose(delay, true, "scout", undefined, delay).visible, false);
     assert.ok(spacecraftPose(end - .4, true, "scout", undefined, delay).entry > .95);
@@ -289,6 +290,54 @@ test("portrait pursuit spacing keeps the portal open for the delayed scout", () 
     assert.equal(wormholePresence(end + 3, true, delay), 0);
     assert.equal(wormholePresence(end, false, delay), 0);
   }
+});
+
+test("each completed pursuit has exactly thirty seconds of empty sky before the next UFO", () => {
+  for (const delay of [4.8, 10, 12.5]) {
+    const end = pursuitEnd(delay), period = pursuitPeriod(delay);
+    assert.ok(Math.abs(period + .6 - end - 30) < 1e-10);
+    for (let age = end; age < end + 30; age += .13) {
+      assert.equal(wormholePresence(age, true, delay), 0);
+      for (const kind of ["ufo", "scout"]) assert.equal(spacecraftPose(age, true, kind, undefined, delay).visible, false);
+    }
+    assert.equal(spacecraftPose(end + 30.01, true, "ufo", undefined, delay).visible, true);
+    const clock = { age: 0, cycle: 0, delay, interrupted: false };
+    for (let i = 0; i < 10000; i++) advancePursuit(clock, .04, true, true, delay, true);
+    assert.ok(clock.cycle >= 6 && clock.age >= 0 && clock.age < period);
+  }
+});
+
+test("interrupted pursuit fades out before a clean cooldown, without resuming a retired encounter", () => {
+  const clock = { age: 10, cycle: 0, delay: 4.8, interrupted: false };
+  advancePursuit(clock, .04, false, true, 4.8, false);
+  assert.equal(clock.age, 10); assert.equal(clock.interrupted, true);
+  advancePursuit(clock, .04, false, true, 4.8, true);
+  assert.equal(clock.age, pursuitEnd()); assert.equal(clock.interrupted, false);
+  for (let i = 0; i < 100; i++) advancePursuit(clock, .04, false, true, 4.8, true);
+  assert.equal(clock.age, pursuitEnd(), "protected chapters do not consume the rest period");
+  for (let i = 0; i < 750; i++) advancePursuit(clock, .04, true, true, 4.8, true);
+  assert.equal(clock.cycle, 1);
+  assert.ok(clock.age >= .59 && clock.age < .61);
+});
+
+test("resize waits for the visible craft to fade, while reduced motion freezes the pursuit clock", () => {
+  const clock = { age: 9, cycle: 2, delay: 4.8, interrupted: false };
+  advancePursuit(clock, .04, true, true, 12.5, false);
+  assert.equal(clock.delay, 4.8); assert.equal(clock.age, 9); assert.equal(clock.interrupted, true);
+  advancePursuit(clock, .04, true, true, 12.5, true);
+  assert.equal(clock.delay, 12.5); assert.ok(clock.age >= pursuitEnd(12.5));
+  const still = { ...clock };
+  advancePursuit(clock, 300, true, false, 4.8, true);
+  assert.deepEqual(clock, still);
+  advancePursuit(clock, 300, true, true, 12.5, true);
+  assert.ok(clock.age - still.age <= .04000001, "a resumed tab cannot skip the encounter");
+});
+
+test("flight reveals changing depth, yaw and bank instead of a fixed-size side-on translation", () => {
+  const points = [7, 11, 16, 21].map(age => spacecraftPose(age, true, "scout"));
+  for (const key of ["depth", "yaw", "roll", "pitch"]) assert.ok(new Set(points.map(p => p[key].toFixed(2))).size >= 3, key);
+  const sizes = points.map(p => (6.4 + 2.8) / (6.4 - p.depth));
+  assert.ok(Math.max(...sizes) / Math.min(...sizes) > 1.15);
 });
 
 test("distant stars form a deterministic depth layer without increasing compact density", () => {
