@@ -228,9 +228,15 @@ try {
     const directPlanetBounds = await directPlanetLabel.boundingBox();
     assert.ok(directPlanetBounds, "Nalira label should be projected for direct canvas click");
     await page.mouse.click(directPlanetBounds.x + directPlanetBounds.width / 2, directPlanetBounds.y - 30);
+    // After free rotation, a nearer planet may occlude this screen-space point.
+    // Verify the raycast-selected world rather than assuming an unoccluded Nalira.
+    await expect(scene).toHaveAttribute("data-view-zoom", "0.20");
+    const pickedWorld = await scene.getAttribute("data-active-world");
+    const worldNames = { catmoji: "Catmoji", nalira: "Nalira", canox: "Canox", hengs: "Hengs", polara: "Polara" };
+    assert.ok(worldNames[pickedWorld]);
     await expect(page.locator(".project-showcase")).toHaveCount(0);
     await page.getByRole("button", { name: "Open active world" }).click();
-    await expect(page.locator(".project-showcase")).toContainText("Nalira");
+    await expect(page.locator(".project-showcase")).toHaveAttribute("aria-label", `Active project: ${worldNames[pickedWorld]}`);
     await page.getByRole("tab", { name: "Focus Canox" }).click();
     await expect(page.locator(".project-showcase")).toContainText("Canox");
     await expect(scene).toHaveAttribute("data-linked-tech-count", "3");
@@ -248,14 +254,14 @@ try {
     await expect.poll(async () => page.locator(".dossier").innerText()).toMatch(/Read source/);
     assert.equal(await page.locator(".dossier-art-preview").count(), 1);
     await page.locator(".certificate-feature-preview").click();
-    await page.locator('[role="dialog"]').waitFor();
-    assert.match(await page.locator('[role="dialog"]').innerText(), /Google Student Ambassador/i);
-    assert.equal(await page.locator(".certificate-modal").evaluate((modal) => getComputedStyle(modal).backgroundColor), "rgb(12, 18, 34)");
-    assert.equal(await page.locator(".certificate-modal-image img").evaluate((image) => image.complete && image.naturalWidth > 0), true);
+    await page.getByRole("dialog").waitFor();
+    assert.match(await page.getByRole("dialog").innerText(), /Google Student Ambassador/i);
+    assert.equal(await page.locator(".credential-dialog").evaluate((modal) => getComputedStyle(modal).backgroundColor), "rgb(15, 23, 31)");
+    assert.equal(await page.locator(".credential-dialog-image img").evaluate((image) => image.complete && image.naturalWidth > 0), true);
     await page.screenshot({ path: `test-results/${viewport.width}-credential-modal.png` });
-    await expect.poll(async () => (await page.locator(".certificate-modal-close").boundingBox())?.height ?? 0).toBeGreaterThanOrEqual(44);
+    await expect.poll(async () => (await page.getByRole("button", { name: "Close certificate viewer" }).boundingBox())?.height ?? 0).toBeGreaterThanOrEqual(44);
     await page.keyboard.press("Escape");
-    await page.locator('[role="dialog"]').waitFor({ state: "detached" });
+    await page.getByRole("dialog").waitFor({ state: "detached" });
     await expect(page.locator(".certificate-feature-preview")).toBeFocused();
     await page.locator("#contact").scrollIntoViewIfNeeded();
     await expect(page.locator("#contact h2")).toBeInViewport();

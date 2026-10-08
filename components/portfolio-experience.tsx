@@ -19,7 +19,6 @@ import {
   Linkedin,
   LockKeyhole,
   Mail,
-  Menu,
   MessageCircle,
   MousePointer2,
   PanelRightOpen,
@@ -28,168 +27,25 @@ import {
   X,
   Zap,
 } from "lucide-react";
-import { AnimatePresence, MotionConfig, motion, useInView, useMotionValue, useMotionValueEvent, useReducedMotion, useScroll, useSpring, useTransform } from "motion/react";
+import { AnimatePresence, MotionConfig, motion, useInView, useMotionValue, useMotionValueEvent, useScroll, useSpring, useTransform } from "motion/react";
 import { CosmicCanvas, type OrbitId, type ProjectId, type SatelliteId, type SatelliteWorld } from "./cosmic-canvas";
 import { SmoothScroll } from "./smooth-scroll";
 import { WorldlineBackdrop } from "./worldline-backdrop";
 import type { GalaxyId } from "./galaxy-system";
 
-type Language = "en" | "id";
+import { projects, academicProjects as academicData, clientProjects as clientData, clientStacks, type Language } from "@/content/projects";
+import { stackGroups, orbitTechNodes } from "@/content/technologies";
+import { certificates, certificateFilters } from "@/content/credentials";
+import { findWorld } from "@/content/catalog";
+import { SiteLink, useSitePreferences, useQuery, updateQuery } from "./site-preferences";
+import { CredentialViewer } from "./credential-viewer";
+
+const academicProjects = academicData.map((record, index) => ({ ...record, icon: [CarFront, ShoppingCart, FlaskConical][index] }));
+const clientProjects = clientData.map((record, index) => ({ ...record, icon: [MessageCircle, Instagram][index] }));
 type WorldlineStage = "world" | "method" | "stack";
 type Sector = GalaxyId;
 
-const projects: Array<{
-  id: ProjectId;
-  name: string;
-  logo: string;
-  color: string;
-  status: Record<Language, string>;
-  visibility: Record<Language, string>;
-  access: Record<Language, string>;
-  summary: Record<Language, string>;
-  flow: Record<Language, string[]>;
-  signature: Record<Language, string[]>;
-  link: string;
-  linkLabel: Record<Language, string>;
-  role: Record<Language, string>;
-  signal: Record<Language, string>;
-  year: string;
-  stack: string[];
-  ownership: Record<Language, string>;
-  evidence: Record<Language, string>;
-  next: Record<Language, string>;
-  media?: string;
-  mediaAlt?: string;
-  source?: string;
-}> = [
-  {
-    id: "catmoji",
-    name: "Catmoji",
-    logo: "/assets/brand/catmoji.png",
-    color: "#ee674f",
-    status: { en: "Live", id: "Live" },
-    visibility: { en: "Public product", id: "Produk publik" },
-    access: { en: "Open source", id: "Open source" },
-    summary: {
-      en: "A playful browser product that turns a hand gesture into emotion, a cat sticker, and a voice.",
-      id: "Produk browser playful yang mengubah gesture tangan menjadi emosi, stiker kucing, dan suara.",
-    },
-    flow: { en: ["Hand gesture", "Emotion", "Cat sticker + voice"], id: ["Gesture tangan", "Emosi", "Stiker kucing + suara"] },
-    signature: { en: ["gesture", "emotion", "voice"], id: ["gesture", "emosi", "suara"] },
-    link: "https://catmoji.vercel.app/",
-    linkLabel: { en: "Open live product", id: "Buka produk live" },
-    role: { en: "Product / interaction", id: "Produk / interaksi" },
-    signal: { en: "Playful input", id: "Input playful" },
-    year: "2026",
-    stack: ["JavaScript", "MediaPipe", "kNN", "PWA"],
-    ownership: { en: "Solo build", id: "Dibangun sendiri" },
-    evidence: { en: "Live product and open source repository", id: "Produk live dan repository open source" },
-    next: { en: "Inspect the live interaction or read the source", id: "Coba interaksi live atau baca source" },
-    media: "/assets/projects/catmoji-hero.png",
-    mediaAlt: "Catmoji product preview showing gesture recognition and the Moji cat interface",
-    source: "https://github.com/nugrahahenry/AI-Gesture-Cat",
-  },
-  {
-    id: "nalira",
-    name: "Nalira",
-    logo: "/assets/brand/nalira.svg",
-    color: "#60c9b0",
-    status: { en: "MVP", id: "MVP" },
-    visibility: { en: "Public MVP", id: "MVP publik" },
-    access: { en: "Public demo", id: "Demo publik" },
-    summary: {
-      en: "An audio-to-knowledge workflow for turning lectures, meetings, and ideas into material you can revisit.",
-      id: "Workflow audio-to-knowledge untuk mengubah kuliah, meeting, dan ide menjadi materi yang bisa dipelajari ulang.",
-    },
-    flow: { en: ["Audio", "Structured knowledge", "Contextual chat"], id: ["Audio", "Knowledge terstruktur", "Chat kontekstual"] },
-    signature: { en: ["capture", "structure", "revisit"], id: ["capture", "struktur", "pelajari ulang"] },
-    link: "https://nalira-hengs.vercel.app/dashboard",
-    linkLabel: { en: "Open MVP", id: "Buka MVP" },
-    role: { en: "Product / AI workflow", id: "Produk / workflow AI" },
-    signal: { en: "Make knowledge usable", id: "Bikin knowledge berguna" },
-    year: "2026",
-    stack: ["Next.js", "Supabase", "Groq", "TypeScript"],
-    ownership: { en: "Solo product build", id: "Dibangun sendiri" },
-    evidence: { en: "Public MVP with a grounded learning workflow", id: "MVP publik dengan workflow belajar yang grounded" },
-    next: { en: "Open the MVP and follow the capture journey", id: "Buka MVP dan ikuti capture journey" },
-    media: "/assets/projects/nalira-ambient.svg",
-    mediaAlt: "Nalira folded-light ambient artwork showing source fragments opening into a structured learning surface",
-  },
-  {
-    id: "canox",
-    name: "Canox",
-    logo: "/assets/brand/canox.png",
-    color: "#657be8",
-    status: { en: "Private build", id: "Build privat" },
-    visibility: { en: "Private system", id: "Sistem privat" },
-    access: { en: "Private walkthrough", id: "Walkthrough privat" },
-    summary: {
-      en: "A personal AI cockpit connecting Henry’s tools, context, and everyday workflows.",
-      id: "Cockpit AI personal yang menghubungkan tools, konteks, dan workflow sehari-hari Henry.",
-    },
-    flow: { en: ["Personal context", "AI tools", "Next action"], id: ["Konteks personal", "Tools AI", "Aksi berikutnya"] },
-    signature: { en: ["context", "assist", "handoff"], id: ["konteks", "bantu", "handoff"] },
-    link: "https://wa.me/6289513559554",
-    linkLabel: { en: "Request a demo", id: "Minta demo" },
-    role: { en: "System / personal AI", id: "Sistem / AI personal" },
-    signal: { en: "Context is the interface", id: "Konteks adalah interface" },
-    year: "2026",
-    stack: ["Python", "FastAPI", "JavaScript", "Local-first"],
-    ownership: { en: "Solo system build", id: "Dibangun sendiri" },
-    evidence: { en: "Private system shown through sanitized architecture evidence", id: "Sistem privat ditampilkan lewat bukti arsitektur yang disanitasi" },
-    next: { en: "Request a focused walkthrough", id: "Minta walkthrough terarah" },
-  },
-  {
-    id: "hengs",
-    name: "Hengs",
-    logo: "/assets/brand/hengs.png",
-    color: "#efc95f",
-    status: { en: "Live system", id: "Sistem live" },
-    visibility: { en: "Private evidence", id: "Bukti privat" },
-    access: { en: "Private evidence", id: "Bukti privat" },
-    summary: {
-      en: "A WhatsApp focus assistant and Discord community bot designed around calmer communication and useful handoffs.",
-      id: "Asisten fokus WhatsApp dan bot komunitas Discord untuk komunikasi lebih tenang dan handoff yang berguna.",
-    },
-    flow: { en: ["Message", "Context", "Useful handoff"], id: ["Pesan", "Konteks", "Handoff berguna"] },
-    signature: { en: ["message", "guard", "handoff"], id: ["pesan", "jaga", "handoff"] },
-    link: "mailto:henrynugraha1210@gmail.com",
-    linkLabel: { en: "Discuss this build", id: "Bahas build ini" },
-    role: { en: "Automation / safety", id: "Automation / safety" },
-    signal: { en: "Calmer communication", id: "Komunikasi lebih tenang" },
-    year: "2026",
-    stack: ["Node.js", "WhatsApp", "Discord", "AI safety"],
-    ownership: { en: "Solo runtime and safety work", id: "Runtime dan safety dikerjakan sendiri" },
-    evidence: { en: "Live private runtime with privacy-safe proof", id: "Runtime privat live dengan bukti yang menjaga privasi" },
-    next: { en: "Discuss the system boundary", id: "Bahas batas sistemnya" },
-  },
-  {
-    id: "polara",
-    name: "Polara",
-    logo: "/assets/brand/polara.png",
-    color: "#a96ba9",
-    status: { en: "In progress", id: "Dalam proses" },
-    visibility: { en: "Creative web experience", id: "Pengalaman web kreatif" },
-    access: { en: "Preview on request", id: "Preview lewat permintaan" },
-    summary: {
-      en: "A browser-based digital photobooth where the interface becomes part of the memory.",
-      id: "Photobooth digital berbasis browser ketika interface-nya sendiri menjadi bagian dari kenangan.",
-    },
-    flow: { en: ["Frame", "Play", "Keep the moment"], id: ["Frame", "Bermain", "Simpan momen"] },
-    signature: { en: ["camera", "play", "memory"], id: ["kamera", "bermain", "memori"] },
-    link: "mailto:henrynugraha1210@gmail.com",
-    linkLabel: { en: "Discuss the experience", id: "Bahas experience ini" },
-    role: { en: "Creative web / camera", id: "Web kreatif / kamera" },
-    signal: { en: "Interface as memory", id: "Interface jadi memori" },
-    year: "2026",
-    stack: ["JavaScript", "HTML", "CSS", "PWA"],
-    ownership: { en: "Solo creative web build", id: "Dibangun sendiri sebagai web kreatif" },
-    evidence: { en: "Live creative experience with authored visual assets", id: "Experience kreatif live dengan aset visual yang dibuat khusus" },
-    next: { en: "Open the experience and see the proof desk", id: "Buka experience dan lihat proof desk" },
-    media: "/assets/projects/polara-og.png",
-    mediaAlt: "Polara product preview showing a playful digital photobooth interface",
-  },
-];
+
 
 const copy = {
   en: {
@@ -244,25 +100,14 @@ const copy = {
   },
 } as const;
 
-const stackGroups = [
-  { label: "Build", items: [["JavaScript", "javascript", "f7df1e"], ["Python", "python", "3776ab"], ["Java", "openjdk", "437291"], ["C#", "csharp", "512bd4"], ["PHP", "php", "777bb4"], ["TypeScript", "typescript", "3178c6"]] },
-  { label: "Interface", items: [["React", "react", "61dafb"], ["Next.js", "nextdotjs", "ffffff"], ["HTML", "html5", "e34f26"], ["CSS", "css3", "1572b6"], ["PWA", "pwa", "5a0fc8"], ["MediaPipe", "mediapipe", "0097a7"]] },
-  { label: "Systems", items: [["Node.js", "nodedotjs", "339933"], ["n8n", "n8n", "ea4b71"], ["OpenAI", "openai", "ffffff"], ["Laravel", "laravel", "ff2d20"], ["Supabase", "supabase", "3ecf8e"], ["Groq", "groq", "f55036"], ["FastAPI", "fastapi", "009688"], ["WhatsApp", "whatsapp", "25d366"], ["Discord", "discord", "5865f2"]] },
-];
+
 
 const techNodes = stackGroups.flatMap((group) => group.items.map(([label, slug, color]) => ({ label, slug, color, projectIds: projects.filter((project) => project.stack.includes(label)).map((project) => project.id as ProjectId) })));
 
-const academicProjects = [
-  { title: "RentalMobil.SG", tag: "OOP · Semester 2", body: "A car-rental web system with vehicle catalog, authentication, booking, payment confirmation, user area, and admin operations.", signal: "Model → reserve → confirm", output: "Booking flow", stack: ["PHP", "MySQL"], color: "#efc95f", icon: CarFront, linkLabel: "Class build · local" },
-  { title: "POS Z Shoes", tag: "APBDS · Semester 3", body: "A point-of-sale system with product, supplier, purchase, customer transaction, return, dashboard, and reporting flows.", signal: "Stock → sale → report", output: "Business flow", stack: ["C#", "WinForms"], color: "#ef8e73", icon: ShoppingCart, link: "https://github.com/nugrahahenry/POS_APBDS", linkLabel: "View source" },
-  { title: "LabQ", tag: "Mobile & Web · Semester 4", body: "A digital health laboratory platform connecting patients, lab staff, and admins from registration to test results.", signal: "Register → test → result", output: "Health workflow", stack: ["Java", "Android", "Laravel", "PostgreSQL"], color: "#60c9b0", icon: FlaskConical, link: "https://github.com/nugrahahenry/labQ-Android", linkLabel: "View source" },
-];
 
-const clientStacks = { yventures: ["n8n"], soreva: ["Node.js", "Next.js", "React", "TypeScript"] };
-const clientProjects = [
-  { title: "Y-Ventures chatbot", icon: MessageCircle, body: "n8n-based vendor-matching chatbot for event planning, grounded in researched vendor data with filtering, price sorting, and quote calculation.", context: { en: "Event planning / vendor discovery", id: "Perencanaan event / pencarian vendor" }, ownership: { en: "Solo by Henry · private", id: "Dibangun sendiri Henry · privat" }, output: { en: "Matching + quote path", id: "Pencocokan + alur quote" }, boundary: { en: "Private data omitted", id: "Data privat tidak ditampilkan" }, signal: { en: "Research → match → quote", id: "Riset → cocokkan → quote" }, color: "#6ee7f4" },
-  { title: "Soreva Autonomous Content", icon: Instagram, body: "Social-media content automation for grounded discovery, editorial generation, branded media, review, scheduling, and controlled publishing.", context: { en: "Social content operations", id: "Operasional konten sosial" }, ownership: { en: "Henry solo build + Vieri prototype account", id: "Build Henry + akun prototype Vieri" }, output: { en: "Discovery → review → publishing", id: "Discovery → review → publishing" }, boundary: { en: "Prototype account by Vieri", id: "Akun prototype oleh Vieri" }, signal: { en: "Discover → review → publish", id: "Temukan → review → publish" }, color: "#ff82c8" },
-];
+
+
+
 
 // Satellite records reuse the existing evidence data, not a second set of project claims.
 const universityRecords = academicProjects.map((project, index) => ({
@@ -293,49 +138,10 @@ const toSatelliteWorld = (record: SatelliteRecord, index: number): SatelliteWorl
 const universityWorlds = universityRecords.map(toSatelliteWorld);
 const clientWorlds = clientRecords.map(toSatelliteWorld);
 const satelliteCatalog = { university: universityWorlds, client: clientWorlds };
-const orbitSources = [
-  ...projects.map(({ id, stack }) => ({ id: id as OrbitId, stack })),
-  ...universityRecords.map(({ id, stack }) => ({ id, stack })),
-  ...clientRecords.map(({ id }) => ({ id, stack: clientStacks[id] })),
-];
-const orbitTechRegistry = [...stackGroups.flatMap((group) => group.items),
-  ["MySQL", "mysql", "4479a1"], ["WinForms", "dotnet", "825ce5"],
-  ["Android", "android", "3ddc84"], ["PostgreSQL", "postgresql", "4169e1"],
-];
-const orbitTechNodes = orbitTechRegistry.map(([label, slug, color]) => ({ label, slug, color,
-  projectIds: orbitSources.filter((world) => world.stack.includes(label)).map((world) => world.id),
-}));
 
-const certificates = [
-  { title: "Class of 2026 Graduation", issuer: "Google Student Ambassador", kind: "Community", date: "Class of 2026", image: "/assets/certificates/previews/google-student-ambassador.png", source: "/assets/certificates/source/google-student-ambassador.pdf", alt: "Google Student Ambassador Class of 2026 graduation certificate for Henry Nugraha" },
-  { title: "Gemini Certified Educator", issuer: "Google", kind: "Certification", date: "18 Apr 2026", image: "/assets/certificates/previews/gemini-certified-educator.png", source: "/assets/certificates/source/gemini-certified-educator.pdf", alt: "Gemini Certified Educator certificate for Henry Nugraha" },
-  { title: "Gemini Certified Student", issuer: "Google", kind: "Certification", date: "08 Apr 2026", image: "/assets/certificates/previews/gemini-certified.png", source: "/assets/certificates/source/gemini-certified.pdf", alt: "Gemini Certified Student certificate for Henry Nugraha" },
-  { title: "TechSprint Web Development", issuer: "Codelab Indonesia", kind: "Competition", date: "Date not shown", image: "/assets/certificates/previews/codelab-techsprint-web-development.png", source: "/assets/certificates/source/codelab-techsprint-web-development.pdf", alt: "TechSprint Innovation Cup Web Development certificate for Henry Nugraha" },
-  { title: "Belajar Prinsip Pemrograman SOLID", issuer: "Dicoding Academy", kind: "Course", date: "30 Apr 2026", image: "/assets/certificates/previews/dicoding-oop.png", source: "/assets/certificates/source/dicoding-oop.pdf", alt: "Dicoding certificate for learning SOLID programming principles" },
-  { title: "Top 10 Finalist RBCA", issuer: "IMPACT / Retail Business Case Analysis", kind: "Competition", date: "Date not shown", image: "/assets/certificates/previews/top-ten-rbca.jpeg", alt: "Top 10 Finalist Retail Business Case Analysis certificate for Henry Nugraha" },
-  { title: "Google Workspace for Education Fundamentals", issuer: "Google for Education", kind: "Credential", date: "Date not shown", image: "/assets/certificates/previews/google-for-education.png", source: "/assets/certificates/source/google-for-education.pdf", alt: "Google Workspace for Education Fundamentals credential for Henry Nugraha" },
-  { title: "Build Your First Agent with ADK", issuer: "Google Skills", kind: "Completion badge", date: "Date not shown", image: "/assets/certificates/previews/google-skills-build-first-agent.png", alt: "Google Skills badge for Build Your First Agent with Agent Development Kit" },
-  { title: "Spec-Driven Development with Antigravity CLI", issuer: "GDG Jakarta / GDG Cloud Jakarta", kind: "Workshop record", date: "22 Jul 2026", image: "/assets/certificates/previews/gdg-spec-driven-development-antigravity-cli.png", source: "/assets/certificates/source/gdg-spec-driven-development-antigravity-cli.pdf", alt: "GDG recognition of engagement for Spec-Driven Development with Antigravity CLI, issued to Henry Nugraha" },
-  { title: "AI-Assisted Checks with Antigravity CLI and SDK", issuer: "GDG Jakarta / GDG Cloud Jakarta", kind: "Workshop record", date: "24 Jul 2026", image: "/assets/certificates/previews/gdg-code-quality-security-antigravity-cli.png", source: "/assets/certificates/source/gdg-code-quality-security-antigravity-cli.pdf", alt: "GDG recognition of engagement for AI-assisted code quality and security checks, issued to Henry Nugraha" },
-  { title: "App Building with AppSheet", issuer: "Google Cloud", kind: "Completion badge", date: "Date not shown", image: "/assets/certificates/previews/google-adventure-app-building-appsheet.png", alt: "Google Cloud skill badge for App Building with AppSheet" },
-  { title: "Build Serverless Applications with Cloud Run Functions", issuer: "Google Cloud", kind: "Completion badge", date: "Date not shown", image: "/assets/certificates/previews/google-adventure-build-serverless-applications.png", alt: "Google Cloud skill badge for building serverless applications with Cloud Run Functions" },
-  { title: "Build a Data Mesh with Dataplex", issuer: "Google Cloud", kind: "Completion badge", date: "Date not shown", image: "/assets/certificates/previews/google-data-mesh-knowledge-catalog.png", alt: "Google Cloud skill badge for building a data mesh with Dataplex" },
-  { title: "Build a Data Warehouse with BigQuery", issuer: "Google Cloud", kind: "Completion badge", date: "Date not shown", image: "/assets/certificates/previews/google-data-warehouse-bigquery.png", alt: "Google Cloud skill badge for building a data warehouse with BigQuery" },
-  { title: "Mitigate Threats with Security Command Center", issuer: "Google Cloud", kind: "Completion badge", date: "Date not shown", image: "/assets/certificates/previews/google-safe-space-security-command-center.png", alt: "Google Cloud skill badge for mitigating threats and vulnerabilities with Security Command Center" },
-  { title: "Optimize Costs for Google Kubernetes Engine", issuer: "Google Cloud", kind: "Completion badge", date: "Date not shown", image: "/assets/certificates/previews/google-safe-space-optimize-costs-kubernetes-engine.png", alt: "Google Cloud skill badge for optimizing costs for Google Kubernetes Engine" },
-  { title: "Create Your First Gemini Enterprise Application", issuer: "Google Cloud", kind: "Completion badge", date: "Date not shown", image: "/assets/certificates/previews/google-skills-create-gemini-enterprise-application.png", alt: "Google Cloud skill badge for creating a Gemini Enterprise application" },
-  { title: "Deploy Multi-Agent Architectures", issuer: "Google Cloud", kind: "Completion badge", date: "Date not shown", image: "/assets/certificates/previews/google-skills-deploy-multi-agent-architectures.png", alt: "Google Cloud skill badge for deploying multi-agent architectures" },
-  { title: "Engineer AI Agents with ADK", issuer: "Google Cloud", kind: "Completion badge", date: "Date not shown", image: "/assets/certificates/previews/google-skills-engineer-ai-agents-adk.png", alt: "Google Cloud skill badge for engineering AI agents with Agent Development Kit" },
-  { title: "Gemini for Data Scientists and Analysts", issuer: "Google Cloud", kind: "Completion badge", date: "Date not shown", image: "/assets/certificates/previews/google-skills-gemini-data-scientists-analysts.png", alt: "Google Cloud completion badge for Gemini for Data Scientists and Analysts" },
-  { title: "Optimize Agent Behavior", issuer: "Google Cloud", kind: "Completion badge", date: "Date not shown", image: "/assets/certificates/previews/google-skills-optimize-agent-behavior.png", alt: "Google Cloud completion badge for optimizing agent behavior" },
-  { title: "Google Skills Arcade: Base Camp", issuer: "Google Cloud", kind: "Completion badge", date: "Jul 2026", image: "/assets/certificates/previews/google-skills-arcade-base-camp.png", alt: "Google Skills Arcade Base Camp badge from July 2026" },
-  { title: "Google Skills Arcade: Data Mesh Architect", issuer: "Google Cloud", kind: "Completion badge", date: "Jul 2026", image: "/assets/certificates/previews/google-skills-arcade-data-mesh-architect.png", alt: "Google Skills Arcade Data Mesh Architect badge from July 2026" },
-  { title: "Google Skills Arcade: Low-Code Development", issuer: "Google Cloud", kind: "Completion badge", date: "Jul 2026", image: "/assets/certificates/previews/google-skills-arcade-low-code-development.png", alt: "Google Skills Arcade Low-Code Development badge from July 2026" },
-  { title: "Google Skills Arcade: Safe Space", issuer: "Google Cloud", kind: "Completion badge", date: "Jul 2026", image: "/assets/certificates/previews/google-skills-arcade-safe-space.png", alt: "Google Skills Arcade Safe Space badge from July 2026" },
-  { title: "Google Skills Arcade: Voyage", issuer: "Google Cloud", kind: "Completion badge", date: "Jul 2026", image: "/assets/certificates/previews/google-skills-arcade-voyage.png", alt: "Google Skills Arcade Voyage badge from July 2026" },
-];
 
-const certificateFilters = ["All", "Certification", "Course", "Competition", "Community", "Credential", "Completion badge", "Workshop record"] as const;
+
+
 
 function cx(...names: Array<string | false | null | undefined>) {
   return names.filter(Boolean).join(" ");
@@ -396,7 +202,7 @@ function SatelliteReadout({ record, records, language, motionOn, onSelect, onClo
       <div><dt>Output</dt><dd>{output}</dd></div>
     </dl>
     <div className="project-showcase-actions">
-      <a href={`#${record.anchor}`}>{language === "en" ? "View evidence" : "Lihat bukti"}<ArrowDown size={14} /></a>
+      <SiteLink href={`/projects/${findWorld(record.id)!.slug}?from=universe`} onClick={() => updateQuery({ world: record.id }, true)}>{language === "en" ? "Read project" : "Baca proyek"}<ArrowUpRight size={14} /></SiteLink>
       {record.sector === "university" && record.link
         ? <a href={record.link} target="_blank" rel="noreferrer">{language === "en" ? "View source" : "Lihat source"}<ArrowUpRight size={14} /></a>
         : record.sector === "client" && <a href="#contact">{language === "en" ? "Request walkthrough" : "Minta walkthrough"}<ArrowUpRight size={14} /></a>}
@@ -405,7 +211,9 @@ function SatelliteReadout({ record, records, language, motionOn, onSelect, onClo
 }
 
 export function PortfolioExperience() {
-  const [language, setLanguage] = useState<Language>("en");
+  const { language, motionOn } = useSitePreferences();
+  const query = useQuery();
+  const returnWorld = query.get("world");
   const [activeId, setActiveId] = useState<ProjectId>("catmoji");
   const [activeSector, setActiveSector] = useState<Sector>("main");
   const [mapView, setMapView] = useState<"universe" | "orbit">("universe");
@@ -415,13 +223,8 @@ export function PortfolioExperience() {
   const [spotlightIndex, setSpotlightIndex] = useState(0);
   const [showCertificateArchive, setShowCertificateArchive] = useState(false);
   const [introDone, setIntroDone] = useState(false);
-  const [motionPreference, setMotionPreference] = useState(true);
-  const [motionReady, setMotionReady] = useState(false);
   const [methodStep, setMethodStep] = useState(0);
   const [worldlineStage, setWorldlineStage] = useState<WorldlineStage>("world");
-  const reducedMotion = useReducedMotion();
-  const reducedMotionActive = motionReady && Boolean(reducedMotion);
-  const motionOn = motionReady && motionPreference && !reducedMotionActive;
   const [heroPhase, setHeroPhase] = useState("intro");
   const [showProjectShowcase, setShowProjectShowcase] = useState(false);
   const heroRef = useRef<HTMLElement>(null);
@@ -430,9 +233,6 @@ export function PortfolioExperience() {
   const methodRef = useRef<HTMLElement>(null);
   const stackRef = useRef<HTMLElement>(null);
   const contactRef = useRef<HTMLElement>(null);
-  const menuRef = useRef<HTMLDetailsElement>(null);
-  const certificateModalRef = useRef<HTMLDivElement>(null);
-  const certificateTriggerRef = useRef<HTMLButtonElement | null>(null);
   const stackVisible = useInView(stackRef, { margin: "150px" });
   const contactVisible = useInView(contactRef, { amount: .15 });
   const { scrollYProgress: contactProgress } = useScroll({ target: contactRef, offset: ["start 65%", "end end"] });
@@ -482,15 +282,12 @@ export function PortfolioExperience() {
   const shelfCertificates = visibleCertificates.filter((certificate) => certificate.title !== spotlightCertificate.title);
 
   useEffect(() => {
-    setMotionReady(true);
-  }, []);
-
-  useEffect(() => {
     let introSeen = false;
     try { introSeen = window.sessionStorage.getItem("henrylabs-intro-seen") === "1"; } catch { /* The introduction also works without storage. */ }
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const replay = new URLSearchParams(window.location.search).get("intro") === "1";
-    if (introSeen && !replay || reduced) {
+    const directEntry = Boolean(window.location.hash || new URLSearchParams(window.location.search).get("world"));
+    if ((introSeen || directEntry) && !replay || reduced) {
       setIntroDone(true);
       return;
     }
@@ -506,48 +303,23 @@ export function PortfolioExperience() {
   }, [introDone]);
 
   useEffect(() => {
-    document.documentElement.dataset.motion = motionOn ? "on" : "off";
-    return () => { delete document.documentElement.dataset.motion; };
-  }, [motionOn]);
-
-  useEffect(() => { document.documentElement.lang = language; }, [language]);
-
-  useEffect(() => {
     setSpotlightIndex(0);
   }, [certificateFilter, showCertificateArchive]);
 
   useEffect(() => {
-    if (!activeCertificate) return;
-    const restoreTarget = certificateTriggerRef.current;
-    const modal = certificateModalRef.current;
-    const focusable = modal ? Array.from(modal.querySelectorAll<HTMLElement>("button, a[href], [tabindex]:not([tabindex='-1'])")) : [];
-    const closeOnEscape = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        event.preventDefault();
-        setActiveCertificate(null);
-        return;
-      }
-      if (event.key !== "Tab" || focusable.length < 2) return;
-      const first = focusable[0];
-      const last = focusable[focusable.length - 1];
-      if (event.shiftKey && document.activeElement === first) {
-        event.preventDefault();
-        last.focus();
-      } else if (!event.shiftKey && document.activeElement === last) {
-        event.preventDefault();
-        first.focus();
-      }
-    };
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    window.addEventListener("keydown", closeOnEscape);
-    window.requestAnimationFrame(() => focusable[0]?.focus());
-    return () => {
-      document.body.style.overflow = previousOverflow;
-      window.removeEventListener("keydown", closeOnEscape);
-      restoreTarget?.focus();
-    };
-  }, [activeCertificate]);
+    const world = returnWorld ? findWorld(returnWorld) : undefined;
+    if (!world || !introDone) return;
+    setActiveSector(world.category === "henrylabs" ? "main" : world.category);
+    if (world.category === "henrylabs") setActiveId(world.id as ProjectId);
+    else setActiveSatellites(previous => ({ ...previous, [world.category]: world.id }));
+    setMapView("orbit");
+    // Wait for the restored route's layout before landing inside the sticky map.
+    const frame = requestAnimationFrame(() => {
+      const hero = heroRef.current;
+      if (hero) window.scrollTo({ top: hero.offsetTop + Math.max(0, hero.offsetHeight - innerHeight) * .7, behavior: "instant" });
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [returnWorld, introDone]);
 
   useEffect(() => {
     if (!motionOn) return;
@@ -578,10 +350,6 @@ export function PortfolioExperience() {
       setActiveSector("main");
       setMapView("orbit");
     }
-  };
-
-  const openProjectDossier = () => {
-    window.requestAnimationFrame(() => document.getElementById("work")?.scrollIntoView({ behavior: motionOn ? "smooth" : "auto" }));
   };
 
   const cycleProject = (direction: -1 | 1) => {
@@ -642,21 +410,6 @@ export function PortfolioExperience() {
         <span>Henry</span><Asterisk size={10} />
       </motion.div>
 
-      <header className="site-header">
-        <a className="brand" href="#top" aria-label="HenryLabs home"><span className="brand-mark"><Asterisk size={18} /></span><span>HenryLabs</span></a>
-        <nav className="desktop-nav" aria-label="Primary navigation">
-          <a href="#work">{t.nav.work}</a><a href="#stack">{t.nav.stack}</a><a href="#proof">{t.nav.proof}</a><a href="#contact">{t.nav.contact}</a>
-        </nav>
-        <div className="header-controls">
-          <button className="motion-toggle" type="button" onClick={() => setMotionPreference((value) => !value)} disabled={reducedMotionActive} aria-label={reducedMotionActive ? "Reduced motion follows device preference" : "Animation"} aria-pressed={motionOn} title={reducedMotionActive ? "Reduced motion follows device preference" : motionOn ? "Turn motion off" : "Turn motion on"}><span className={cx("signal-dot", motionOn && "signal-dot--on")} />{motionOn ? "Motion" : "Still"}</button>
-          <button className="language-toggle" type="button" onClick={() => setLanguage((value) => value === "en" ? "id" : "en")} aria-label="Toggle language"><span className={language === "en" ? "is-active" : ""}>EN</span><span>/</span><span className={language === "id" ? "is-active" : ""}>ID</span></button>
-          <details className="mobile-nav" ref={menuRef} onKeyDown={(event) => { if (event.key === "Escape" && menuRef.current) { menuRef.current.open = false; menuRef.current.querySelector("summary")?.focus(); } }}>
-            <summary aria-label={language === "en" ? "Navigation" : "Navigasi"}><Menu size={18} /></summary>
-            <nav aria-label="Mobile navigation">{Object.entries(t.nav).map(([id, label]) => <a href={`#${id}`} key={id} onClick={() => { if (menuRef.current) menuRef.current.open = false; }}>{label}<ArrowUpRight size={16} /></a>)}</nav>
-          </details>
-        </div>
-      </header>
-
       <section ref={heroRef} className="hero-stage" id="top" aria-labelledby="hero-title" data-phase={motionOn ? heroPhase : "all"}>
         <div className="space-backdrop" aria-hidden="true">
           <span className="star-field star-field--far" /><span className="star-field star-field--near" />
@@ -692,7 +445,7 @@ export function PortfolioExperience() {
                   <p className="project-showcase-summary">{activeProject.summary[language]}</p>
                   <ProjectSignature project={activeProject} language={language} />
                   <div className="project-showcase-stack">{activeProject.stack.slice(0, 4).map((item) => <span key={item}>{item}</span>)}</div>
-                  <div className="project-showcase-actions"><button type="button" onClick={openProjectDossier}>{t.field.inspect}<ArrowDown size={14} /></button><a href={activeProject.link} target={activeProject.link.startsWith("http") ? "_blank" : undefined} rel={activeProject.link.startsWith("http") ? "noreferrer" : undefined}>{t.field.open}<ArrowUpRight size={13} /></a></div>
+                  <div className="project-showcase-actions"><SiteLink href={`/projects/${activeProject.id}?from=universe`} onClick={() => updateQuery({ world: activeProject.id }, true)}>{language === "en" ? "Read project" : "Baca proyek"}<ArrowUpRight size={14} /></SiteLink><a href={activeProject.link} target={activeProject.link.startsWith("http") ? "_blank" : undefined} rel={activeProject.link.startsWith("http") ? "noreferrer" : undefined}>{t.field.open}<ArrowUpRight size={13} /></a></div>
                 </motion.section> : <SatelliteReadout key={activeSatellite.id} record={activeSatellite} records={sectorRecords} language={language} motionOn={motionOn} onSelect={selectSatellite} onClose={() => setShowProjectShowcase(false)} />) : <motion.button className="project-showcase-reopen" type="button" key="reopen-project-showcase" onClick={() => setShowProjectShowcase(true)} aria-expanded="false" aria-label="Open active world"><span><PanelRightOpen size={15} /> Active world</span><small>{focusedWorld.name}</small></motion.button>)}
               </AnimatePresence>
               <div className="frame-bottomline"><span>{mapView === "universe" ? "03 galaxies / 10 worlds" : `${String(activeSector === "main" ? projects.length : sectorRecords.length).padStart(2, "0")} worlds / 01 maker`}</span><span>{mapView === "orbit" ? <><MousePointer2 size={13} /> {t.field.hint}</> : "HENRY NUGRAHA"}</span></div>
@@ -790,20 +543,21 @@ export function PortfolioExperience() {
 
       <section className="content-section proof-section" id="proof" aria-labelledby="proof-title">
         <div className="section-heading"><div><p className="section-kicker">Credentials / 05 featured</p><h2 id="proof-title">{t.proof.title}</h2></div><p>{t.proof.body}</p></div>
+        <SiteLink className="library-text-link" href="/credentials">{language === "en" ? "Visit the credential library" : "Buka library kredensial"}<ArrowUpRight size={17} /></SiteLink>
         <div className="proof-toolbar"><div className="proof-count"><strong>{String(visibleCertificates.length).padStart(2, "0")}</strong><span>{showCertificateArchive ? "archive records" : "featured records"}</span></div><div className="certificate-filters" role="tablist" aria-label="Filter credentials">{certificateFilters.map((filter) => <button key={filter} type="button" role="tab" aria-selected={certificateFilter === filter} className={cx(certificateFilter === filter && "is-active")} onClick={() => setCertificateFilter(filter)}>{filter}</button>)}</div></div>
         <div className="certificate-feature certificate-card">
-          <button type="button" className="certificate-feature-preview" onClick={(event) => { certificateTriggerRef.current = event.currentTarget; setActiveCertificate(spotlightCertificate); }} aria-label={`Inspect ${spotlightCertificate.title} certificate`}>
+          <button type="button" className="certificate-feature-preview" onClick={() => { setActiveCertificate(spotlightCertificate); }} aria-label={`Inspect ${spotlightCertificate.title} certificate`}>
             {spotlightPool.slice(1, 4).map((certificate, index) => <span className={cx("certificate-feature-ghost", `certificate-feature-ghost--${index + 1}`)} key={certificate.title} aria-hidden="true"><img src={certificate.image} alt="" /></span>)}
             <AnimatePresence mode="wait" initial={false}><motion.img key={spotlightCertificate.title} src={spotlightCertificate.image} alt={spotlightCertificate.alt} initial={motionOn ? { opacity: 0, x: 28, rotate: 3 } : false} animate={{ opacity: 1, x: 0, rotate: 0 }} exit={motionOn ? { opacity: 0, x: -22, rotate: -3 } : undefined} transition={{ duration: motionOn ? .42 : 0, ease: [0.22, 1, .36, 1] }} /></AnimatePresence>
             <span className="certificate-index">{String((spotlightPool.indexOf(spotlightCertificate) + 1).toString().padStart(2, "0"))} / FEATURED RECORD</span><span className="certificate-view">inspect full <ArrowUpRight size={13} /></span>
           </button>
-          <div className="certificate-feature-copy"><div className="certificate-meta"><span>{spotlightCertificate.issuer}</span><span>{spotlightCertificate.kind}</span></div><div className="certificate-feature-title"><h3>{spotlightCertificate.title}</h3><div className="certificate-feature-switcher"><span>{String(spotlightPool.indexOf(spotlightCertificate) + 1).padStart(2, "0")} / {String(spotlightPool.length).padStart(2, "0")}</span><button type="button" onClick={() => cycleSpotlight(-1)} aria-label="Previous featured credential"><ChevronLeft size={15} /></button><button type="button" onClick={() => cycleSpotlight(1)} aria-label="Next featured credential"><ChevronRight size={15} /></button></div></div><p>One original record from the shelf, kept large enough to read and specific enough to trust.</p><div className="certificate-feature-specs"><span><small>Issued</small><strong>{spotlightCertificate.date}</strong></span><span><small>{showCertificateArchive ? "Archive" : "Featured"}</small><strong>{String(visibleCertificates.length).padStart(2, "0")} visible</strong></span></div><button type="button" className="certificate-feature-open" onClick={(event) => { certificateTriggerRef.current = event.currentTarget; setActiveCertificate(spotlightCertificate); }}>Open the record <ArrowUpRight size={15} /></button>{spotlightCertificate.source && <a className="certificate-feature-source" href={spotlightCertificate.source} target="_blank" rel="noreferrer">Source PDF <ArrowUpRight size={13} /></a>}</div>
+          <div className="certificate-feature-copy"><div className="certificate-meta"><span>{spotlightCertificate.issuer}</span><span>{spotlightCertificate.kind}</span></div><div className="certificate-feature-title"><h3>{spotlightCertificate.title}</h3><div className="certificate-feature-switcher"><span>{String(spotlightPool.indexOf(spotlightCertificate) + 1).padStart(2, "0")} / {String(spotlightPool.length).padStart(2, "0")}</span><button type="button" onClick={() => cycleSpotlight(-1)} aria-label="Previous featured credential"><ChevronLeft size={15} /></button><button type="button" onClick={() => cycleSpotlight(1)} aria-label="Next featured credential"><ChevronRight size={15} /></button></div></div><p>One original record from the shelf, kept large enough to read and specific enough to trust.</p><div className="certificate-feature-specs"><span><small>Issued</small><strong>{spotlightCertificate.date}</strong></span><span><small>{showCertificateArchive ? "Archive" : "Featured"}</small><strong>{String(visibleCertificates.length).padStart(2, "0")} visible</strong></span></div><button type="button" className="certificate-feature-open" onClick={() => { setActiveCertificate(spotlightCertificate); }}>Open the record <ArrowUpRight size={15} /></button>{spotlightCertificate.source && <a className="certificate-feature-source" href={spotlightCertificate.source} target="_blank" rel="noreferrer">Source PDF <ArrowUpRight size={13} /></a>}</div>
         </div>
-        <div className="certificate-shelf certificate-shelf--compact"><AnimatePresence initial={false} mode="popLayout">{shelfCertificates.map((certificate, index) => <motion.article layout className="certificate-card" key={certificate.title} initial={motionOn ? { opacity: 0, y: 26, scale: .98 } : false} whileInView={motionOn ? { opacity: 1, y: 0, scale: 1 } : undefined} viewport={{ once: false, amount: .18, margin: "0px 0px -8% 0px" }} exit={motionOn ? { opacity: 0, y: -14, scale: .96 } : undefined} transition={{ duration: motionOn ? .42 : 0, delay: motionOn ? (index % 3) * .045 : 0, ease: [0.22, 1, .36, 1] }}><button type="button" className="certificate-preview" onClick={(event) => { certificateTriggerRef.current = event.currentTarget; setActiveCertificate(certificate); }} aria-label={`Inspect ${certificate.title} certificate`}><img src={certificate.image} alt={certificate.alt} loading="lazy" /><span className="certificate-index">{String(index + 2).padStart(2, "0")}</span><span className="certificate-view">inspect full <ArrowUpRight size={13} /></span></button><div className="certificate-copy"><div className="certificate-meta"><span>{certificate.issuer}</span><span>{certificate.kind}</span></div><h3>{certificate.title}</h3><div className="certificate-foot"><span>{certificate.date}</span>{certificate.source ? <a href={certificate.source} target="_blank" rel="noreferrer">Source PDF <ArrowUpRight size={13} /></a> : <span className="certificate-muted">Original image</span>}</div></div></motion.article>)}</AnimatePresence></div>
+        <div className="certificate-shelf certificate-shelf--compact"><AnimatePresence initial={false} mode="popLayout">{shelfCertificates.map((certificate, index) => <motion.article layout className="certificate-card" key={certificate.title} initial={motionOn ? { opacity: 0, y: 26, scale: .98 } : false} whileInView={motionOn ? { opacity: 1, y: 0, scale: 1 } : undefined} viewport={{ once: false, amount: .18, margin: "0px 0px -8% 0px" }} exit={motionOn ? { opacity: 0, y: -14, scale: .96 } : undefined} transition={{ duration: motionOn ? .42 : 0, delay: motionOn ? (index % 3) * .045 : 0, ease: [0.22, 1, .36, 1] }}><button type="button" className="certificate-preview" onClick={() => { setActiveCertificate(certificate); }} aria-label={`Inspect ${certificate.title} certificate`}><img src={certificate.image} alt={certificate.alt} loading="lazy" /><span className="certificate-index">{String(index + 2).padStart(2, "0")}</span><span className="certificate-view">inspect full <ArrowUpRight size={13} /></span></button><div className="certificate-copy"><div className="certificate-meta"><span>{certificate.issuer}</span><span>{certificate.kind}</span></div><h3>{certificate.title}</h3><div className="certificate-foot"><span>{certificate.date}</span>{certificate.source ? <a href={certificate.source} target="_blank" rel="noreferrer">Source PDF <ArrowUpRight size={13} /></a> : <span className="certificate-muted">Original image</span>}</div></div></motion.article>)}</AnimatePresence></div>
         <div className="certificate-archive"><span>certificate shelf</span><p>Original assets, issuer names, and dates stay visible so the proof feels specific, not ornamental.</p><button type="button" className="certificate-archive-toggle" aria-expanded={showCertificateArchive} onClick={() => setShowCertificateArchive((value) => !value)}>{showCertificateArchive ? "Show featured five" : `Open full archive (${filteredCertificates.length})`}<motion.span animate={{ rotate: showCertificateArchive ? 180 : 0 }} transition={{ duration: .3 }}><ChevronDown size={14} /></motion.span></button><Sparkles size={19} /></div>
       </section>
 
-      <AnimatePresence>{activeCertificate && <motion.div className="certificate-modal-backdrop" role="presentation" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={(event) => { if (event.target === event.currentTarget) setActiveCertificate(null); }}><motion.div ref={certificateModalRef} className="certificate-modal" data-lenis-prevent role="dialog" aria-modal="true" aria-labelledby="certificate-modal-title" initial={motionOn ? { opacity: 0, y: 26, scale: .97 } : false} animate={{ opacity: 1, y: 0, scale: 1 }} exit={motionOn ? { opacity: 0, y: 18, scale: .98 } : undefined} transition={{ duration: .35, ease: [0.22, 1, .36, 1] }}><button type="button" className="certificate-modal-close" onClick={() => setActiveCertificate(null)} aria-label="Close certificate viewer"><X size={19} /></button><div className="certificate-modal-image"><img src={activeCertificate.image} alt={activeCertificate.alt} /></div><div className="certificate-modal-copy"><p className="section-kicker">Certificate detail</p><div className="certificate-meta"><span>{activeCertificate.issuer}</span><span>{activeCertificate.kind}</span></div><h2 id="certificate-modal-title">{activeCertificate.title}</h2><p>{activeCertificate.date}</p>{activeCertificate.source && <a className="button button-bright" href={activeCertificate.source} target="_blank" rel="noreferrer">Open source PDF <ArrowUpRight size={16} /></a>}</div></motion.div></motion.div>}</AnimatePresence>
+      <CredentialViewer record={activeCertificate} onClose={() => setActiveCertificate(null)} />
 
       <section ref={contactRef} className="contact-section" id="contact" aria-labelledby="contact-title"><div className="content-section contact-content"><div><p className="section-kicker section-kicker-dark">Make the next useful thing</p><h2 id="contact-title">{t.contact.title}</h2></div><div className="contact-copy"><p>{t.contact.body}</p><div className="contact-actions"><a className="button button-bright" href="https://wa.me/6289513559554" target="_blank" rel="noreferrer"><MessageCircle size={18} /> WhatsApp <ArrowUpRight size={16} /></a><a className="button button-outline" href="mailto:henrynugraha1210@gmail.com"><Mail size={18} /> Email <ArrowUpRight size={16} /></a></div><div className="social-links"><a href="https://github.com/nugrahahenry" target="_blank" rel="noreferrer"><Github size={19} /> GitHub</a><a href="https://www.linkedin.com/in/nugrahahenry/" target="_blank" rel="noreferrer"><Linkedin size={19} /> LinkedIn</a><a href="https://instagram.com/hnry.dev" target="_blank" rel="noreferrer"><Instagram size={19} /> @hnry.dev</a></div></div></div></section>
 

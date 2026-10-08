@@ -4,28 +4,36 @@ import { chromium, expect } from "@playwright/test";
 
 const url = process.env.PORTFOLIO_URL ?? "http://localhost:3002/";
 const browser = await chromium.launch({ headless: true, executablePath: process.env.CHROME_PATH ?? "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe" });
+async function hydrateWithClock(page) {
+  // Advance React's scheduler without consuming the short entrance timeline.
+  await expect.poll(async () => {
+    await page.clock.runFor(16);
+    return page.locator(".site-shell").getAttribute("data-motion");
+  }, { timeout: 20000, intervals: [100, 250, 500] }).toBe("on");
+}
 try {
   mkdirSync("test-results", { recursive: true });
   for (const viewport of [{ width: 1440, height: 900 }, { width: 390, height: 844 }]) {
-    const page = await browser.newPage({ viewport });
+    const page = await browser.newPage({ viewport, reducedMotion: "no-preference" });
     const errors = [];
     page.on("pageerror", (error) => errors.push(error.message));
     await page.clock.install();
     await page.clock.pauseAt(new Date());
     await page.goto(url, { waitUntil: "domcontentloaded" });
-    await page.clock.runFor(900);
+    await hydrateWithClock(page);
+    await page.clock.runFor(500);
     const intro = page.locator(".arrival-intro");
     await expect(intro).toBeVisible();
     await expect(intro).toContainText("HenryLabs");
     await expect(intro).not.toContainText("I build things");
+    if (viewport.width === 1440) await page.getByRole("button", { name: "Skip intro" }).click();
+    else await page.clock.runFor(1600);
     const bounds = await page.locator(".arrival-content").boundingBox();
     assert.ok(bounds.x >= 0 && bounds.x + bounds.width <= viewport.width);
     assert.ok(bounds.y >= 0 && bounds.y + bounds.height <= viewport.height);
-    await page.screenshot({ path: `test-results/${viewport.width}-arrival.png` });
-    if (viewport.width === 1440) await page.getByRole("button", { name: "Skip intro" }).click();
-    else await page.clock.runFor(900);
     await page.clock.runFor(900);
     await expect(intro).toBeHidden();
+    await page.screenshot({ path: `test-results/${viewport.width}-arrival.png` });
     await expect(page.locator(".hero-transition")).toHaveCount(0);
     await page.locator(".hero-stage").evaluate((hero) => window.scrollTo({ top: (hero.offsetHeight - innerHeight) * .35, behavior: "instant" }));
     await page.clock.runFor(700);
@@ -34,12 +42,13 @@ try {
     await page.screenshot({ path: `test-results/${viewport.width}-arrival-map.png` });
     assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
     await page.reload({ waitUntil: "domcontentloaded" });
+    await hydrateWithClock(page);
     await page.clock.runFor(900);
     await expect(intro).toBeHidden();
     await page.goto(`${url}?intro=1`, { waitUntil: "domcontentloaded" });
-    await page.clock.runFor(500);
+    await hydrateWithClock(page);
     await expect(intro).toBeVisible();
-    await page.clock.runFor(2100);
+    await page.clock.runFor(2500);
     await expect(intro).toBeHidden();
     assert.deepEqual(errors, []);
     await page.close();

@@ -97,10 +97,12 @@ try {
       await panel.evaluate((node) => node.scrollTo({ top: 0, behavior: "instant" }));
     }
     await page.screenshot({ path: `test-results/${viewport.width}-university-sector.png` });
-    await page.locator('.satellite-readout a[href="#academic-3"]').click();
-    await waitForAnchorArrival(page, "#academic-3");
+    await page.locator('.satellite-readout a[href^="/projects/labq"]').click();
+    await expect(page.locator("h1")).toHaveText("LabQ");
+    await page.getByRole("link", { name: "Back to the universe" }).click();
     await enterOrbit(page);
-    await page.getByRole("button", { name: "Close active world" }).click();
+    await expect(scene).toHaveAttribute("data-active-world", "labq");
+    await expect(page.locator(".project-showcase")).toHaveCount(0);
     await chooseGalaxy(page, "Client Work");
     await expect(scene).toHaveAttribute("data-world-count", "2");
     await expect(scene).toHaveAttribute("data-tech-count", "5");
@@ -117,9 +119,7 @@ try {
     await expect.poll(() => page.locator(".satellite-readout").evaluate((panel) => Number(getComputedStyle(panel).opacity))).toBe(1);
     await expect(page.locator('.satellite-readout a[target="_blank"]')).toHaveCount(0);
     await page.screenshot({ path: `test-results/${viewport.width}-client-sector.png` });
-    await page.locator('.satellite-readout a[href="#client-2"]').click();
-    await waitForAnchorArrival(page, "#client-2");
-    await enterOrbit(page);
+    await expect(page.locator('.satellite-readout a[href^="/projects/soreva"]')).toHaveCount(1);
     await page.getByRole("button", { name: "Close active world" }).click();
     await chooseGalaxy(page, "HenryLabs");
     await expect(scene).toHaveAttribute("data-world-count", "5");

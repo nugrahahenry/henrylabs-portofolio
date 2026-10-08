@@ -1,6 +1,6 @@
 <div align="center">
 
-# HenryLabs Portfolio v0.79.0
+# HenryLabs Portfolio v0.80.0
 
 **I build things I actually see.**
 
@@ -27,9 +27,13 @@ Enter a living map of **HenryLabs**, **University**, and **Client Work**. Choose
 
 Beyond the map: Henry's working method, a technology orbit, and original credentials. A continuous Three.js universe connects the journey, from distant stars and nebulae to a reversible black-hole encounter at Contact. A metallic UFO and its pursuing scout add a small story along the way.
 
+Prefer a closer read? **Projects** opens a searchable catalog of all ten worlds, filtered by HenryLabs, University, or Client Work. Each planet and catalog record leads to the same project detail, with ownership, workflow, stack, and honest access boundaries. Return to the universe to continue from that planet; its reading panel stays closed until requested.
+
+**Credentials** is a separate library of all 26 original records. Filter by issuer or type, search a title, and open a full-size document with zoom and available source PDFs. English/Indonesian and motion choices travel with the internal links.
+
 English is the default, with Indonesian available throughout the main experience. Keyboard navigation, touch controls, reduced motion, and a WebGL fallback keep the work accessible.
 
-The animation above is a short recording of the actual portfolio, not a concept render. The live experience is interactive; the README is a preview. Public hosting is still deferred.
+The animation above is a short recording of the actual portfolio, not a concept render. It focuses on the orbit experience and predates the dedicated reading libraries. The live experience is interactive; the README is a preview. Public hosting is still deferred.
 
 ## The Worlds
 
@@ -108,7 +112,18 @@ npm run dev
 
 Open the local address printed by Next.js. For verification: `npm test`, `npm run typecheck`, and `npm run build`. Browser checks live in `tests/`.
 
-This portfolio is **actively being developed**. Hosting is deferred; the planned personal portrait and dedicated project/credential libraries are not yet part of the shipped interface. The original `henrylabs-useful-worlds.html` remains a legacy prototype.
+This portfolio is **actively being developed**. Hosting is deferred. The project and credential libraries are available; the personal cosmic portrait and its scroll transition are still being developed separately. Existing Home evidence sections remain until that replacement is ready. The original `henrylabs-useful-worlds.html` remains a legacy prototype.
+
+### Reading Routes
+
+| Route | Contents |
+| :-- | :-- |
+| `/` | The interactive three-galaxy journey |
+| `/projects` | Ten projects; category and text filters |
+| `/projects/[slug]` | A shared detail page for each project |
+| `/credentials` | All 26 original learning records |
+
+Content lives in `content/`; catalog pages and orbital reading actions share those records. Libraries do not mount additional WebGL scenes. Certificate lists use lightweight, uncropped WebP previews, while the viewer preserves full-resolution originals. To regenerate the previews from the public source images, use `node scripts/credential-thumbnails.mjs` with the installed dependencies and Node 24. Route and accessibility checks: `npm run test:libraries`; galaxy integration: `npm run test:sectors`.
 
 <details>
 <summary>About the README visuals</summary>

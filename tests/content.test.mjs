@@ -6,7 +6,7 @@ const root = new URL("..", import.meta.url);
 const read = (path) => readFileSync(new URL(path, root), "utf8");
 
 test("portfolio surface keeps its core experience contracts", () => {
-  const experience = read("components/portfolio-experience.tsx");
+  const experience = ["components/portfolio-experience.tsx", "content/projects.ts", "content/credentials.ts", "content/technologies.ts", "components/site-header.tsx", "components/site-preferences.tsx", "components/credential-viewer.tsx"].map(read).join("\n");
   const canvas = read("components/cosmic-canvas.tsx");
   const backdrop = read("components/worldline-backdrop.tsx");
   const styles = read("app/globals.css");
@@ -19,7 +19,7 @@ test("portfolio surface keeps its core experience contracts", () => {
   assert.match(experience, /Aku membangun hal yang benar-benar kulihat\./);
   assert.match(experience, /certificate shelf/);
   assert.match(experience, /certificate-shelf/);
-  assert.match(experience, /certificate-modal/);
+  assert.match(experience, /credential-dialog/);
   assert.match(experience, /AnimatePresence/);
   assert.match(experience, /gemini-certified-educator\.png/);
   assert.match(experience, /google-student-ambassador\.png/);
