@@ -13,7 +13,7 @@ async function hydrateWithClock(page) {
 }
 try {
   mkdirSync("test-results", { recursive: true });
-  for (const viewport of [{ width: 1440, height: 900 }, { width: 390, height: 844 }]) {
+  for (const viewport of process.argv.includes("--reduced") ? [] : [{ width: 1440, height: 900 }, { width: 390, height: 844 }]) {
     const page = await browser.newPage({ viewport, reducedMotion: "no-preference" });
     const errors = [];
     page.on("pageerror", (error) => errors.push(error.message));
@@ -24,7 +24,7 @@ try {
     await page.clock.runFor(500);
     const intro = page.locator(".arrival-intro");
     await expect(intro).toBeVisible();
-    await expect(intro).toContainText("HenryLabs");
+    await expect(intro).toContainText("StarGod");
     await expect(intro).not.toContainText("I build things");
     if (viewport.width === 1440) await page.getByRole("button", { name: "Skip intro" }).click();
     else await page.clock.runFor(1600);
@@ -56,6 +56,7 @@ try {
   }
   const reduced = await browser.newPage({ reducedMotion: "reduce" });
   await reduced.goto(url, { waitUntil: "domcontentloaded" });
+  await expect(reduced.locator("html")).toHaveAttribute("data-preferences-ready", "true", { timeout: 20000 });
   await expect(reduced.locator(".intro-loader")).toBeHidden();
   await expect(reduced.locator(".site-shell")).toHaveAttribute("data-motion", "off");
   await expect(reduced.locator(".worldline-backdrop")).toHaveAttribute("data-pursuit-bolts", "0");

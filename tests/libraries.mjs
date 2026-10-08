@@ -9,7 +9,16 @@ mkdirSync("test-results/libraries", { recursive: true });
 async function fits(page) {
   await expect(page.locator("html")).toHaveAttribute("data-preferences-ready", "true", { timeout: 20000 });
   assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false, "No horizontal overflow");
-  assert.equal(await page.locator("canvas").count(), 0, "Reading routes do not mount WebGL");
+  assert.equal(await page.locator("canvas").count(), 1, "Reading routes mount only the shared quiet sky, not the project map");
+  await expect(page.locator(".reading-sky")).toHaveAttribute("data-ready", "true");
+  assert.ok(Number(await page.locator(".reading-sky").getAttribute("data-draw-calls")) <= 2);
+  assert.ok(await page.locator(".reading-sky canvas").evaluate(canvas => {
+    const gl = canvas.getContext("webgl2"), pixels = new Uint8Array(canvas.width * canvas.height * 4);
+    gl.readPixels(0, 0, canvas.width, canvas.height, gl.RGBA, gl.UNSIGNED_BYTE, pixels);
+    let lit = 0;
+    for (let i = 0; i < pixels.length; i += 4) if (pixels[i] + pixels[i + 1] + pixels[i + 2] > 30) lit++;
+    return lit > canvas.width * canvas.height * .02;
+  }), "Reading sky must paint real nebula pixels");
 }
 try {
   for (const viewport of process.argv.includes("--integration") ? [] : viewports) {
@@ -101,6 +110,16 @@ try {
   await expect(page.locator("html")).toHaveAttribute("data-preferences-ready", "true");
   await page.locator(".desktop-nav").getByRole("link", { name: "Kontak" }).click();
   await expect(page.locator("#contact h2")).toBeInViewport({ timeout: 20000 });
+  await expect(page.locator(".reading-sky")).toHaveCount(0);
+  await expect(page.locator("canvas")).toHaveCount(2);
+  await page.goto(`${base}/?lang=id&motion=off#academic-3`);
+  await expect(page.locator("h1")).toHaveText("LabQ");
+  await expect(page).toHaveURL(/\/projects\/labq\?lang=id&motion=off/);
+  await page.goto(`${base}/#client-work`);
+  await page.waitForURL(/\/projects\?category=client/, { waitUntil: "domcontentloaded", timeout: 20000 });
+  await fits(page);
+  await expect(page.locator(".project-record")).toHaveCount(2);
+  await expect(page).toHaveURL(/category=client/);
   for (const slug of ["catmoji", "nalira", "canox", "hengs", "polara", "rentalmobil-sg", "pos-z-shoes", "labq", "y-ventures", "soreva"]) {
     const response = await page.request.get(`${base}/projects/${slug}`);
     assert.equal(response.status(), 200, slug);
@@ -110,9 +129,24 @@ try {
   await page.close();
   const reduced = await browser.newPage({ reducedMotion: "reduce" });
   await reduced.goto(`${base}/projects`);
+  await fits(reduced);
   await expect(reduced.locator("html")).toHaveAttribute("data-motion", "off");
   await expect(reduced.locator(".motion-toggle")).toBeDisabled();
+  const still = await reduced.locator(".reading-sky").getAttribute("data-time");
+  await reduced.waitForTimeout(200);
+  assert.equal(await reduced.locator(".reading-sky").getAttribute("data-time"), still);
   await reduced.close();
+  const sky = await browser.newPage({ viewport: { width: 390, height: 844 } });
+  await sky.goto(`${base}/projects`);
+  await fits(sky);
+  const before = Number(await sky.locator(".reading-sky").getAttribute("data-time"));
+  await expect.poll(async () => Number(await sky.locator(".reading-sky").getAttribute("data-time"))).toBeGreaterThan(before + .1);
+  await sky.locator(".reading-sky canvas").evaluate(canvas => canvas.getContext("webgl2").getExtension("WEBGL_lose_context").loseContext());
+  await expect(sky.locator(".reading-sky")).toHaveAttribute("data-fallback", "true");
+  await expect(sky.getByRole("link", { name: "Catmoji", exact: true })).toBeVisible();
+  await sky.getByRole("link", { name: "Catmoji", exact: true }).click();
+  await expect(sky.locator("h1")).toHaveText("Catmoji");
+  await sky.close();
   for (const language of ["en", "id"]) {
     const recovery = await browser.newPage({ viewport: { width: 390, height: 844 } });
     const errors = [];

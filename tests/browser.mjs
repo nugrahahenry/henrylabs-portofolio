@@ -23,7 +23,7 @@ async function clearDragPoint(page, bounds) {
 try {
   mkdirSync("test-results", { recursive: true });
   const sizes = [{ width: 1440, height: 900 }, { width: 1024, height: 768 }, { width: 768, height: 1024 }, { width: 390, height: 844 }, { width: 360, height: 800 }];
-  for (const viewport of process.argv.includes("--phone") ? sizes.slice(-1) : sizes) {
+  for (const viewport of process.argv.includes("--phone") ? sizes.slice(-1) : process.argv.includes("--desktop") ? sizes.slice(0, 1) : sizes) {
     const page = await browser.newPage({ viewport, reducedMotion: "no-preference" });
     const errors = [];
     page.on("pageerror", (error) => errors.push(error.message));
@@ -80,21 +80,21 @@ try {
     assert.equal(result.stackInspector, 1);
     assert.equal(result.makerPortrait, 1);
     assert.equal(result.makerActiveWorld, "catmoji");
-    assert.equal(result.academicSourceLinks, 2);
-    assert.equal(result.academicCards, 3);
-    assert.equal(result.academicStackChips, 8);
+    assert.equal(result.academicSourceLinks, 0);
+    assert.equal(result.academicCards, 0);
+    assert.equal(result.academicStackChips, 0);
     assert.equal(result.showcaseWorlds, 0);
-    assert.equal(result.continuumNodes, 5);
-    assert.equal(result.continuumRouteStages, 3);
-    assert.equal(result.worldlineActiveStages, 1);
+    assert.equal(result.continuumNodes, 0);
+    assert.equal(result.continuumRouteStages, 0);
+    assert.equal(result.worldlineActiveStages, 0);
     assert.equal(result.heroTelemetry, 3);
     assert.equal(result.starFields, 2);
     assert.ok(result.credentialControlHeights.every((height) => height >= 44), `credential controls must remain touchable: ${result.credentialControlHeights}`);
-    assert.equal(result.clientEvidenceMaps, 2);
+    assert.equal(result.clientEvidenceMaps, 0);
     assert.equal(result.methodScenes, 0);
     assert.equal(result.projectSignatures, 0);
     assert.equal(result.fieldContinuum, 1);
-    assert.equal(result.fieldContinuumOrbits, 3);
+    assert.equal(result.fieldContinuumOrbits, 0);
     assert.equal(result.worldlineBackdrops, 1);
     assert.equal(result.worldlineBackdropPosition, "fixed");
     assert.equal(result.scrollDriver, "lenis-gsap");
@@ -103,45 +103,25 @@ try {
       return {
         proofText: style(".proof-section").color,
         credentialText: style(".certificate-card").color,
-        clientText: style(".client-card > p").color,
         credentialMatte: style(".certificate-feature-preview").backgroundColor,
-        clientBackground: style(".client-section").backgroundColor,
         proofBackground: style(".proof-section").backgroundColor,
-        clientMapBorder: style(".client-evidence-map").borderLeftWidth,
       };
     });
     assert.equal(evidenceTheme.proofText, "rgb(244, 245, 239)");
     assert.equal(evidenceTheme.credentialText, evidenceTheme.proofText);
-    assert.equal(evidenceTheme.clientText, "rgb(189, 200, 215)");
     assert.equal(evidenceTheme.credentialMatte, "rgb(12, 18, 34)");
-    assert.equal(evidenceTheme.clientBackground, "rgba(0, 0, 0, 0)");
     assert.equal(evidenceTheme.proofBackground, "rgba(0, 0, 0, 0)");
-    assert.equal(evidenceTheme.clientMapBorder, "0px", "client map must not form a nested card");
-    for (const [selector, name] of [["#client-work", "private-evidence"], ["#proof", "credentials"]]) {
+    for (const [selector, name] of [["#work", "selected-preview"], ["#proof", "credentials"]]) {
       await page.locator(selector).evaluate((section) => window.scrollTo({ top: scrollY + section.getBoundingClientRect().top - 96, behavior: "instant" }));
       await expect(page.locator(`${selector} h2`)).toBeInViewport();
       await page.screenshot({ path: `test-results/${viewport.width}-${name}.png` });
     }
     await page.locator(".certificate-feature").screenshot({ path: `test-results/${viewport.width}-credential-feature.png` });
-    await page.locator(".client-card").first().evaluate((card) => window.scrollTo({ top: scrollY + card.getBoundingClientRect().top - 96, behavior: "instant" }));
-    await expect(page.locator(".client-card").first()).toBeInViewport();
-    await page.locator(".client-grid").screenshot({ path: `test-results/${viewport.width}-client-cards.png` });
-    const clientOverlaps = await page.locator(".client-grid").evaluate((grid) => [...grid.querySelectorAll(".client-card")].some((card) => {
-      const proof = card.querySelector(".client-proof").getBoundingClientRect();
-      const action = card.querySelector(".client-card-action").getBoundingClientRect();
-      return proof.bottom > action.top;
-    }));
-    assert.equal(clientOverlaps, false, "client ownership must not collide with the walkthrough action");
-    assert.equal(await page.locator(".certificate-feature-preview > img").getAttribute("src"), "/assets/certificates/previews/google-student-ambassador.png");
-    await page.getByRole("button", { name: /Open full archive/ }).click();
-    await expect(page.locator(".certificate-card")).toHaveCount(26);
-    assert.equal(await page.locator("a[href*='/assets/certificates/source/']").count(), 8);
-    await page.getByRole("tab", { name: "Completion badge", exact: true }).click();
-    await expect(page.locator(".certificate-card")).toHaveCount(17);
-    await page.getByRole("tab", { name: "All", exact: true }).click();
-    await expect(page.locator(".certificate-card")).toHaveCount(26);
-    await page.getByRole("button", { name: /Show featured five/ }).click();
-    await expect(page.locator(".certificate-card")).toHaveCount(5);
+    await expect(page.locator(".home-project-preview")).toHaveCount(1);
+    await expect(page.locator(".home-project-preview")).toHaveAttribute("data-project", "catmoji");
+    assert.equal(await page.locator(".certificate-feature-preview > img").getAttribute("src"), "/assets/certificates/thumbnails/google-student-ambassador.webp");
+    await expect(page.getByRole("link", { name: /All 26 credentials/ })).toHaveAttribute("href", /\/credentials/);
+    await expect(page.getByRole("button", { name: /Open full archive/ })).toHaveCount(0);
     const featuredTitle = await page.locator(".certificate-feature-copy h3").innerText();
     await page.getByRole("button", { name: "Next featured credential" }).click();
     await expect.poll(async () => page.locator(".certificate-feature-copy h3").innerText()).not.toBe(featuredTitle);
@@ -150,7 +130,6 @@ try {
     await expect(page.locator('a[href="https://www.linkedin.com/in/nugrahahenry/"]')).toHaveCount(1);
 
     await page.locator("#stack").scrollIntoViewIfNeeded();
-    await expect(page.locator(".field-continuum-route-stage.is-active b")).toContainText("STACK");
     await expect(page.locator(".field-continuum")).toHaveAttribute("data-worldline-stage", "stack");
     const worldlineBackdropMetrics = await page.locator(".worldline-backdrop canvas").evaluate((canvas) => new Promise((resolve) => {
       requestAnimationFrame(() => {
@@ -167,8 +146,8 @@ try {
     assert.equal(worldlineBackdropMetrics.ready, "true", "Worldline backdrop must render after entering the field");
     await page.getByRole("button", { name: /Focus Nalira through Supabase/ }).click({ force: true });
     await expect(page.locator(".maker-orbit-inspector")).toContainText("Nalira");
-    await expect(page.locator(".dossier-art-preview")).toHaveAttribute("src", "/assets/projects/nalira-ambient.svg");
-    await expect.poll(() => page.locator(".dossier-art-preview").evaluate((image) => image.complete && image.naturalWidth > 0), { message: "Nalira artwork must render" }).toBe(true);
+    await expect(page.locator(".home-project-media > img")).toHaveAttribute("src", "/assets/projects/nalira-ambient.svg");
+    await expect.poll(() => page.locator(".home-project-media > img").evaluate((image) => image.complete && image.naturalWidth > 0), { message: "Nalira artwork must render" }).toBe(true);
     assert.equal(await page.locator(".maker-tech.is-linked").count(), 4);
 
     await page.locator(".hero-stage").evaluate((hero) => window.scrollTo({ top: scrollY + hero.getBoundingClientRect().top + (hero.offsetHeight - innerHeight) * .7, behavior: "instant" }));
@@ -240,19 +219,14 @@ try {
     await page.getByRole("tab", { name: "Focus Canox" }).click();
     await expect(page.locator(".project-showcase")).toContainText("Canox");
     await expect(scene).toHaveAttribute("data-linked-tech-count", "3");
-    await expect(page.locator(".dossier")).toContainText("Canox");
-    assert.match(await page.locator(".dossier-art-evidence").innerText(), /PRIVATE WALKTHROUGH/);
-    await page.locator(".planet-label").nth(2).evaluate((button) => button.click());
-    await page.locator(".dossier").waitFor();
-    assert.equal(await page.locator(".dossier-art-evidence span").count(), 3);
-    await expect(page.locator(".project-showcase")).toContainText("Canox");
-    await expect.poll(async () => page.locator(".dossier").innerText()).toMatch(/Context is the interface/);
-    assert.match(await page.locator(".dossier").innerText(), /PRIVATE DETAILS STAY PROTECTED/);
-    assert.equal(await page.locator(".dossier-sequence span").count(), 3);
+    await expect(page.locator(".home-project-preview")).toHaveAttribute("data-project", "canox");
+    await expect(page.locator(".home-project-preview")).toContainText(/private/i);
+    await expect(page.locator(".home-project-preview a").last()).toHaveAttribute("href", /\/projects\/canox/);
     await page.locator(".planet-label").first().evaluate((button) => button.click());
     await expect(page.locator(".project-showcase")).toContainText("Catmoji");
-    await expect.poll(async () => page.locator(".dossier").innerText()).toMatch(/Read source/);
-    assert.equal(await page.locator(".dossier-art-preview").count(), 1);
+    await expect(page.locator(".home-project-preview")).toHaveAttribute("data-project", "catmoji");
+    await expect(page.locator(".home-project-preview a").last()).toHaveAttribute("href", /\/projects\/catmoji/);
+    assert.equal(await page.locator(".home-project-media > img").count(), 1);
     await page.locator(".certificate-feature-preview").click();
     await page.getByRole("dialog").waitFor();
     assert.match(await page.getByRole("dialog").innerText(), /Google Student Ambassador/i);
@@ -271,11 +245,13 @@ try {
     await page.screenshot({ path: `test-results/${viewport.width}-contact.png` });
     assert.deepEqual(errors, []);
     await page.reload({ waitUntil: "domcontentloaded" });
+    await expect(page.locator("html")).toHaveAttribute("data-preferences-ready", "true", { timeout: 20000 });
     await expect(page.locator(".intro-loader")).toHaveClass(/intro-loader--done/);
     await page.close();
 
     const reducedPage = await browser.newPage({ viewport, reducedMotion: "reduce" });
     await reducedPage.goto(baseUrl, { waitUntil: "domcontentloaded" });
+    await expect(reducedPage.locator("html")).toHaveAttribute("data-preferences-ready", "true", { timeout: 20000 });
     await expect(reducedPage.locator(".intro-loader")).toHaveClass(/intro-loader--done/);
     await expect(reducedPage.locator(".site-shell")).toHaveAttribute("data-motion", "off");
     await expect(reducedPage.locator(".hero-stage")).toHaveAttribute("data-phase", "all");

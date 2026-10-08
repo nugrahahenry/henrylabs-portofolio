@@ -36,7 +36,7 @@ async function holePixels(page) {
 
 try {
   mkdirSync("test-results", { recursive: true });
-  for (const viewport of viewports) {
+  for (const viewport of process.argv.includes("--fallback") ? [] : viewports) {
     const page = await browser.newPage({ viewport });
     const errors = [];
     const bitmapBackdrops = [];
@@ -124,6 +124,9 @@ try {
 
   const reduced = await browser.newPage({ viewport: viewports[3], reducedMotion: "reduce" });
   await reduced.goto(url, { waitUntil: "domcontentloaded" });
+  await expect(reduced.locator("html")).toHaveAttribute("data-preferences-ready", "true", { timeout: 20000 });
+  await expect(reduced.locator(".intro-loader")).toBeHidden();
+  await expect(reduced.locator(".worldline-backdrop")).toHaveAttribute("data-ready", "true");
   await expect(reduced.locator(".site-shell")).toHaveAttribute("data-motion", "off");
   await scrollToEnd(reduced);
   assert.ok(await holePixels(reduced), "reduced motion must retain the terminal landmark");

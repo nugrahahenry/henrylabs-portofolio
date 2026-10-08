@@ -1,16 +1,16 @@
 <div align="center">
 
-# HenryLabs Portfolio v0.80.1
+# StarGod Portfolio v0.81.0
 
 **I build things I actually see.**
 
 <picture>
   <source media="(prefers-reduced-motion: reduce)" srcset="public/assets/readme/universe-poster.webp" />
   <source type="image/webp" srcset="public/assets/readme/living-universe.webp" />
-  <img src="public/assets/readme/living-universe.gif" alt="The real HenryLabs portfolio: three galaxies, a flight into HenryLabs, Catmoji and Nalira with orbiting technologies, then a return to the universe." width="960" />
+  <img src="public/assets/readme/living-universe.gif" alt="Henry Nugraha's real portfolio: three galaxies, a flight into HenryLabs, Catmoji and Nalira with orbiting technologies, then a return to the universe." width="960" />
 </picture>
 
-A personal universe of products, client systems, and things built while learning.
+**StarGod** is Henry Nugraha's universe of products, client systems, and things built while learning.
 Designed and developed by **Henry Nugraha**, a product-minded developer in Indonesia.
 
 [The Worlds](#the-worlds) · [University](#university) · [Client Work](#client-work) · [Credentials](#credentials) · [Contact](#contact)
@@ -23,9 +23,11 @@ Designed and developed by **Henry Nugraha**, a product-minded developer in Indon
 
 Three galaxies. Ten project worlds. One maker.
 
+StarGod is the working name of the universe, drawn from Henry's longtime alias. **HenryLabs** remains its personal-project galaxy.
+
 Enter a living map of **HenryLabs**, **University**, and **Client Work**. Choose a galaxy, approach its planets, and explore the work behind each identity. Technologies orbit the projects they belong to; an optional reading panel brings the context, ownership, and evidence into view.
 
-Beyond the map: Henry's working method, a technology orbit, and original credentials. A continuous Three.js universe connects the journey, from distant stars and nebulae to a reversible black-hole encounter at Contact. A metallic UFO and its pursuing scout add a small story along the way.
+Beyond the map: one preview following the selected project, Henry's working method, a technology orbit, and five featured original credentials. The full project and certificate lists live in their own libraries, not repeated down Home. A continuous Three.js universe connects the journey, from distant stars and nebulae to a reversible black-hole encounter at Contact. A metallic UFO and its pursuing scout add a small story along the way: missed tracer shots, a luminous wormhole, the UFO entering first, and the scout following.
 
 Prefer a closer read? **Projects** opens a searchable catalog of all ten worlds, filtered by HenryLabs, University, or Client Work. Each planet and catalog record leads to the same project detail, with ownership, workflow, stack, and honest access boundaries. Return to the universe to continue from that planet; its reading panel stays closed until requested.
 
@@ -33,7 +35,7 @@ Prefer a closer read? **Projects** opens a searchable catalog of all ten worlds,
 
 English is the default, with Indonesian available throughout the main experience. Keyboard navigation, touch controls, reduced motion, and a WebGL fallback keep the work accessible.
 
-The animation above is a short recording of the actual portfolio, not a concept render. It focuses on the orbit experience and predates the dedicated reading libraries. The live experience is interactive; the README is a preview. Public hosting is still deferred.
+The animation above is a short recording of the actual portfolio, not a concept render. It focuses on the orbit experience and predates the StarGod naming and dedicated reading libraries. The live experience is interactive; the README is a preview. Public hosting is still deferred.
 
 ## The Worlds
 
@@ -112,7 +114,7 @@ npm run dev
 
 Open the local address printed by Next.js. For verification: `npm test`, `npm run typecheck`, and `npm run build`. Browser checks live in `tests/`.
 
-This portfolio is **actively being developed**. Hosting is deferred. The project and credential libraries are available; the personal cosmic portrait and its scroll transition are still being developed separately. Existing Home evidence sections remain until that replacement is ready. The original `henrylabs-useful-worlds.html` remains a legacy prototype.
+This portfolio is **actively being developed**. Hosting is deferred. The project and credential libraries are available; the personal cosmic portrait and its scroll transition are still being developed separately. Home already uses selected previews rather than duplicate university/client lists and a full credential archive. The current method and technology chapter remain until the portrait replacement is ready. The original `henrylabs-useful-worlds.html` remains a legacy prototype.
 
 ### Reading Routes
 
@@ -123,7 +125,7 @@ This portfolio is **actively being developed**. Hosting is deferred. The project
 | `/projects/[slug]` | A shared detail page for each project |
 | `/credentials` | All 26 original learning records |
 
-Content lives in `content/`; catalog pages and orbital reading actions share those records. Libraries do not mount additional WebGL scenes. Certificate lists use lightweight, uncropped WebP previews, while the viewer preserves full-resolution originals. To regenerate the previews from the public source images, use `node scripts/credential-thumbnails.mjs` with the installed dependencies and Node 24. Route and accessibility checks: `npm run test:libraries`; galaxy integration: `npm run test:sectors`.
+Content lives in `content/`; catalog pages and orbital reading actions share those records. Reading pages share one quiet volumetric nebula and distant-star field, without the project-map or cinematic scenes. Motion pauses when hidden and stays still with reduced motion; a dark fallback keeps content readable without WebGL. Home keeps its existing two-renderer setup. Certificate lists use lightweight, uncropped WebP previews, while the viewer preserves full-resolution originals. To regenerate the previews from the public source images, use `node scripts/credential-thumbnails.mjs` with the installed dependencies and Node 24. Route and accessibility checks: `npm run test:libraries`; galaxy integration: `npm run test:sectors`.
 
 <details>
 <summary>About the README visuals</summary>

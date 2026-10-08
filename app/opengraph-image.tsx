@@ -1,6 +1,6 @@
 import { ImageResponse } from "next/og";
 
-export const alt = "HenryLabs - Useful Worlds";
+export const alt = "StarGod - Useful Worlds";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -22,13 +22,13 @@ export default function OpenGraphImage() {
           fontFamily: "Arial",
         }}
       >
-        <div style={{ display: "flex", alignItems: "center", gap: "14px", color: "#6ee7f4", fontSize: 22, letterSpacing: "0.12em" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "14px", color: "#6ee7f4", fontSize: 22, letterSpacing: "0" }}>
           <span style={{ fontSize: 34 }}>*</span>
-          <span>HENRYLABS / USEFUL WORLDS</span>
+          <span>STARGOD / HENRY NUGRAHA</span>
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: "8px", maxWidth: "850px" }}>
-          <div style={{ display: "flex", color: "#efc95f", fontSize: 88, fontWeight: 700, lineHeight: 0.92, letterSpacing: "-0.06em" }}>I build things</div>
-          <div style={{ display: "flex", color: "#f4f5ef", fontSize: 88, fontWeight: 700, lineHeight: 0.92, letterSpacing: "-0.06em" }}>I actually see.</div>
+          <div style={{ display: "flex", color: "#efc95f", fontSize: 88, fontWeight: 700, lineHeight: 0.92, letterSpacing: "0" }}>I build things</div>
+          <div style={{ display: "flex", color: "#f4f5ef", fontSize: 88, fontWeight: 700, lineHeight: 0.92, letterSpacing: "0" }}>I actually see.</div>
         </div>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", color: "#aeb8b1", fontSize: 20 }}>
           <span>Product-minded developer / Indonesia</span>

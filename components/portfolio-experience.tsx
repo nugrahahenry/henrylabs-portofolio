@@ -9,7 +9,6 @@ import {
   Asterisk,
   Brackets,
   CarFront,
-  ChevronDown,
   ChevronLeft,
   ChevronRight,
   Code2,
@@ -17,13 +16,11 @@ import {
   Github,
   Instagram,
   Linkedin,
-  LockKeyhole,
   Mail,
   MessageCircle,
   MousePointer2,
   PanelRightOpen,
   ShoppingCart,
-  Sparkles,
   X,
   Zap,
 } from "lucide-react";
@@ -35,7 +32,8 @@ import type { GalaxyId } from "./galaxy-system";
 
 import { projects, academicProjects as academicData, clientProjects as clientData, clientStacks, type Language } from "@/content/projects";
 import { stackGroups, orbitTechNodes } from "@/content/technologies";
-import { certificates, certificateFilters } from "@/content/credentials";
+import { certificates } from "@/content/credentials";
+import { HomeProjectPreview } from "./home-project-preview";
 import { findWorld } from "@/content/catalog";
 import { SiteLink, useSitePreferences, useQuery, updateQuery } from "./site-preferences";
 import { CredentialViewer } from "./credential-viewer";
@@ -57,7 +55,7 @@ const copy = {
       contact: "Start a project",
       note: "Open to thoughtful freelance work and the right team.",
     },
-    field: { label: "A living map of HenryLabs", hint: "Drag X/Y · zoom · select a world", inspect: "Inspect dossier", open: "Open project" },
+    field: { label: "A living map of StarGod", hint: "Drag X/Y · zoom · select a world", inspect: "Inspect dossier", open: "Open project" },
     method: {
       kicker: "The Henry method",
       title: "Notice the friction.\nShape the useful.",
@@ -82,7 +80,7 @@ const copy = {
       contact: "Mulai project",
       note: "Terbuka untuk project freelance dan tim yang tepat.",
     },
-    field: { label: "Peta hidup HenryLabs", hint: "Geser X/Y · zoom · pilih dunia", inspect: "Buka dossier", open: "Buka project" },
+    field: { label: "Peta hidup StarGod", hint: "Geser X/Y · zoom · pilih dunia", inspect: "Buka dossier", open: "Buka project" },
     method: {
       kicker: "Cara kerja Henry",
       title: "Lihat friksinya.\nBentuk yang berguna.",
@@ -219,9 +217,7 @@ export function PortfolioExperience() {
   const [mapView, setMapView] = useState<"universe" | "orbit">("universe");
   const [activeSatellites, setActiveSatellites] = useState({ university: "rental" as SatelliteId, client: "yventures" as SatelliteId });
   const [activeCertificate, setActiveCertificate] = useState<(typeof certificates)[number] | null>(null);
-  const [certificateFilter, setCertificateFilter] = useState<(typeof certificateFilters)[number]>("All");
   const [spotlightIndex, setSpotlightIndex] = useState(0);
-  const [showCertificateArchive, setShowCertificateArchive] = useState(false);
   const [introDone, setIntroDone] = useState(false);
   const [methodStep, setMethodStep] = useState(0);
   const [worldlineStage, setWorldlineStage] = useState<WorldlineStage>("world");
@@ -236,13 +232,9 @@ export function PortfolioExperience() {
   const stackVisible = useInView(stackRef, { margin: "150px" });
   const contactVisible = useInView(contactRef, { amount: .15 });
   const { scrollYProgress: contactProgress } = useScroll({ target: contactRef, offset: ["start 65%", "end end"] });
-  const { scrollYProgress: workProgress } = useScroll({ target: workRef, offset: ["start end", "end start"] });
   const { scrollYProgress: methodProgress } = useScroll({ target: methodRef, offset: ["start 85%", "center center"] });
   const { scrollYProgress: worldlineProgress } = useScroll({ target: fieldRef, offset: ["start 72%", "end 30%"] });
   const methodY = useTransform(methodProgress, [0, 1], [42, 0]);
-  const workArtX = useTransform(workProgress, [0, .35, .72, 1], [-30, 0, 0, 30]);
-  const workArtRotate = useTransform(workProgress, [0, .35, .72, 1], [-2.5, 0, 0, 2.5]);
-  const workCopyY = useTransform(workProgress, [0, .35, .72, 1], [24, 0, 0, -20]);
   const pointerX = useMotionValue(-100);
   const pointerY = useMotionValue(-100);
   const cursorX = useSpring(pointerX, { stiffness: 240, damping: 28, mass: 0.28 });
@@ -275,11 +267,31 @@ export function PortfolioExperience() {
   const sectorRecords = activeSector === "university" ? universityRecords : clientRecords;
   const activeSatellite = sectorRecords.find((record) => record.id === (activeSector === "university" ? activeSatellites.university : activeSatellites.client)) ?? sectorRecords[0];
   const focusedWorld = activeSector === "main" ? activeProject : activeSatellite;
-  const filteredCertificates = certificateFilter === "All" ? certificates : certificates.filter((certificate) => certificate.kind === certificateFilter);
-  const visibleCertificates = showCertificateArchive ? filteredCertificates : filteredCertificates.slice(0, 5);
+  const visibleCertificates = certificates.filter(certificate => certificate.featuredOrder !== null);
   const spotlightPool = visibleCertificates.slice(0, Math.min(5, visibleCertificates.length));
   const spotlightCertificate = spotlightPool[spotlightIndex % Math.max(spotlightPool.length, 1)] ?? certificates[0];
   const shelfCertificates = visibleCertificates.filter((certificate) => certificate.title !== spotlightCertificate.title);
+
+  useEffect(() => {
+    const migrateLegacyFragment = () => {
+      const fragment = window.location.hash.slice(1);
+      const legacyRecord = /^(academic|client)-(\d+)$/.exec(fragment);
+      const records = legacyRecord?.[1] === "academic" ? universityRecords : clientRecords;
+      const world = legacyRecord ? findWorld(records[Number(legacyRecord[2]) - 1]?.id) : undefined;
+      const category = fragment === "academic" ? "university" : fragment === "client-work" ? "client" : null;
+      if (world || category) {
+        const destination = new URL(world ? `/projects/${world.slug}` : "/projects", window.location.origin);
+        if (category) destination.searchParams.set("category", category);
+        const preferences = new URLSearchParams(window.location.search);
+        for (const key of ["lang", "motion"]) if (preferences.has(key)) destination.searchParams.set(key, preferences.get(key)!);
+        window.location.replace(destination.href);
+        return;
+      }
+    };
+    migrateLegacyFragment();
+    window.addEventListener("hashchange", migrateLegacyFragment);
+    return () => window.removeEventListener("hashchange", migrateLegacyFragment);
+  }, []);
 
   useEffect(() => {
     let introSeen = false;
@@ -302,9 +314,6 @@ export function PortfolioExperience() {
     if (introDone) try { window.sessionStorage.setItem("henrylabs-intro-seen", "1"); } catch { /* Storage is optional. */ }
   }, [introDone]);
 
-  useEffect(() => {
-    setSpotlightIndex(0);
-  }, [certificateFilter, showCertificateArchive]);
 
   useEffect(() => {
     const world = returnWorld ? findWorld(returnWorld) : undefined;
@@ -399,7 +408,7 @@ export function PortfolioExperience() {
       <div className={cx("intro-loader", "arrival-intro", introDone && "intro-loader--done")} aria-hidden={introDone} inert={introDone}>
         <div className="arrival-content">
           <Asterisk className="arrival-mark" size={88} strokeWidth={.8} aria-hidden="true" />
-          <strong>HenryLabs</strong>
+          <strong>StarGod</strong>
           <span className="arrival-rule" aria-hidden="true" />
           <p>{language === "en" ? "Entering the universe" : "Memasuki semesta"}</p>
         </div>
@@ -458,29 +467,8 @@ export function PortfolioExperience() {
       </section>
 
       <div ref={fieldRef} className="field-continuum" data-active-world={activeProject.id} data-worldline-stage={worldlineStage}>
-        <div className="field-continuum-visual" aria-hidden="true">
-          <span className="field-continuum-glow" />
-          <span className="field-continuum-orbit field-continuum-orbit--wide" />
-          <span className="field-continuum-orbit field-continuum-orbit--mid" />
-          <span className="field-continuum-orbit field-continuum-orbit--tight" />
-          <span className="field-continuum-signal field-continuum-signal--one" />
-          <span className="field-continuum-signal field-continuum-signal--two" />
-          <div className="field-continuum-nodes">{projects.map((project, index) => <motion.span className={cx("field-continuum-node", `field-continuum-node--${index + 1}`, project.id === activeProject.id && "is-active")} style={{ "--node-color": project.color } as CSSProperties} animate={motionOn ? { y: [0, -5, 0] } : undefined} transition={motionOn ? { duration: 5.5 + index * .35, delay: index * -.7, repeat: Infinity, ease: "easeInOut" } : undefined} key={project.id}><i><img src={project.logo} alt="" /></i><b>{project.name}</b></motion.span>)}</div>
-          <div className="field-continuum-route" aria-label="Worldline reading path"><span className="field-continuum-route-line" /><motion.span className="field-continuum-route-progress" aria-hidden="true" style={{ scaleY: motionOn ? worldlineProgress : 1 }} /><span className={cx("field-continuum-route-stage", worldlineStage === "world" && "is-active")}><i>01</i><b>WORLD</b></span><span className={cx("field-continuum-route-stage", worldlineStage === "method" && "is-active")}><i>02</i><b>METHOD</b></span><span className={cx("field-continuum-route-stage", worldlineStage === "stack" && "is-active")}><i>03</i><b>STACK</b></span></div>
-        </div>
-
       <motion.section ref={workRef} className="content-section work-section" id="work" aria-labelledby="work-title">
-        <div className="section-heading"><div><p className="section-kicker">Selected worlds</p><h2 id="work-title">{t.work.title}</h2></div><p>{t.work.body}</p></div>
-        <div className="work-scroll-track" aria-hidden="true"><span>orbit / evidence</span><motion.i style={{ scaleX: motionOn ? workProgress : 1 }} /><span>{activeProject.name} / live signal</span></div>
-        <div className="work-world-context"><div><span>ACTIVE WORLD / {String(projects.findIndex((project) => project.id === activeProject.id) + 1).padStart(2, "0")}</span><strong>{activeProject.name}</strong><small>Focused from the project orbit</small></div></div>
-        <div className="work-layout">
-          <AnimatePresence mode="wait" initial={false}>
-            <motion.article className="dossier" key={activeProject.id} style={{ "--dossier-color": activeProject.color } as React.CSSProperties} initial={motionOn ? { opacity: 0, y: 18, scale: .985 } : false} animate={{ opacity: 1, y: 0, scale: 1 }} exit={motionOn ? { opacity: 0, y: -10, scale: .99 } : undefined} transition={{ duration: motionOn ? 0.45 : 0, ease: [0.16, 1, 0.3, 1] }}>
-              <motion.div className="dossier-art" style={{ x: motionOn ? workArtX : 0, rotate: motionOn ? workArtRotate : 0 }}><div className="dossier-art-ring dossier-art-ring--one" /><div className="dossier-art-ring dossier-art-ring--two" /><span className="dossier-art-scan" aria-hidden="true" /><div className="dossier-art-readout"><span>WORLD / {String(projects.findIndex((project) => project.id === activeProject.id) + 1).padStart(2, "0")}</span><span>{activeProject.year}</span></div><span className="dossier-art-stamp">{activeProject.signal[language]}</span><div className="dossier-art-evidence" aria-label="Project evidence signals"><span><small>Surface</small><strong>{activeProject.media ? "Visual" : "System map"}</strong></span><span><small>Access</small><strong>{activeProject.access[language]}</strong></span><span><small>State</small><strong>{activeProject.status[language]}</strong></span></div>{activeProject.media ? <motion.img className="dossier-art-preview" src={activeProject.media} alt={activeProject.mediaAlt} initial={motionOn ? { opacity: 0, scale: .86, rotate: -3, y: 14, filter: "blur(8px)" } : false} animate={{ opacity: 1, scale: 1, rotate: 0, y: 0, filter: "blur(0px)" }} transition={{ duration: motionOn ? .58 : 0, ease: [0.16, 1, 0.3, 1] }} /> : <motion.div className="dossier-art-map" aria-label={`${activeProject.name} system map`} initial={motionOn ? { opacity: 0, scale: .9, rotateY: -10, y: 14 } : false} animate={{ opacity: 1, scale: 1, rotateY: 0, y: 0 }} transition={{ duration: motionOn ? .52 : 0, ease: [0.16, 1, 0.3, 1] }}>{activeProject.flow[language].map((step, index) => <span key={step}><i>{String(index + 1).padStart(2, "0")}</i>{step}</span>)}</motion.div>}<motion.img className="dossier-art-logo" src={activeProject.logo} alt={`${activeProject.name} logo`} initial={motionOn ? { opacity: 0, scale: .68, rotate: -12 } : false} animate={{ opacity: 1, scale: 1, rotate: 0 }} transition={{ duration: motionOn ? .42 : 0, delay: motionOn ? .12 : 0, ease: [0.16, 1, 0.3, 1] }} /></motion.div>
-              <motion.div className="dossier-copy" style={{ y: motionOn ? workCopyY : 0 }} initial={motionOn ? { opacity: 0, x: 18 } : false} animate={{ opacity: 1, x: 0 }} transition={{ duration: motionOn ? .42 : 0, delay: motionOn ? .08 : 0, ease: [0.16, 1, 0.3, 1] }}><div className="dossier-meta"><span>{activeProject.status[language]}</span><span>{activeProject.visibility[language]}</span></div><h3>{activeProject.name}</h3><p>{activeProject.summary[language]}</p><div className="dossier-details"><span><small>Role</small><strong>{activeProject.role[language]}</strong></span><span><small>Access</small><strong>{activeProject.access[language]}</strong></span><span><small>Signal</small><strong>{activeProject.signal[language]}</strong></span></div><div className="dossier-sequence" aria-label="Case study sequence">{activeProject.flow[language].map((step, index) => <span key={step}><small>0{index + 1} / {t.caseStudy.sequence[index]}</small><strong>{step}</strong></span>)}</div><div className="case-facts"><span><small>{t.caseStudy.stack}</small><strong>{activeProject.stack.join(" · ")}</strong></span><span><small>{t.caseStudy.ownership}</small><strong>{activeProject.ownership[language]}</strong></span><span><small>{t.caseStudy.evidence}</small><strong>{activeProject.evidence[language]}</strong></span></div><div className="dossier-next"><span>{t.caseStudy.next}</span><p>{activeProject.next[language]}</p></div><div className="dossier-actions"><a className="inline-link" href={activeProject.link} target={activeProject.link.startsWith("http") ? "_blank" : undefined} rel={activeProject.link.startsWith("http") ? "noreferrer" : undefined}>{activeProject.linkLabel[language]}<ArrowUpRight size={17} /></a>{activeProject.source && <a className="inline-link inline-link--source" href={activeProject.source} target="_blank" rel="noreferrer"><Github size={16} />{t.caseStudy.source}<ArrowUpRight size={15} /></a>}</div>{!activeProject.source && <p className="dossier-private"><LockKeyhole size={14} />{t.caseStudy.private}</p>}</motion.div>
-            </motion.article>
-          </AnimatePresence>
-        </div>
+        <HomeProjectPreview project={findWorld(focusedWorld.id)!} />
       </motion.section>
 
       <section ref={methodRef}
@@ -491,7 +479,7 @@ export function PortfolioExperience() {
         <div className="signal-inner">
           <div className="signal-layout">
             <div className="signal-heading">
-              <p className="section-kicker section-kicker-dark">{t.method.kicker} <span className="worldline-context">/ {activeProject.name}</span></p>
+              <p className="section-kicker section-kicker-dark">{t.method.kicker} <span className="worldline-context">/ {focusedWorld.name}</span></p>
               <motion.h2 id="method-title" style={{ y: motionOn ? methodY : 0 }}>{t.method.title.split("\n").map((line) => <span key={line}>{line}</span>)}</motion.h2>
             </div>
             <div className="signal-copy">
@@ -537,31 +525,27 @@ export function PortfolioExperience() {
       </section>
       </div>
 
-      <section className="content-section split-section academic-section" id="academic" aria-labelledby="academic-title"><div className="section-heading"><div><p className="section-kicker">University builds</p><h2 id="academic-title">{t.academic.title}</h2></div><p>{t.academic.body}</p></div><div className="academic-runway" aria-hidden="true"><span>SOLO BUILD RECORDS</span><i /><span>SEMESTER 02 → 04</span></div><div className="academic-grid">{academicProjects.map((project, index) => { const AcademicIcon = project.icon; return <article id={`academic-${index + 1}`} tabIndex={-1} className="academic-card" style={{ "--academic-color": project.color } as React.CSSProperties} key={project.title}><div className="academic-card-top"><span>0{index + 1}</span><small>solo system</small></div><div className="academic-card-visual" aria-hidden="true"><span className="academic-mark"><AcademicIcon size={21} strokeWidth={1.7} /></span><span className="academic-card-orbit academic-card-orbit--one" /><span className="academic-card-orbit academic-card-orbit--two" /></div><div className="academic-card-label"><p>{project.tag}</p><small>OWNED END TO END</small></div><h3>{project.title}</h3><span className="academic-card-body">{project.body}</span><div className="academic-card-signal"><span>FLOW</span><strong>{project.signal}</strong></div><div className="academic-card-stack" aria-label={`${project.title} stack`}>{project.stack.map((item) => <span key={item}>{item}</span>)}</div><div className="academic-card-foot"><span className="academic-card-output"><small>OUTPUT</small><strong>{project.output}</strong></span>{project.link ? <a href={project.link} target="_blank" rel="noreferrer" aria-label={`${project.linkLabel} for ${project.title}`}>{project.linkLabel}<ArrowUpRight size={18} /></a> : <span className="academic-card-local">class build</span>}</div></article>; })}</div></section>
 
-      <section className="client-section" id="client-work" aria-labelledby="client-title"><div className="content-section"><div className="section-heading"><div><p className="section-kicker section-kicker-dark">Private evidence</p><h2 id="client-title">{t.client.title}</h2></div><p>{t.client.body}</p></div><div className="client-signal-rail" aria-hidden="true"><span>PRIVATE / SANITIZED EVIDENCE</span><i /><span>02 CASES / OWNER SIGNAL</span></div><div className="client-grid">{clientProjects.map(({ title, icon: Icon, body, context, ownership, output, boundary, signal, color }, index) => <motion.article id={`client-${index + 1}`} tabIndex={-1} className="client-card" style={{ "--client-color": color } as React.CSSProperties} key={title} initial={motionOn ? { opacity: 0, x: index === 0 ? -36 : 36, rotate: index === 0 ? -1.2 : 1.2 } : false} whileInView={motionOn ? { opacity: 1, x: 0, rotate: 0 } : undefined} viewport={{ once: false, amount: .3 }} transition={{ duration: .7, delay: index * .08, ease: [0.16, 1, 0.3, 1] }}><div className="client-card-orbit" aria-hidden="true"><span /><span /><span /></div><div className="client-topline"><span>0{index + 1} / PRIVATE EVIDENCE</span><Icon size={21} /></div><div className="client-card-titleline"><h3>{title}</h3><span className="client-owner-stamp">OWNER / HENRY</span></div><p>{body}</p><div className="client-evidence-map" aria-label={`${title} sanitized evidence map`}><div className="client-map-topline"><span>SAFE VIEW / SYSTEM MAP</span><span>NO PRIVATE DATA</span></div><div className="client-map-canvas"><span className="client-map-line client-map-line--one" /><span className="client-map-line client-map-line--two" /><span className="client-map-line client-map-line--three" /><span className="client-map-node client-map-node--one"><i>01</i><b>{signal[language].split(" → ")[0]}</b></span><span className="client-map-node client-map-node--two"><i>02</i><b>{signal[language].split(" → ")[1]}</b></span><span className="client-map-node client-map-node--three"><i>03</i><b>{signal[language].split(" → ")[2]}</b></span><span className="client-map-core"><Icon size={15} /><b>HENRY</b></span></div></div><div className="client-proof"><span><small>{t.client.context}</small><strong>{context[language]}</strong></span><span><small>{t.caseStudy.ownership}</small><strong>{ownership[language]}</strong></span><span><small>{t.client.output}</small><strong>{output[language]}</strong></span><span><small>{t.client.boundary}</small><strong>{boundary[language]}</strong></span></div><a className="client-card-action" href="#contact">{t.client.request} <ArrowUpRight size={15} /></a></motion.article>)}</div></div></section>
 
       <section className="content-section proof-section" id="proof" aria-labelledby="proof-title">
         <div className="section-heading"><div><p className="section-kicker">Credentials / 05 featured</p><h2 id="proof-title">{t.proof.title}</h2></div><p>{t.proof.body}</p></div>
-        <SiteLink className="library-text-link" href="/credentials">{language === "en" ? "Visit the credential library" : "Buka library kredensial"}<ArrowUpRight size={17} /></SiteLink>
-        <div className="proof-toolbar"><div className="proof-count"><strong>{String(visibleCertificates.length).padStart(2, "0")}</strong><span>{showCertificateArchive ? "archive records" : "featured records"}</span></div><div className="certificate-filters" role="tablist" aria-label="Filter credentials">{certificateFilters.map((filter) => <button key={filter} type="button" role="tab" aria-selected={certificateFilter === filter} className={cx(certificateFilter === filter && "is-active")} onClick={() => setCertificateFilter(filter)}>{filter}</button>)}</div></div>
+        <SiteLink className="library-text-link" href="/credentials">{language === "en" ? "All 26 credentials" : "Semua 26 kredensial"}<ArrowUpRight size={17} /></SiteLink>
         <div className="certificate-feature certificate-card">
           <button type="button" className="certificate-feature-preview" onClick={() => { setActiveCertificate(spotlightCertificate); }} aria-label={`Inspect ${spotlightCertificate.title} certificate`}>
-            {spotlightPool.slice(1, 4).map((certificate, index) => <span className={cx("certificate-feature-ghost", `certificate-feature-ghost--${index + 1}`)} key={certificate.title} aria-hidden="true"><img src={certificate.image} alt="" /></span>)}
-            <AnimatePresence mode="wait" initial={false}><motion.img key={spotlightCertificate.title} src={spotlightCertificate.image} alt={spotlightCertificate.alt} initial={motionOn ? { opacity: 0, x: 28, rotate: 3 } : false} animate={{ opacity: 1, x: 0, rotate: 0 }} exit={motionOn ? { opacity: 0, x: -22, rotate: -3 } : undefined} transition={{ duration: motionOn ? .42 : 0, ease: [0.22, 1, .36, 1] }} /></AnimatePresence>
+            {spotlightPool.slice(1, 4).map((certificate, index) => <span className={cx("certificate-feature-ghost", `certificate-feature-ghost--${index + 1}`)} key={certificate.title} aria-hidden="true"><img src={certificate.thumbnail} alt="" /></span>)}
+            <AnimatePresence mode="wait" initial={false}><motion.img key={spotlightCertificate.title} src={spotlightCertificate.thumbnail} alt={spotlightCertificate.alt} initial={motionOn ? { opacity: 0, x: 28, rotate: 3 } : false} animate={{ opacity: 1, x: 0, rotate: 0 }} exit={motionOn ? { opacity: 0, x: -22, rotate: -3 } : undefined} transition={{ duration: motionOn ? .42 : 0, ease: [0.22, 1, .36, 1] }} /></AnimatePresence>
             <span className="certificate-index">{String((spotlightPool.indexOf(spotlightCertificate) + 1).toString().padStart(2, "0"))} / FEATURED RECORD</span><span className="certificate-view">inspect full <ArrowUpRight size={13} /></span>
           </button>
-          <div className="certificate-feature-copy"><div className="certificate-meta"><span>{spotlightCertificate.issuer}</span><span>{spotlightCertificate.kind}</span></div><div className="certificate-feature-title"><h3>{spotlightCertificate.title}</h3><div className="certificate-feature-switcher"><span>{String(spotlightPool.indexOf(spotlightCertificate) + 1).padStart(2, "0")} / {String(spotlightPool.length).padStart(2, "0")}</span><button type="button" onClick={() => cycleSpotlight(-1)} aria-label="Previous featured credential"><ChevronLeft size={15} /></button><button type="button" onClick={() => cycleSpotlight(1)} aria-label="Next featured credential"><ChevronRight size={15} /></button></div></div><p>One original record from the shelf, kept large enough to read and specific enough to trust.</p><div className="certificate-feature-specs"><span><small>Issued</small><strong>{spotlightCertificate.date}</strong></span><span><small>{showCertificateArchive ? "Archive" : "Featured"}</small><strong>{String(visibleCertificates.length).padStart(2, "0")} visible</strong></span></div><button type="button" className="certificate-feature-open" onClick={() => { setActiveCertificate(spotlightCertificate); }}>Open the record <ArrowUpRight size={15} /></button>{spotlightCertificate.source && <a className="certificate-feature-source" href={spotlightCertificate.source} target="_blank" rel="noreferrer">Source PDF <ArrowUpRight size={13} /></a>}</div>
+          <div className="certificate-feature-copy"><div className="certificate-meta"><span>{spotlightCertificate.issuer}</span><span>{spotlightCertificate.kind}</span></div><div className="certificate-feature-title"><h3>{spotlightCertificate.title}</h3><div className="certificate-feature-switcher"><span>{String(spotlightPool.indexOf(spotlightCertificate) + 1).padStart(2, "0")} / {String(spotlightPool.length).padStart(2, "0")}</span><button type="button" onClick={() => cycleSpotlight(-1)} aria-label="Previous featured credential"><ChevronLeft size={15} /></button><button type="button" onClick={() => cycleSpotlight(1)} aria-label="Next featured credential"><ChevronRight size={15} /></button></div></div><p>One original record from the shelf, kept large enough to read and specific enough to trust.</p><div className="certificate-feature-specs"><span><small>Issued</small><strong>{spotlightCertificate.date}</strong></span><span><small>{language === "en" ? "Featured" : "Pilihan"}</small><strong>{String(visibleCertificates.length).padStart(2, "0")} visible</strong></span></div><button type="button" className="certificate-feature-open" onClick={() => { setActiveCertificate(spotlightCertificate); }}>Open the record <ArrowUpRight size={15} /></button>{spotlightCertificate.source && <a className="certificate-feature-source" href={spotlightCertificate.source} target="_blank" rel="noreferrer">Source PDF <ArrowUpRight size={13} /></a>}</div>
         </div>
-        <div className="certificate-shelf certificate-shelf--compact"><AnimatePresence initial={false} mode="popLayout">{shelfCertificates.map((certificate, index) => <motion.article layout className="certificate-card" key={certificate.title} initial={motionOn ? { opacity: 0, y: 26, scale: .98 } : false} whileInView={motionOn ? { opacity: 1, y: 0, scale: 1 } : undefined} viewport={{ once: false, amount: .18, margin: "0px 0px -8% 0px" }} exit={motionOn ? { opacity: 0, y: -14, scale: .96 } : undefined} transition={{ duration: motionOn ? .42 : 0, delay: motionOn ? (index % 3) * .045 : 0, ease: [0.22, 1, .36, 1] }}><button type="button" className="certificate-preview" onClick={() => { setActiveCertificate(certificate); }} aria-label={`Inspect ${certificate.title} certificate`}><img src={certificate.image} alt={certificate.alt} loading="lazy" /><span className="certificate-index">{String(index + 2).padStart(2, "0")}</span><span className="certificate-view">inspect full <ArrowUpRight size={13} /></span></button><div className="certificate-copy"><div className="certificate-meta"><span>{certificate.issuer}</span><span>{certificate.kind}</span></div><h3>{certificate.title}</h3><div className="certificate-foot"><span>{certificate.date}</span>{certificate.source ? <a href={certificate.source} target="_blank" rel="noreferrer">Source PDF <ArrowUpRight size={13} /></a> : <span className="certificate-muted">Original image</span>}</div></div></motion.article>)}</AnimatePresence></div>
-        <div className="certificate-archive"><span>certificate shelf</span><p>Original assets, issuer names, and dates stay visible so the proof feels specific, not ornamental.</p><button type="button" className="certificate-archive-toggle" aria-expanded={showCertificateArchive} onClick={() => setShowCertificateArchive((value) => !value)}>{showCertificateArchive ? "Show featured five" : `Open full archive (${filteredCertificates.length})`}<motion.span animate={{ rotate: showCertificateArchive ? 180 : 0 }} transition={{ duration: .3 }}><ChevronDown size={14} /></motion.span></button><Sparkles size={19} /></div>
+        <div className="certificate-shelf certificate-shelf--compact"><AnimatePresence initial={false} mode="popLayout">{shelfCertificates.map((certificate, index) => <motion.article layout className="certificate-card" key={certificate.title} initial={motionOn ? { opacity: 0, y: 26, scale: .98 } : false} whileInView={motionOn ? { opacity: 1, y: 0, scale: 1 } : undefined} viewport={{ once: false, amount: .18, margin: "0px 0px -8% 0px" }} exit={motionOn ? { opacity: 0, y: -14, scale: .96 } : undefined} transition={{ duration: motionOn ? .42 : 0, delay: motionOn ? (index % 3) * .045 : 0, ease: [0.22, 1, .36, 1] }}><button type="button" className="certificate-preview" onClick={() => { setActiveCertificate(certificate); }} aria-label={`Inspect ${certificate.title} certificate`}><img src={certificate.thumbnail} alt={certificate.alt} loading="lazy" /><span className="certificate-index">{String(index + 2).padStart(2, "0")}</span><span className="certificate-view">inspect full <ArrowUpRight size={13} /></span></button><div className="certificate-copy"><div className="certificate-meta"><span>{certificate.issuer}</span><span>{certificate.kind}</span></div><h3>{certificate.title}</h3><div className="certificate-foot"><span>{certificate.date}</span>{certificate.source ? <a href={certificate.source} target="_blank" rel="noreferrer">Source PDF <ArrowUpRight size={13} /></a> : <span className="certificate-muted">Original image</span>}</div></div></motion.article>)}</AnimatePresence></div>
       </section>
 
       <CredentialViewer record={activeCertificate} onClose={() => setActiveCertificate(null)} />
 
       <section ref={contactRef} className="contact-section" id="contact" aria-labelledby="contact-title"><div className="content-section contact-content"><div><p className="section-kicker section-kicker-dark">Make the next useful thing</p><h2 id="contact-title">{t.contact.title}</h2></div><div className="contact-copy"><p>{t.contact.body}</p><div className="contact-actions"><a className="button button-bright" href="https://wa.me/6289513559554" target="_blank" rel="noreferrer"><MessageCircle size={18} /> WhatsApp <ArrowUpRight size={16} /></a><a className="button button-outline" href="mailto:henrynugraha1210@gmail.com"><Mail size={18} /> Email <ArrowUpRight size={16} /></a></div><div className="social-links"><a href="https://github.com/nugrahahenry" target="_blank" rel="noreferrer"><Github size={19} /> GitHub</a><a href="https://www.linkedin.com/in/nugrahahenry/" target="_blank" rel="noreferrer"><Linkedin size={19} /> LinkedIn</a><a href="https://instagram.com/hnry.dev" target="_blank" rel="noreferrer"><Instagram size={19} /> @hnry.dev</a></div></div></div></section>
 
-      <footer className="site-footer"><a className="brand" href="#top"><span className="brand-mark"><Asterisk size={18} /></span><span>HenryLabs</span></a><span>{t.footer}</span><span>© 2026</span></footer>
+      <footer className="site-footer"><a className="brand" href="#top"><span className="brand-mark"><Asterisk size={18} /></span><span>StarGod</span></a><span>{t.footer}</span><span>© 2026</span></footer>
     </main>
     </MotionConfig>
   );

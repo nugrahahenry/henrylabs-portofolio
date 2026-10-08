@@ -12,7 +12,7 @@ export function ProjectMark({ project }: { project: CatalogProject }) {
 
 export function LibraryFooter() {
   const { language } = useSitePreferences();
-  return <footer className="library-footer"><SiteLink href="/">HenryLabs <ArrowLeft size={16} /></SiteLink><span>{language === "en" ? "Built by Henry Nugraha" : "Dibangun oleh Henry Nugraha"}</span><a href="https://www.linkedin.com/in/nugrahahenry/" target="_blank" rel="noreferrer">LinkedIn <ArrowUpRight size={16} /></a></footer>;
+  return <footer className="library-footer"><SiteLink href="/">StarGod <ArrowLeft size={16} /></SiteLink><span>{language === "en" ? "Built by Henry Nugraha" : "Dibangun oleh Henry Nugraha"}</span><a href="https://www.linkedin.com/in/nugrahahenry/" target="_blank" rel="noreferrer">LinkedIn <ArrowUpRight size={16} /></a></footer>;
 }
 
 export function ProjectLibrary() {

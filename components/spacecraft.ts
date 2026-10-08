@@ -2,11 +2,28 @@ import * as THREE from "three";
 import { mergeGeometries } from "three/addons/utils/BufferGeometryUtils.js";
 
 export type SpacecraftKind = "ufo" | "scout";
-export type SpacecraftPose = { visible: boolean; x: number; y: number; depth: number; roll: number; opacity: number };
+export type SpacecraftPose = { visible: boolean; x: number; y: number; depth: number; roll: number; opacity: number; entry: number; scale: number };
 export type FlightObstacle = { x: number; y: number; radius: number };
 export type SafeFlightPoint = { x: number; y: number; visible: boolean; clearance: number };
 export const PURSUIT_DELAY = 4.8;
 export const SPACECRAFT_PERIOD = 112;
+// Keep the rendezvous in the open left sky, away from the natural system on the right.
+export const WORMHOLE_X = -.42;
+
+export function wormholePresence(age: number, motionOn: boolean, delay = PURSUIT_DELAY) {
+  const time = Math.max(0, age) % SPACECRAFT_PERIOD;
+  return motionOn ? THREE.MathUtils.smoothstep(time, 13.5, 15.3) * (1 - THREE.MathUtils.smoothstep(time, 18.9 + delay, 20.7 + delay)) : 0;
+}
+
+// Aim beyond the target on a tangent, not at its hull. The whole segment is clearance-tested.
+export function pursuitMiss(from: Pick<FlightObstacle, "x" | "y">, target: FlightObstacle, index: number, out = { x: 0, y: 0 }) {
+  const dx = target.x - from.x, dy = target.y - from.y;
+  const distance = Math.max(.001, Math.hypot(dx, dy));
+  const miss = (target.radius + .07) * 2.8 * (index % 2 ? -1 : 1);
+  out.x = from.x + dx * 1.4 - dy / distance * miss;
+  out.y = from.y + dy * 1.4 + dx / distance * miss;
+  return out;
+}
 
 export function flightPresence(current: number, target: number, dt: number) {
   const step = Math.min(.04, Math.max(0, dt)) / (target > current ? .55 : .42);
@@ -40,15 +57,45 @@ export function createPursuitBolts() {
   return mesh;
 }
 
-export function spacecraftPose(age: number, motionOn: boolean, kind: SpacecraftKind = "ufo", out: SpacecraftPose = { visible: false, x: 0, y: 0, depth: 0, roll: 0, opacity: 0 }) {
-  const t = ((Math.max(0, Number.isFinite(age) ? age : 0) % SPACECRAFT_PERIOD) - .6 - (kind === "scout" ? PURSUIT_DELAY : 0)) / 18;
+export function spacecraftPose(age: number, motionOn: boolean, kind: SpacecraftKind = "ufo", out: SpacecraftPose = { visible: false, x: 0, y: 0, depth: 0, roll: 0, opacity: 0, entry: 0, scale: 1 }, delay = PURSUIT_DELAY) {
+  const t = ((Math.max(0, Number.isFinite(age) ? age : 0) % SPACECRAFT_PERIOD) - .6 - (kind === "scout" ? delay : 0)) / 18;
   out.visible = motionOn ? t > 0 && t < 1 : true;
-  out.x = motionOn ? -1.15 + t * 2.3 : kind === "ufo" ? -.46 : -.75;
-  out.y = motionOn ? .61 + Math.sin(t * Math.PI) * .11 : kind === "ufo" ? .68 : .43;
-  out.depth = -2.8 + (motionOn ? Math.sin(t * Math.PI) * .45 : 0);
-  out.roll = motionOn ? Math.sin(t * Math.PI * 2) * .10 : -.08;
-  out.opacity = motionOn ? THREE.MathUtils.smoothstep(t, 0, .09) * (1 - THREE.MathUtils.smoothstep(t, .87, 1)) : .72;
+  out.entry = motionOn ? THREE.MathUtils.smoothstep(t, .82, 1) : 0;
+  out.x = motionOn ? -1.15 + THREE.MathUtils.clamp(t, 0, 1) * (1.15 + WORMHOLE_X) : kind === "ufo" ? -.46 : -.75;
+  out.y = motionOn ? .61 + Math.sin(t * Math.PI) * .10 + Math.sin(t * Math.PI * 4) * .035 * (1 - out.entry) : kind === "ufo" ? .68 : .43;
+  out.depth = -2.8 + (motionOn ? Math.sin(t * Math.PI) * .45 - out.entry * 4 : 0);
+  out.roll = motionOn ? Math.sin(t * Math.PI * 4) * .16 * (1 - out.entry) : -.08;
+  out.scale = 1 - out.entry * .96;
+  out.opacity = motionOn ? THREE.MathUtils.smoothstep(t, 0, .09) * (1 - THREE.MathUtils.smoothstep(out.entry, .75, 1)) : .72;
   return out;
+}
+
+export function createWormhole() {
+  const material = new THREE.ShaderMaterial({
+    uniforms: { uTime: { value: 0 }, uOpacity: { value: 0 } },
+    vertexShader: `varying vec2 vUv; void main(){vUv=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}`,
+    fragmentShader: `
+      varying vec2 vUv; uniform float uTime; uniform float uOpacity;
+      void main(){
+        vec2 p=(vUv-.5)*2.4; float r=length(p); float a=atan(p.y,p.x);
+        float edge=exp(-pow((r-.83)*20.0,2.0));
+        float spiral=(.5+.5*sin(a*5.0-r*23.0+uTime*1.8))*smoothstep(.12,.8,r);
+        vec3 color=mix(vec3(.015,.04,.07),vec3(.12,.6,.68),spiral*.3);
+        color+=edge*mix(vec3(.28,.88,1.0),vec3(1.0,.82,.48),.5+.5*sin(a*2.0+uTime*.4));
+        gl_FragColor=vec4(color,uOpacity*(1.0-smoothstep(.91,1.1,r)));
+        #include <tonemapping_fragment>
+        #include <colorspace_fragment>
+      }`,
+    transparent: true, depthWrite: false, side: THREE.DoubleSide,
+  });
+  const group = new THREE.Group();
+  group.add(new THREE.Mesh(new THREE.PlaneGeometry(2.4, 2.4), material));
+  const rimMaterial = new THREE.MeshBasicMaterial({ color: "#bceefa", transparent: true, opacity: 0, depthWrite: false });
+  const rim = new THREE.Mesh(new THREE.TorusGeometry(.85, .012, 8, 80), rimMaterial);
+  rim.position.z = .035;
+  group.add(rim);
+  group.visible = false;
+  return { group, material, rimMaterial };
 }
 
 // Circle-boundary candidates also handle overlapping exclusion zones without iterative pushes.

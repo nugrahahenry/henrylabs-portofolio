@@ -85,6 +85,7 @@ try {
     await expect(page.locator(".satellite-readout").getByRole("button", { name: /^(Previous|Next) project$/ })).toHaveCount(0);
     await page.locator(".satellite-readout").getByRole("button", { name: "Focus LabQ", exact: true }).click();
     await expect(page.locator(".satellite-readout")).toContainText("LabQ");
+    await expect(page.locator(".home-project-preview")).toHaveAttribute("data-project", "labq");
     await expect.poll(() => page.locator(".satellite-readout").evaluate((panel) => Number(getComputedStyle(panel).opacity))).toBe(1);
     if (viewport.height < 620) {
       const panel = page.locator(".satellite-readout");
@@ -113,6 +114,8 @@ try {
     const bounds = await soreva.boundingBox();
     await page.mouse.click(bounds.x + bounds.width / 2, bounds.y + bounds.height / 2);
     await expect(scene).toHaveAttribute("data-active-world", "soreva");
+    await expect(page.locator(".home-project-preview")).toHaveAttribute("data-project", "soreva");
+    await expect(page.locator(".home-project-preview")).toContainText("Vieri");
     await expect(page.locator(".project-showcase")).toHaveCount(0);
     await page.getByRole("button", { name: "Open active world" }).click();
     await expect(page.locator(".satellite-readout")).toContainText("Vieri prototype account");

@@ -7,8 +7,8 @@ export function generateStaticParams() { return projectCatalog.map(({ slug }) =>
 type Props = { params: Promise<{ slug: string }> };
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const project = findProject((await params).slug);
-  if (!project) return { title: "Project not found | HenryLabs" };
-  const title = `${project.name} | HenryLabs`;
+  if (!project) return { title: "Project not found | StarGod" };
+  const title = `${project.name} | StarGod`;
   const path = `/projects/${project.slug}`;
   return { title, description: project.summary.en, alternates: { canonical: path },
     openGraph: { title, description: project.summary.en, url: path },

@@ -22,7 +22,7 @@ const { createStellarCore } = await loadModule("stellar-core");
 const { advanceGalaxyFlight, sampleGalaxyFlight } = await loadModule("galaxy-flight");
 const { createDeepSpace } = await loadModule("deep-space");
 const { infallPoint, gravityMaterial, dustWarmth } = await loadModule("gravity-field");
-const { createSpacecraft, spacecraftPose, routeSpacecraft, flightPresence, pursuitPulse, clearShot, PURSUIT_DELAY, SPACECRAFT_PERIOD } = await loadModule("spacecraft");
+const { createSpacecraft, spacecraftPose, routeSpacecraft, flightPresence, pursuitPulse, pursuitMiss, wormholePresence, createWormhole, clearShot, PURSUIT_DELAY, SPACECRAFT_PERIOD } = await loadModule("spacecraft");
 const { distantStarPoint, dustStreamSource, stellarTwinkle, createDistantStarMaterial, DISTANT_STAR_COUNT, COMPACT_STAR_COUNT, FEEDING_DUST_COUNT } = await loadModule("ambient-field");
 
 test("galaxy approach centers first and reveals the local system without a visibility jump", () => {
@@ -248,6 +248,47 @@ test("flight lanes clear overlapping projected planet/ring exclusions or hide sa
   assert.equal(point.visible, false);
   routeSpacecraft(0, .6, .1, [], .8, .2, point);
   assert.equal(point.visible, false);
+});
+
+test("the portal opens before the UFO enters, waits for the scout, then closes", () => {
+  assert.equal(wormholePresence(8, true), 0);
+  assert.ok(wormholePresence(16, true) > .99);
+  assert.ok(spacecraftPose(17.5, true).entry > .6);
+  assert.equal(spacecraftPose(17.5, true, "scout").entry, 0);
+  assert.ok(spacecraftPose(22.3, true, "scout").entry > .6);
+  assert.equal(wormholePresence(23.4, true), 1);
+  assert.equal(wormholePresence(26, true), 0);
+  assert.equal(wormholePresence(17, false), 0);
+  assert.ok(spacecraftPose(18.2, true).scale < spacecraftPose(16, true).scale);
+  const portal = createWormhole();
+  assert.equal(portal.group.children.length, 2);
+  portal.group.children.forEach(mesh => mesh.geometry.dispose());
+  portal.material.dispose(); portal.rimMaterial.dispose();
+});
+
+test("every pursuit tracer misses the entire UFO silhouette, not just its center", () => {
+  for (const aspect of [.46, .7, 1.6, 2.2]) for (let age = 7.3; age < 14; age += .2) for (let shot = 0; shot < 3; shot++) {
+    const lead = spacecraftPose(age, true), scout = spacecraftPose(age, true, "scout");
+    const start = { x: scout.x * aspect, y: scout.y };
+    const target = { x: lead.x * aspect, y: lead.y, radius: .13 };
+    const end = pursuitMiss(start, target, shot);
+    const dx = end.x - start.x, dy = end.y - start.y;
+    const t = Math.max(0, Math.min(1, ((target.x-start.x)*dx + (target.y-start.y)*dy)/(dx*dx+dy*dy)));
+    const distance = Math.hypot(target.x-start.x-dx*t, target.y-start.y-dy*t);
+    // Very narrow lanes may suppress the shot rather than grazing the craft.
+    if (clearShot(start, end, [target])) assert.ok(distance > target.radius + .025);
+  }
+});
+
+test("portrait pursuit spacing keeps the portal open for the delayed scout", () => {
+  for (const delay of [4.8, 12.5]) {
+    const end = .6 + 18 + delay;
+    assert.equal(spacecraftPose(delay, true, "scout", undefined, delay).visible, false);
+    assert.ok(spacecraftPose(end - .4, true, "scout", undefined, delay).entry > .95);
+    assert.equal(wormholePresence(end, true, delay), 1);
+    assert.equal(wormholePresence(end + 3, true, delay), 0);
+    assert.equal(wormholePresence(end, false, delay), 0);
+  }
 });
 
 test("distant stars form a deterministic depth layer without increasing compact density", () => {

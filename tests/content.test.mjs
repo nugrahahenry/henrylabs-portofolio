@@ -6,7 +6,7 @@ const root = new URL("..", import.meta.url);
 const read = (path) => readFileSync(new URL(path, root), "utf8");
 
 test("portfolio surface keeps its core experience contracts", () => {
-  const experience = ["components/portfolio-experience.tsx", "content/projects.ts", "content/credentials.ts", "content/technologies.ts", "components/site-header.tsx", "components/site-preferences.tsx", "components/credential-viewer.tsx"].map(read).join("\n");
+  const experience = ["components/portfolio-experience.tsx", "components/home-project-preview.tsx", "content/projects.ts", "content/credentials.ts", "content/technologies.ts", "components/site-header.tsx", "components/site-preferences.tsx", "components/credential-viewer.tsx"].map(read).join("\n");
   const canvas = read("components/cosmic-canvas.tsx");
   const backdrop = read("components/worldline-backdrop.tsx");
   const styles = read("app/globals.css");
@@ -17,8 +17,10 @@ test("portfolio surface keeps its core experience contracts", () => {
 
   assert.match(experience, /I build things I actually see\./);
   assert.match(experience, /Aku membangun hal yang benar-benar kulihat\./);
-  assert.match(experience, /certificate shelf/);
   assert.match(experience, /certificate-shelf/);
+  assert.match(experience, /HomeProjectPreview/);
+  assert.match(experience, /featuredOrder !== null/);
+  assert.doesNotMatch(experience, /className="academic-card"|className="client-card"|showCertificateArchive|certificate-archive-toggle/);
   assert.match(experience, /credential-dialog/);
   assert.match(experience, /AnimatePresence/);
   assert.match(experience, /gemini-certified-educator\.png/);
@@ -26,10 +28,6 @@ test("portfolio surface keeps its core experience contracts", () => {
   assert.match(experience, /The Henry method/);
   assert.match(experience, /Technology stack orbit/);
   assert.match(experience, /maker-orbit/);
-  assert.match(experience, /case-facts/);
-  assert.match(experience, /academic-runway/);
-  assert.match(experience, /academic-card-signal/);
-  assert.match(experience, /academic-card-stack/);
   assert.match(experience, /CarFront/);
   assert.match(experience, /FlaskConical/);
   assert.match(experience, /ShoppingCart/);
@@ -43,15 +41,13 @@ test("portfolio surface keeps its core experience contracts", () => {
   assert.doesNotMatch(experience, /loader-system/);
   assert.doesNotMatch(experience, /loader-telemetry/);
   assert.doesNotMatch(experience, /hero-transition|The signal is live|aria-label="(?:Previous|Next) project"/);
-  assert.match(experience, /field-continuum-node/);
-  assert.match(experience, /field-continuum-route/);
+  assert.doesNotMatch(experience, /className="field-continuum-visual"/);
   assert.match(experience, /worldlineProgress/);
   assert.match(experience, /WorldlineStage/);
   assert.match(experience, /WorldlineBackdrop/);
   assert.doesNotMatch(experience, /signal-constellation/);
   assert.doesNotMatch(experience, /world-chain/);
   assert.match(experience, /project-showcase-index/);
-  assert.match(experience, /dossier-art-evidence/);
   assert.match(experience, /access: Record<Language, string>/);
   assert.doesNotMatch(experience, /className="chapter-rail"/);
   assert.match(experience, /id="method"/);
@@ -63,25 +59,16 @@ test("portfolio surface keeps its core experience contracts", () => {
   assert.match(experience, /data-lenis-prevent/);
   assert.match(experience, /maker-core-portrait/);
   assert.match(experience, /data-active-world=\{activeProject.id\}/);
-  assert.match(experience, /client-signal-rail/);
-  assert.match(experience, /client-owner-stamp/);
-  assert.match(experience, /client-evidence-map/);
-  assert.match(experience, /NO PRIVATE DATA/);
   assert.doesNotMatch(experience, /method-scene/);
   assert.match(experience, /offset: \["start 85%", "center center"\]/);
   assert.match(experience, /activeMethodStep = motionOn \? methodStep : 2/);
   assert.match(experience, /aria-current=\{index === activeMethodStep \? "step" : undefined\}/);
   assert.match(experience, /ProjectSignature/);
   assert.match(experience, /project signature/);
-  assert.match(experience, /work-scroll-track/);
-  assert.match(experience, /workProgress/);
   assert.match(experience, /stackStageRotate/);
   assert.match(experience, /field-continuum/);
   assert.match(experience, /is-active/);
   assert.match(experience, /whileInView=\{motionOn \? \{ opacity: 1, y: 0, scale: 1 \} : undefined\}/);
-  assert.match(experience, /filter: "blur\(8px\)"/);
-  assert.match(experience, /rotateY: -10/);
-  assert.match(experience, /className="dossier-copy"/);
   assert.match(experience, /current signal/);
   assert.match(experience, /Focus \$\{linkedProject.name\} through \$\{label\}/);
   assert.match(experience, /POS_APBDS/);
