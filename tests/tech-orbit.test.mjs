@@ -26,9 +26,9 @@ const { createSpacecraft, spacecraftPose, routeSpacecraft, flightPresence, pursu
 const { distantStarPoint, dustStreamSource, stellarTwinkle, createDistantStarMaterial, DISTANT_STAR_COUNT, COMPACT_STAR_COUNT, FEEDING_DUST_COUNT } = await loadModule("ambient-field");
 
 test("galaxy approach centers first and reveals the local system without a visibility jump", () => {
-  const pose = { pan: 0, approach: 0, orbitScale: 0, selectedVisibility: 1, otherVisibility: 1 };
+  const pose = { pan: 0, approach: 0, orbitScale: 0, selectedVisibility: 1, otherVisibility: 1, arc: 0 };
   assert.equal(sampleGalaxyFlight(0, pose), pose);
-  assert.deepEqual(pose, { pan: 0, approach: 0, orbitScale: 0, selectedVisibility: 1, otherVisibility: 1 });
+  assert.deepEqual(pose, { pan: 0, approach: 0, orbitScale: 0, selectedVisibility: 1, otherVisibility: 1, arc: 0 });
   sampleGalaxyFlight(.45, pose);
   assert.ok(pose.pan > .7 && pose.approach < .3);
   assert.equal(pose.orbitScale, 0);
@@ -43,7 +43,19 @@ test("galaxy approach centers first and reveals the local system without a visib
     Object.assign(previous, pose);
   }
   sampleGalaxyFlight(1, pose);
-  assert.deepEqual(pose, { pan: 1, approach: 1, orbitScale: 1, selectedVisibility: 0, otherVisibility: 0 });
+  assert.deepEqual(pose, { pan: 1, approach: 1, orbitScale: 1, selectedVisibility: 0, otherVisibility: 0, arc: 0 });
+});
+
+test("galaxy camera arc retraces the same path and settles without endpoint velocity", () => {
+  const pose = {};
+  for (let p = 0; p <= 1; p += .01) {
+    const forward = sampleGalaxyFlight(p, pose).arc;
+    assert.ok(forward >= 0 && forward <= 1);
+    assert.ok(Math.abs(forward - sampleGalaxyFlight(1 - p, pose).arc) < 1e-12);
+  }
+  assert.equal(sampleGalaxyFlight(.5, pose).arc, 1);
+  assert.ok(sampleGalaxyFlight(.001, pose).arc < .00002);
+  assert.ok(sampleGalaxyFlight(.999, pose).arc < .00002);
 });
 
 test("galaxy flight has a bounded faster return and can reverse at any frame", () => {

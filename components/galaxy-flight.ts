@@ -4,6 +4,7 @@ export type GalaxyFlightPose = {
   orbitScale: number;
   selectedVisibility: number;
   otherVisibility: number;
+  arc: number;
 };
 
 function ease(value: number, start: number, end: number) {
@@ -23,5 +24,7 @@ export function sampleGalaxyFlight(progress: number, out: GalaxyFlightPose) {
   out.orbitScale = ease(progress, .46, 1);
   out.selectedVisibility = 1 - ease(progress, .38, .96);
   out.otherVisibility = 1 - ease(progress, .04, .62);
+  // A reversible lateral arc starts and ends at rest, without a camera snap.
+  out.arc = 16 * progress * progress * (1 - progress) * (1 - progress);
   return out;
 }

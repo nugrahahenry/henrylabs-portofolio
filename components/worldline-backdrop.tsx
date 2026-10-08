@@ -404,6 +404,8 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, contactProgres
     const closing = { peak: 0, presence: 0, returning: false };
     const retreatPose = { infall: 0, growth: 0, opacity: 0 };
     let solarVisibility = 1;
+    let readingBlend = 0;
+    const solarBodies = orbitPlanets.map(() => ({ x: 0, y: 0, radius: 0 }));
     const render = (time: number) => {
       frame = 0;
       if (!visible || document.hidden || !enhanced) return;
@@ -423,19 +425,28 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, contactProgres
       galaxyDust.rotation.y = drift * .006 + scroll * .035;
       galaxyDust.rotation.z = Math.sin(drift * .012) * .018;
       const solarPortrait = camera.aspect < .9;
-      const solarScale = solarPortrait ? .8 : 1;
-      solarOrigin.set(solarPortrait ? .72 : 2.8, (solarPortrait ? 2.5 : 2.7) - scroll * 2.2, -3.2);
       const readingChapter = scroll > .005 && !state.current.contactVisible && !state.current.mapActive;
-      const solarStrength = state.current.mapActive ? .28 : readingChapter ? 0 : 1;
+      const readingTarget = readingChapter ? 1 : 0;
+      readingBlend = state.current.motionOn ? THREE.MathUtils.damp(readingBlend, readingTarget, 5, dt) : readingTarget;
+      // Move the same system to the reading periphery instead of hiding its planets.
+      const solarScale = (solarPortrait ? .8 : 1) * THREE.MathUtils.lerp(1, solarPortrait ? .58 : .82, readingBlend);
+      solarOrigin.set(
+        THREE.MathUtils.lerp(solarPortrait ? .72 : 2.8, solarPortrait ? 1.12 : 3.8, readingBlend),
+        THREE.MathUtils.lerp((solarPortrait ? 2.5 : 2.7) - scroll * 2.2, 2.5 - scroll * .25, readingBlend),
+        -3.2,
+      );
+      const solarStrength = state.current.mapActive ? .28 : THREE.MathUtils.lerp(1, .72, readingBlend);
       solarVisibility = state.current.motionOn ? THREE.MathUtils.damp(solarVisibility, solarStrength, 5, dt) : solarStrength;
       planetSystem.visible = solarVisibility > .005;
       planetSystem.rotation.y = Math.sin(drift * .016) * .08 + scroll * .22;
       planetSystem.rotation.x = Math.sin(scroll * Math.PI * 1.4) * .12;
       planetSystem.rotation.z = Math.sin(drift * .012) * .018;
       stellarCore.material.uniforms.uTime.value = drift;
-      stellarCore.material.uniforms.uOpacity.value = solarVisibility;
+      stellarCore.group.scale.setScalar(THREE.MathUtils.lerp(1, .6, readingBlend));
+      const coreStrength = solarVisibility * THREE.MathUtils.lerp(1, .24, readingBlend);
+      stellarCore.material.uniforms.uOpacity.value = coreStrength;
       stellarCore.aura.material.uniforms.uTime.value = drift;
-      stellarCore.aura.material.uniforms.uOpacity.value = .55 * solarVisibility;
+      stellarCore.aura.material.uniforms.uOpacity.value = .55 * coreStrength;
       stellarCore.surface.rotation.y = drift * .018;
       orbitPlanets.forEach(({ pivot, body, surface, atmosphere, ring, cloud, phase, orbitRadius, index }) => {
         const phaseOffset = phase + drift * orbitalSpeed(orbitRadius) + scroll * .45;
@@ -541,7 +552,7 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, contactProgres
       }
       const readingLane = readingChapter && bandBottom - bandTop >= 120;
       const laneCenter = 1 - (bandTop + bandBottom) / height;
-      const chapterAllowsFlight = holeOpacity < .05 && !state.current.mapActive && !compactOpening && (!readingChapter || readingLane && solarVisibility < .05);
+      const chapterAllowsFlight = holeOpacity < .05 && !state.current.mapActive && !compactOpening && (!readingChapter || readingLane);
       advancePursuit(pursuit, dt, Boolean(chapterAllowsFlight), state.current.motionOn, requestedDelay, portalOpacity < .001 && flights.every(flight => flight.presence < .001));
       const flightAllowed = chapterAllowsFlight && !pursuit.interrupted && pursuit.delay === requestedDelay;
       const flightAge = pursuit.age, flightDelay = pursuit.delay;
@@ -558,7 +569,7 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, contactProgres
       };
       if (flightActive && solarVisibility > .05) {
         planetSystem.updateWorldMatrix(true, true);
-        obstacle(stellarCore.group, .63 * planetSystem.scale.x, 0);
+        obstacle(stellarCore.group, .63 * stellarCore.group.scale.x * planetSystem.scale.x, 0);
         orbitPlanets.forEach(({ body, radius, ring }, index) => obstacle(body, radius * body.scale.x * planetSystem.scale.x * (ring.visible ? 1.93 : 1.3), index + 1));
         sectorNodes.forEach(({ body, size }, index) => {
           if (sectorSystem.visible) obstacle(body, size * body.scale.x * planetSystem.scale.x * 1.26, index + 6);
@@ -742,6 +753,18 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, contactProgres
       host.dataset.backgroundGalaxies = "3";
       host.dataset.planetSurface = "opaque-terrain";
       host.dataset.solarVisibility = solarVisibility.toFixed(3);
+      host.dataset.readingBlend = readingBlend.toFixed(3);
+      host.dataset.solarChapter = state.current.contactVisible ? "contact" : state.current.mapActive ? "map" : readingChapter ? "reading" : "opening";
+      planetSystem.updateWorldMatrix(true, true);
+      orbitPlanets.forEach(({ body, radius }, index) => {
+        body.getWorldPosition(projectedStar);
+        flightView.copy(projectedStar).applyMatrix4(camera.matrixWorldInverse);
+        projectedStar.project(camera);
+        solarBodies[index].x = Number(((projectedStar.x * .5 + .5) * width).toFixed(1));
+        solarBodies[index].y = Number(((-projectedStar.y * .5 + .5) * height).toFixed(1));
+        solarBodies[index].radius = Number((radius * body.scale.x * planetSystem.scale.x / (tangent * Math.max(.1, -flightView.z)) * height / 2).toFixed(1));
+      });
+      host.dataset.solarBodies = JSON.stringify(solarBodies);
       stellarCore.group.getWorldPosition(projectedStar).project(camera);
       host.dataset.stellarX = ((projectedStar.x * .5 + .5) * width).toFixed(1);
       host.dataset.stellarY = ((-projectedStar.y * .5 + .5) * height).toFixed(1);

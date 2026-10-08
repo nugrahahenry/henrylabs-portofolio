@@ -34,6 +34,31 @@ async function holePixels(page) {
   })));
 }
 
+async function readingPlanets(page, chapter) {
+  const background = page.locator(".worldline-backdrop");
+  await expect(background).toHaveAttribute("data-solar-chapter", "reading");
+  await expect.poll(async () => Number(await background.getAttribute("data-reading-blend"))).toBeGreaterThan(.98);
+  await expect.poll(async () => Number(await background.getAttribute("data-solar-visibility"))).toBeGreaterThan(.65);
+  const signals = await background.locator("canvas").evaluate(canvas => new Promise(resolve => requestAnimationFrame(() => {
+    const gl = canvas.getContext("webgl2");
+    const bodies = JSON.parse(canvas.parentElement.dataset.solarBodies);
+    resolve(bodies.filter(body => body.x > body.radius && body.x < canvas.clientWidth - body.radius && body.y > body.radius && body.y < canvas.clientHeight - body.radius).map(body => {
+      const radius = Math.max(2, Math.floor(body.radius * .7));
+      const x = Math.round(body.x), y = Math.round(gl.drawingBufferHeight - body.y);
+      const pixels = new Uint8Array(radius * radius * 16);
+      gl.readPixels(x - radius, y - radius, radius * 2, radius * 2, gl.RGBA, gl.UNSIGNED_BYTE, pixels);
+      let min = 765, max = 0;
+      for (let i = 0; i < pixels.length; i += 4) {
+        const brightness = pixels[i] + pixels[i + 1] + pixels[i + 2];
+        min = Math.min(min, brightness); max = Math.max(max, brightness);
+      }
+      return { radius: body.radius, variation: max - min, brightest: max };
+    }));
+  })));
+  assert.ok(signals.length >= 1, `${chapter} must retain an onscreen natural planet`);
+  assert.ok(signals.some(body => body.radius >= 3 && body.variation > 15 && body.brightest > 50), `${chapter} must paint a shaded planet surface, not only set visibility metadata: ${JSON.stringify(signals)}`);
+}
+
 try {
   mkdirSync("test-results", { recursive: true });
   for (const viewport of process.argv.includes("--fallback") ? [] : viewports) {
@@ -74,13 +99,20 @@ try {
     assert.ok(starPixel[0] > 60 && starPixel[3] > 220, "the opening must contain a painted luminous stellar surface");
     await page.screenshot({ path: `test-results/${viewport.width}-solar-opening.png` });
     assert.equal(await background.evaluate((node) => getComputedStyle(node).pointerEvents), "none");
+    await page.locator("#work").evaluate(section => window.scrollTo({ top: scrollY + section.getBoundingClientRect().top + section.offsetHeight / 2 - innerHeight / 2, behavior: "instant" }));
+    await readingPlanets(page, "selected project");
     await page.locator("#method").evaluate((section) => window.scrollTo({ top: scrollY + section.getBoundingClientRect().top + section.offsetHeight / 2 - innerHeight / 2, behavior: "instant" }));
     await expect(page.locator('#method [aria-current="step"] i')).toHaveText("03");
     await expect(background).toHaveAttribute("data-hole-opacity", "0.000");
+    await readingPlanets(page, "method");
     await page.screenshot({ path: `test-results/${viewport.width}-connected-background.png` });
+    await page.locator("#stack-title").scrollIntoViewIfNeeded();
+    await readingPlanets(page, "technology orbit");
     await page.locator("#proof h2").scrollIntoViewIfNeeded();
     await expect(background).toHaveAttribute("data-hole-opacity", "0.000");
     await expect(background).toHaveAttribute("data-pull", "0.000");
+    await readingPlanets(page, "credentials");
+    await page.screenshot({ path: `test-results/${viewport.width}-persistent-planets.png` });
     await scrollToEnd(page);
     await expect(background).toHaveAttribute("data-hole-growth", "1.000", { timeout: 10000 });
     await expect(page.locator("footer")).toBeInViewport();

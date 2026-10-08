@@ -1,6 +1,6 @@
 <div align="center">
 
-# StarGod Portfolio v0.82.0
+# StarGod Portfolio v0.83.0
 
 **I build things I actually see.**
 
@@ -25,9 +25,9 @@ Three galaxies. Ten project worlds. One maker.
 
 StarGod is the working name of the universe, drawn from Henry's longtime alias. **HenryLabs** remains its personal-project galaxy.
 
-Enter a living map of **HenryLabs**, **University**, and **Client Work**. Choose a galaxy, approach its planets, and explore the work behind each identity. Technologies orbit the projects they belong to; an optional reading panel brings the context, ownership, and evidence into view.
+Enter a living map of **HenryLabs**, **University**, and **Client Work**. Choose a galaxy, follow a curved camera approach into its planets, and explore the work behind each identity. Returning retraces that journey without rebuilding the scene. Technologies orbit the projects they belong to; an optional reading panel brings the context, ownership, and evidence into view.
 
-Beyond the map: one preview following the selected project, Henry's working method, a technology orbit, and five featured original credentials. The full project and certificate lists live in their own libraries, not repeated down Home. A continuous Three.js universe connects the journey, from distant stars and nebulae to a reversible black-hole encounter at Contact. A metallic UFO and its pursuing scout add a small story along the way: banking through real depth, missed tracer shots, a luminous wormhole, the UFO entering first, and the scout following. After the portal closes, thirty quiet seconds pass before the next encounter. The scene pauses outside its clear flight areas and respects reduced motion.
+Beyond the map: one preview following the selected project, Henry's working method, a technology orbit, and five featured original credentials. The full project and certificate lists live in their own libraries, not repeated down Home. A continuous Three.js universe connects the journey, from distant stars and nebulae to a reversible black-hole encounter at Contact. Natural background planets remain in orbit throughout the reading sections, moving into a smaller peripheral composition rather than disappearing. A metallic UFO and its pursuing scout add a small story along the way: banking through real depth, missed tracer shots, a luminous wormhole, the UFO entering first, and the scout following. After the portal closes, thirty quiet seconds pass before the next encounter. The scene pauses outside its clear flight areas and respects reduced motion.
 
 Prefer a closer read? **Projects** opens a searchable catalog of all ten worlds, filtered by HenryLabs, University, or Client Work. Each planet and catalog record leads to the same project detail, with ownership, workflow, stack, and honest access boundaries. Return to the universe to continue from that planet; its reading panel stays closed until requested.
 

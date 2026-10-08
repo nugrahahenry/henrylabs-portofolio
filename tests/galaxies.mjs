@@ -33,7 +33,7 @@ async function observeFlight(page) {
       const timeout = setTimeout(() => reject(new Error("galaxy approach did not settle")), 10000);
       const sample = () => {
         const rect = scene.getBoundingClientRect();
-        samples.push({ progress: Number(scene.dataset.flight), pan: Number(scene.dataset.flightPan), scale: Number(scene.dataset.orbitScale), galaxy: Number(scene.dataset.galaxyVisibility), angle: Number(scene.dataset.universeAngle), stage: scene.dataset.flightStage, x: rect.x, y: rect.y, width: rect.width, height: rect.height });
+        samples.push({ progress: Number(scene.dataset.flight), pan: Number(scene.dataset.flightPan), arc: Number(scene.dataset.flightArc), scale: Number(scene.dataset.orbitScale), galaxy: Number(scene.dataset.galaxyVisibility), angle: Number(scene.dataset.universeAngle), stage: scene.dataset.flightStage, x: rect.x, y: rect.y, width: rect.width, height: rect.height });
         const p = Number(scene.dataset.flight);
         const phase = p > .18 && p < .46 ? "approach" : p > .63 && p < .9 ? "arrival" : null;
         if (phase && !frames[phase]) {
@@ -92,6 +92,8 @@ try {
     const arrival = flight.filter(({ stage }) => stage === "arrival");
     assert.ok(approach.length > 1 && arrival.length > 1, "the journey must expose both real camera stages");
     assert.ok(approach.every(({ scale, galaxy }) => scale === 0 && galaxy > .97), "the selected galaxy must remain while the local system is hidden");
+    assert.ok(flight.some(({ arc }) => arc > .9), "the camera must follow a real curved approach");
+    await expect(scene).toHaveAttribute("data-flight-arc", "0.000");
     assert.ok(arrival.some(({ scale, galaxy }) => scale > .1 && scale < .9 && galaxy > .1), "dust and local planets must overlap during the shared arrival");
     const inFlight = flight.filter(({ progress }) => progress > 0 && progress < 1);
     assert.ok(inFlight.every(({ angle }) => Math.abs(angle - inFlight[0].angle) < .0001), "the approach must not chase a moving galaxy");

@@ -405,7 +405,7 @@ export function CosmicCanvas({ activeId, onSelect, onPrevious, onNext, motionOn,
     let pitch = 0;
     let viewBlend = state.current.view === "universe" ? 0 : 1;
     let universeAngle = 0;
-    const flightPose = { pan: 0, approach: 0, orbitScale: 0, selectedVisibility: 1, otherVisibility: 1 };
+    const flightPose = { pan: 0, approach: 0, orbitScale: 0, selectedVisibility: 1, otherVisibility: 1, arc: 0 };
     const mapFrame = host.closest<HTMLElement>(".cosmic-frame");
     const cameraTarget = new THREE.Vector3();
     const projected = new THREE.Vector3();
@@ -453,9 +453,13 @@ export function CosmicCanvas({ activeId, onSelect, onPrevious, onNext, motionOn,
       const fittedDistance = Math.max(10.5, halfWidth / (Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) * camera.aspect));
       const overviewDistance = Math.max(14.5, 4.3 / (Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) * camera.aspect));
       camera.position.set(focus.x * flightPose.pan, .05 + focus.y * flightPose.pan, THREE.MathUtils.lerp(overviewDistance + (1 - zoom) * 3, focus.z + fittedDistance - state.current.viewZoom * 2.7, flightPose.approach));
+      const arcDirection = sector === "university" ? -1 : 1;
+      camera.position.x += flightPose.arc * arcDirection * (portrait ? .65 : 1.4);
+      camera.position.y += flightPose.arc * .3;
       camera.position.z += departure * departure * 26;
       cameraTarget.set(focus.x * flightPose.pan, focus.y * flightPose.pan, focus.z * flightPose.pan);
       camera.lookAt(cameraTarget);
+      camera.rotateZ(flightPose.arc * arcDirection * -.025);
       system.position.copy(focus);
       system.scale.setScalar(Math.max(.0001, flightPose.orbitScale));
       system.visible = flightPose.orbitScale > .0001;
@@ -625,6 +629,7 @@ export function CosmicCanvas({ activeId, onSelect, onPrevious, onNext, motionOn,
       if (mapFrame) mapFrame.dataset.flightReady = String(flightReady);
       host.dataset.flightStage = flightReady ? state.current.view : viewBlend < .46 ? "approach" : "arrival";
       host.dataset.flightPan = flightPose.pan.toFixed(3);
+      host.dataset.flightArc = flightPose.arc.toFixed(3);
       host.dataset.orbitScale = flightPose.orbitScale.toFixed(3);
       host.dataset.galaxyVisibility = flightPose.selectedVisibility.toFixed(3);
       host.dataset.galaxyCount = "3";
