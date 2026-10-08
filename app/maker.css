@@ -1,13 +1,14 @@
 .maker-approach { height: min(35svh, 315px); }
-.maker-chapter { position: relative; min-height: 320svh; color: var(--paper); --maker-progress: 0; --tool-retreat: 0; --maker-header: 76px; }
+.maker-chapter { position: relative; min-height: 420svh; color: var(--paper); --maker-progress: 0; --tool-retreat: 0; --maker-header: 76px; }
 .maker-sticky { position: sticky; top: var(--maker-header); height: calc(100svh - var(--maker-header)); max-width: 1600px; margin-inline: auto; isolation: isolate; }
-.maker-proof-anchor { position: absolute; top: 84%; scroll-margin-top: 65svh; }
+.maker-proof-anchor { position: absolute; top: 93%; scroll-margin-top: 65svh; }
 .maker-heading { position: absolute; z-index: 8; top: 4%; left: 5%; max-width: 255px; transition: opacity .35s; }
 .maker-heading h2 { margin: 0; font-size: 42px; letter-spacing: 0; line-height: 1.02; }
 .maker-heading h2 span { color: var(--cyan); }
 .maker-heading p { margin: 18px 0; color: #cad6df; font-size: 16px; }
 .maker-principles { display: flex; flex-wrap: wrap; gap: 12px; font-size: 13px; color: #b5c8d5; }
-.maker-scene { position: absolute; inset: 0; }
+.maker-scene { position: absolute; inset: 0; touch-action: pan-y; }
+.maker-scene[data-dragging="true"], .maker-scene[data-dragging="true"] .maker-tool { cursor: grabbing; user-select: none; }
 .portrait-identity { position: absolute; z-index: 4; top: 50%; left: 50%; width: min(46%, 520px, calc((100svh - 230px) * .8)); transform: translate(-50%, -43%); }
 .portrait-reveal { position: relative; width: 100%; aspect-ratio: 1122 / 1402; --reveal-x: 50%; --reveal-y: 35%; --reveal-strength: 0; --clear-opacity: 0; --human-opacity: 0; touch-action: pan-y; mask-image: linear-gradient(#000 89%, transparent 100%); }
 .portrait-reveal img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; user-select: none; pointer-events: none; opacity: 0; }
@@ -29,6 +30,9 @@
 .maker-groups button { display: flex; align-items: baseline; gap: 7px; padding: 12px 0; border-bottom: 2px solid transparent; background: none; color: #c1cdd5; cursor: pointer; }
 .maker-groups button[aria-pressed="true"] { color: var(--cyan); border-color: var(--cyan); }
 .maker-groups small { font-size: 10px; }
+.maker-orbit-turn { display: flex; justify-content: flex-end; gap: 6px; margin-top: 8px; }
+.maker-orbit-turn button { display: grid; place-items: center; width: 44px; height: 44px; border-radius: 50%; border: 1px solid #ffffff36; color: #c9e3ed; background: #101821b8; cursor: pointer; }
+.maker-orbit-turn button:hover { border-color: var(--cyan); color: var(--cyan); }
 .maker-orbit-field { position: absolute; inset: 0; z-index: 5; pointer-events: none; }
 .maker-orbit-field canvas { width: 100%; height: 100%; display: block; }
 .maker-tools { position: absolute; inset: 0; z-index: 6; pointer-events: none; opacity: calc(1 - var(--tool-retreat)); }
@@ -40,6 +44,7 @@
 .maker-tool[data-side="back"] > span:last-child { opacity: .72; }
 .maker-tool:focus-visible .maker-tool-icon { visibility: visible; }
 .maker-tool:focus-visible > span:last-child, .maker-tool:hover > span:last-child { opacity: 1; }
+.maker-chapter[data-spatial="true"] .maker-scene[data-all="true"] .maker-tool:not(:hover):not(:focus-visible):not([aria-pressed="true"]) > span:last-child { opacity: 0; }
 .maker-tool[data-occluded="true"]:not(:focus-visible) { opacity: 0; pointer-events: none; }
 .maker-tool[aria-pressed="true"] .maker-tool-icon { border-color: #f3d184; box-shadow: inset -7px -7px 14px #0009, 0 9px 20px #0005; }
 .maker-tool-detail { position: absolute; z-index: 8; left: 5%; bottom: 7%; width: 230px; min-height: 90px; transition: opacity .35s; }
@@ -75,8 +80,9 @@
   .maker-chapter { --maker-header: 64px; }
   .maker-heading h2 { font-size: 30px; }.maker-heading h2 br { display: none; }
   .maker-heading p { margin: 8px 0; font-size: 13px; }.maker-principles { font-size: 11px; gap: 8px; }
-  .maker-tools-controls { top: 18%; right: 5%; left: 5%; display: flex; justify-content: center; }
-  .maker-groups { gap: 24px; }.maker-groups button { padding-block: 8px; font-size: 13px; }
+  .maker-tools-controls { top: 18%; right: 5%; left: 5%; display: flex; flex-direction: column; align-items: center; }
+  .maker-groups { gap: 20px; }.maker-groups button { padding-block: 8px; font-size: 13px; }
+  .maker-orbit-turn { gap: 10px; margin-top: 5px; }
   .maker-tool-detail { bottom: 3%; font-size: 13px; width: 90%; min-height: 55px; }
   .maker-tool-detail > strong { font-size: 17px; }.maker-tool-detail > div { margin-top: 5px; }
   .maker-tool-detail a { font-size: 11px; }

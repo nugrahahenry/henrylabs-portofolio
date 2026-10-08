@@ -15,9 +15,9 @@ import { COMPACT_STAR_COUNT, DISTANT_STAR_COUNT, FEEDING_DUST_COUNT, createDista
 
 function createBlackHole() {
   const group = new THREE.Group();
-  const horizon = new THREE.Mesh(new THREE.SphereGeometry(.5, 32, 24), new THREE.MeshBasicMaterial({ color: 0x020308, transparent: true }));
+  const horizon = new THREE.Mesh(new THREE.SphereGeometry(.5, 48, 32), new THREE.MeshBasicMaterial({ color: 0x000001, transparent: true }));
   const diskMaterial = new THREE.ShaderMaterial({
-    uniforms: { uTime: { value: 0 }, uStrength: { value: 0 }, uResolution: { value: new THREE.Vector2(1, 1) } },
+    uniforms: { uTime: { value: 0 }, uStrength: { value: 0 }, uResolution: { value: new THREE.Vector2(1, 1) }, uVoid: { value: new THREE.Vector3() } },
     vertexShader: `
       varying vec2 vDisk;
       void main() {
@@ -29,39 +29,64 @@ function createBlackHole() {
       uniform float uTime;
       uniform float uStrength;
       uniform vec2 uResolution;
+      uniform vec3 uVoid;
       varying vec2 vDisk;
       void main() {
+        float apparentRadius = length(gl_FragCoord.xy - uVoid.xy) / max(1.0, uVoid.z);
+        if (apparentRadius < .97) discard;
         float radius = length(vDisk);
         float angle = atan(vDisk.y, vDisk.x);
-        float edge = smoothstep(.56, .65, radius) * (1.0 - smoothstep(1.08, 1.55, radius));
-        float ribbon = sin(radius * 54.0 - angle * 3.0 + uTime * .7);
-        float detail = sin(radius * 113.0 + angle * 7.0 - uTime * 1.1);
-        float heat = pow(clamp(1.55 - radius, 0.0, 1.0), 1.8);
-        float filament = sin(angle * 11.0 + radius * 83.0 - uTime * .8);
-        float brightness = (.62 + ribbon * .15 + detail * .07 + filament * .035) * (.76 + .24 * cos(angle - .7));
-        vec3 color = mix(vec3(.20, .52, .66), vec3(.96, .62, .27), heat);
-        color = mix(color, vec3(1.0, .96, .82), pow(heat, 3.0));
+        float edge = smoothstep(.51, .59, radius) * (1.0 - smoothstep(.98, 1.7, radius));
+        float flow = angle * 3.0 + log(radius) * 22.0 - uTime * .8;
+        float ribbon = sin(flow + sin(angle * 7.0 + radius * 13.0) * .38);
+        float detail = sin(radius * 170.0 + angle * 9.0 - uTime * 1.2);
+        float heat = pow(clamp(1.4 - radius, 0.0, 1.0), 1.4);
+        float filament = pow(.5 + .5 * sin(flow * 3.0), 8.0);
+        float brightness = (.38 + ribbon * .20 + detail * .08 + filament * .4) * (1.0 + .55 * cos(angle - .7));
+        vec3 color = mix(vec3(.08, .35, .85), vec3(1.0, .32, .08), smoothstep(.1,.6,heat));
+        color = mix(color, vec3(1.0, .89, .57), smoothstep(.6,.84,heat));
         vec2 screen = vec2(gl_FragCoord.x / uResolution.x, 1.0 - gl_FragCoord.y / uResolution.y);
         float readingMask = clamp(smoothstep(.77, .94, screen.y) + smoothstep(.85, .99, screen.x), 0.0, 1.0);
-        gl_FragColor = vec4(color * (brightness + heat * .45) * 1.15, edge * uStrength * mix(.18, 1.0, readingMask));
+        gl_FragColor = vec4(color * (brightness + heat * .9) * 1.4, edge * uStrength * mix(.18, 1.0, readingMask));
         #include <tonemapping_fragment>
         #include <colorspace_fragment>
       }
     `,
     transparent: true, side: THREE.DoubleSide, depthWrite: false, blending: THREE.AdditiveBlending,
   });
-  const disk = new THREE.Mesh(new THREE.RingGeometry(.56, 1.55, 96, 4), diskMaterial);
+  const disk = new THREE.Mesh(new THREE.RingGeometry(.51, 1.7, 128, 5), diskMaterial);
   disk.rotation.set(1.16, 0, -.16);
-  const rim = new THREE.Mesh(new THREE.TorusGeometry(.515, .0035, 8, 96), new THREE.MeshBasicMaterial({ color: 0xffe8b8, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }));
-  // A complete far-side light path is naturally occluded by the dark horizon.
-  const lens = new THREE.Mesh(new THREE.TorusGeometry(.72, .006, 8, 96), new THREE.MeshBasicMaterial({ color: 0xffe8bd, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }));
-  lens.scale.y = .8;
-  lens.position.z = -.3;
+  // A graded image of the far disk bends over the silhouette; no solid torus edge.
+  const lensMaterial = new THREE.ShaderMaterial({
+    uniforms: { uTime: { value: 0 }, uStrength: { value: 0 } },
+    vertexShader: `varying vec2 vLens; void main() { vLens = position.xy; gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }`,
+    fragmentShader: `
+      uniform float uTime; uniform float uStrength; varying vec2 vLens;
+      void main() {
+        float r = length(vLens), a = atan(vLens.y, vLens.x);
+        float outside = smoothstep(.498, .514, r);
+        float photon = exp(-pow((r - .518) / .013, 2.0));
+        float arcRadius = length(vec2(vLens.x, vLens.y * .92));
+        float arc = exp(-pow((arcRadius - .575) / .055, 2.0)) * smoothstep(-.12,.32,vLens.y);
+        float bands = .65 + .20 * sin(arcRadius * 240.0 + a * 4.0 - uTime) + .15 * sin(a * 19.0 + r * 93.0);
+        float glow = exp(-max(0.0, r - .52) * 24.0) * .12;
+        float beaming = .8 + .3 * cos(a - .5);
+        vec3 light = vec3(1.0,.76,.35) * photon * 1.8 + mix(vec3(1.0,.26,.08),vec3(1.0,.82,.48),bands) * arc * bands * 1.6;
+        light += vec3(.14,.32,.64) * glow;
+        gl_FragColor = vec4(light * beaming, clamp(photon + arc + glow,0.0,1.0) * outside * uStrength);
+        #include <tonemapping_fragment>
+        #include <colorspace_fragment>
+      }
+    `,
+    transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
+  });
+  const lens = new THREE.Mesh(new THREE.PlaneGeometry(2.1, 2.1), lensMaterial);
+  lens.position.z = 0;
   horizon.renderOrder = 1;
   disk.renderOrder = 2;
-  rim.renderOrder = 3;
-  group.add(horizon, disk, rim, lens);
-  return { group, horizon, diskMaterial, rim, lens };
+  lens.renderOrder = 3;
+  group.add(horizon, disk, lens);
+  return { group, horizon, diskMaterial, lensMaterial };
 }
 
 export function WorldlineBackdrop({ activeId, motionOn, progress, contactProgress, contactVisible, mapActive }: {
@@ -304,7 +329,8 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, contactProgres
     const feedingMaterials = [flowMaterial, upperStreakMaterial];
     const upperProbeIndex = 44;
     const upperProbe = new THREE.Vector3();
-    const dustProbes = Array.from({ length: 24 }, (_, index) => ({ index, x: 0, y: 0, travel: 0 }));
+    // Sample all source lanes across the pool; consecutive seeds can all be offscreen on phones.
+    const dustProbes = Array.from({ length: 48 }, (_, slot) => ({ index: Math.floor(slot / 4) * 20 + slot % 4, x: 0, y: 0, travel: 0 }));
 
     const wandererMaps = ["#82b8c4", "#c69b78", "#a9bba0"].map((color, index) => createPlanetMaps(color, index === 0 ? "ocean" : index === 1 ? "rocky" : "ice", 256, 61 + index * 11));
     const planetTextures: THREE.Texture[] = wandererMaps.flatMap((maps) => maps.textures);
@@ -495,9 +521,10 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, contactProgres
       blackHole.diskMaterial.uniforms.uTime.value = drift * .35;
       blackHole.diskMaterial.uniforms.uStrength.value = holeOpacity;
       blackHole.diskMaterial.uniforms.uResolution.value.set(width * renderer.getPixelRatio(), height * renderer.getPixelRatio());
-      blackHole.horizon.material.opacity = holeOpacity * .98;
-      blackHole.rim.material.opacity = holeOpacity * .56;
-      blackHole.lens.material.opacity = holeOpacity * .32;
+      blackHole.diskMaterial.uniforms.uVoid.value.set(holeX * width * renderer.getPixelRatio(), (1 - holeY) * height * renderer.getPixelRatio(), diameter * (.08 + holeGrowth * .92) * .5 * renderer.getPixelRatio());
+      blackHole.horizon.material.opacity = holeOpacity;
+      blackHole.lensMaterial.uniforms.uTime.value = drift * .35;
+      blackHole.lensMaterial.uniforms.uStrength.value = holeOpacity;
       gravityTarget.copy(blackHole.group.position);
       const gravityActive = contactActive && birth.ready;
       gravityAge = advanceGravityAge(gravityAge, delta, gravityActive);

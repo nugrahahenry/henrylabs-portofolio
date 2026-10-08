@@ -19,20 +19,28 @@ export function createDistantStarMaterial() {
       uniform float uMotion;
       uniform float uScale;
       varying vec3 vColor;
+      varying float vGiant;
       void main() {
         vec4 view = modelViewMatrix * vec4(position, 1.0);
         float seed = fract(sin(dot(position.xyz, vec3(12.9898, 78.233, 39.425))) * 43758.5453);
         float light = .92 + uMotion * .08 * sin(uTime * (.18 + seed * .08) + seed * 6.2831853);
         vColor = color * light;
+        vGiant = smoothstep(.974, .998, seed);
         gl_Position = projectionMatrix * view;
-        gl_PointSize = clamp(.115 * uScale / max(1.0, -view.z), 1.0, 3.0);
+        gl_PointSize = clamp((.08 + seed * .10) * uScale / max(1.0, -view.z), 1.0, 3.0) + vGiant * 7.0;
       }
     `,
     fragmentShader: `
       varying vec3 vColor;
+      varying float vGiant;
       void main() {
-        float mask = 1.0 - smoothstep(.08, .5, length(gl_PointCoord - .5));
-        gl_FragColor = vec4(vColor, mask * .65);
+        vec2 p = gl_PointCoord - .5;
+        float r = length(p);
+        float core = 1.0 - smoothstep(.02, mix(.5,.2,vGiant), r);
+        float spikes = (exp(-abs(p.x) * 65.0) + exp(-abs(p.y) * 65.0)) * (1.0 - smoothstep(.05,.48,r));
+        float halo = exp(-r * 9.0) * .25;
+        float mask = core + vGiant * (spikes * .5 + halo);
+        gl_FragColor = vec4(vColor * (1.0 + vGiant * .65), min(1.0, mask * .82));
         #include <tonemapping_fragment>
         #include <colorspace_fragment>
       }

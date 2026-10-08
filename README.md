@@ -1,6 +1,6 @@
 <div align="center">
 
-# StarGod Portfolio v0.86.0
+# StarGod Portfolio v0.87.0
 
 **I build things I actually see.**
 
@@ -29,7 +29,7 @@ Enter a living map of **HenryLabs**, **University**, and **Client Work**. Choose
 
 Beyond the map: one preview following the selected project, then Henry himself. A crowned StarGod portrait opens locally under the cursor to reveal Henry in a dark suit: sunglasses, clear glasses, then his unobscured face. The approved portraits share one composition; this is a layered photographic reveal, not a rotatable head model. Four appearance controls also work with touch, keyboard, or reduced motion.
 
-Twenty-five technologies surround the portrait as lit 3D satellites, grouped into Build, Interface, and Systems. Tools pass in front of and behind Henry; select one to see the projects that use it. Scroll further and the orbit recedes as original credentials rise around the same anchored figure. This exchange also works in tablet and phone windows. Short landscape screens and reduced motion retain a readable sequence. Home no longer repeats a separate technology chapter and certificate shelf; the full collections live in their own libraries.
+Twenty-five technologies surround the portrait as lit 3D satellites. Scroll through **Build, Interface, Systems, then All**, or choose a group directly. Drag left or right to turn the orbit with momentum; arrow controls offer the same motion without dragging. Tools pass in front of and behind Henry; select one to see the projects that use it. Scroll further and the orbit recedes as original credentials rise around the same anchored figure. This exchange also works in tablet and phone windows. Short landscape screens and reduced motion retain a readable sequence. Home no longer repeats a separate technology chapter and certificate shelf; the full collections live in their own libraries.
 
 A continuous Three.js universe connects the journey, from distant stars and nebulae to a reversible black-hole encounter at Contact. Natural background planets remain in orbit throughout the reading sections, moving into a smaller peripheral composition rather than disappearing. A metallic UFO and its pursuing scout add a small story along the way: banking through real depth, missed tracer shots, a luminous wormhole, the UFO entering first, and the scout following. After the portal closes, thirty quiet seconds pass before the next encounter. The scene pauses outside its clear flight areas and respects reduced motion.
 
@@ -39,7 +39,7 @@ Prefer a closer read? **Projects** opens a searchable catalog of all ten worlds,
 
 English is the default, with Indonesian available throughout the main experience. Keyboard navigation, touch controls, reduced motion, and a WebGL fallback keep the work accessible.
 
-At Contact, feeding grains and wisps arrive from above, below, left, and right. Their winding paths contract through several sides of the black-hole horizon rather than streaming toward one visible entry point. Scroll back to retrace the encounter; distant stars stay beyond the pull. This is an authored visual interpretation, not a scientific gravity simulation.
+The nebula is a sampled 3D density field with illuminated filaments and darker rifts, accompanied by fine stars and occasional brighter glints. At Contact, a dark void interrupts the sky, framed by a flowing accretion disk and bent far-side light. Feeding grains and wisps arrive from above, below, left, and right. Their winding paths contract through several sides of the black-hole horizon rather than streaming toward one visible entry point. Scroll back to retrace the encounter; distant stars stay beyond the pull. These are authored visual interpretations, not a scientific gravity simulation or photographic astronomy assets.
 
 The animation above is a short recording of the actual portfolio, not a concept render. It focuses on the orbit experience and predates the StarGod naming and dedicated reading libraries. The live experience is interactive; the README is a preview. Public hosting is still deferred.
 

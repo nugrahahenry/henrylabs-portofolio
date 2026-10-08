@@ -15,7 +15,7 @@ try {
     const errors = []; page.on("pageerror", e => errors.push(e.message));
     await page.goto(url, { waitUntil: "domcontentloaded" });
     await page.locator(".intro-loader").waitFor({ state: "hidden" });
-    await move(page, .2);
+    await move(page, .06);
     const wide = viewport.height >= 560;
     if (wide) await expect(page.locator(".maker-proof-heading a")).toBeHidden();
     if (!wide) await page.locator(".portrait-reveal").scrollIntoViewIfNeeded();
@@ -27,7 +27,7 @@ try {
       await expect(page.locator(".maker-orbit-field")).toHaveAttribute("data-ready", "true");
       await expect(page.locator(".maker-scene")).toHaveAttribute("data-webgl", "true");
       await expect(page.locator(".cosmic-canvas")).toHaveAttribute("data-intersecting", "false");
-      assert.ok(Number(await page.locator(".maker-orbit-field").getAttribute("data-draw-calls")) <= 27);
+      assert.ok(Number(await page.locator(".maker-orbit-field").getAttribute("data-draw-calls")) <= 51);
       assert.ok(Number(await page.locator(".maker-orbit-field").getAttribute("data-front")) > 0);
       assert.ok(Number(await page.locator(".maker-orbit-field").getAttribute("data-back")) > 0);
       const phase = Number(await page.locator(".maker-orbit-field").getAttribute("data-phase"));
@@ -66,7 +66,41 @@ try {
     assert.equal(found.size, 25);
     await page.locator(".maker-groups button").filter({ hasText: "Build" }).click();
     if (wide) {
-      await move(page, .94);
+      const field = page.locator(".maker-orbit-field");
+      const original = await field.locator("canvas").elementHandle();
+      for (const [progress, group, count] of [[.2,"Interface",6],[.35,"Systems",13],[.52,"All",25],[.2,"Interface",6],[.06,"Build",6]]) {
+        await move(page, progress);
+        await expect(page.locator(".maker-groups button[aria-pressed='true']")).toContainText(group);
+        await expect(page.locator(".maker-tool")).toHaveCount(count);
+        assert.equal(await original.evaluate(node => node.isConnected),true,"group changes reuse the same renderer");
+      }
+      await page.getByRole("button", {name:"Rotate technologies right",exact:true}).click();
+      await expect.poll(() => field.getAttribute("data-velocity").then(Number)).toBeGreaterThan(1);
+      await page.getByRole("button", {name:"Rotate technologies left",exact:true}).click();
+      await expect.poll(() => field.getAttribute("data-velocity").then(Number)).toBeLessThan(-1);
+      const scene = await page.locator(".maker-scene").boundingBox();
+      const dragY = scene.y + scene.height * .38;
+      const selected = await page.locator(".maker-tool[aria-pressed='true']").getAttribute("aria-label");
+      const phase = Number(await field.getAttribute("data-phase"));
+      await page.mouse.move(scene.x+scene.width*.15,dragY); await page.mouse.down();
+      await page.mouse.move(scene.x+scene.width*.75,dragY,{steps:8}); await page.mouse.up();
+      assert.ok(Number(await field.getAttribute("data-phase"))>phase+.4,"horizontal swipe turns the true 3D orbit");
+      assert.equal(await page.locator(".maker-tool[aria-pressed='true']").getAttribute("aria-label"),selected,"drag must not select a technology");
+      await move(page,.52);
+      await expect(page.locator(".maker-tool")).toHaveCount(25);
+      await page.mouse.move(5,80);
+      await page.waitForTimeout(400);
+      await page.screenshot({path:`test-results/portrait/${viewport.width}-all.png`});
+      assert.ok(Number(await field.getAttribute("data-draw-calls"))<=51);
+      const visibleBack = await page.locator(".maker-tool[data-side='back'][data-occluded='false']").evaluateAll(buttons => buttons.map(button => {
+        const b = button.getBoundingClientRect(), x=b.x+b.width/2, y=b.y+b.height/2;
+        return document.elementFromPoint(x,y)?.closest("button") === button ? button.getAttribute("aria-label") : null;
+      }).find(Boolean));
+      assert.ok(visibleBack,"a visible satellite behind the transparent portrait margin remains clickable");
+      const backButton=page.getByRole("button",{name:visibleBack,exact:true});
+      await backButton.focus(); await page.keyboard.press("Enter");
+      await expect(backButton).toHaveAttribute("aria-pressed","true");
+      await move(page, .97);
       await expect(page.locator(".maker-chapter")).toHaveAttribute("data-proof", "true");
       await expect(page.locator(".maker-evidence-card[data-arrived='true']")).toHaveCount(5);
       await expect.poll(() => page.locator(".maker-proof-heading").evaluate(node => Number(getComputedStyle(node).opacity))).toBe(1);
@@ -88,7 +122,7 @@ try {
     await expect(page.locator(".credential-dialog-stage")).toHaveAttribute("data-image-state", "ready");
     await page.keyboard.press("Escape");
     await expect(card).toBeFocused();
-    if (wide) { await move(page, .2); await expect(page.locator(".maker-chapter")).toHaveAttribute("data-proof", "false"); }
+    if (wide) { await move(page, .06); await expect(page.locator(".maker-chapter")).toHaveAttribute("data-proof", "false"); }
     await page.locator("#contact").scrollIntoViewIfNeeded();
     await page.evaluate(() => window.scrollTo({ top: document.documentElement.scrollHeight, behavior: "instant" }));
     await expect.poll(() => page.locator(".worldline-backdrop").getAttribute("data-hole-opacity").then(Number)).toBeGreaterThan(.9);
@@ -100,6 +134,9 @@ try {
   if (!process.argv.includes("--capture")) {
     const reduced = await browser.newPage({ viewport: sizes[0], reducedMotion: "reduce" });
     await reduced.goto(url, { waitUntil: "domcontentloaded" });
+    await reduced.locator(".maker-groups button").filter({hasText:"All"}).click();
+    await expect(reduced.locator(".maker-tool")).toHaveCount(25);
+    assert.ok(await reduced.locator(".maker-tool > span:last-child").evaluateAll(labels=>labels.every(label=>Number(getComputedStyle(label).opacity)===1)),"all labels remain readable without spatial motion");
     await reduced.locator(".maker-evidence-card").first().click();
     await expect(reduced.locator(".credential-dialog")).toBeVisible();
     await reduced.keyboard.press("Escape");
@@ -120,6 +157,22 @@ try {
     const touch = await browser.newPage({ viewport: sizes[3], hasTouch: true, isMobile: true });
     await touch.goto(url, { waitUntil: "domcontentloaded" });
     await touch.locator(".intro-loader").waitFor({ state: "hidden" });
+    await move(touch,.06);
+    await expect(touch.locator(".maker-orbit-field")).toHaveAttribute("data-ready","true");
+    const cdp=await touch.context().newCDPSession(touch);
+    const scene=await touch.locator(".maker-scene").boundingBox();
+    const y=scene.y+scene.height*.38;
+    const phase=Number(await touch.locator(".maker-orbit-field").getAttribute("data-phase"));
+    await cdp.send("Input.dispatchTouchEvent",{type:"touchStart",touchPoints:[{x:35,y}]});
+    for(let x=55; x<=295; x+=30) await cdp.send("Input.dispatchTouchEvent",{type:"touchMove",touchPoints:[{x,y}]});
+    await cdp.send("Input.dispatchTouchEvent",{type:"touchEnd",touchPoints:[]});
+    await expect.poll(()=>touch.locator(".maker-orbit-field").getAttribute("data-phase").then(Number)).toBeGreaterThan(phase+.8);
+    const top=await touch.evaluate(()=>scrollY);
+    await cdp.send("Input.dispatchTouchEvent",{type:"touchStart",touchPoints:[{x:30,y:600}]});
+    for(let y=580; y>=400; y-=30) await cdp.send("Input.dispatchTouchEvent",{type:"touchMove",touchPoints:[{x:30,y}]});
+    await cdp.send("Input.dispatchTouchEvent",{type:"touchEnd",touchPoints:[]});
+    await expect.poll(()=>touch.evaluate(()=>scrollY)).toBeGreaterThan(top+50);
+    await cdp.detach(); await move(touch,.06);
     await touch.locator(".portrait-reveal").scrollIntoViewIfNeeded();
     await expect(touch.locator(".portrait-reveal")).toHaveAttribute("data-interactive", "true");
     const face = await touch.locator(".portrait-reveal").boundingBox();
@@ -132,11 +185,11 @@ try {
     await noGL.addInitScript(() => { const original = HTMLCanvasElement.prototype.getContext; HTMLCanvasElement.prototype.getContext = function(type, ...args) { return type.startsWith("webgl") ? null : original.call(this, type, ...args); }; });
     await noGL.goto(url, { waitUntil: "domcontentloaded" });
     await noGL.locator(".intro-loader").waitFor({ state: "hidden" });
-    await move(noGL, .2);
+    await move(noGL, .06);
     await expect(noGL.locator(".maker-scene")).toHaveAttribute("data-webgl", "false");
     await expect(noGL.locator(".maker-tool-icon").first()).toBeVisible();
     await noGL.locator(".maker-tool").first().focus(); await noGL.keyboard.press("Enter");
-    await move(noGL, .94); await noGL.locator(".maker-evidence-card").first().click();
+    await move(noGL, .97); await noGL.locator(".maker-evidence-card").first().click();
     await expect(noGL.locator(".credential-dialog")).toBeVisible();
     await noGL.close(); console.log("PASS no-WebGL semantic orbit and credential viewer");
   }

@@ -21,6 +21,7 @@ const { sampleOrbit, orbitalSpeed } = await loadModule("orbital-path");
 const { createStellarCore } = await loadModule("stellar-core");
 const { advanceGalaxyFlight, sampleGalaxyFlight } = await loadModule("galaxy-flight");
 const { createDeepSpace } = await loadModule("deep-space");
+const { makerGroupAt, advanceMakerRotation, portraitCoversSatellite, MAKER_RETREAT_START, MAKER_PROOF_START } = await loadModule("maker-motion");
 const { infallPoint, gravityMaterial, dustWarmth } = await loadModule("gravity-field");
 const { createSpacecraft, spacecraftPose, routeSpacecraft, flightPresence, pursuitPulse, pursuitMiss, wormholePresence, createWormhole, clearShot, advancePursuit, pursuitEnd, pursuitPeriod, PURSUIT_DELAY, PURSUIT_REST } = await loadModule("spacecraft");
 const { distantStarPoint, dustStreamSource, stellarTwinkle, createDistantStarMaterial, DISTANT_STAR_COUNT, COMPACT_STAR_COUNT, FEEDING_DUST_COUNT } = await loadModule("ambient-field");
@@ -141,6 +142,36 @@ test("deep space is a bounded real density volume with deterministic cached voxe
   assert.match(a.material.fragmentShader, /i < 16/);
   assert.equal(a.material.depthWrite, false);
   for (const item of [a, b]) { item.texture.dispose(); item.material.dispose(); item.volume.geometry.dispose(); }
+});
+
+test("maker scroll has four reversible tech chapters followed by a separate proof exchange", () => {
+  for (const [progress, group] of [[0,0],[.13,0],[.14,1],[.27,1],[.28,2],[.42,2],[.43,3],[.61,3]]) assert.equal(makerGroupAt(progress), group);
+  assert.ok(MAKER_RETREAT_START > .6 && MAKER_PROOF_START > MAKER_RETREAT_START);
+});
+
+test("maker swipes retain bounded momentum without fighting a live drag or pause", () => {
+  const state = { angle: 0, velocity: 5, dragging: true };
+  advanceMakerRotation(state, 1, false); assert.equal(state.angle, 0);
+  state.dragging = false;
+  advanceMakerRotation(state, 1, true); assert.equal(state.angle, .25);
+  assert.ok(state.velocity < 5);
+  for (let i=0; i<120; i++) advanceMakerRotation(state, 1/60, true);
+  assert.ok(state.velocity < .01 && state.angle < 2);
+  state.velocity = 0; const angle = state.angle;
+  advanceMakerRotation(state, .04, true); assert.equal(state.angle, angle);
+  advanceMakerRotation(state, .04, false); assert.ok(state.angle > angle);
+});
+
+test("portrait hit occlusion follows alpha, including visible crescents beside the ear", () => {
+  const mask = { data: new Uint8ClampedArray(100*100*4).fill(255), width:100, height:100 };
+  const bounds = {left:0,right:100,top:0,bottom:100};
+  assert.equal(portraitCoversSatellite(mask,bounds,50,50,10),true);
+  assert.equal(portraitCoversSatellite(mask,bounds,97,50,10),false);
+  assert.equal(portraitCoversSatellite(undefined,bounds,50,50,10),false);
+  mask.data[(50*100+50)*4+3]=0;
+  assert.equal(portraitCoversSatellite(mask,bounds,50,50,10),false);
+  mask.data.fill(255); mask.data[(50*100+65)*4+3]=0;
+  assert.equal(portraitCoversSatellite(mask,bounds,50,50,20),false);
 });
 
 test("dust spirals only inward and terminates at the actual horizon center", () => {

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, type CSSProperties } from "react";
-import { ArrowUpRight, Maximize2 } from "lucide-react";
+import { ArrowLeft, ArrowRight, ArrowUpRight, Maximize2 } from "lucide-react";
 import { motion, useInView, useMotionValueEvent, useScroll } from "motion/react";
 import { certificates, type Credential } from "@/content/credentials";
 import { orbitTechNodes, stackGroups } from "@/content/technologies";
@@ -10,9 +10,10 @@ import { PortraitReveal } from "./portrait-reveal";
 import { SiteLink, useSitePreferences } from "./site-preferences";
 import { CredentialViewer } from "./credential-viewer";
 import { MakerOrbitField } from "./maker-orbit-field";
+import { makerGroupAt, MAKER_RETREAT_START, MAKER_PROOF_START, type OrbitRotation } from "./maker-motion";
 
 const featured = certificates.filter(record => record.featuredOrder !== null);
-const groups = stackGroups.map((group, i) => ({ label: group.label, items: orbitTechNodes.filter(tech => group.items.some(item => item[0] === tech.label) || i === 2 && !stackGroups.some(entry => entry.items.some(item => item[0] === tech.label))) }));
+const groups = [...stackGroups.map((group, i) => ({ label: group.label, items: orbitTechNodes.filter(tech => group.items.some(item => item[0] === tech.label) || i === 2 && !stackGroups.some(entry => entry.items.some(item => item[0] === tech.label))) })), { label: "All", items: orbitTechNodes }];
 
 function ToolIcon({ slug, label, color }: { slug: string; label: string; color: string }) {
   const [failed, setFailed] = useState(false);
@@ -28,6 +29,8 @@ export function MakerChapter() {
   const stage = useRef<HTMLDivElement>(null);
   const nodes = useRef<(HTMLButtonElement | null)[]>([]);
   const paused = useRef(false);
+  const rotation = useRef<OrbitRotation>({ angle: 0, velocity: 0, dragging: false });
+  const scrollGroup = useRef(0);
   const [group, setGroup] = useState(0);
   const [selected, setSelected] = useState(orbitTechNodes[0]);
   const [record, setRecord] = useState<Credential | null>(null);
@@ -38,9 +41,14 @@ export function MakerChapter() {
   const { scrollYProgress } = useScroll({ target: section, offset: ["start start", "end end"] });
   const items = groups[group].items;
   useMotionValueEvent(scrollYProgress, "change", value => {
-    setProof(value > .51);
+    setProof(value > MAKER_PROOF_START);
+    const next = makerGroupAt(value);
+    if (spatial && next !== scrollGroup.current) {
+      setGroup(next); setSelected(groups[next].items[0]);
+    }
+    scrollGroup.current = next;
     section.current?.style.setProperty("--maker-progress", String(value));
-    section.current?.style.setProperty("--tool-retreat", String(Math.min(1, Math.max(0, (value - .38) / .13))));
+    section.current?.style.setProperty("--tool-retreat", String(Math.min(1, Math.max(0, (value - MAKER_RETREAT_START) / (MAKER_PROOF_START - MAKER_RETREAT_START)))));
   });
 
   useEffect(() => {
@@ -50,6 +58,13 @@ export function MakerChapter() {
     return () => media.removeEventListener("change", sync);
   }, []);
 
+  useEffect(() => {
+    if (!spatial) return;
+    const value = scrollYProgress.get(), next = makerGroupAt(value);
+    scrollGroup.current = next; setGroup(next); setSelected(groups[next].items[0]);
+    setProof(value > MAKER_PROOF_START);
+  }, [spatial, scrollYProgress]);
+
   return <section ref={section} className="maker-chapter" id="stack" data-proof={proof} data-motion={motionOn} data-spatial={spatial} aria-labelledby="maker-title">
     <span className="maker-proof-anchor" id="proof" />
     <div className="maker-sticky">
@@ -58,16 +73,20 @@ export function MakerChapter() {
         <p>{en ? "The person behind the worlds." : "Orang di balik semua dunia."}</p>
         <div className="maker-principles"><span>{en ? "Notice." : "Amati."}</span><span>{en ? "Shape." : "Bentuk."}</span><span>{en ? "Build." : "Bangun."}</span></div>
       </div>
-      <div ref={stage} className="maker-scene" aria-label={en ? "Henry and his technology orbit" : "Henry dan orbit teknologinya"}>
+      <div ref={stage} className="maker-scene" data-all={group === 3} aria-label={en ? "Henry and his technology orbit" : "Henry dan orbit teknologinya"}>
         <PortraitReveal />
-        {spatial && visible && !proof && <MakerOrbitField items={items} nodes={nodes} paused={paused} progress={scrollYProgress} selected={selected.label} />}
+        {spatial && visible && !proof && <MakerOrbitField items={items} nodes={nodes} paused={paused} rotation={rotation} progress={scrollYProgress} selected={selected.label} />}
       <div className="maker-tools-controls" onPointerEnter={() => { paused.current = true; }} onPointerLeave={() => { paused.current = false; }}>
         <div role="group" aria-label={en ? "Technology group" : "Kelompok teknologi"} className="maker-groups">
           {groups.map((entry, index) => <button key={entry.label} type="button" aria-pressed={index === group} onClick={() => { setGroup(index); setSelected(entry.items[0]); }}>{entry.label}<small>{entry.items.length}</small></button>)}
         </div>
+        {spatial && <div className="maker-orbit-turn">
+          <button type="button" title={en ? "Rotate technologies left" : "Putar teknologi ke kiri"} aria-label={en ? "Rotate technologies left" : "Putar teknologi ke kiri"} onClick={() => { rotation.current.velocity = -3.5; }}><ArrowLeft size={17} /></button>
+          <button type="button" title={en ? "Rotate technologies right" : "Putar teknologi ke kanan"} aria-label={en ? "Rotate technologies right" : "Putar teknologi ke kanan"} onClick={() => { rotation.current.velocity = 3.5; }}><ArrowRight size={17} /></button>
+        </div>}
       </div>
 
-        <div className="maker-tools" aria-label={en ? "Technology stack orbit" : "Orbit teknologi"} onPointerEnter={() => { paused.current = true; }} onPointerLeave={() => { paused.current = false; }} onFocus={() => { paused.current = true; }} onBlur={event => { if (!event.currentTarget.contains(event.relatedTarget)) paused.current = false; }}>
+        <div className="maker-tools" aria-label={en ? "Technology stack orbit" : "Orbit teknologi"} onPointerEnter={() => { paused.current = true; }} onPointerLeave={() => { paused.current = false; }} onFocus={() => { paused.current = true; rotation.current.velocity = 0; }} onBlur={event => { if (!event.currentTarget.contains(event.relatedTarget)) paused.current = false; }}>
           {items.map((tech, index) => <button key={tech.label} ref={element => { nodes.current[index] = element; }} type="button" className="maker-tool" style={{ "--tool-color": `#${tech.color}`, "--tool-delay": `${index * -.4}s` } as CSSProperties} aria-label={tech.label} aria-pressed={selected.label === tech.label} onClick={() => setSelected(tech)}>
             <ToolIcon {...tech} /><span>{tech.label}</span>
           </button>)}
@@ -91,7 +110,7 @@ function Evidence({ record, index, spatial, language, progress, onOpen }: { reco
   const update = (value: number) => {
     const node = element.current;
     if (!node) return;
-    const t = spatial ? Math.min(1, Math.max(0, (value - .52 - index * .035) / .2)) : 1;
+    const t = spatial ? Math.min(1, Math.max(0, (value - .72 - index * .025) / .12)) : 1;
     const eased = 1 - Math.pow(1 - t, 3);
     node.style.setProperty("--evidence-rise", `${(1 - eased) * 85}svh`);
     node.style.setProperty("--evidence-turn", `${(1 - eased) * (index % 2 ? -22 : 22)}deg`);

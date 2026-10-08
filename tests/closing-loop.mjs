@@ -95,8 +95,8 @@ try {
     await expect(field).toHaveAttribute("data-dust-streaks", "60");
     await expect(field).toHaveAttribute("data-dust-motion", "orbital-accretion");
     const firstDust = await paintedDust(page);
-    assert.ok(firstDust.light > 8, "the orbital stream must paint a local grain, not just expose coordinates");
     await page.screenshot({ path: `test-results/${viewport.width}-black-hole-rest.png` });
+    assert.ok(firstDust.light > 8, `the orbital stream must paint a local grain, not just expose coordinates: ${JSON.stringify(firstDust)}`);
     await advanceTo(33.5);
     const nextDust = JSON.parse(await field.getAttribute("data-dust-probes")).find(probe => probe.index === firstDust.point.index);
     assert.ok(Math.hypot(nextDust.x - firstDust.point.x, nextDust.y - firstDust.point.y) > 5, "the sampled grain must actually move along its spiral");

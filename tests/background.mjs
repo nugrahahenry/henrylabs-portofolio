@@ -21,7 +21,8 @@ async function holePixels(page) {
     const y = Math.round((1 - Number(canvas.parentElement.dataset.holeY)) * height);
     const center = new Uint8Array(4);
     gl.readPixels(x, y, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, center);
-    const radius = Math.floor(Math.min(width, height) * .15);
+    // Inspect the accretion outside the whole void, not a patch entirely inside it.
+    const radius = Math.floor(Number(canvas.parentElement.dataset.holeDiameter) * .65);
     const left = Math.max(0, x - radius);
     const bottom = Math.max(0, y - radius);
     const patchWidth = Math.min(width - left, radius * 2);
@@ -109,7 +110,7 @@ try {
     await page.screenshot({ path: `test-results/${viewport.width}-connected-background.png` });
     await page.locator("#maker-title").scrollIntoViewIfNeeded();
     await readingPlanets(page, "technology orbit");
-    if (viewport.width >= 1000 && viewport.height >= 650) await page.locator(".maker-chapter").evaluate(node => window.scrollTo({top: scrollY + node.getBoundingClientRect().top + (node.offsetHeight-innerHeight)*.9, behavior: "instant"}));
+    if (viewport.height >= 560) await page.locator(".maker-chapter").evaluate(node => window.scrollTo({top: scrollY + node.getBoundingClientRect().top + (node.offsetHeight-innerHeight)*.97, behavior: "instant"}));
     else await page.locator(".maker-proof-heading").scrollIntoViewIfNeeded();
     await expect(background).toHaveAttribute("data-hole-opacity", "0.000");
     await expect(background).toHaveAttribute("data-pull", "0.000");
@@ -142,7 +143,7 @@ try {
     await expect.poll(async () => Number(await background.getAttribute("data-visitor-opacity"))).toBeGreaterThan(.35);
     await expect(page.locator('#contact a[href*="wa.me"]')).toBeInViewport();
     await page.screenshot({ path: `test-results/${viewport.width}-gravity-infall.png` });
-    if (viewport.width >= 1000 && viewport.height >= 650) await page.locator(".maker-chapter").evaluate(node => window.scrollTo({top: scrollY + node.getBoundingClientRect().top + (node.offsetHeight-innerHeight)*.9, behavior: "instant"}));
+    if (viewport.height >= 560) await page.locator(".maker-chapter").evaluate(node => window.scrollTo({top: scrollY + node.getBoundingClientRect().top + (node.offsetHeight-innerHeight)*.97, behavior: "instant"}));
     else await page.locator(".maker-proof-heading").scrollIntoViewIfNeeded();
     await expect(background).toHaveAttribute("data-gravity-active", "false");
     await expect(background).toHaveAttribute("data-pull", "0.000");
