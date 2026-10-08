@@ -26,18 +26,20 @@ export function ProjectLibrary() {
   if (category !== "all") returnQuery.set("category", category);
   if (search) returnQuery.set("q", search);
   return <main className="library-page" id="main-content">
-    <div className="library-heading"><span className="library-eyebrow">HenryLabs / {isEn ? "Project index" : "Indeks proyek"}</span><h1>{isEn ? "Projects." : "Proyek."}</h1><p>{isEn ? "Independent products, university systems, and work with real stakes." : "Produk mandiri, sistem kuliah, dan pekerjaan dengan konsekuensi nyata."}</p><SiteLink className="library-text-link" href="/">{isEn ? "Explore the universe" : "Jelajahi semesta"}<ArrowUpRight size={18} /></SiteLink></div>
+    <div className="library-heading"><h1>{isEn ? "Projects." : "Proyek."}</h1><p>{isEn ? "Independent products, university systems, and work with real stakes." : "Produk mandiri, sistem kuliah, dan pekerjaan dengan konsekuensi nyata."}</p><SiteLink className="library-text-link" href="/">{isEn ? "Explore the universe" : "Jelajahi semesta"}<ArrowUpRight size={18} /></SiteLink></div>
     <div className="library-controls">
       <div className="category-filter" role="group" aria-label={isEn ? "Project category" : "Kategori proyek"}>{Object.entries(categories).map(([id, label]) => <button type="button" key={id} aria-pressed={category === id} onClick={() => updateQuery({ category: id === "all" ? null : id })}>{label[language]}</button>)}</div>
       <label className="library-search"><Search size={18} /><span className="sr-only">{isEn ? "Search projects" : "Cari proyek"}</span><input type="search" value={search} placeholder={isEn ? "Name, stack, or idea" : "Nama, stack, atau ide"} onChange={event => updateQuery({ q: event.target.value || null }, true)} /></label>
     </div>
     <div className="library-results" aria-live="polite"><span>{String(results.length).padStart(2, "0")} {isEn ? "projects" : "proyek"}</span><span>{categories[category][language]}</span></div>
     <div className="project-library-grid">{results.map((project, index) => <article className="project-record" key={project.id} style={{ "--record-color": project.color } as CSSProperties}>
+      <SiteLink className="project-record-link" aria-labelledby={`project-title-${project.id}`} href={`/projects/${project.slug}${returnQuery.size ? `?${returnQuery}` : ""}`}>
       <div className="project-record-visual">
         {project.media ? <img className="project-record-art" src={project.media} alt={project.mediaAlt ?? project.name} loading={index < 2 ? "eager" : "lazy"} /> : <div className="project-record-system"><span className="project-record-mark"><ProjectMark project={project} /></span><div>{project.flow[language].map((step, i) => <span key={step}><small>{String(i + 1).padStart(2, "0")}</small>{step}</span>)}</div></div>}
         <span className="record-category">{categories[project.category][language]}</span>
       </div>
-      <div className="project-record-body"><span className="record-status">{project.status[language]} / {project.access[language]}</span><h2><SiteLink href={`/projects/${project.slug}${returnQuery.size ? `?${returnQuery}` : ""}`}>{project.name}<ArrowUpRight size={22} /></SiteLink></h2><p>{project.summary[language]}</p><ul className="library-stack" aria-label="Technology stack">{project.stack.map(tech => <li key={tech}>{tech}</li>)}</ul><span className="record-ownership">{project.ownership[language]}</span></div>
+      <div className="project-record-body"><span className="record-status">{project.status[language]} / {project.access[language]}</span><h2 id={`project-title-${project.id}`}>{project.name}<ArrowUpRight size={22} aria-hidden="true" /></h2><p>{project.summary[language]}</p><ul className="library-stack" aria-label={isEn ? "Technology stack" : "Teknologi proyek"}>{project.stack.map(tech => <li key={tech}>{tech}</li>)}</ul><span className="record-ownership">{project.ownership[language]}</span></div>
+      </SiteLink>
     </article>)}</div>
     {results.length === 0 && <div className="library-empty"><Search size={28} /><h2>{isEn ? "No matching worlds." : "Belum ada proyek yang cocok."}</h2><button type="button" className="library-text-link" onClick={() => updateQuery({ category: null, q: null })}><X size={16} />{isEn ? "Clear filters" : "Hapus filter"}</button></div>}
     <LibraryFooter />

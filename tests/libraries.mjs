@@ -42,11 +42,15 @@ try {
     await trigger.click();
     const dialog = page.getByRole("dialog");
     await expect(dialog).toBeVisible();
-    await expect(dialog.locator("img")).toHaveJSProperty("complete", true);
-    assert.ok(await dialog.locator("img").evaluate(image => image.naturalWidth > 0));
+    await expect(dialog.locator(".credential-dialog-stage")).toHaveAttribute("data-image-state", "ready");
+    assert.ok(await dialog.locator("[data-credential-original]").evaluate(image => image.complete && image.naturalWidth > 0));
     const bounds = await dialog.boundingBox();
     assert.ok(bounds.x >= 0 && bounds.y >= 0 && bounds.x + bounds.width <= viewport.width && bounds.y + bounds.height <= viewport.height);
     await page.screenshot({ path: `test-results/libraries/${viewport.width}-viewer.png` });
+    await dialog.getByRole("button", { name: "Zoom certificate", exact: true }).click();
+    await expect(dialog.getByRole("region", { name: "Certificate image" })).toBeFocused();
+    assert.ok(await dialog.locator(".credential-dialog-image").evaluate(el => el.scrollWidth > el.clientWidth), "Zoomed image can be panned");
+    await dialog.getByRole("button", { name: "Fit certificate", exact: true }).click();
     for (let i = 0; i < 7; i++) { await page.keyboard.press("Tab"); assert.ok(await dialog.evaluate(el => el.contains(document.activeElement))); }
     await page.keyboard.press("Escape");
     await expect(dialog).toHaveCount(0);
@@ -62,6 +66,14 @@ try {
     console.log(`Libraries, query return/reload, viewer/focus, overflow passed at ${viewport.width}x${viewport.height}`);
   }
   const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
+  await page.goto(`${base}/projects`);
+  await fits(page);
+  await page.locator(".project-record").first().locator(".project-record-visual").click();
+  await expect(page.locator("h1")).toHaveText("Catmoji");
+  await page.goBack();
+  await page.getByRole("link", { name: "Nalira", exact: true }).focus();
+  await page.keyboard.press("Enter");
+  await expect(page.locator("h1")).toHaveText("Nalira");
   await page.goto(`${base}/projects?lang=id&motion=off&category=client`);
   await expect(page.locator(".project-record")).toHaveCount(2);
   await expect(page.locator("html")).toHaveAttribute("lang", "id");
@@ -101,6 +113,48 @@ try {
   await expect(reduced.locator("html")).toHaveAttribute("data-motion", "off");
   await expect(reduced.locator(".motion-toggle")).toBeDisabled();
   await reduced.close();
+  for (const language of ["en", "id"]) {
+    const recovery = await browser.newPage({ viewport: { width: 390, height: 844 } });
+    const errors = [];
+    recovery.on("pageerror", error => errors.push(error.message));
+    let release;
+    const pending = new Promise(resolve => { release = resolve; });
+    await recovery.route("**/assets/certificates/previews/google-student-ambassador.png*", async route => {
+      if (route.request().url().includes("retry=")) return route.continue();
+      await pending;
+      await route.abort("failed");
+    });
+    try {
+      await recovery.goto(`${base}/credentials?lang=${language}&motion=off`);
+      await fits(recovery);
+      const isEn = language === "en";
+      const trigger = recovery.getByRole("button", { name: `${isEn ? "Open" : "Buka"} Class of 2026 Graduation`, exact: true });
+      await trigger.click();
+      const dialog = recovery.getByRole("dialog");
+      await expect(dialog.locator(".credential-dialog-stage")).toHaveAttribute("data-image-state", "loading");
+      await expect(dialog.getByRole("button", { name: isEn ? "Zoom certificate" : "Perbesar sertifikat", exact: true })).toBeDisabled();
+      await expect.poll(() => dialog.locator(".credential-dialog-preview").evaluate(img => img.complete && img.naturalWidth > 0)).toBe(true);
+      await recovery.screenshot({ path: `test-results/libraries/viewer-loading-${language}.png` });
+      release();
+      await expect(dialog.getByRole("alert")).toContainText(isEn ? "could not load" : "belum berhasil");
+      await recovery.screenshot({ path: `test-results/libraries/viewer-error-${language}.png` });
+      await dialog.getByRole("button", { name: isEn ? "Retry image" : "Coba muat lagi", exact: true }).click();
+      await expect(dialog.getByRole("button", { name: isEn ? "Close certificate viewer" : "Tutup sertifikat", exact: true })).toBeFocused();
+      await expect(dialog.locator(".credential-dialog-stage")).toHaveAttribute("data-image-state", "ready");
+      await expect(dialog.locator(".credential-dialog-preview")).toHaveCount(0);
+      const zoom = dialog.getByRole("button", { name: isEn ? "Zoom certificate" : "Perbesar sertifikat", exact: true });
+      await zoom.click();
+      await expect(dialog.getByRole("region")).toBeFocused();
+      await expect(dialog.getByRole("button", { name: isEn ? "Fit certificate" : "Sesuaikan sertifikat", exact: true })).toHaveAttribute("aria-pressed", "true");
+      await recovery.keyboard.press("Escape");
+      await expect(trigger).toBeFocused();
+      await recovery.getByRole("button", { name: `${isEn ? "Open" : "Buka"} Gemini Certified Educator`, exact: true }).click();
+      await expect(recovery.locator(".credential-dialog-stage")).toHaveAttribute("data-image-state", "ready");
+      await expect(recovery.locator(".credential-dialog-image")).not.toHaveClass(/is-zoomed/);
+      assert.deepEqual(errors, []);
+      console.log(`Credential slow-load, failure, retry, localized zoom, focus, and record reset passed: ${language}`);
+    } finally { release(); await recovery.close(); }
+  }
   console.log("Language/motion propagation, native Back, direct viewer URLs, unknown values, 404, and reduced motion passed.");
   console.log("Cross-route Contact and all ten detail HTTP/canonical routes passed.");
 } finally { await browser.close(); }

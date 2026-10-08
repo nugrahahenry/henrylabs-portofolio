@@ -257,7 +257,8 @@ try {
     await page.getByRole("dialog").waitFor();
     assert.match(await page.getByRole("dialog").innerText(), /Google Student Ambassador/i);
     assert.equal(await page.locator(".credential-dialog").evaluate((modal) => getComputedStyle(modal).backgroundColor), "rgb(15, 23, 31)");
-    assert.equal(await page.locator(".credential-dialog-image img").evaluate((image) => image.complete && image.naturalWidth > 0), true);
+    await expect(page.locator(".credential-dialog-stage")).toHaveAttribute("data-image-state", "ready");
+    assert.equal(await page.locator("[data-credential-original]").evaluate((image) => image.complete && image.naturalWidth > 0), true);
     await page.screenshot({ path: `test-results/${viewport.width}-credential-modal.png` });
     await expect.poll(async () => (await page.getByRole("button", { name: "Close certificate viewer" }).boundingBox())?.height ?? 0).toBeGreaterThanOrEqual(44);
     await page.keyboard.press("Escape");

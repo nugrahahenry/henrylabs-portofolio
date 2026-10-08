@@ -1,6 +1,6 @@
 <div align="center">
 
-# HenryLabs Portfolio v0.80.0
+# HenryLabs Portfolio v0.80.1
 
 **I build things I actually see.**
 
@@ -29,7 +29,7 @@ Beyond the map: Henry's working method, a technology orbit, and original credent
 
 Prefer a closer read? **Projects** opens a searchable catalog of all ten worlds, filtered by HenryLabs, University, or Client Work. Each planet and catalog record leads to the same project detail, with ownership, workflow, stack, and honest access boundaries. Return to the universe to continue from that planet; its reading panel stays closed until requested.
 
-**Credentials** is a separate library of all 26 original records. Filter by issuer or type, search a title, and open a full-size document with zoom and available source PDFs. English/Indonesian and motion choices travel with the internal links.
+**Credentials** is a separate library of all 26 original records. Filter by issuer or type, search a title, and open a full-size document with zoom and available source PDFs. A small preview remains visible while the original loads, with a retry option on failure. English/Indonesian and motion choices travel with the internal links.
 
 English is the default, with Indonesian available throughout the main experience. Keyboard navigation, touch controls, reduced motion, and a WebGL fallback keep the work accessible.
 
