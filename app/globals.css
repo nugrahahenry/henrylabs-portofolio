@@ -24,14 +24,14 @@
 .arrival-content { position: relative; z-index: 2; display: grid; justify-items: center; width: min(420px, 100%); text-align: center; transition: opacity .25s ease, transform .5s var(--ease); }
 .arrival-content strong { font-size: 48px; line-height: 1.1; letter-spacing: 0; }
 .arrival-content p { margin: 20px 0 0; color: #bac5ce; font-size: 14px; letter-spacing: 0; }
-.arrival-mark { margin-bottom: 24px; color: var(--cyan); filter: drop-shadow(0 6px 24px rgba(110,231,244,.22)); animation: arrival-lock 1.5s cubic-bezier(.16,1,.3,1) both; }
-.arrival-rule { width: 120px; height: 1px; margin-top: 28px; background: var(--cyan); transform-origin: center; animation: arrival-line 1.5s var(--ease) both; }
+.arrival-mark { margin-bottom: 24px; color: var(--cyan); filter: none; animation: arrival-lock 1.15s cubic-bezier(.16,1,.3,1) both; }
+.arrival-rule { width: 64px; height: 1px; margin-top: 24px; background: var(--cyan); transform-origin: center; animation: arrival-line 1.15s var(--ease) both; }
 .arrival-skip { position: absolute; z-index: 2; bottom: max(24px, env(safe-area-inset-bottom)); right: 24px; display: flex; gap: 12px; align-items: center; min-height: 44px; padding: 10px 14px; background: transparent; color: #bac5ce; cursor: pointer; font-size: 14px; }
 .arrival-skip:hover { color: var(--cyan); }
 .arrival-intro.intro-loader--done .arrival-content { opacity: 0; transform: scale(1.05); }
 .arrival-intro.intro-loader--done .arrival-skip { visibility: hidden; }
 .project-showcase-topline > .project-showcase-close { display: grid; place-items: center; width: 44px; height: 44px; flex: none; background: transparent; color: var(--paper); cursor: pointer; border: 1px solid rgba(244,245,239,.3); border-radius: 50%; }
-@keyframes arrival-lock { from { transform: rotate(-16deg) translateY(8px) scale(.9); opacity: 0; clip-path: inset(0 100% 0 0); } 65% { opacity: 1; clip-path: inset(0); } to { transform: rotate(0) translateY(0) scale(1); opacity: 1; clip-path: inset(0); } }
+@keyframes arrival-lock { from { transform: perspective(500px) rotateY(-32deg) rotateZ(-8deg) scale(.88); opacity: .2; } to { transform: perspective(500px) rotateY(0) rotateZ(0) scale(1); opacity: 1; } }
 @keyframes arrival-line { from { transform: scaleX(0); } to { transform: scaleX(1); } }
 @media (max-width: 480px), (max-height: 500px) { .arrival-content strong { font-size: 36px; }.arrival-mark { width: 64px; height: 64px; margin-bottom: 16px; }.arrival-rule { margin-top: 20px; } }
 @media (prefers-reduced-motion: reduce) { .intro-loader.arrival-intro, .arrival-intro::before, .arrival-intro::after, .arrival-content { transition: none; }.arrival-mark, .arrival-rule { animation: none; } }
@@ -1096,14 +1096,14 @@ html[data-motion="off"] *, html[data-motion="off"] *::before, html[data-motion="
 }
 
 /* The map recedes in camera space before handing the field to project evidence. */
-.hero-stage:not([data-phase="all"]) { min-height: 310svh; }
+.hero-stage:not([data-phase="all"]) { min-height: 340svh; }
 .map-departure { width: min(1180px, 100%); }
 .hero-stage[data-phase="departing"] .hero-copy, .hero-stage[data-phase="departing"] .hero-telemetry, .hero-stage[data-phase="departing"] .scroll-cue { opacity: 0; pointer-events: none; }
 .hero-stage[data-phase="departing"] .cosmic-frame-wrap { pointer-events: none; }
 .hero-stage[data-phase="departing"] .cosmic-frame { pointer-events: none; }
 @media (max-width: 640px) {
-  .hero-stage:not([data-phase="all"]) { min-height: 290svh; }
+  .hero-stage:not([data-phase="all"]) { min-height: 320svh; }
 }
 @media (orientation: landscape) and (max-height: 620px) {
-  .hero-stage:not([data-phase="all"]) { min-height: 280svh; }
+  .hero-stage:not([data-phase="all"]) { min-height: 310svh; }
 }

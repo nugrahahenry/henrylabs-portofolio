@@ -1,6 +1,6 @@
 <div align="center">
 
-# StarGod Portfolio v0.87.0
+# StarGod Portfolio v0.88.0
 
 **I build things I actually see.**
 
@@ -25,7 +25,7 @@ Three galaxies. Ten project worlds. One maker.
 
 StarGod is the working name of the universe, drawn from Henry's longtime alias. **HenryLabs** remains its personal-project galaxy. An authored stellar-orbit mark connects the header, quiet entrance, maker signature, and footer.
 
-Enter a living map of **HenryLabs**, **University**, and **Client Work**. Choose a galaxy, follow a curved camera approach into its planets, and explore the work behind each identity. Returning retraces that journey without rebuilding the scene. The opening headline stays free of project overlays when scrolling back up; Explore the universe reopens the three-galaxy overview. Technologies orbit the projects they belong to; an optional reading panel brings the context, ownership, and evidence into view.
+Enter a living map of **HenryLabs**, **University**, and **Client Work**. Choose a galaxy, follow a curved camera approach into its planets, and explore the work behind each identity. Returning retraces that journey without rebuilding the scene. Explore the universe lands in a stable, fully visible exploration window, with space to browse before the camera recedes. The opening headline stays free of project overlays when scrolling back up. Technologies orbit the projects they belong to; an optional reading panel brings the context, ownership, and evidence into view.
 
 Beyond the map: one preview following the selected project, then Henry himself. A crowned StarGod portrait opens locally under the cursor to reveal Henry in a dark suit: sunglasses, clear glasses, then his unobscured face. The approved portraits share one composition; this is a layered photographic reveal, not a rotatable head model. Four appearance controls also work with touch, keyboard, or reduced motion.
 
@@ -35,7 +35,7 @@ A continuous Three.js universe connects the journey, from distant stars and nebu
 
 Prefer a closer read? **Projects** opens a searchable catalog of all ten worlds, filtered by HenryLabs, University, or Client Work. Each planet and catalog record leads to the same project detail, with ownership, workflow, stack, and honest access boundaries. Return to the universe to continue from that planet; its reading panel stays closed until requested.
 
-**Credentials** is a separate library of all 26 original records. Filter by issuer or type, search a title, and open a full-size document with zoom and available source PDFs. A small preview remains visible while the original loads, with a retry option on failure. English/Indonesian and motion choices travel with the internal links.
+**Credentials** is a separate library of all 26 learning records. Filter by issuer or type, search a title, and open a full-size watermarked preview with zoom and available PDF previews. A small preview remains visible while the full-size image loads, with a retry option on failure. English/Indonesian and motion choices travel with the internal links.
 
 English is the default, with Indonesian available throughout the main experience. Keyboard navigation, touch controls, reduced motion, and a WebGL fallback keep the work accessible.
 
@@ -86,24 +86,24 @@ The portfolio includes **26 original certificates, badges, and participation rec
 
 <p align="center">
   <a href="public/assets/certificates/source/google-student-ambassador.pdf">
-    <img src="public/assets/readme/google-student-ambassador.webp" alt="Original Google Student Ambassador certificate for Henry Nugraha, Class of 2026. Open the source PDF." width="720" />
+    <img src="public/assets/readme/google-student-ambassador.webp" alt="Watermarked Google Student Ambassador certificate for Henry Nugraha, Class of 2026. Open the PDF preview." width="720" />
   </a>
 </p>
 
 <table>
   <tr>
     <td width="50%" align="center">
-      <a href="public/assets/certificates/previews/gemini-certified-educator.png"><img src="public/assets/readme/gemini-certified-educator.webp" alt="Henry's original Gemini Certified Educator record. Open the full-size image." width="430" /></a><br />
+      <a href="public/assets/certificates/previews/gemini-certified-educator.png"><img src="public/assets/readme/gemini-certified-educator.webp" alt="Henry's watermarked Gemini Certified Educator record. Open the full-size preview." width="430" /></a><br />
       <strong>Gemini Certified Educator</strong><br />Google for Education
     </td>
     <td width="50%" align="center">
-      <a href="public/assets/certificates/previews/dicoding-oop.png"><img src="public/assets/readme/dicoding-oop.webp" alt="Henry's original Dicoding Belajar Prinsip Pemrograman SOLID course completion record. Open the full-size image." width="430" /></a><br />
+      <a href="public/assets/certificates/previews/dicoding-oop.png"><img src="public/assets/readme/dicoding-oop.webp" alt="Henry's watermarked Dicoding Belajar Prinsip Pemrograman SOLID course completion record. Open the full-size preview." width="430" /></a><br />
       <strong>Belajar Prinsip Pemrograman SOLID</strong><br />Dicoding course completion
     </td>
   </tr>
 </table>
 
-Records retain their issuer and type, with full-size previews and source PDFs where available. Course completions, badges, and professional certifications remain distinguishable.
+Records retain their issuer and type, with full-size images and PDF previews where available. Course completions, badges, and professional certifications remain distinguishable. All current public copies, including these README images, carry a baked-in **Henry Nugraha • Portfolio Preview** watermark. Unmarked masters are private. Watermarks discourage reuse; they cannot prevent screenshots or retract copies and Git history published earlier.
 
 ## Built With
 
@@ -129,14 +129,18 @@ This portfolio is **actively being developed**. Hosting is deferred. The project
 | `/` | The interactive three-galaxy journey |
 | `/projects` | Ten projects; category and text filters |
 | `/projects/[slug]` | A shared detail page for each project |
-| `/credentials` | All 26 original learning records |
+| `/credentials` | Watermarked previews of all 26 learning records |
 
-Content lives in `content/`; catalog pages and orbital reading actions share those records. Reading pages share one quiet volumetric nebula and distant-star field, without the project-map or cinematic scenes. Motion pauses when hidden and stays still with reduced motion; a dark fallback keeps content readable without WebGL. The maker's small 3D scene exists only during its visible technology phase, with the upper galaxy animation paused; it releases its renderer before credentials and Contact. Certificate lists use lightweight, uncropped WebP previews, while the viewer preserves full-resolution originals. To regenerate the previews from the public source images, use `node scripts/credential-thumbnails.mjs` with the installed dependencies and Node 24. Route and accessibility checks: `npm run test:libraries`; galaxy integration: `npm run test:sectors`; portrait choreography: `npm run test:maker`.
+Content lives in `content/`; catalog pages and orbital reading actions share those records. Reading pages share one quiet volumetric nebula and distant-star field, without the project-map or cinematic scenes. Motion pauses when hidden and stays still with reduced motion; a dark fallback keeps content readable without WebGL. The maker's small 3D scene exists only during its visible technology phase, with the upper galaxy animation paused; it releases its renderer before credentials and Contact. Shared typography roles keep reading sizes and spacing consistent.
+
+Certificate lists and viewers use permanently watermarked derivatives. `scripts/credential-watermarks.py` exports images, thumbnails, flattened PDF previews and README copies from private local masters, using Pillow, pypdf, ReportLab and Poppler. Regeneration requires those private masters; they are intentionally absent from a public clone. `node scripts/credential-thumbnails.mjs` can resize verified public copies, refusing changed/unreviewed input. The public checksum manifest and unit checks guard against accidentally replacing marked files. These checks ensure consistency, not copy protection.
+
+Route and accessibility checks: `npm run test:libraries`; entrance and exploration window: `npm run test:arrival`; galaxy integration: `npm run test:galaxies`; portrait choreography: `npm run test:maker`.
 
 <details>
 <summary>About the README visuals</summary>
 
-All media is stored in this repository. The animated tour and stills are captured from the running portfolio. Certificate thumbnails are resized from the original public records, linked above; no certificate content is generated or altered. The still image is also supplied for reduced-motion readers.
+Public media is stored in this repository. The animated tour and stills are captured from the running portfolio. Certificate images are resized from genuine records with an added ownership watermark; issuer text and achievements are not generated. The still image is also supplied for reduced-motion readers.
 
 To refresh the preview after an interface change, start the portfolio on port 3002 and run:
 
@@ -155,4 +159,4 @@ The capture uses the installed Playwright package and an isolated Chrome instanc
 
 ---
 
-Internal planning and runtime data stay private. Project artwork and selected original credential records are included for portfolio presentation. Set `NEXT_PUBLIC_SITE_URL` when choosing the final public host.
+Internal planning, credential masters, and runtime data stay private. Project artwork and watermarked credential previews are included for portfolio presentation. Set `NEXT_PUBLIC_SITE_URL` when choosing the final public host.

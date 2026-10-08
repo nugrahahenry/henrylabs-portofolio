@@ -18,7 +18,7 @@ export function createDeepSpace(size = 64) {
   texture.unpackAlignment = 1;
   texture.needsUpdate = true;
   const material = new THREE.ShaderMaterial({
-    uniforms: { uVolume: { value: texture }, uTime: { value: 0 }, uPull: { value: 0 }, uTarget: { value: new THREE.Vector3() }, uResolution: { value: new THREE.Vector2(1, 1) } },
+    uniforms: { uVolume: { value: texture }, uTime: { value: 0 }, uPull: { value: 0 }, uPresence: { value: 1 }, uTarget: { value: new THREE.Vector3() }, uResolution: { value: new THREE.Vector2(1, 1) } },
     vertexShader: `
       varying vec3 vWorld;
       void main() {
@@ -31,6 +31,7 @@ export function createDeepSpace(size = 64) {
       uniform sampler3D uVolume;
       uniform float uTime;
       uniform float uPull;
+      uniform float uPresence;
       uniform vec3 uTarget;
       uniform vec2 uResolution;
       varying vec3 vWorld;
@@ -73,7 +74,7 @@ export function createDeepSpace(size = 64) {
         vec2 reading = abs((screen - vec2(.5,.48)) / vec2(.46,.34));
         float outsideCopy = smoothstep(.2, 1.8, pow(reading.x, 4.0) + pow(reading.y, 4.0));
         float readingGuard = mix(.52, 1.0, outsideCopy);
-        gl_FragColor = vec4(light / max(alpha, .001), min(.9, alpha) * (1.0 - uPull * .55) * readingGuard);
+        gl_FragColor = vec4(light / max(alpha, .001), min(.9, alpha) * (1.0 - uPull * .55) * readingGuard * uPresence);
         #include <tonemapping_fragment>
         #include <colorspace_fragment>
       }

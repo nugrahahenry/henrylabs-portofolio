@@ -1,15 +1,20 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
-  <rect width="64" height="64" rx="16" fill="#07091b"/>
+  <defs>
+    <linearGradient id="metal" x1="13" y1="10" x2="49" y2="54" gradientUnits="userSpaceOnUse"><stop stop-color="#fff"/><stop offset=".38" stop-color="#c8f6ff"/><stop offset=".55" stop-color="#55adc9"/><stop offset="1" stop-color="#205775"/></linearGradient>
+    <linearGradient id="orbit" x1="9" y1="44" x2="56" y2="20" gradientUnits="userSpaceOnUse"><stop stop-color="#886224"/><stop offset=".35" stop-color="#ffe3a3"/><stop offset=".65" stop-color="#fff5dc"/><stop offset="1" stop-color="#c39742"/></linearGradient>
+  </defs>
   <path d="M11 42C2 37 9 25 25 19C41 13 57 15 59 22C61 28 50 37 35 42C22 47 11 48 7 44" stroke="#efc95f" stroke-width="2.6" stroke-linecap="round"/>
-  <path d="M32 7L38 26L51 32L38 39L32 57L26 39L13 32L26 26Z" fill="#153c58"/>
+  <path d="M32 7L38 26L51 32L38 39L32 57L26 39L13 32L26 26Z" fill="url(#metal)" stroke="#75adc2" stroke-width=".8"/>
   <path d="M32 7L32 32L26 26Z" fill="#f4fcff"/>
   <path d="M32 7L38 26L32 32Z" fill="#65c4dc"/>
   <path d="M13 32L26 26L32 32Z" fill="#b3f0f7"/>
-  <path d="M32 32L38 26L51 32Z" fill="#e3f7fb"/>
+  <path d="M32 32L38 26L51 32Z" fill="url(#metal)"/>
   <path d="M32 32L51 32L38 39Z" fill="#397797"/>
   <path d="M13 32L32 32L26 39Z" fill="#317596"/>
   <path d="M32 32L32 57L26 39Z" fill="#7ecbde"/>
   <path d="M32 32L38 39L32 57Z" fill="#204966"/>
-  <path d="M9 44C17 46 28 44 39 40C49 36 57 30 59 25" stroke="#ffe3a3" stroke-width="2" stroke-linecap="round"/>
+  <path d="M32 10V32L16 32M32 32L32 53" stroke="#edfdff" stroke-width=".75" stroke-linecap="round"/>
+  <path d="M9 44C17 46 28 44 39 40C49 36 57 30 59 25" stroke="url(#orbit)" stroke-width="3.2" stroke-linecap="round"/>
+  <path d="M13 44C26 45 49 36 56 29" stroke="#fff3d5" stroke-width=".65" stroke-linecap="round"/>
   <circle cx="54" cy="17" r="3" fill="#f4f5ef"/>
 </svg>

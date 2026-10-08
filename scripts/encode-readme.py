@@ -3,6 +3,7 @@
 Requires Pillow. Run scripts/capture-readme.mjs first; originals are never changed.
 """
 
+import hashlib
 import json
 from pathlib import Path
 
@@ -12,6 +13,17 @@ from PIL import Image, ImageChops, ImageStat
 ROOT = Path(__file__).resolve().parent.parent
 SOURCE = ROOT / "test-results/readme-frames"
 OUTPUT = ROOT / "public/assets/readme"
+MANIFEST = ROOT / "public/assets/certificates/watermarks.json"
+CERTIFICATES = [
+    ("google-student-ambassador", 960),
+    ("gemini-certified-educator", 600),
+    ("dicoding-oop", 600),
+]
+watermarks = json.loads(MANIFEST.read_text(encoding="utf-8"))
+for name, _ in CERTIFICATES:
+    url = f"/assets/certificates/previews/{name}.png"
+    source = ROOT / "public" / url.lstrip("/")
+    assert hashlib.sha256(source.read_bytes()).hexdigest() == watermarks["files"][url]["sha256"], f"Unverified credential preview: {name}"
 OUTPUT.mkdir(parents=True, exist_ok=True)
 capture = json.loads((SOURCE / "capture.json").read_text())
 
@@ -59,14 +71,16 @@ indexed[0].save(
 for source, target in [("universe", "universe-poster"), ("worlds", "project-orbits")]:
     resized(SOURCE / f"{source}.png", 1200, True).save(OUTPUT / f"{target}.webp", quality=86, method=6)
 
-for name, width in [
-    ("google-student-ambassador", 960),
-    ("gemini-certified-educator", 600),
-    ("dicoding-oop", 600),
-]:
+for name, width in CERTIFICATES:
     resized(ROOT / f"public/assets/certificates/previews/{name}.png", width).save(
         OUTPUT / f"{name}.webp", quality=88, method=6,
     )
+    result = OUTPUT / f"{name}.webp"
+    watermarks["files"][f"/assets/readme/{name}.webp"] = {
+        "sha256": hashlib.sha256(result.read_bytes()).hexdigest(),
+        "bytes": result.stat().st_size,
+    }
+MANIFEST.write_text(json.dumps(watermarks, ensure_ascii=True, indent=2) + "\n", encoding="utf-8")
 
 with Image.open(OUTPUT / "living-universe.webp") as animation:
     assert animation.n_frames > 60, "Animation must have real movement, not one still."

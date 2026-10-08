@@ -13,7 +13,7 @@ async function hydrateWithClock(page) {
 }
 try {
   mkdirSync("test-results", { recursive: true });
-  for (const viewport of process.argv.includes("--reduced") ? [] : [{ width: 1440, height: 900 }, { width: 390, height: 844 }]) {
+  for (const viewport of process.argv.includes("--reduced") ? [] : [{ width: 1440, height: 900 }, { width: 1024, height: 768 }, { width: 768, height: 1024 }, { width: 390, height: 844 }, { width: 360, height: 800 }, { width: 844, height: 390 }]) {
     const page = await browser.newPage({ viewport, reducedMotion: "no-preference" });
     const errors = [];
     page.on("pageerror", (error) => errors.push(error.message));
@@ -36,17 +36,36 @@ try {
     await page.clock.runFor(900);
     await expect(intro).toBeHidden();
     await page.screenshot({ path: `test-results/${viewport.width}-arrival.png` });
+    const heroText = await page.locator('.hero-copy').evaluate(el => [...el.querySelectorAll('h1,p,.hero-actions')].map(item => {
+      const r = item.getBoundingClientRect(); return { x:r.x, y:r.y, right:r.right, bottom:r.bottom };
+    }));
+    assert.ok(heroText.every(r => r.x >= 0 && r.right <= viewport.width && r.y >= 60 && r.bottom <= viewport.height), JSON.stringify(heroText));
     await expect(page.locator(".hero-transition")).toHaveCount(0);
     await page.locator(".hero-stage").evaluate((hero) => window.scrollTo({ top: (hero.offsetHeight - innerHeight) * .35, behavior: "instant" }));
     await page.clock.runFor(700);
     await expect(page.locator(".hero-stage")).toHaveAttribute("data-phase", "worlds");
     await expect(page.getByRole("button", { name: "Explore HenryLabs galaxy", exact: true })).toBeVisible();
     await page.screenshot({ path: `test-results/${viewport.width}-arrival-map.png` });
+    for (const progress of [.45, .57, .8]) {
+      await page.locator('.hero-stage').evaluate((hero, p) => window.scrollTo({top:(hero.offsetHeight-innerHeight)*p, behavior:'instant'}), progress);
+      await page.clock.runFor(450);
+      await expect(page.locator('.hero-stage')).toHaveAttribute('data-phase', 'worlds');
+      await expect(page.locator('.cosmic-canvas')).toHaveAttribute('data-departure', '0.000');
+      for (const selector of ['.cosmic-frame-wrap', '.map-departure']) assert.equal(await page.locator(selector).evaluate(el => Number(getComputedStyle(el).opacity)), 1);
+    }
+    await page.locator('.home-preview-heading').evaluate(el => window.scrollTo({top:scrollY+el.getBoundingClientRect().top-110,behavior:'instant'}));
+    await page.clock.runFor(700);
+    await page.screenshot({path:`test-results/${viewport.width}-project-reading.png`});
     assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
     await page.reload({ waitUntil: "domcontentloaded" });
     await hydrateWithClock(page);
     await page.clock.runFor(900);
     await expect(intro).toBeHidden();
+    await page.goto(`${url}?view=universe`, {waitUntil:'domcontentloaded'});
+    await hydrateWithClock(page); await page.clock.runFor(1200);
+    const landed = await page.locator('.hero-stage').evaluate(hero => (scrollY-hero.offsetTop)/(hero.offsetHeight-innerHeight));
+    assert.ok(Math.abs(landed-.57)<.003, `Universe link must land inside plateau: ${landed}`);
+    await page.screenshot({path:`test-results/${viewport.width}-universe-settled.png`});
     await page.goto(`${url}?intro=1`, { waitUntil: "domcontentloaded" });
     await hydrateWithClock(page);
     await expect(intro).toBeVisible();

@@ -29,7 +29,7 @@ function galaxyDustTexture(arms: number, color: string, seed: number) {
     const bulge = Math.exp(-radius * radius * 54);
     const dustLane = 1 - Math.pow(.5 + .5 * Math.sin(phase * arms + .7 + clumps), 18) * .6;
     const edge = 1 - THREE.MathUtils.smoothstep(radius, .72, .97);
-    const light = (bulge * .84 + arm * (.19 + clumps * .12 + grain * .045) + .025) * dustLane * edge;
+    const light = (bulge * .94 + arm * (.33 + clumps * .16 + grain * .07) + .015) * dustLane * edge;
     data.set([
       THREE.MathUtils.lerp(outer[0], 255, bulge),
       THREE.MathUtils.lerp(outer[1], 228, bulge),
@@ -81,7 +81,7 @@ export function createGalaxySystem() {
     const geometry = new THREE.BufferGeometry();
     geometry.setAttribute("position", new THREE.BufferAttribute(positions, 3));
     geometry.setAttribute("color", new THREE.BufferAttribute(colors, 3));
-    const material = new THREE.PointsMaterial({ map: texture, vertexColors: true, size: .022, sizeAttenuation: true, transparent: true, opacity: .9, depthWrite: false, blending: THREE.AdditiveBlending });
+    const material = new THREE.PointsMaterial({ map: texture, vertexColors: true, size: .03, sizeAttenuation: true, transparent: true, opacity: .9, depthWrite: false, blending: THREE.AdditiveBlending });
     const points = new THREE.Points(geometry, material);
     disk.add(points);
     const dustMap = galaxyDustTexture(galaxy.arms, galaxy.color, 17 + index * 13);

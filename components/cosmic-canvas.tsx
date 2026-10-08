@@ -11,6 +11,7 @@ import { createProjectSculpture } from "./project-sculptures";
 import { resolveTechOwner, sampleTechOrbit, techOrbitRadius } from "./tech-orbit";
 import { orbitGeometry, orbitalSpeed, sampleOrbit } from "./orbital-path";
 import { createStellarAura } from "./stellar-core";
+import { UNIVERSE_CHAPTER as chapter } from "./universe-chapter";
 
 export type ProjectId = "catmoji" | "nalira" | "canox" | "hengs" | "polara";
 export type SatelliteId = "rental" | "pos" | "labq" | "yventures" | "soreva";
@@ -437,8 +438,8 @@ export function CosmicCanvas({ activeId, onSelect, onPrevious, onNext, motionOn,
       const sector = state.current.sector;
       const worlds = sectorWorlds[sector];
       const planets = sectorPlanets[sector];
-      const zoom = state.current.motionOn ? THREE.MathUtils.smoothstep(progress.get(), .24, .65) : 1;
-      const departure = state.current.motionOn ? THREE.MathUtils.smoothstep(progress.get(), .84, 1) : 0;
+      const zoom = state.current.motionOn ? THREE.MathUtils.smoothstep(progress.get(), chapter.entry, chapter.settled) : 1;
+      const departure = state.current.motionOn ? THREE.MathUtils.smoothstep(progress.get(), chapter.departure, 1) : 0;
       const targetBlend = state.current.view === "universe" ? 0 : 1;
       viewBlend = state.current.motionOn ? advanceGalaxyFlight(viewBlend, targetBlend === 1, dt) : targetBlend;
       sampleGalaxyFlight(viewBlend, flightPose);
@@ -473,7 +474,7 @@ export function CosmicCanvas({ activeId, onSelect, onPrevious, onNext, motionOn,
         material.opacity = (id === sector ? .07 + visibility * .88 : .85 * visibility) + emphasis * .12 * visibility;
         nucleus.material.opacity = (.72 + emphasis * .25) * visibility;
         cloud.material.opacity = (.025 + emphasis * .02) * visibility;
-        dustMaterial.opacity = (.4 + emphasis * .08) * visibility;
+        dustMaterial.opacity = (.65 + emphasis * .08) * visibility;
         nucleus.scale.setScalar(THREE.MathUtils.damp(nucleus.scale.x, highlighted ? .22 : .17, 8, dt));
         galaxyLabels.current[index]?.setAttribute("data-highlighted", String(highlighted));
       });

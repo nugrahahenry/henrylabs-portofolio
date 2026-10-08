@@ -63,7 +63,7 @@ function CertificateDialog({ record, onClose }: { record: Credential; onClose: (
           {status === "error" && <button type="button" onClick={retry} aria-label={isEn ? "Retry image" : "Coba muat lagi"} title={isEn ? "Retry image" : "Coba muat lagi"}><RotateCcw size={18} /></button>}
         </div>}
       </div>
-      <div className="credential-dialog-foot"><span>{record.kind} / {record.date === "Date not shown" && !isEn ? "Tanggal tidak tercantum" : record.date}</span><button type="button" disabled={status !== "ready"} onClick={() => setZoomed(value => !value)} aria-pressed={zoomed} aria-label={zoomLabel} title={zoomLabel}>{zoomed ? <ZoomOut size={18} /> : <ZoomIn size={18} />}</button>{record.source && <a href={record.source} target="_blank" rel="noreferrer">{isEn ? "Source PDF" : "PDF asli"}<ArrowUpRight size={16} /></a>}<a href={record.image} target="_blank" rel="noreferrer">{isEn ? "Original image" : "Gambar asli"}<ArrowUpRight size={16} /></a></div>
+      <div className="credential-dialog-foot"><span>{record.kind} / {record.date === "Date not shown" && !isEn ? "Tanggal tidak tercantum" : record.date}<br />{isEn ? "Watermarked portfolio copy" : "Salinan portofolio ber-watermark"}</span><button type="button" disabled={status !== "ready"} onClick={() => setZoomed(value => !value)} aria-pressed={zoomed} aria-label={zoomLabel} title={zoomLabel}>{zoomed ? <ZoomOut size={18} /> : <ZoomIn size={18} />}</button>{record.source && <a href={record.source} target="_blank" rel="noreferrer">{isEn ? "PDF preview" : "Preview PDF"}<ArrowUpRight size={16} /></a>}<a href={record.image} target="_blank" rel="noreferrer">{isEn ? "Full-size preview" : "Preview ukuran penuh"}<ArrowUpRight size={16} /></a></div>
     </div>
   </dialog>;
 }

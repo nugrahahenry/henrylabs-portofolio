@@ -1,0 +1,258 @@
+{
+  "version": 1,
+  "watermark": "Henry Nugraha \u2022 Portfolio Preview",
+  "files": {
+    "/assets/certificates/previews/codelab-techsprint-web-development.png": {
+      "sha256": "0803d092b2b5d3fa636c018ca0b25bdfa6a862dca29864ef34d679db212554aa",
+      "bytes": 904508
+    },
+    "/assets/certificates/previews/dicoding-oop.png": {
+      "sha256": "e204f33d16abaeb18bd83eb3191cc5fff45138ddfb361e7744391956cb092456",
+      "bytes": 328195
+    },
+    "/assets/certificates/previews/gdg-code-quality-security-antigravity-cli.png": {
+      "sha256": "37f2f6551976d85b4361862ba0ab6d80dce6e55bdbe69f7112464482ed5250d1",
+      "bytes": 748540
+    },
+    "/assets/certificates/previews/gdg-spec-driven-development-antigravity-cli.png": {
+      "sha256": "45ec2f9e30f5062818350c5d37530530bca87bd86ea1393642c01ebb9c95cf47",
+      "bytes": 749904
+    },
+    "/assets/certificates/previews/gemini-certified-educator.png": {
+      "sha256": "d02f48cbae70e090c7f41c835f4dae22c29ab3ff1c2849e81f314340bc54ce23",
+      "bytes": 157198
+    },
+    "/assets/certificates/previews/gemini-certified.png": {
+      "sha256": "adfef74c00d2d9e1281e85deec4e48dd32b4814d8089decb8fd99fa90a189ec6",
+      "bytes": 148679
+    },
+    "/assets/certificates/previews/google-adventure-app-building-appsheet.png": {
+      "sha256": "877a9f4fdd20f12e4e626cd06ae8f286c41db79c0298ef63e6daabf575e30bef",
+      "bytes": 105066
+    },
+    "/assets/certificates/previews/google-adventure-build-serverless-applications.png": {
+      "sha256": "caf00691199c7191e79e7c99b6c7db870b3296414d2b9aa831c0e2d2f2afc521",
+      "bytes": 128193
+    },
+    "/assets/certificates/previews/google-data-mesh-knowledge-catalog.png": {
+      "sha256": "661a0c24a5c34103ad8910c9d31e6a76e5a7838e272300b063c03ebb66bbf618",
+      "bytes": 95921
+    },
+    "/assets/certificates/previews/google-data-warehouse-bigquery.png": {
+      "sha256": "304eeffd8ceb585ab2911829c3e03852205058e0436431432002952dd6f88aae",
+      "bytes": 99594
+    },
+    "/assets/certificates/previews/google-for-education.png": {
+      "sha256": "02d0b5c59ef63e8950e9c8d796200d33d4ab5274a64c45cd44ee5df2c100dafe",
+      "bytes": 125845
+    },
+    "/assets/certificates/previews/google-safe-space-optimize-costs-kubernetes-engine.png": {
+      "sha256": "cf89d02d49122eace74531e59fbe1e37f11e35b0de7b58d2041ce0a5f5b29987",
+      "bytes": 103473
+    },
+    "/assets/certificates/previews/google-safe-space-security-command-center.png": {
+      "sha256": "4fc4a7d625c386b76ab508ff01e6e1792304331987312ac1817d6dd862b2df72",
+      "bytes": 100093
+    },
+    "/assets/certificates/previews/google-skills-arcade-base-camp.png": {
+      "sha256": "87606bf4b0a80af984405a27325c6e7b24a0b34b52b86d919e1d66eb69450f01",
+      "bytes": 1094521
+    },
+    "/assets/certificates/previews/google-skills-arcade-data-mesh-architect.png": {
+      "sha256": "1d8b7153ce6be5c360e70e89bed8e54e6f58138eb9fc782e7688cabb0c0a3b6d",
+      "bytes": 1083246
+    },
+    "/assets/certificates/previews/google-skills-arcade-low-code-development.png": {
+      "sha256": "1885faca5b3e2e97011cf553e1d759ae54061b148aeb201fa4b4c6dd1baf76b6",
+      "bytes": 1260207
+    },
+    "/assets/certificates/previews/google-skills-arcade-safe-space.png": {
+      "sha256": "0865e775262e50f28eed7acd1bfd84bf843ac52889d3f79324a80354dd29dd68",
+      "bytes": 994920
+    },
+    "/assets/certificates/previews/google-skills-arcade-voyage.png": {
+      "sha256": "9d31859401db7d5eeb85c7241b6c477acbd631972ca5242ccc3648b4e82fafae",
+      "bytes": 1222583
+    },
+    "/assets/certificates/previews/google-skills-build-first-agent.png": {
+      "sha256": "9bbd89925e90d350648b5c74404fc87c9bbfd4ad14439dd1160146c4b0b785e9",
+      "bytes": 128584
+    },
+    "/assets/certificates/previews/google-skills-create-gemini-enterprise-application.png": {
+      "sha256": "3cc9cf5082ee66689b984d54bf987efaff7dac70c2afd52eacb08fd36eb54976",
+      "bytes": 107943
+    },
+    "/assets/certificates/previews/google-skills-deploy-multi-agent-architectures.png": {
+      "sha256": "38359220a44800a97355cc4e97ebbc3c8cfb6de0e855976f424252c14972c4e6",
+      "bytes": 101570
+    },
+    "/assets/certificates/previews/google-skills-engineer-ai-agents-adk.png": {
+      "sha256": "5b66ccac06535ca78c9351f8548ff4eba5cf77da3401aef8c404c285579f98a1",
+      "bytes": 105269
+    },
+    "/assets/certificates/previews/google-skills-gemini-data-scientists-analysts.png": {
+      "sha256": "34dc8b8cfbbacf5091c191043f77681f26781244554baa9452cb18121c6ebe8b",
+      "bytes": 127751
+    },
+    "/assets/certificates/previews/google-skills-optimize-agent-behavior.png": {
+      "sha256": "06593f437d95c463286f0df0f7bd3dcf9c60e676d40b0c3b931d7e4105fd75e2",
+      "bytes": 110761
+    },
+    "/assets/certificates/previews/google-student-ambassador.png": {
+      "sha256": "7b5a4dcc51d1a7e066ceaacaa941fa242645f3d497a184fc4d963a48445faff8",
+      "bytes": 7186548
+    },
+    "/assets/certificates/previews/top-ten-rbca.jpeg": {
+      "sha256": "708496703eccb72ccff3a2d6c3a6745e05b7b62163a2b12b3a96bad924d63879",
+      "bytes": 240042
+    },
+    "/assets/certificates/source/codelab-techsprint-web-development.pdf": {
+      "sha256": "b59b217b5aeefadadaf6554c026f3824ed09166ad8189a701bbff7bc0a6a3faf",
+      "bytes": 1898060
+    },
+    "/assets/certificates/source/dicoding-oop.pdf": {
+      "sha256": "5083fa7a8ab43040910b75934b9dcfdbf1ec12fca4ee6fc0842f571c17fc1ecb",
+      "bytes": 2307443
+    },
+    "/assets/certificates/source/gdg-code-quality-security-antigravity-cli.pdf": {
+      "sha256": "4f0b3905c56c8d1c330dbe93c8a0b7e244970156e60490e16570c659a5ed1b16",
+      "bytes": 1254069
+    },
+    "/assets/certificates/source/gdg-spec-driven-development-antigravity-cli.pdf": {
+      "sha256": "c6745570b2d7b7a33ec252cadbc7c44cdc7c55de8620b8076646cdaecbaf3692",
+      "bytes": 1257466
+    },
+    "/assets/certificates/source/gemini-certified-educator.pdf": {
+      "sha256": "1b8f39e48b478aebb9d8ba41b2bba2aea269f5520969797495470ffeb4fe428f",
+      "bytes": 621685
+    },
+    "/assets/certificates/source/gemini-certified.pdf": {
+      "sha256": "def3a2586879f2adc3f1cd86a70d1730e08e35d2351acb6deefc50603ca88ef3",
+      "bytes": 611965
+    },
+    "/assets/certificates/source/google-for-education.pdf": {
+      "sha256": "11d92a649fe61eaba236cc2ae34861c45963626307f6b09859f6718db79c0e65",
+      "bytes": 597782
+    },
+    "/assets/certificates/source/google-student-ambassador.pdf": {
+      "sha256": "9a365e3d6828fd2cf38e201719a7daa619a1a0930ca666babda38a3ffc869ea2",
+      "bytes": 1722477
+    },
+    "/assets/certificates/thumbnails/codelab-techsprint-web-development.webp": {
+      "sha256": "9ef4dac588aeef73eff1b7ec4be7cf68704eda0a87a0d20cec646523fe29897a",
+      "bytes": 45238
+    },
+    "/assets/certificates/thumbnails/dicoding-oop.webp": {
+      "sha256": "b6a4320bfc312625298d25451d6c6e56f5fcc5549bdb04107438e0c620e4b4c1",
+      "bytes": 25734
+    },
+    "/assets/certificates/thumbnails/gdg-code-quality-security-antigravity-cli.webp": {
+      "sha256": "e8932337b401f7c8145fe6070066dbbefd5c1d78f7c4d86d1e5d4bf4494513d9",
+      "bytes": 36898
+    },
+    "/assets/certificates/thumbnails/gdg-spec-driven-development-antigravity-cli.webp": {
+      "sha256": "c75db3159e238a472cfae19d775634459eb32dd14195d4711035f2880367af10",
+      "bytes": 37198
+    },
+    "/assets/certificates/thumbnails/gemini-certified-educator.webp": {
+      "sha256": "6ab6c40f4825c6130e06a149ee1aa55f9bd5b3c11a5d82fd750ecefc1b514a42",
+      "bytes": 16870
+    },
+    "/assets/certificates/thumbnails/gemini-certified.webp": {
+      "sha256": "fefbc118fdc736f249180fc526e998131cd64e4e1888b0e4528aaa77f2d9dda6",
+      "bytes": 16128
+    },
+    "/assets/certificates/thumbnails/google-adventure-app-building-appsheet.webp": {
+      "sha256": "acf45be67c98f515c74541ffd894b0e3f5fd3feef8166b920016898f4f466f17",
+      "bytes": 17126
+    },
+    "/assets/certificates/thumbnails/google-adventure-build-serverless-applications.webp": {
+      "sha256": "d7431825bed958b98a5859f60b079a83151f28a9eafda61ee55ddb6dc36b2cfe",
+      "bytes": 17646
+    },
+    "/assets/certificates/thumbnails/google-data-mesh-knowledge-catalog.webp": {
+      "sha256": "822f316b89dfbdd2529d9d234035fc41753034268efed8e57888a722b4673803",
+      "bytes": 17060
+    },
+    "/assets/certificates/thumbnails/google-data-warehouse-bigquery.webp": {
+      "sha256": "19f621cc25728dfa8effd508138496e7ea3d37379b42e9f8920ad497a10b95a5",
+      "bytes": 16448
+    },
+    "/assets/certificates/thumbnails/google-for-education.webp": {
+      "sha256": "9e44f77fbd641e605fc231f60670a4e7f1a7d260e381ea61d2ce4568f94b11d8",
+      "bytes": 11880
+    },
+    "/assets/certificates/thumbnails/google-safe-space-optimize-costs-kubernetes-engine.webp": {
+      "sha256": "5c3ad4ce6afd30814f4e9c24f1dfc9abd54df0eb12148d1763013d9caa3c5fa1",
+      "bytes": 17852
+    },
+    "/assets/certificates/thumbnails/google-safe-space-security-command-center.webp": {
+      "sha256": "d56efb7d3e2bc882b3e8dd645ff1d49ab71fb9e09f5dcb6d8bf5698d1a571b09",
+      "bytes": 18142
+    },
+    "/assets/certificates/thumbnails/google-skills-arcade-base-camp.webp": {
+      "sha256": "a82307c1b09fd38bd69da3af9912dfa6409f38022f8dbafbd0e2373774c30f91",
+      "bytes": 59842
+    },
+    "/assets/certificates/thumbnails/google-skills-arcade-data-mesh-architect.webp": {
+      "sha256": "1a4e46d95f273f6bff9756e129a564db9f9b4e90466139b0611553df825ddcf7",
+      "bytes": 70642
+    },
+    "/assets/certificates/thumbnails/google-skills-arcade-low-code-development.webp": {
+      "sha256": "ef712e6c29707815bbb245c9bd9cb10b6bfd0762bd5855d8e4290d69f0222b53",
+      "bytes": 57632
+    },
+    "/assets/certificates/thumbnails/google-skills-arcade-safe-space.webp": {
+      "sha256": "674a5d273e33e8b7b3074693c1de910338eb89e7e6bcc92d19fd80aed4a319a7",
+      "bytes": 64606
+    },
+    "/assets/certificates/thumbnails/google-skills-arcade-voyage.webp": {
+      "sha256": "1ee48ffac302b99cc728e549a2404ba360ea634716fdf2eebbbf9aef78b299c2",
+      "bytes": 57284
+    },
+    "/assets/certificates/thumbnails/google-skills-build-first-agent.webp": {
+      "sha256": "5ea0ace34156ccb5253a4ad0a32a50e02f6da0fb5f2ae41276a85f22193afb30",
+      "bytes": 17138
+    },
+    "/assets/certificates/thumbnails/google-skills-create-gemini-enterprise-application.webp": {
+      "sha256": "5393f4056fd2d44b309c67996c0ad598f0a40fc7ad09a5f5bd33f091e641340c",
+      "bytes": 16984
+    },
+    "/assets/certificates/thumbnails/google-skills-deploy-multi-agent-architectures.webp": {
+      "sha256": "8b6318e3c348489aa48a54d5f3d994211c95bc1970264f44b73d09788fe32f0c",
+      "bytes": 17334
+    },
+    "/assets/certificates/thumbnails/google-skills-engineer-ai-agents-adk.webp": {
+      "sha256": "bf308ae3093df1fc32f2bcd27ada56c02f69c07b89dd3baebcc399a6cb328528",
+      "bytes": 17842
+    },
+    "/assets/certificates/thumbnails/google-skills-gemini-data-scientists-analysts.webp": {
+      "sha256": "247ee3d156060ec4589c845422d4f38d42e3b43c5f6182d96acb1596efd34e0d",
+      "bytes": 16838
+    },
+    "/assets/certificates/thumbnails/google-skills-optimize-agent-behavior.webp": {
+      "sha256": "0fbc3fe06dbd9ecb9155e0c17f8bb4cc18df4ae8f8a0eab71ffa1a9786b8b10a",
+      "bytes": 14516
+    },
+    "/assets/certificates/thumbnails/google-student-ambassador.webp": {
+      "sha256": "5936d0fd862f1686577b90a1dec4d4e94ff1df4413829e89c40e1d9d9b2ebfda",
+      "bytes": 45482
+    },
+    "/assets/certificates/thumbnails/top-ten-rbca.webp": {
+      "sha256": "ae5e7bf4eab1008d62fe5a0c387283964fd8e0a3d31e40f3cb05a172e7feec82",
+      "bytes": 35304
+    },
+    "/assets/readme/dicoding-oop.webp": {
+      "sha256": "7b638cb5f8ba2c6540768ad1e7b3c2a715b0405fc0a07716937fa3c3a93b0c56",
+      "bytes": 22364
+    },
+    "/assets/readme/gemini-certified-educator.webp": {
+      "sha256": "4c6787a8cf4478860631434483e84fc3e55155065cf700850c1e8f6b81b1aaea",
+      "bytes": 14740
+    },
+    "/assets/readme/google-student-ambassador.webp": {
+      "sha256": "49f5ce60c26edc93b5becafde758332f6936b0b4ed0a80aeb1c954e7a7dad3db",
+      "bytes": 81350
+    }
+  }
+}

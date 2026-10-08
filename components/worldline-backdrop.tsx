@@ -452,21 +452,21 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, contactProgres
       const readingTarget = readingChapter ? 1 : 0;
       readingBlend = state.current.motionOn ? THREE.MathUtils.damp(readingBlend, readingTarget, 5, dt) : readingTarget;
       // Move the same system to the reading periphery instead of hiding its planets.
-      const solarScale = (solarPortrait ? .8 : 1) * THREE.MathUtils.lerp(1, solarPortrait ? .58 : .82, readingBlend);
+      const solarScale = (solarPortrait ? .8 : 1) * THREE.MathUtils.lerp(1, solarPortrait ? .7 : .9, readingBlend);
       solarOrigin.set(
-        THREE.MathUtils.lerp(solarPortrait ? .72 : 2.8, solarPortrait ? 1.12 : 3.8, readingBlend),
-        THREE.MathUtils.lerp((solarPortrait ? 2.5 : 2.7) - scroll * 2.2, 2.5 - scroll * .25, readingBlend),
+        THREE.MathUtils.lerp(solarPortrait ? .72 : 2.8, solarPortrait ? .84 : 3.05, readingBlend),
+        THREE.MathUtils.lerp((solarPortrait ? 2.5 : 2.7) - scroll * 2.2, 2.15 - scroll * .25, readingBlend),
         -3.2,
       );
-      const solarStrength = state.current.mapActive ? .28 : THREE.MathUtils.lerp(1, .72, readingBlend);
+      const solarStrength = state.current.mapActive ? .38 : THREE.MathUtils.lerp(1, .76, readingBlend);
       solarVisibility = state.current.motionOn ? THREE.MathUtils.damp(solarVisibility, solarStrength, 5, dt) : solarStrength;
       planetSystem.visible = solarVisibility > .005;
       planetSystem.rotation.y = Math.sin(drift * .016) * .08 + scroll * .22;
       planetSystem.rotation.x = Math.sin(scroll * Math.PI * 1.4) * .12;
       planetSystem.rotation.z = Math.sin(drift * .012) * .018;
       stellarCore.material.uniforms.uTime.value = drift;
-      stellarCore.group.scale.setScalar(THREE.MathUtils.lerp(1, .6, readingBlend));
-      const coreStrength = solarVisibility * THREE.MathUtils.lerp(1, .24, readingBlend);
+      stellarCore.group.scale.setScalar(THREE.MathUtils.lerp(1, .78, readingBlend));
+      const coreStrength = solarVisibility * THREE.MathUtils.lerp(1, .52, readingBlend);
       stellarCore.material.uniforms.uOpacity.value = coreStrength;
       stellarCore.aura.material.uniforms.uTime.value = drift;
       stellarCore.aura.material.uniforms.uOpacity.value = .55 * coreStrength;
@@ -537,6 +537,7 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, contactProgres
       const restoring = state.current.motionOn && closing.presence < 1 && birth.ready && holeOpacity > .001;
       const streamVisible = birth.ready && state.current.motionOn && holeOpacity > .001 && (gravityActive || returning || closing.presence < 1);
       deepSpace.material.uniforms.uTime.value = drift;
+      deepSpace.material.uniforms.uPresence.value = THREE.MathUtils.damp(deepSpace.material.uniforms.uPresence.value, state.current.mapActive ? .48 : 1, 4, dt);
       deepSpace.material.uniforms.uPull.value = pull;
       deepSpace.material.uniforms.uTarget.value.copy(gravityTarget);
       [starMaterial, galaxyMaterial, streakMaterial, brightMaterial].forEach((material) => {
@@ -651,7 +652,10 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, contactProgres
         const baseSize = Math.min(model.kind === "ufo" ? 76 : 90, Math.min(width, height) * widthRatio);
         const peakPerspective = (camera.position.z + 2.8) / (camera.position.z + .7);
         const availableHeight = readingLane ? bandBottom - bandTop - 8 : readingEdge === null ? Infinity : Math.max(0, readingEdge - headerHeight - 30);
-        const size = Math.min(baseSize, availableHeight * model.span / (model.radius * 2 * 1.12 * peakPerspective));
+        // Reserve separation for both silhouettes even at their closest depth and in a narrow heading gap.
+        const pairSpacing = flightDelay / 18 * (portalX + 1.15) * width * .5;
+        const pairRadius = Math.max(0, (pairSpacing - .045 * height * .5) * .5);
+        const size = Math.min(baseSize, Math.min(availableHeight * .5, pairRadius) * model.span / (model.radius * 1.12 * peakPerspective));
         const perspective = (camera.position.z + 2.8) / (camera.position.z - pose.depth);
         const projectedSize = size * perspective;
         const radius = projectedSize * model.radius / model.span / height * 2 * 1.12 * pose.scale;

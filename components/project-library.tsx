@@ -26,7 +26,7 @@ export function ProjectLibrary() {
   if (category !== "all") returnQuery.set("category", category);
   if (search) returnQuery.set("q", search);
   return <main className="library-page" id="main-content">
-    <div className="library-heading"><h1>{isEn ? "Projects." : "Proyek."}</h1><p>{isEn ? "Independent products, university systems, and work with real stakes." : "Produk mandiri, sistem kuliah, dan pekerjaan dengan konsekuensi nyata."}</p><SiteLink className="library-text-link" href="/">{isEn ? "Explore the universe" : "Jelajahi semesta"}<ArrowUpRight size={18} /></SiteLink></div>
+    <div className="library-heading"><h1>{isEn ? "Projects." : "Proyek."}</h1><p>{isEn ? "Independent products, university systems, and work with real stakes." : "Produk mandiri, sistem kuliah, dan pekerjaan dengan konsekuensi nyata."}</p><SiteLink className="library-text-link" href="/?view=universe">{isEn ? "Explore the universe" : "Jelajahi semesta"}<ArrowUpRight size={18} /></SiteLink></div>
     <div className="library-controls">
       <div className="category-filter" role="group" aria-label={isEn ? "Project category" : "Kategori proyek"}>{Object.entries(categories).map(([id, label]) => <button type="button" key={id} aria-pressed={category === id} onClick={() => updateQuery({ category: id === "all" ? null : id })}>{label[language]}</button>)}</div>
       <label className="library-search"><Search size={18} /><span className="sr-only">{isEn ? "Search projects" : "Cari proyek"}</span><input type="search" value={search} placeholder={isEn ? "Name, stack, or idea" : "Nama, stack, atau ide"} onChange={event => updateQuery({ q: event.target.value || null }, true)} /></label>

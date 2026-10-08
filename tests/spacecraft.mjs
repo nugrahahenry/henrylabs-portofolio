@@ -123,7 +123,10 @@ try {
       assert.ok(repeatLead && repeatScout && completed, `a second UFO/scout/portal sequence must complete without reloading: ${JSON.stringify({repeatLead, repeatScout, completed, state: await field.evaluate(h => ({age:h.dataset.flightTime, cycle:h.dataset.flightCycle, ufoExit:h.dataset.ufoExitReason, scoutExit:h.dataset.scoutExitReason}))})}`);
       console.log(`thirty-second rest and second encounter passed at ${viewport.width}px`);
     }
-    assert.equal(await page.locator("canvas").count(), 2);
+    const makerCanvas = await page.locator(".maker-orbit-field canvas").count();
+    assert.ok(makerCanvas <= 1, "only the visible technology chapter may add one renderer");
+    assert.equal(await page.locator("canvas").count(), 2 + makerCanvas);
+    if (makerCanvas) await expect(page.locator(".cosmic-canvas")).toHaveAttribute("data-intersecting", "false");
     await page.locator(".hero-stage").evaluate((hero) => window.scrollTo({ top: scrollY + hero.getBoundingClientRect().top + (hero.offsetHeight - innerHeight) * .7, behavior: "instant" }));
     await page.clock.runFor(500);
     let opacity = Number(await field.getAttribute("data-ufo-opacity"));

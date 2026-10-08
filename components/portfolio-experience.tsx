@@ -31,6 +31,7 @@ import { findWorld } from "@/content/catalog";
 import { SiteLink, useSitePreferences, useQuery, updateQuery } from "./site-preferences";
 import { MakerChapter } from "./maker-chapter";
 import { StarGodMark } from "./stargod-mark";
+import { UNIVERSE_CHAPTER as chapter, universeLanding, chapterBlend } from "./universe-chapter";
 
 const academicProjects = academicData.map((record, index) => ({ ...record, icon: [CarFront, ShoppingCart, FlaskConical][index] }));
 const clientProjects = clientData.map((record, index) => ({ ...record, icon: [MessageCircle, Instagram][index] }));
@@ -196,6 +197,7 @@ export function PortfolioExperience() {
   const { language, motionOn } = useSitePreferences();
   const query = useQuery();
   const returnWorld = query.get("world");
+  const returnUniverse = query.get("view") === "universe";
   const [activeId, setActiveId] = useState<ProjectId>("catmoji");
   const [activeSector, setActiveSector] = useState<Sector>("main");
   const [mapView, setMapView] = useState<"universe" | "orbit">("universe");
@@ -216,14 +218,16 @@ export function PortfolioExperience() {
   const cursorX = useSpring(pointerX, { stiffness: 240, damping: 28, mass: 0.28 });
   const cursorY = useSpring(pointerY, { stiffness: 240, damping: 28, mass: 0.28 });
   const { scrollYProgress } = useScroll({ target: heroRef, offset: ["start start", "end end"] });
-  const heroCopyY = useTransform(scrollYProgress, [0, 0.28], [0, -58]);
-  const fieldScale = useTransform(scrollYProgress, [.18, .42], [.8, 1]);
-  const fieldY = useTransform(scrollYProgress, [.18, .42], [52, 0]);
-  const mapEntryOpacity = useTransform(scrollYProgress, [.18, .32], [0, 1]);
-  const mapExitOpacity = useTransform(scrollYProgress, [.86, .98], [1, 0]);
-  const mapExitY = useTransform(scrollYProgress, [.86, 1], [0, -44]);
+  // Function transforms keep sticky DOM and Three.js on the same JS scroll clock.
+  // Native ViewTimeline acceleration otherwise interpolates outside this window.
+  const heroCopyY = useTransform(scrollYProgress, p => -58 * chapterBlend(p, 0, .28));
+  const fieldScale = useTransform(scrollYProgress, p => .88 + .12 * chapterBlend(p, chapter.entry, chapter.settled));
+  const fieldY = useTransform(scrollYProgress, p => 40 * (1 - chapterBlend(p, chapter.entry, chapter.settled)));
+  const mapEntryOpacity = useTransform(scrollYProgress, p => chapterBlend(p, chapter.entry, chapter.visible));
+  const mapExitOpacity = useTransform(scrollYProgress, p => 1 - chapterBlend(p, chapter.departure, chapter.hidden));
+  const mapExitY = useTransform(scrollYProgress, p => -44 * chapterBlend(p, chapter.departure, 1));
   useMotionValueEvent(scrollYProgress, "change", (value) => {
-    const phase = value < .18 ? "intro" : value < .32 ? "transition" : value < .92 ? "worlds" : "departing";
+    const phase = value < chapter.entry ? "intro" : value < chapter.visible ? "transition" : value < chapter.departure ? "worlds" : "departing";
     setHeroPhase((previous) => previous === phase ? previous : phase);
   });
   useMotionValueEvent(worldlineProgress, "change", (value) => {
@@ -263,7 +267,7 @@ export function PortfolioExperience() {
     try { introSeen = window.sessionStorage.getItem("henrylabs-intro-seen") === "1"; } catch { /* The introduction also works without storage. */ }
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const replay = new URLSearchParams(window.location.search).get("intro") === "1";
-    const directEntry = Boolean(window.location.hash || new URLSearchParams(window.location.search).get("world"));
+    const directEntry = Boolean(window.location.hash || new URLSearchParams(window.location.search).get("world") || new URLSearchParams(window.location.search).get("view") === "universe");
     if ((introSeen || directEntry) && !replay || reduced) {
       setIntroDone(true);
       return;
@@ -271,7 +275,7 @@ export function PortfolioExperience() {
     if (window.scrollY > 0) window.scrollTo({ top: 0, behavior: "auto" });
     const timer = window.setTimeout(() => {
       setIntroDone(true);
-    }, 1550);
+    }, 1250);
     return () => window.clearTimeout(timer);
   }, []);
 
@@ -282,18 +286,22 @@ export function PortfolioExperience() {
 
   useEffect(() => {
     const world = returnWorld ? findWorld(returnWorld) : undefined;
-    if (!world || !introDone) return;
-    setActiveSector(world.category === "henrylabs" ? "main" : world.category);
-    if (world.category === "henrylabs") setActiveId(world.id as ProjectId);
-    else setActiveSatellites(previous => ({ ...previous, [world.category]: world.id }));
-    setMapView("orbit");
+    if ((!world && !returnUniverse) || !introDone) return;
+    if (world) {
+      setActiveSector(world.category === "henrylabs" ? "main" : world.category);
+      if (world.category === "henrylabs") setActiveId(world.id as ProjectId);
+      else setActiveSatellites(previous => ({ ...previous, [world.category]: world.id }));
+    }
+    setMapView(world ? "orbit" : "universe");
     // Wait for the restored route's layout before landing inside the sticky map.
     const frame = requestAnimationFrame(() => {
       const hero = heroRef.current;
-      if (hero) window.scrollTo({ top: hero.offsetTop + Math.max(0, hero.offsetHeight - innerHeight) * .7, behavior: "instant" });
+      if (!hero) return;
+      const top = motionOn ? universeLanding(hero.offsetTop, hero.offsetHeight, innerHeight) : hero.offsetTop + (hero.querySelector<HTMLElement>(".cosmic-frame-wrap")?.offsetTop ?? 0) - 84;
+      window.scrollTo({ top, behavior: "instant" });
     });
     return () => cancelAnimationFrame(frame);
-  }, [returnWorld, introDone]);
+  }, [returnWorld, returnUniverse, introDone, motionOn]);
 
   useEffect(() => {
     if (!motionOn) return;
@@ -344,13 +352,16 @@ export function PortfolioExperience() {
   const returnToUniverse = () => {
     setShowProjectShowcase(false);
     setMapView("universe");
+    const hero = heroRef.current;
+    if (hero && motionOn) window.scrollTo({ top: universeLanding(hero.offsetTop, hero.offsetHeight, innerHeight), behavior: "smooth" });
   };
   const openGalaxyMap = () => {
     const hero = heroRef.current;
     if (!hero) return;
     setShowProjectShowcase(false);
     setMapView("universe");
-    window.scrollTo({ top: scrollY + hero.getBoundingClientRect().top + Math.max(0, hero.offsetHeight - innerHeight) * .7, behavior: motionOn ? "smooth" : "instant" });
+    const top = motionOn ? universeLanding(hero.offsetTop, hero.offsetHeight, innerHeight) : hero.offsetTop + (hero.querySelector<HTMLElement>(".cosmic-frame-wrap")?.offsetTop ?? 0) - 84;
+    window.scrollTo({ top, behavior: motionOn ? "smooth" : "instant" });
   };
 
   return (

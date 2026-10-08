@@ -33,6 +33,7 @@ function ReadingField() {
       const camera = new THREE.PerspectiveCamera(44, 1, .1, 100);
       camera.position.set(.2, 0, 6.4);
       const sky = createDeepSpace();
+      sky.material.uniforms.uPresence.value = .66;
       scene.add(sky.volume);
       const points = new Float32Array(800 * 3), colors = new Float32Array(800 * 3);
       for (let i = 0; i < 800; i++) {

@@ -202,7 +202,7 @@ try {
     await page.getByRole("button", { name: "Toggle language" }).click();
     await expect(page.getByRole("button", { name: "Jelajahi Kuliah galaksi" })).toBeVisible();
     const cameraDistance = Number(await scene.getAttribute("data-camera-distance"));
-    await page.locator(".hero-stage").evaluate((hero) => window.scrollTo({ top: scrollY + hero.getBoundingClientRect().top + (hero.offsetHeight - innerHeight) * .94, behavior: "instant" }));
+    await page.locator(".hero-stage").evaluate((hero) => window.scrollTo({ top: scrollY + hero.getBoundingClientRect().top + (hero.offsetHeight - innerHeight) * .97, behavior: "instant" }));
     await expect(page.locator(".hero-stage")).toHaveAttribute("data-phase", "departing");
     await expect.poll(async () => Number(await scene.getAttribute("data-departure"))).toBeGreaterThan(.65);
     assert.ok(Number(await scene.getAttribute("data-camera-distance")) > cameraDistance + 10, "the map must recede in real camera depth");

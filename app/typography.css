@@ -1,0 +1,50 @@
+/* Shared type roles for the exploration and reading surfaces. */
+:root { --type-hero: 96px; --type-title: 56px; --type-section: 44px; --type-body: 17px; --type-label: 12px; --text-reading: #cbd7de; }
+html { scrollbar-color: #566a78 #0a1018; }
+body { caret-color: var(--cyan); }
+::selection { background: #6ee7f4; color: #07151b; }
+html :is(h1, h2, h3) { text-wrap: balance; letter-spacing: 0; }
+html :is(.site-header, .site-footer, .hero-copy, .frame-topline, .frame-bottomline, .galaxy-label, .project-showcase, .contact-content) * { letter-spacing: 0; }
+html .hero-copy h1 { max-width: 12ch; font-size: var(--type-hero); line-height: 1; font-weight: 600; }
+html .hero-body { font-size: 19px; line-height: 1.65; color: var(--text-reading); max-width: 52ch; margin-top: 28px; }
+html .hero-note { font: 14px/1.6 var(--display); color: #bdccd3; justify-content: center; text-align: center; }
+html :is(.hero-kicker, .section-kicker) { font-size: var(--type-label); line-height: 1.6; }
+html :is(.frame-topline, .frame-bottomline) { font-size: 11px; line-height: 1.5; }
+html .galaxy-label small { font-size: 11px; }
+html .button { font-size: 15px; min-height: 48px; }
+html .hero-actions { gap: 12px; }
+html .contact-content h2 { font-size: 68px; line-height: 1.08; max-width: 12ch; }
+html .contact-copy > p { font-size: var(--type-body); line-height: 1.7; color: var(--text-reading); }
+html :is(.library-heading h1, .detail-identity h1) { font-size: var(--type-title); font-weight: 600; line-height: 1.08; }
+html .home-preview-heading h2 { font-size: var(--type-section); line-height: 1.12; }
+html :is(.record-status, .record-ownership, .record-category, .detail-art figcaption, .credential-filters > label:not(.library-search)) { font-size: var(--type-label); line-height: 1.6; }
+html .project-record-system > div > span { font-size: 13px; line-height: 1.5; }
+html .project-record p { font-size: 16px; line-height: 1.7; }
+html .library-page p { text-wrap: pretty; }
+@media (max-width: 1100px) {
+  :root { --type-hero: 76px; --type-title: 48px; }
+  html .contact-content h2 { font-size: 56px; }
+}
+@media (max-width: 760px) {
+  :root { --type-hero: 60px; --type-title: 40px; --type-section: 36px; }
+  html .hero-body { font-size: 17px; max-width: 40ch; }
+  html .contact-content h2 { font-size: 46px; }
+}
+@media (max-width: 480px) {
+  :root { --type-hero: 46px; --type-title: 36px; --type-section: 32px; }
+  html .hero-copy h1 { max-width: 11ch; }
+  html .hero-body { font-size: 16px; line-height: 1.6; margin-top: 22px; }
+  html .hero-note { font-size: 13px; max-width: 30ch; }
+  html .hero-kicker { max-width: 30ch; justify-content: center; text-align: center; font-size: 11px; }
+  html .contact-content h2 { font-size: 42px; }
+  html .frame-topline, html .frame-bottomline { font-size: 10px; }
+}
+@media (max-height: 560px) and (orientation: landscape) {
+  :root { --type-hero: 44px; }
+  html .hero-copy { padding: 84px 24px 16px; }
+  html .hero-copy h1 { max-width: 24ch; }
+  html .hero-kicker { margin-bottom: 10px; }
+  html .hero-body { font-size: 16px; margin-top: 12px; max-width: 64ch; }
+  html .hero-actions { margin-top: 14px; }
+  html .hero-note { margin-top: 12px; font-size: 12px; }
+}
