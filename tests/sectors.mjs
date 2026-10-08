@@ -21,7 +21,9 @@ async function chooseGalaxy(page, name) {
     await page.getByRole("button", { name: "Back to universe" }).click();
     await expect(page.locator(".cosmic-canvas")).toHaveAttribute("data-flight", "0.000");
   }
-  await page.getByRole("button", { name: `Explore ${name} galaxy`, exact: true }).click();
+  const galaxy = page.getByRole("button", { name: `Explore ${name} galaxy`, exact: true });
+  await galaxy.focus();
+  await galaxy.click();
   await expect(page.locator(".cosmic-canvas")).toHaveAttribute("data-flight", "1.000");
 }
 
@@ -69,7 +71,7 @@ try {
     await chooseGalaxy(page, "University");
     const scene = page.locator(".cosmic-canvas");
     await expect(scene).toHaveAttribute("data-world-count", "3");
-    await expect(scene).toHaveAttribute("data-tech-count", "0");
+    await expect(scene).toHaveAttribute("data-tech-count", "8");
     await expect(page.locator(".planet-label")).toHaveCount(3);
     await expect(page.locator(".project-showcase")).toHaveCount(0);
     await paintedScene(page);
@@ -80,7 +82,8 @@ try {
     await page.getByRole("button", { name: "Open active world" }).click();
     await expect(page.locator(".satellite-readout")).toContainText("POS Z Shoes");
     await expect(page.locator('.satellite-readout a[href="https://github.com/nugrahahenry/POS_APBDS"]')).toHaveCount(1);
-    await page.locator(".satellite-readout").getByRole("button", { name: "Next project", exact: true }).click();
+    await expect(page.locator(".satellite-readout").getByRole("button", { name: /^(Previous|Next) project$/ })).toHaveCount(0);
+    await page.locator(".satellite-readout").getByRole("button", { name: "Focus LabQ", exact: true }).click();
     await expect(page.locator(".satellite-readout")).toContainText("LabQ");
     await expect.poll(() => page.locator(".satellite-readout").evaluate((panel) => Number(getComputedStyle(panel).opacity))).toBe(1);
     if (viewport.height < 620) {
@@ -100,6 +103,7 @@ try {
     await page.getByRole("button", { name: "Close active world" }).click();
     await chooseGalaxy(page, "Client Work");
     await expect(scene).toHaveAttribute("data-world-count", "2");
+    await expect(scene).toHaveAttribute("data-tech-count", "5");
     await paintedScene(page);
     // A real pointer click on the projected label must select without reopening the panel.
     const soreva = page.locator(".planet-label").filter({ hasText: "Soreva" });
@@ -119,7 +123,7 @@ try {
     await page.getByRole("button", { name: "Close active world" }).click();
     await chooseGalaxy(page, "HenryLabs");
     await expect(scene).toHaveAttribute("data-world-count", "5");
-    await expect(scene).toHaveAttribute("data-tech-count", "21");
+    await expect(scene).toHaveAttribute("data-tech-count", "15");
     await expect(scene).toHaveAttribute("data-active-world", "catmoji");
     await paintedScene(page);
     await expect(page.locator(".project-showcase")).toHaveCount(0);

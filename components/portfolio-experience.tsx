@@ -194,8 +194,6 @@ const projects: Array<{
 const copy = {
   en: {
     nav: { work: "Work", stack: "Stack", proof: "Proof", contact: "Contact" },
-    loading: ["Calibrating the field", "Waking project identities", "Mapping useful worlds", "Almost ready"],
-    loader: { eyebrow: "HenryLabs / useful worlds", title: "I build things", accent: "I actually see.", body: "Loading the worlds, tools, and proof behind the work.", phases: ["Identity", "Project field", "Proof archive"], telemetry: ["Identity signal", "Project field", "Proof archive", "Field ready"] },
     hero: {
       title: "I build things I actually see.",
       body: "Product-minded developer turning everyday friction into useful systems, playful interfaces, and honest experiments.",
@@ -204,7 +202,6 @@ const copy = {
       note: "Open to thoughtful freelance work and the right team.",
     },
     field: { label: "A living map of HenryLabs", hint: "Drag X/Y · zoom · select a world", inspect: "Inspect dossier", open: "Open project" },
-    transition: { eyebrow: "02 / Project field", title: "The signal is live.", body: "Scroll into the systems behind the marks." },
     method: {
       kicker: "The Henry method",
       title: "Notice the friction.\nShape the useful.",
@@ -222,8 +219,6 @@ const copy = {
   },
   id: {
     nav: { work: "Karya", stack: "Stack", proof: "Bukti", contact: "Kontak" },
-    loading: ["Mengkalibrasi ruang", "Membangunkan identitas project", "Memetakan useful worlds", "Hampir siap"],
-    loader: { eyebrow: "HenryLabs / useful worlds", title: "Aku membangun hal", accent: "yang benar-benar kulihat.", body: "Memuat dunia, tools, dan bukti di balik karya ini.", phases: ["Identitas", "Project field", "Arsip bukti"], telemetry: ["Sinyal identitas", "Project field", "Arsip bukti", "Field siap"] },
     hero: {
       title: "Aku membangun hal yang benar-benar kulihat.",
       body: "Developer product-minded yang mengubah rasa penasaran sehari-hari menjadi sistem berguna, interface playful, dan eksperimen jujur.",
@@ -232,7 +227,6 @@ const copy = {
       note: "Terbuka untuk project freelance dan tim yang tepat.",
     },
     field: { label: "Peta hidup HenryLabs", hint: "Geser X/Y · zoom · pilih dunia", inspect: "Buka dossier", open: "Buka project" },
-    transition: { eyebrow: "02 / Project field", title: "Sinyalnya hidup.", body: "Masuk lebih dalam ke sistem di balik setiap mark." },
     method: {
       kicker: "Cara kerja Henry",
       title: "Lihat friksinya.\nBentuk yang berguna.",
@@ -368,13 +362,12 @@ function ProjectSignature({ project, language, compact = false }: { project: (ty
   </div>;
 }
 
-function SatelliteReadout({ record, records, language, motionOn, onSelect, onCycle, onClose }: {
+function SatelliteReadout({ record, records, language, motionOn, onSelect, onClose }: {
   record: SatelliteRecord;
   records: readonly SatelliteRecord[];
   language: Language;
   motionOn: boolean;
   onSelect: (id: SatelliteId) => void;
-  onCycle: (direction: -1 | 1) => void;
   onClose: () => void;
 }) {
   const Icon = record.icon;
@@ -386,8 +379,6 @@ function SatelliteReadout({ record, records, language, motionOn, onSelect, onCyc
     exit={motionOn ? { opacity: 0, x: -12 } : undefined} transition={{ duration: motionOn ? .35 : 0 }}>
     <div className="project-showcase-topline"><span>{record.sector === "university" ? "UNIVERSITY" : "CLIENT WORK"}</span>
       <div className="project-showcase-nav">
-        <button type="button" aria-label="Previous project" onClick={() => onCycle(-1)}><ChevronLeft size={15} /></button>
-        <button type="button" aria-label="Next project" onClick={() => onCycle(1)}><ChevronRight size={15} /></button>
         <button type="button" aria-label="Close active world" onClick={onClose}><X size={15} /></button>
       </div>
     </div>
@@ -431,7 +422,6 @@ export function PortfolioExperience() {
   const reducedMotion = useReducedMotion();
   const reducedMotionActive = motionReady && Boolean(reducedMotion);
   const motionOn = motionReady && motionPreference && !reducedMotionActive;
-  const [loadingStep, setLoadingStep] = useState(0);
   const [heroPhase, setHeroPhase] = useState("intro");
   const [showProjectShowcase, setShowProjectShowcase] = useState(false);
   const heroRef = useRef<HTMLElement>(null);
@@ -459,15 +449,15 @@ export function PortfolioExperience() {
   const cursorY = useSpring(pointerY, { stiffness: 240, damping: 28, mass: 0.28 });
   const { scrollYProgress } = useScroll({ target: heroRef, offset: ["start start", "end end"] });
   const heroCopyY = useTransform(scrollYProgress, [0, 0.28], [0, -58]);
-  const fieldScale = useTransform(scrollYProgress, [0.32, 0.65], [0.8, 1]);
-  const fieldY = useTransform(scrollYProgress, [0.32, 0.65], [52, 0]);
+  const fieldScale = useTransform(scrollYProgress, [.18, .42], [.8, 1]);
+  const fieldY = useTransform(scrollYProgress, [.18, .42], [52, 0]);
   const mapExitOpacity = useTransform(scrollYProgress, [.86, .98], [1, 0]);
   const mapExitY = useTransform(scrollYProgress, [.86, 1], [0, -44]);
   const stackStageRotate = useTransform(scrollYProgress, [0, 1], [-3, 3]);
   const stackStageY = useTransform(scrollYProgress, [0, 1], [28, -22]);
   const stackStageScale = useTransform(scrollYProgress, [0, .45, 1], [.94, 1, .96]);
   useMotionValueEvent(scrollYProgress, "change", (value) => {
-    const phase = value < 0.28 ? "intro" : value < 0.5 ? "transition" : value < .92 ? "worlds" : "departing";
+    const phase = value < .18 ? "intro" : value < .32 ? "transition" : value < .92 ? "worlds" : "departing";
     setHeroPhase((previous) => previous === phase ? previous : phase);
   });
   useMotionValueEvent(methodProgress, "change", (value) => {
@@ -496,24 +486,24 @@ export function PortfolioExperience() {
   }, []);
 
   useEffect(() => {
-    const introSeen = window.sessionStorage.getItem("henrylabs-intro-seen") === "1";
+    let introSeen = false;
+    try { introSeen = window.sessionStorage.getItem("henrylabs-intro-seen") === "1"; } catch { /* The introduction also works without storage. */ }
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    if (introSeen || reduced) {
-      setLoadingStep(3);
+    const replay = new URLSearchParams(window.location.search).get("intro") === "1";
+    if (introSeen && !replay || reduced) {
       setIntroDone(true);
       return;
     }
     if (window.scrollY > 0) window.scrollTo({ top: 0, behavior: "auto" });
     const timer = window.setTimeout(() => {
       setIntroDone(true);
-      window.sessionStorage.setItem("henrylabs-intro-seen", "1");
-    }, 1900);
-    const interval = window.setInterval(() => setLoadingStep((step) => Math.min(step + 1, 3)), 460);
-    return () => {
-      window.clearTimeout(timer);
-      window.clearInterval(interval);
-    };
+    }, 1550);
+    return () => window.clearTimeout(timer);
   }, []);
+
+  useEffect(() => {
+    if (introDone) try { window.sessionStorage.setItem("henrylabs-intro-seen", "1"); } catch { /* Storage is optional. */ }
+  }, [introDone]);
 
   useEffect(() => {
     document.documentElement.dataset.motion = motionOn ? "on" : "off";
@@ -638,16 +628,15 @@ export function PortfolioExperience() {
     <main className="site-shell" data-motion={motionOn ? "on" : "off"}>
       <SmoothScroll enabled={motionOn} />
       <WorldlineBackdrop activeId={activeProject.id} motionOn={motionOn} progress={worldlineProgress} contactProgress={contactProgress} contactVisible={contactVisible} mapActive={heroPhase === "worlds"} />
-      <motion.div className={cx("intro-loader", introDone && "intro-loader--done")} aria-hidden={introDone}>
-        <div className="loader-content">
-          <div className="loader-meta"><span>HENRYLABS / USEFUL WORLDS</span><span>0{Math.min(loadingStep + 1, 4)} / 04</span></div>
-          <div className="loader-mark"><span><Asterisk size={20} strokeWidth={1.5} /></span><small>HENRY</small></div>
-          <p className="loader-eyebrow">{t.loader.eyebrow}</p>
-          <h2><span>{t.loader.title}</span><em>{t.loader.accent}</em></h2>
-          <div className="loader-line"><span style={{ transform: `scaleX(${(loadingStep + 1) / 4})` }} /></div>
-          <div className="loader-status"><p>{t.loading[loadingStep]}</p><span>{t.loader.telemetry[loadingStep]}</span></div>
+      <div className={cx("intro-loader", "arrival-intro", introDone && "intro-loader--done")} aria-hidden={introDone} inert={introDone}>
+        <div className="arrival-content">
+          <Asterisk className="arrival-mark" size={88} strokeWidth={.8} aria-hidden="true" />
+          <strong>HenryLabs</strong>
+          <span className="arrival-rule" aria-hidden="true" />
+          <p>{language === "en" ? "Entering the universe" : "Memasuki semesta"}</p>
         </div>
-      </motion.div>
+        <button type="button" className="arrival-skip" onClick={() => setIntroDone(true)}>{language === "en" ? "Skip intro" : "Lewati intro"}<ArrowUpRight size={15} /></button>
+      </div>
 
       <motion.div className="cursor-guide" style={{ x: cursorX, y: cursorY }} aria-hidden="true">
         <span>Henry</span><Asterisk size={10} />
@@ -697,22 +686,19 @@ export function PortfolioExperience() {
               <CosmicCanvas activeId={activeSector === "main" ? activeId : activeSatellite.id} onSelect={focusOrbitWorld} onPrevious={() => cycleOrbitWorld(-1)} onNext={() => cycleOrbitWorld(1)} motionOn={motionOn} progress={scrollYProgress} techNodes={orbitTechNodes} satelliteCatalog={satelliteCatalog} sector={activeSector} view={mapView} language={language} readingOpen={showProjectShowcase} onGalaxySelect={enterGalaxy} onUniverse={returnToUniverse} />
               <AnimatePresence mode="wait" initial={false}>
                 {mapView === "orbit" && (showProjectShowcase ? (activeSector === "main" ? <motion.section className="project-showcase" data-lenis-prevent key={activeProject.id} aria-label={`Active project: ${activeProject.name}`} style={{ "--project-showcase-color": activeProject.color } as CSSProperties} initial={motionOn ? { opacity: 0, x: 22 } : false} animate={{ opacity: 1, x: 0 }} exit={motionOn ? { opacity: 0, x: -16 } : undefined} transition={{ duration: motionOn ? .4 : 0, ease: [0.16, 1, 0.3, 1] }}>
-                  <div className="project-showcase-topline"><span>ACTIVE WORLD / {String(projects.findIndex((project) => project.id === activeProject.id) + 1).padStart(2, "0")}</span><div className="project-showcase-nav"><button type="button" onClick={() => cycleProject(-1)} aria-label="Previous project"><ChevronLeft size={13} /></button><button type="button" onClick={() => cycleProject(1)} aria-label="Next project"><ChevronRight size={13} /></button><button type="button" className="project-showcase-close" onClick={() => setShowProjectShowcase(false)} aria-label="Close active world" title="Close active world"><X size={13} /></button></div></div>
+                  <div className="project-showcase-topline"><span>ACTIVE WORLD / {String(projects.findIndex((project) => project.id === activeProject.id) + 1).padStart(2, "0")}</span><button type="button" className="project-showcase-close" onClick={() => setShowProjectShowcase(false)} aria-label="Close active world" title="Close active world"><X size={13} /></button></div>
                   <div className="project-showcase-index" role="tablist" aria-label="Project worlds">{projects.map((project, index) => <button type="button" role="tab" aria-selected={activeId === project.id} className={cx(activeId === project.id && "is-active")} style={{ "--world-color": project.color } as CSSProperties} onClick={() => focusProject(project.id)} aria-label={`Focus ${project.name}`} title={project.name} key={project.id}><span className="project-showcase-index-mark"><img src={project.logo} alt="" /></span><span>{String(index + 1).padStart(2, "0")}</span></button>)}</div>
                   <div className="project-showcase-identity"><span className="project-showcase-mark"><img src={activeProject.logo} alt="" /></span><div><span>{activeProject.status[language]} · {activeProject.visibility[language]}</span><h2>{activeProject.name}</h2></div></div>
                   <p className="project-showcase-summary">{activeProject.summary[language]}</p>
                   <ProjectSignature project={activeProject} language={language} />
                   <div className="project-showcase-stack">{activeProject.stack.slice(0, 4).map((item) => <span key={item}>{item}</span>)}</div>
                   <div className="project-showcase-actions"><button type="button" onClick={openProjectDossier}>{t.field.inspect}<ArrowDown size={14} /></button><a href={activeProject.link} target={activeProject.link.startsWith("http") ? "_blank" : undefined} rel={activeProject.link.startsWith("http") ? "noreferrer" : undefined}>{t.field.open}<ArrowUpRight size={13} /></a></div>
-                </motion.section> : <SatelliteReadout key={activeSatellite.id} record={activeSatellite} records={sectorRecords} language={language} motionOn={motionOn} onSelect={selectSatellite} onCycle={cycleOrbitWorld} onClose={() => setShowProjectShowcase(false)} />) : <motion.button className="project-showcase-reopen" type="button" key="reopen-project-showcase" onClick={() => setShowProjectShowcase(true)} aria-expanded="false" aria-label="Open active world"><span><PanelRightOpen size={15} /> Active world</span><small>{focusedWorld.name}</small></motion.button>)}
+                </motion.section> : <SatelliteReadout key={activeSatellite.id} record={activeSatellite} records={sectorRecords} language={language} motionOn={motionOn} onSelect={selectSatellite} onClose={() => setShowProjectShowcase(false)} />) : <motion.button className="project-showcase-reopen" type="button" key="reopen-project-showcase" onClick={() => setShowProjectShowcase(true)} aria-expanded="false" aria-label="Open active world"><span><PanelRightOpen size={15} /> Active world</span><small>{focusedWorld.name}</small></motion.button>)}
               </AnimatePresence>
               <div className="frame-bottomline"><span>{mapView === "universe" ? "03 galaxies / 10 worlds" : `${String(activeSector === "main" ? projects.length : sectorRecords.length).padStart(2, "0")} worlds / 01 maker`}</span><span>{mapView === "orbit" ? <><MousePointer2 size={13} /> {t.field.hint}</> : "HENRY NUGRAHA"}</span></div>
             </div>
             </motion.div>
           </motion.div>
-          <div className="hero-transition" aria-hidden={heroPhase !== "transition"}>
-            <div className="hero-transition-card"><span>{t.transition.eyebrow}</span><strong>{t.transition.title}</strong><small>{t.transition.body}</small><i><b /><b /><b /></i></div>
-          </div>
         </div>
         <div className="hero-telemetry" aria-hidden="true"><span>FIELD STATUS <b>LIVE</b></span><span>WORLD COUNT <b>05</b></span><span>MAKER <b>01</b></span></div>
         <button type="button" className="scroll-cue" onClick={openGalaxyMap}><span>Scroll to enter</span><ArrowDown size={18} /></button>
@@ -733,7 +719,7 @@ export function PortfolioExperience() {
       <motion.section ref={workRef} className="content-section work-section" id="work" aria-labelledby="work-title">
         <div className="section-heading"><div><p className="section-kicker">Selected worlds</p><h2 id="work-title">{t.work.title}</h2></div><p>{t.work.body}</p></div>
         <div className="work-scroll-track" aria-hidden="true"><span>orbit / evidence</span><motion.i style={{ scaleX: motionOn ? workProgress : 1 }} /><span>{activeProject.name} / live signal</span></div>
-        <div className="work-world-context"><div><span>ACTIVE WORLD / {String(projects.findIndex((project) => project.id === activeProject.id) + 1).padStart(2, "0")}</span><strong>{activeProject.name}</strong><small>Focused from the project orbit</small></div><div className="work-world-controls"><button type="button" onClick={() => cycleProject(-1)} aria-label="Previous project"><ChevronLeft size={17} /></button><button type="button" onClick={() => cycleProject(1)} aria-label="Next project"><ChevronRight size={17} /></button></div></div>
+        <div className="work-world-context"><div><span>ACTIVE WORLD / {String(projects.findIndex((project) => project.id === activeProject.id) + 1).padStart(2, "0")}</span><strong>{activeProject.name}</strong><small>Focused from the project orbit</small></div></div>
         <div className="work-layout">
           <AnimatePresence mode="wait" initial={false}>
             <motion.article className="dossier" key={activeProject.id} style={{ "--dossier-color": activeProject.color } as React.CSSProperties} initial={motionOn ? { opacity: 0, y: 18, scale: .985 } : false} animate={{ opacity: 1, y: 0, scale: 1 }} exit={motionOn ? { opacity: 0, y: -10, scale: .99 } : undefined} transition={{ duration: motionOn ? 0.45 : 0, ease: [0.16, 1, 0.3, 1] }}>

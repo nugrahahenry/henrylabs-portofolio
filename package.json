@@ -1,6 +1,6 @@
 {
   "name": "henrylabs-portfolio",
-  "version": "0.78.0",
+  "version": "0.79.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -13,6 +13,7 @@
     "test:background": "node tests/background.mjs",
     "test:closing": "node tests/closing-loop.mjs",
     "test:spacecraft": "node tests/spacecraft.mjs",
+    "test:arrival": "node tests/arrival.mjs",
     "test:galaxies": "node tests/galaxies.mjs",
     "test:sectors": "node tests/sectors.mjs"
   },

@@ -8,6 +8,38 @@ export type SafeFlightPoint = { x: number; y: number; visible: boolean; clearanc
 export const PURSUIT_DELAY = 4.8;
 export const SPACECRAFT_PERIOD = 112;
 
+export function flightPresence(current: number, target: number, dt: number) {
+  const step = Math.min(.04, Math.max(0, dt)) / (target > current ? .55 : .42);
+  return current + THREE.MathUtils.clamp(target - current, -step, step);
+}
+
+export function pursuitPulse(age: number, index: number) {
+  const encounter = age % SPACECRAFT_PERIOD;
+  if (encounter < 7.2 || encounter > 17) return -1;
+  const phase = ((encounter - 7.2) % 4.6 - index * .48) / .85;
+  return phase >= 0 && phase <= 1 ? phase : -1;
+}
+
+export function clearShot(from: Pick<FlightObstacle, "x" | "y">, to: Pick<FlightObstacle, "x" | "y">, obstacles: readonly FlightObstacle[], count = obstacles.length) {
+  const dx = to.x - from.x, dy = to.y - from.y, length = dx * dx + dy * dy;
+  if (length < .001) return false;
+  for (let index = 0; index < count; index++) {
+    const body = obstacles[index];
+    const t = THREE.MathUtils.clamp(((body.x - from.x) * dx + (body.y - from.y) * dy) / length, 0, 1);
+    if (Math.hypot(body.x - from.x - dx * t, body.y - from.y - dy * t) < body.radius + .025) return false;
+  }
+  return true;
+}
+
+export function createPursuitBolts() {
+  const material = new THREE.MeshBasicMaterial({ color: "#a4ecff", transparent: true, opacity: .8, depthWrite: false });
+  const mesh = new THREE.InstancedMesh(new THREE.CylinderGeometry(.009, .009, 1, 6), material, 3);
+  mesh.frustumCulled = false;
+  mesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+  mesh.visible = false;
+  return mesh;
+}
+
 export function spacecraftPose(age: number, motionOn: boolean, kind: SpacecraftKind = "ufo", out: SpacecraftPose = { visible: false, x: 0, y: 0, depth: 0, roll: 0, opacity: 0 }) {
   const t = ((Math.max(0, Number.isFinite(age) ? age : 0) % SPACECRAFT_PERIOD) - .6 - (kind === "scout" ? PURSUIT_DELAY : 0)) / 18;
   out.visible = motionOn ? t > 0 && t < 1 : true;

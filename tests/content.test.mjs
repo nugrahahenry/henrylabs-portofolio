@@ -38,11 +38,11 @@ test("portfolio surface keeps its core experience contracts", () => {
   assert.match(experience, /polara-og\.png/);
   assert.match(experience, /\["PHP", "php"/);
   assert.match(experience, /tech-icon-fallback/);
-  assert.match(experience, /loader-mark/);
-  assert.match(experience, /className="loader-status"/);
+  assert.match(experience, /arrival-mark/);
+  assert.match(experience, /Skip intro/);
   assert.doesNotMatch(experience, /loader-system/);
   assert.doesNotMatch(experience, /loader-telemetry/);
-  assert.match(experience, /hero-transition/);
+  assert.doesNotMatch(experience, /hero-transition|The signal is live|aria-label="(?:Previous|Next) project"/);
   assert.match(experience, /field-continuum-node/);
   assert.match(experience, /field-continuum-route/);
   assert.match(experience, /worldlineProgress/);

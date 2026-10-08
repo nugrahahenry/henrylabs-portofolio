@@ -22,7 +22,7 @@ const { createStellarCore } = await loadModule("stellar-core");
 const { advanceGalaxyFlight, sampleGalaxyFlight } = await loadModule("galaxy-flight");
 const { createDeepSpace } = await loadModule("deep-space");
 const { infallPoint, gravityMaterial, dustWarmth } = await loadModule("gravity-field");
-const { createSpacecraft, spacecraftPose, routeSpacecraft, PURSUIT_DELAY, SPACECRAFT_PERIOD } = await loadModule("spacecraft");
+const { createSpacecraft, spacecraftPose, routeSpacecraft, flightPresence, pursuitPulse, clearShot, PURSUIT_DELAY, SPACECRAFT_PERIOD } = await loadModule("spacecraft");
 const { distantStarPoint, dustStreamSource, stellarTwinkle, createDistantStarMaterial, DISTANT_STAR_COUNT, COMPACT_STAR_COUNT, FEEDING_DUST_COUNT } = await loadModule("ambient-field");
 
 test("galaxy approach centers first and reveals the local system without a visibility jump", () => {
@@ -205,6 +205,32 @@ test("a bounded metallic UFO and scout share a delayed pursuit and still alterna
   assert.equal(PURSUIT_DELAY, 4.8);
   for (let t = 6; t < 18; t += .25) assert.ok(spacecraftPose(t, true).x > spacecraftPose(t, true, "scout").x);
   assert.deepEqual(spacecraftPose(8, true), spacecraftPose(120, true));
+});
+
+test("flight opacity retreats over multiple frames even after a long tab suspension", () => {
+  let opacity = 1, frames = 0;
+  while (opacity > 0 && frames++ < 100) {
+    const next = flightPresence(opacity, 0, frames === 1 ? 100 : 1 / 60);
+    assert.ok(next <= opacity && opacity - next < .1);
+    opacity = next;
+  }
+  assert.equal(opacity, 0);
+  assert.ok(frames > 15 && frames < 30);
+  assert.equal(flightPresence(.5, 0, 0), .5);
+});
+
+test("pursuit shots travel in bounded bursts and respect intervening planet silhouettes", () => {
+  assert.equal(pursuitPulse(5, 0), -1);
+  assert.equal(pursuitPulse(30, 0), -1);
+  for (let i = 0; i < 3; i++) {
+    const age = 7.2 + i * .48 + .4;
+    assert.ok(pursuitPulse(age, i) > 0 && pursuitPulse(age, i) < 1);
+    assert.ok(Math.abs(pursuitPulse(age, i) - pursuitPulse(age + 112, i)) < 1e-10);
+  }
+  const start = { x: -1, y: .5 }, end = { x: 1, y: .5 };
+  assert.equal(clearShot(start, end, [{ x: 0, y: .5, radius: .2 }]), false);
+  assert.equal(clearShot(start, end, [{ x: 0, y: -.5, radius: .2 }]), true);
+  assert.equal(clearShot(start, start, []), false);
 });
 
 test("flight lanes clear overlapping projected planet/ring exclusions or hide safely", () => {

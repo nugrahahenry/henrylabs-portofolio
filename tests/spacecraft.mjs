@@ -44,7 +44,7 @@ try {
       await page.locator("#method").evaluate((section) => window.scrollTo({ top: scrollY + section.getBoundingClientRect().top, behavior: "instant" }));
       for (let i = 0; i < 12; i++) await page.clock.fastForward(250);
     }
-    let seenPair = false, seenLeader = false;
+    let seenPair = false, seenLeader = false, seenShot = false;
     for (let i = 0; i < 390; i++) {
       await page.clock.fastForward(250);
       if (i % 8 !== 0) continue;
@@ -53,7 +53,11 @@ try {
       if (sample.scout) assert.ok(sample.scoutGap >= .0348, "the scout must clear planets and its leading UFO");
       assert.ok(sample.calls < 65, "two detailed craft must stay within the existing draw budget");
       if (sample.lead && !sample.scout) seenLeader = true;
-      if (sample.time > 6.5 && sample.lead && sample.scout) {
+      if (Number(await field.getAttribute("data-pursuit-bolts")) > 0) {
+        seenShot = true;
+        assert.ok(await signalPixels(page, "bolt") > 30, "the pursuit tracer must paint real pixels");
+      }
+      if (!seenPair && sample.time > 6.5 && sample.lead && sample.scout) {
         seenPair = true;
         assert.ok(await signalPixels(page, "ufo") > 35 && await signalPixels(page, "scout") > 35, "both dimensional craft must paint a visible light signal");
         const introVisible = await page.locator(".hero-copy").evaluate((node) => !node.inert);
@@ -67,13 +71,20 @@ try {
           }
         }
         await page.screenshot({ path: `test-results/${viewport.width}-spacecraft-pursuit.png` });
-        break;
       }
+      if (seenPair && (seenShot || viewport.width !== 1440)) break;
     }
     assert.ok(seenLeader && seenPair, `the UFO must arrive first, then its scout follower (${viewport.width}px, headroom=${openingGap.toFixed(1)}, leader=${seenLeader}, pair=${seenPair})`);
+    if (viewport.width === 1440) assert.ok(seenShot, "the desktop pursuit must include a visible shot");
     assert.equal(await page.locator("canvas").count(), 2);
     await page.locator(".hero-stage").evaluate((hero) => window.scrollTo({ top: scrollY + hero.getBoundingClientRect().top + (hero.offsetHeight - innerHeight) * .7, behavior: "instant" }));
-    for (let i = 0; i < 12; i++) await page.clock.fastForward(250);
+    let opacity = Number(await field.getAttribute("data-ufo-opacity"));
+    for (let i = 0; i < 16; i++) {
+      await page.clock.fastForward(250);
+      const next = Number(await field.getAttribute("data-ufo-opacity"));
+      assert.ok(opacity - next <= .097, "a protected chapter must fade the craft, not remove it in one frame");
+      opacity = next;
+    }
     await expect(page.locator(".hero-stage")).toHaveAttribute("data-phase", "worlds");
     await expect(field).toHaveAttribute("data-spacecraft-visible", "false");
     await expect(field).toHaveAttribute("data-scout-visible", "false");

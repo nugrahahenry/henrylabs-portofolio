@@ -10,7 +10,7 @@ import { advanceGravityAge, closingReturn, updateClosingScroll, gravityApproachA
 import { orbitGeometry, orbitalSpeed, sampleOrbit } from "./orbital-path";
 import { createStellarCore } from "./stellar-core";
 import { createDeepSpace } from "./deep-space";
-import { createSpacecraft, spacecraftPose, routeSpacecraft, PURSUIT_DELAY } from "./spacecraft";
+import { createSpacecraft, spacecraftPose, routeSpacecraft, flightPresence, createPursuitBolts, pursuitPulse, clearShot, PURSUIT_DELAY, SPACECRAFT_PERIOD } from "./spacecraft";
 import { COMPACT_STAR_COUNT, DISTANT_STAR_COUNT, FEEDING_DUST_COUNT, createDistantStarMaterial, distantStarPoint, dustStreamSource } from "./ambient-field";
 
 function createBlackHole() {
@@ -116,8 +116,11 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, contactProgres
     const scene = new THREE.Scene();
     const deepSpace = createDeepSpace();
     scene.add(deepSpace.volume);
-    const flights = [createSpacecraft(), createSpacecraft("scout")].map((model) => ({ model, pose: spacecraftPose(0, false, model.kind), safe: { x: 0, y: .65, visible: false, clearance: 0 }, heading: 0, radius: 0 }));
+    const flights = [createSpacecraft(), createSpacecraft("scout")].map((model) => ({ model, pose: spacecraftPose(0, false, model.kind), safe: { x: 0, y: .65, visible: false, clearance: 0 }, candidate: { x: 0, y: .65, visible: false, clearance: 0 }, heading: 0, radius: 0, presence: 0, retired: false, cycle: -1 }));
     flights.forEach(({ model }) => scene.add(model.group));
+    const bolts = createPursuitBolts();
+    scene.add(bolts);
+    const boltPose = new THREE.Object3D(), boltStart = new THREE.Vector3(), boltTarget = new THREE.Vector3(), boltDirection = new THREE.Vector3();
     const flightObstacles = Array.from({ length: 12 }, () => ({ x: 0, y: 0, radius: 0 }));
     const flightWorld = new THREE.Vector3(), flightView = new THREE.Vector3();
     const heroCopy = document.querySelector<HTMLElement>(".hero-copy");
@@ -508,7 +511,7 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, contactProgres
       // Project real bodies into one height-normalized clearance space, including visible rings.
       flights.forEach(({ model, pose }) => spacecraftPose(drift, state.current.motionOn, model.kind, pose));
       const flightAllowed = holeOpacity < .05 && !state.current.mapActive;
-      const flightActive = flightAllowed && flights.some(({ pose }) => pose.visible);
+      const flightActive = flights.some(({ pose, presence }) => pose.visible && flightAllowed || presence > 0);
       const tangent = Math.tan(THREE.MathUtils.degToRad(camera.fov / 2));
       const obstacle = (object: THREE.Object3D, radius: number, index: number) => {
         object.getWorldPosition(flightWorld);
@@ -531,9 +534,10 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, contactProgres
       flightObstacles[11].x = 100;
       const readingEdge = flightActive && heroCopy && !heroCopy.inert && heroKicker ? heroKicker.getBoundingClientRect().top : null;
       flights.forEach((flight, index) => {
-        const { model, pose, safe } = flight;
-        model.group.visible = false;
-        if (!flightAllowed || !pose.visible) return;
+        const { model, pose, safe, candidate } = flight;
+        const cycle = Math.floor(drift / SPACECRAFT_PERIOD);
+        if (cycle !== flight.cycle) { flight.cycle = cycle; flight.retired = false; }
+        if (!state.current.motionOn) flight.retired = false;
         const compactIntro = readingEdge !== null && width < 640;
         const widthRatio = compactIntro ? model.kind === "ufo" ? .11 : .13 : model.kind === "ufo" ? .14 : .17;
         const baseSize = Math.min(model.kind === "ufo" ? 84 : 92, Math.min(width, height) * widthRatio);
@@ -542,10 +546,17 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, contactProgres
         const previousX = safe.x, previousY = safe.y;
         const desired = state.current.motionOn ? THREE.MathUtils.damp(previousY, pose.y, 5, dt) : pose.y;
         const floor = readingEdge === null ? .18 : 1 - (readingEdge - radius * height / 2 - 12) / height * 2;
-        routeSpacecraft(pose.x * camera.aspect, desired, radius, flightObstacles, floor, 1 - (headerHeight + radius * height / 2 + 10) / height * 2, safe);
-        model.group.visible = safe.visible && size >= 28;
-        flight.radius = radius;
-        if (model.group.visible) {
+        routeSpacecraft(pose.x * camera.aspect, desired, radius, flightObstacles, floor, 1 - (headerHeight + radius * height / 2 + 10) / height * 2, candidate);
+        const continuous = flight.presence < .05 || Math.hypot(candidate.x - safe.x, candidate.y - safe.y) < .24;
+        const canFly = flightAllowed && pose.visible && candidate.visible && size >= 28 && continuous;
+        // Finish one graceful exit at the last safe pose; never flicker back within this pass.
+        if (!canFly && flight.presence > 0 && state.current.motionOn) flight.retired = true;
+        const targetPresence = canFly && !flight.retired ? pose.opacity : 0;
+        flight.presence = state.current.motionOn ? flightPresence(flight.presence, targetPresence, dt) : targetPresence;
+        model.group.visible = flight.presence > .001;
+        if (canFly && !flight.retired) {
+          Object.assign(safe, candidate);
+          flight.radius = radius;
           holeRay.set(safe.x / camera.aspect, safe.y, .5).unproject(camera).sub(camera.position).normalize();
           model.group.position.copy(camera.position).addScaledVector(holeRay, (pose.depth - camera.position.z) / holeRay.z);
           const shipHeight = 2 * tangent * (camera.position.z - pose.depth);
@@ -553,16 +564,45 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, contactProgres
           const bank = state.current.motionOn ? THREE.MathUtils.clamp(Math.atan2(safe.y - previousY, Math.max(.001, safe.x - previousX)), -.42, .42) : 0;
           flight.heading = state.current.motionOn ? THREE.MathUtils.damp(flight.heading, bank, 7, dt) : 0;
           model.group.rotation.set(model.kind === "ufo" ? .55 : .65, model.kind === "ufo" ? drift * .04 : .14, pose.roll + flight.heading);
-          model.hull.opacity = pose.opacity; model.trim.opacity = pose.opacity;
-          model.glass.opacity = pose.opacity * .84; model.light.opacity = pose.opacity;
-          model.flame.opacity = pose.opacity * (state.current.motionOn ? .44 + Math.sin(drift * 7) * .04 : .2);
-          if (index === 0) { flightObstacles[11].x = safe.x; flightObstacles[11].y = safe.y; flightObstacles[11].radius = radius; }
         }
+        model.hull.opacity = flight.presence; model.trim.opacity = flight.presence;
+        model.glass.opacity = flight.presence * .84; model.light.opacity = flight.presence;
+        model.flame.opacity = flight.presence * (state.current.motionOn ? .44 + Math.sin(drift * 7) * .04 : .2);
+        if (index === 0 && model.group.visible) { flightObstacles[11].x = safe.x; flightObstacles[11].y = safe.y; flightObstacles[11].radius = flight.radius; }
+        host.dataset[`${model.kind}Opacity`] = flight.presence.toFixed(4);
         host.dataset[model.kind === "ufo" ? "ufoX" : "scoutX"] = ((safe.x / camera.aspect * .5 + .5) * width).toFixed(2);
         host.dataset[model.kind === "ufo" ? "ufoY" : "scoutY"] = ((-safe.y * .5 + .5) * height).toFixed(2);
         host.dataset[model.kind === "ufo" ? "ufoClearance" : "scoutClearance"] = safe.clearance.toFixed(4);
-        host.dataset[model.kind === "ufo" ? "ufoRadius" : "scoutRadius"] = (radius * height / 2).toFixed(2);
+        host.dataset[model.kind === "ufo" ? "ufoRadius" : "scoutRadius"] = (flight.radius * height / 2).toFixed(2);
       });
+      let visibleBolts = 0;
+      const [lead, scout] = flights;
+      const canShoot = state.current.motionOn && flightAllowed && !lead.retired && !scout.retired && lead.presence > .6 && scout.presence > .6
+        && clearShot(scout.safe, lead.safe, flightObstacles, 11);
+      if (canShoot) {
+        boltDirection.copy(lead.model.group.position).sub(scout.model.group.position).normalize();
+        boltStart.copy(scout.model.group.position).addScaledVector(boltDirection, scout.model.group.scale.x * .58);
+        boltTarget.copy(lead.model.group.position).addScaledVector(boltDirection, -lead.model.group.scale.x * .32);
+      }
+      for (let index = 0; index < 3; index++) {
+        const pulse = canShoot ? pursuitPulse(drift, index) : -1;
+        const size = pulse < 0 ? 0 : Math.sin(pulse * Math.PI);
+        boltPose.scale.set(size, size * .24, size);
+        if (size > 0) {
+          boltPose.position.lerpVectors(boltStart, boltTarget, pulse);
+          boltPose.quaternion.setFromUnitVectors(THREE.Object3D.DEFAULT_UP, boltDirection);
+          visibleBolts++;
+          flightWorld.copy(boltPose.position).project(camera);
+          host.dataset.boltX = ((flightWorld.x * .5 + .5) * width).toFixed(2);
+          host.dataset.boltY = ((-flightWorld.y * .5 + .5) * height).toFixed(2);
+          host.dataset.boltRadius = "8";
+        }
+        boltPose.updateMatrix();
+        bolts.setMatrixAt(index, boltPose.matrix);
+      }
+      bolts.visible = visibleBolts > 0;
+      bolts.instanceMatrix.needsUpdate = true;
+      host.dataset.pursuitBolts = String(visibleBolts);
       wanderer.visible = gravityActive && sequence.visitorVisible || restoring && visitorProgress > 0;
       if (wanderer.visible) {
         if (visitorIndex !== sequence.index) {
