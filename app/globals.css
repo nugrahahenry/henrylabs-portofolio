@@ -17,12 +17,10 @@
   --mono: "Cascadia Mono", "SFMono-Regular", Consolas, monospace;
 }
 
-.intro-loader.arrival-intro { background: transparent; opacity: 1; padding: 24px; transition: visibility 0s .8s; }
-.intro-loader.arrival-intro::before, .intro-loader.arrival-intro::after { position: absolute; inset: 0 0 auto; height: 50.1%; background: #070a10; box-shadow: none; animation: none; transition: transform .8s cubic-bezier(.76, 0, .24, 1); }
-.intro-loader.arrival-intro::before { border-bottom: 1px solid rgba(110,231,244,.24); }
-.intro-loader.arrival-intro::after { inset: auto 0 0; }
-.intro-loader.arrival-intro.intro-loader--done::before { transform: translateY(-101%); }
-.intro-loader.arrival-intro.intro-loader--done::after { transform: translateY(101%); }
+.intro-loader.arrival-intro { background: transparent; opacity: 1; padding: 24px; transition: visibility 0s .65s; }
+.intro-loader.arrival-intro::before { position: absolute; inset: 0; height: 100%; background: #070a10; box-shadow: none; animation: none; transition: opacity .65s var(--ease); }
+.intro-loader.arrival-intro::after { display: none; }
+.intro-loader.arrival-intro.intro-loader--done::before { opacity: 0; }
 .arrival-content { position: relative; z-index: 2; display: grid; justify-items: center; width: min(420px, 100%); text-align: center; transition: opacity .25s ease, transform .5s var(--ease); }
 .arrival-content strong { font-size: 48px; line-height: 1.1; letter-spacing: 0; }
 .arrival-content p { margin: 20px 0 0; color: #bac5ce; font-size: 14px; letter-spacing: 0; }
@@ -33,7 +31,7 @@
 .arrival-intro.intro-loader--done .arrival-content { opacity: 0; transform: scale(1.05); }
 .arrival-intro.intro-loader--done .arrival-skip { visibility: hidden; }
 .project-showcase-topline > .project-showcase-close { display: grid; place-items: center; width: 44px; height: 44px; flex: none; background: transparent; color: var(--paper); cursor: pointer; border: 1px solid rgba(244,245,239,.3); border-radius: 50%; }
-@keyframes arrival-lock { from { transform: rotate(-90deg) scale(.65); opacity: 0; } 65% { opacity: 1; } to { transform: rotate(0) scale(1); opacity: 1; } }
+@keyframes arrival-lock { from { transform: rotate(-16deg) translateY(8px) scale(.9); opacity: 0; clip-path: inset(0 100% 0 0); } 65% { opacity: 1; clip-path: inset(0); } to { transform: rotate(0) translateY(0) scale(1); opacity: 1; clip-path: inset(0); } }
 @keyframes arrival-line { from { transform: scaleX(0); } to { transform: scaleX(1); } }
 @media (max-width: 480px), (max-height: 500px) { .arrival-content strong { font-size: 36px; }.arrival-mark { width: 64px; height: 64px; margin-bottom: 16px; }.arrival-rule { margin-top: 20px; } }
 @media (prefers-reduced-motion: reduce) { .intro-loader.arrival-intro, .arrival-intro::before, .arrival-intro::after, .arrival-content { transition: none; }.arrival-mark, .arrival-rule { animation: none; } }
@@ -140,16 +138,16 @@ html[data-cursor="quiet"] .cursor-guide { opacity: 0; }
 .arc-one { inset: 13% 6% 19% 4%; }
 .arc-two { inset: 27% 18% 25% 26%; border-color: rgba(255,130,200,.1); transform: rotate(31deg); animation-direction: reverse; animation-duration: 38s; }
 .hero-copy { position: absolute; inset: 0; display: flex; align-items: center; flex-direction: column; justify-content: center; padding: 95px 25px 40px; text-align: center; }
-.hero-copy, .cosmic-frame-wrap { transition: opacity .55s var(--ease); }
+.hero-copy { transition: opacity .55s var(--ease); }
 .hero-stage[data-phase="intro"] .cosmic-frame-wrap, .hero-stage[data-phase="transition"] .hero-copy, .hero-stage[data-phase="worlds"] .hero-copy { opacity: 0; pointer-events: none; }
 .hero-stage[data-phase="intro"] .hero-copy, .hero-stage[data-phase="worlds"] .cosmic-frame-wrap { opacity: 1; }
 .hero-stage[data-phase="transition"] .cosmic-frame-wrap { opacity: .82; }
 .hero-stage[data-phase="transition"] .hero-transition { opacity: 1; transform: translateY(0); }
 .hero-stage[data-phase="worlds"] .hero-telemetry, .hero-stage[data-phase="worlds"] .scroll-cue { opacity: 0; pointer-events: none; }
-.hero-stage[data-phase="intro"] .cosmic-frame-wrap { opacity: .16; pointer-events: none; }
+.hero-stage[data-phase="intro"] .cosmic-frame-wrap { visibility: hidden; pointer-events: none; }
 .hero-stage[data-phase="intro"] .cosmic-frame { box-shadow: none; }
 .hero-stage[data-phase="intro"] .project-showcase, .hero-stage[data-phase="intro"] .frame-topline, .hero-stage[data-phase="intro"] .frame-bottomline { visibility: hidden; }
-.hero-stage[data-phase="intro"] .cosmic-canvas { opacity: .72; }
+.stargod-mark { display: block; flex: none; object-fit: contain; }
 .hero-kicker, .section-kicker { display: flex; align-items: center; gap: 8px; margin: 0 0 24px; color: var(--yellow); font-family: var(--mono); font-size: .65rem; letter-spacing: .12em; text-transform: uppercase; }
 .live-pulse, .status-light { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--mint); box-shadow: 0 0 0 5px rgba(96,201,176,.15); }
 .hero-copy h1 { max-width: 10ch; margin: 0; color: var(--paper); font-size: clamp(4.3rem, 10vw, 9.4rem); font-weight: 600; letter-spacing: -.09em; line-height: .85; text-wrap: balance; }
@@ -686,6 +684,10 @@ html[data-motion="off"] *, html[data-motion="off"] *::before, html[data-motion="
 .cosmic-frame[data-view] { box-shadow: none; }
 .cosmic-frame[data-view]::before, .cosmic-frame[data-view]::after { display: none; }
 .galaxy-label span { font-size: 1rem; font-weight: 650; }
+.galaxy-label-name { display: flex; align-items: center; gap: 6px; }
+.galaxy-label-name svg { opacity: .6; transition: transform .2s var(--ease), opacity .2s var(--ease); }
+.galaxy-label:hover .galaxy-label-name svg, .galaxy-label:focus-visible .galaxy-label-name svg, .galaxy-label[data-highlighted="true"] .galaxy-label-name svg { opacity: 1; transform: translate(2px, -2px); }
+.galaxy-label:active { filter: brightness(1.25); }
 .galaxy-label small { color: var(--galaxy-color); font-family: var(--mono); font-size: .6rem; text-transform: uppercase; }
 .galaxy-label::before { content: ""; position: absolute; top: 0; left: 35%; right: 35%; height: 1px; background: var(--galaxy-color); opacity: .65; transition: transform .2s ease; }
 .galaxy-label:hover::before, .galaxy-label[data-highlighted="true"]::before { transform: scaleX(1.6); }

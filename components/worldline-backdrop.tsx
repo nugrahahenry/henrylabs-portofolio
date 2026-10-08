@@ -266,23 +266,20 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, contactProgres
     const flowPositions = new Float32Array(FEEDING_DUST_COUNT * 3);
     const flowColors = new Float32Array(FEEDING_DUST_COUNT * 3);
     const flowSeeds = new Float32Array(FEEDING_DUST_COUNT);
-    const flowUpper = new Float32Array(FEEDING_DUST_COUNT);
     for (let i = 0; i < FEEDING_DUST_COUNT; i++) {
       dustStreamSource(i, ambientPoint).toArray(flowPositions, i * 3);
       galaxyColor.set(galaxyPalette[i % galaxyPalette.length]);
       galaxyColor.toArray(flowColors, i * 3);
       flowSeeds[i] = ((i + .5) * .618033989) % 1;
-      flowUpper[i] = i % 4 < 2 ? 1 : 0;
     }
     flowGeometry.setAttribute("position", new THREE.BufferAttribute(flowPositions, 3));
     flowGeometry.setAttribute("color", new THREE.BufferAttribute(flowColors, 3));
     flowGeometry.setAttribute("aSeed", new THREE.BufferAttribute(flowSeeds, 1));
-    flowGeometry.setAttribute("aUpper", new THREE.BufferAttribute(flowUpper, 1));
     const flowMaterial = gravityMaterial(gravityTarget, .027, false, true);
     const feedingDust = new THREE.Points(flowGeometry, flowMaterial);
     feedingDust.frustumCulled = false;
     scene.add(feedingDust);
-    // Short upper-stream wisps expose movement without adding another particle pool.
+    // Balanced wisps from all four source lanes share the existing particle pool.
     const upperStreakCount = FEEDING_DUST_COUNT / 4;
     const upperStreakGeometry = new THREE.BufferGeometry();
     const upperStreakPositions = new Float32Array(upperStreakCount * 6);
@@ -290,7 +287,7 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, contactProgres
     const upperStreakSeeds = new Float32Array(upperStreakCount * 2);
     const upperStreakTails = new Float32Array(upperStreakCount * 2);
     for (let i = 0; i < upperStreakCount; i++) for (let end = 0; end < 2; end++) {
-      const index = i * 4;
+      const index = i * 4 + i % 4;
       upperStreakPositions.set(flowPositions.subarray(index * 3, index * 3 + 3), i * 6 + end * 3);
       upperStreakColors.set(flowColors.subarray(index * 3, index * 3 + 3), i * 6 + end * 3);
       upperStreakSeeds[i * 2 + end] = flowSeeds[index];
@@ -299,7 +296,6 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, contactProgres
     upperStreakGeometry.setAttribute("position", new THREE.BufferAttribute(upperStreakPositions, 3));
     upperStreakGeometry.setAttribute("color", new THREE.BufferAttribute(upperStreakColors, 3));
     upperStreakGeometry.setAttribute("aSeed", new THREE.BufferAttribute(upperStreakSeeds, 1));
-    upperStreakGeometry.setAttribute("aUpper", new THREE.BufferAttribute(new Float32Array(upperStreakCount * 2).fill(1), 1));
     upperStreakGeometry.setAttribute("aTail", new THREE.BufferAttribute(upperStreakTails, 1));
     const upperStreakMaterial = gravityMaterial(gravityTarget, 0, true, true);
     const upperStreaks = new THREE.LineSegments(upperStreakGeometry, upperStreakMaterial);
@@ -308,6 +304,7 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, contactProgres
     const feedingMaterials = [flowMaterial, upperStreakMaterial];
     const upperProbeIndex = 44;
     const upperProbe = new THREE.Vector3();
+    const dustProbes = Array.from({ length: 24 }, (_, index) => ({ index, x: 0, y: 0, travel: 0 }));
 
     const wandererMaps = ["#82b8c4", "#c69b78", "#a9bba0"].map((color, index) => createPlanetMaps(color, index === 0 ? "ocean" : index === 1 ? "rocky" : "ice", 256, 61 + index * 11));
     const planetTextures: THREE.Texture[] = wandererMaps.flatMap((maps) => maps.textures);
@@ -794,19 +791,31 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, contactProgres
       host.dataset.pursuitPhase = pursuit.interrupted ? "retiring" : flightAge >= pursuitEnd(flightDelay) ? "rest" : flightAllowed ? "flying" : "paused";
       host.dataset.brightStars = "18";
       host.dataset.dustFlow = returning ? "outward-return" : "inward";
-      host.dataset.dustSources = "top,left,bottom";
+      host.dataset.dustSources = "top,left,bottom,right";
+      host.dataset.dustMotion = "orbital-accretion";
       host.dataset.feedingDustCount = String(flowGeometry.getAttribute("position").count);
       host.dataset.distantStars = String(distantGeometry.drawRange.count);
       host.dataset.distantStarPull = "0.000";
       host.dataset.starTwinkle = distantMaterial.uniforms.uMotion.value ? "on" : "off";
-      host.dataset.upperDustStreaks = String(upperStreakCount);
+      host.dataset.dustStreaks = String(upperStreakCount);
       const upperPhase = (gravityAge * .05 + flowSeeds[upperProbeIndex]) % 1;
       upperProbe.set(flowPositions[upperProbeIndex * 3], flowPositions[upperProbeIndex * 3 + 1], .5).applyMatrix4(camera.projectionMatrixInverse);
       upperProbe.multiplyScalar(flowPositions[upperProbeIndex * 3 + 2] / upperProbe.z).applyMatrix4(camera.matrixWorld);
-      infallPoint(upperProbe, gravityTarget, upperPhase * retreat.infall, flowSeeds[upperProbeIndex], upperProbe, true).project(camera);
+      infallPoint(upperProbe, gravityTarget, upperPhase * retreat.infall, flowSeeds[upperProbeIndex], upperProbe).project(camera);
       host.dataset.upperDustX = ((upperProbe.x * .5 + .5) * width).toFixed(2);
       host.dataset.upperDustY = ((-upperProbe.y * .5 + .5) * height).toFixed(2);
       host.dataset.upperDustPhase = upperPhase.toFixed(3);
+      if (streamVisible) dustProbes.forEach(probe => {
+        const index = probe.index;
+        const travel = ((gravityAge * .05 + flowSeeds[index]) % 1) * retreat.infall;
+        probe.travel = Number(travel.toFixed(4));
+        upperProbe.set(flowPositions[index * 3], flowPositions[index * 3 + 1], .5).applyMatrix4(camera.projectionMatrixInverse);
+        upperProbe.multiplyScalar(flowPositions[index * 3 + 2] / upperProbe.z).applyMatrix4(camera.matrixWorld);
+        infallPoint(upperProbe, gravityTarget, travel, flowSeeds[index], upperProbe).project(camera);
+        probe.x = Number(((upperProbe.x * .5 + .5) * width).toFixed(2));
+        probe.y = Number(((-upperProbe.y * .5 + .5) * height).toFixed(2));
+      });
+      host.dataset.dustProbes = streamVisible ? JSON.stringify(dustProbes) : "[]";
       host.dataset.absorptionRadius = flowMaterial.uniforms.uHorizon.value.toFixed(3);
       renderer.render(scene, camera);
       let visibleVisitors = 0;

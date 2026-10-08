@@ -6,7 +6,6 @@ import {
   ArrowDown,
   ArrowLeft,
   ArrowUpRight,
-  Asterisk,
   Brackets,
   CarFront,
   ChevronLeft,
@@ -37,6 +36,7 @@ import { HomeProjectPreview } from "./home-project-preview";
 import { findWorld } from "@/content/catalog";
 import { SiteLink, useSitePreferences, useQuery, updateQuery } from "./site-preferences";
 import { CredentialViewer } from "./credential-viewer";
+import { StarGodMark } from "./stargod-mark";
 
 const academicProjects = academicData.map((record, index) => ({ ...record, icon: [CarFront, ShoppingCart, FlaskConical][index] }));
 const clientProjects = clientData.map((record, index) => ({ ...record, icon: [MessageCircle, Instagram][index] }));
@@ -243,6 +243,7 @@ export function PortfolioExperience() {
   const heroCopyY = useTransform(scrollYProgress, [0, 0.28], [0, -58]);
   const fieldScale = useTransform(scrollYProgress, [.18, .42], [.8, 1]);
   const fieldY = useTransform(scrollYProgress, [.18, .42], [52, 0]);
+  const mapEntryOpacity = useTransform(scrollYProgress, [.18, .32], [0, 1]);
   const mapExitOpacity = useTransform(scrollYProgress, [.86, .98], [1, 0]);
   const mapExitY = useTransform(scrollYProgress, [.86, 1], [0, -44]);
   const stackStageRotate = useTransform(scrollYProgress, [0, 1], [-3, 3]);
@@ -392,6 +393,8 @@ export function PortfolioExperience() {
   const openGalaxyMap = () => {
     const hero = heroRef.current;
     if (!hero) return;
+    setShowProjectShowcase(false);
+    setMapView("universe");
     window.scrollTo({ top: scrollY + hero.getBoundingClientRect().top + Math.max(0, hero.offsetHeight - innerHeight) * .7, behavior: motionOn ? "smooth" : "instant" });
   };
 
@@ -407,7 +410,7 @@ export function PortfolioExperience() {
       <WorldlineBackdrop activeId={activeProject.id} motionOn={motionOn} progress={worldlineProgress} contactProgress={contactProgress} contactVisible={contactVisible} mapActive={heroPhase === "worlds"} />
       <div className={cx("intro-loader", "arrival-intro", introDone && "intro-loader--done")} aria-hidden={introDone} inert={introDone}>
         <div className="arrival-content">
-          <Asterisk className="arrival-mark" size={88} strokeWidth={.8} aria-hidden="true" />
+          <StarGodMark className="arrival-mark" size={88} />
           <strong>StarGod</strong>
           <span className="arrival-rule" aria-hidden="true" />
           <p>{language === "en" ? "Entering the universe" : "Memasuki semesta"}</p>
@@ -416,7 +419,7 @@ export function PortfolioExperience() {
       </div>
 
       <motion.div className="cursor-guide" style={{ x: cursorX, y: cursorY }} aria-hidden="true">
-        <span>Henry</span><Asterisk size={10} />
+        <span>Henry</span><StarGodMark size={14} />
       </motion.div>
 
       <section ref={heroRef} className="hero-stage" id="top" aria-labelledby="hero-title" data-phase={motionOn ? heroPhase : "all"}>
@@ -440,8 +443,8 @@ export function PortfolioExperience() {
             <p className="hero-note"><span className="status-light" />{t.hero.note}</p>
           </motion.div>
 
-          {mapView === "orbit" && <motion.button type="button" className="universe-return" style={{ opacity: motionOn ? mapExitOpacity : 1 }} inert={motionOn && heroPhase === "departing"} onClick={returnToUniverse} aria-label={language === "en" ? "Back to universe" : "Kembali ke semesta"} title={language === "en" ? "Back to universe" : "Kembali ke semesta"}><ArrowLeft size={16} /><span>{language === "en" ? "Universe" : "Semesta"}</span></motion.button>}
-          <motion.div className="cosmic-frame-wrap" data-view={mapView} data-lenis-prevent={showProjectShowcase ? "true" : undefined} inert={motionOn && heroPhase !== "worlds"} style={{ scale: motionOn ? fieldScale : 1, y: motionOn ? fieldY : 0 }}>
+          {mapView === "orbit" && <motion.button type="button" className="universe-return" style={{ opacity: motionOn ? mapExitOpacity : 1 }} inert={motionOn && heroPhase !== "worlds"} onClick={returnToUniverse} aria-label={language === "en" ? "Back to universe" : "Kembali ke semesta"} title={language === "en" ? "Back to universe" : "Kembali ke semesta"}><ArrowLeft size={16} /><StarGodMark size={20} /><span>{language === "en" ? "Universe" : "Semesta"}</span></motion.button>}
+          <motion.div className="cosmic-frame-wrap" data-view={mapView} data-lenis-prevent={showProjectShowcase ? "true" : undefined} inert={motionOn && heroPhase !== "worlds"} style={{ opacity: motionOn ? mapEntryOpacity : 1, scale: motionOn ? fieldScale : 1, y: motionOn ? fieldY : 0 }}>
             <motion.div className="map-departure" style={{ opacity: motionOn ? mapExitOpacity : 1, y: motionOn ? mapExitY : 0 }}>
             <div className="cosmic-frame" data-view={mapView} data-sector={activeSector} style={{ "--active-world-color": mapView === "universe" ? "#78cdbb" : focusedWorld.color } as CSSProperties}>
               <div className="frame-topline"><span>{t.field.label}</span><span>{mapView === "universe" ? "03 GALAXIES / 10 WORLDS" : `${focusedWorld.name} / ${activeSector === "main" ? activeProject.status[language] : activeSatellite.access[language]}`}</span></div>
@@ -508,7 +511,7 @@ export function PortfolioExperience() {
               <span className="maker-core-orbit-dot maker-core-orbit-dot--two" aria-hidden="true" />
               <div className="maker-core-portrait" aria-hidden="true">
                 <span className="maker-core-portrait-grid" />
-                <span className="maker-core-mark"><Asterisk size={25} /></span>
+                <span className="maker-core-mark"><StarGodMark size={30} /></span>
                 <span className="maker-core-portrait-scan" />
                 <small>MAKER SIGNAL / {String(activeProject.stack.length).padStart(2, "0")}</small>
               </div>
@@ -545,7 +548,7 @@ export function PortfolioExperience() {
 
       <section ref={contactRef} className="contact-section" id="contact" aria-labelledby="contact-title"><div className="content-section contact-content"><div><p className="section-kicker section-kicker-dark">Make the next useful thing</p><h2 id="contact-title">{t.contact.title}</h2></div><div className="contact-copy"><p>{t.contact.body}</p><div className="contact-actions"><a className="button button-bright" href="https://wa.me/6289513559554" target="_blank" rel="noreferrer"><MessageCircle size={18} /> WhatsApp <ArrowUpRight size={16} /></a><a className="button button-outline" href="mailto:henrynugraha1210@gmail.com"><Mail size={18} /> Email <ArrowUpRight size={16} /></a></div><div className="social-links"><a href="https://github.com/nugrahahenry" target="_blank" rel="noreferrer"><Github size={19} /> GitHub</a><a href="https://www.linkedin.com/in/nugrahahenry/" target="_blank" rel="noreferrer"><Linkedin size={19} /> LinkedIn</a><a href="https://instagram.com/hnry.dev" target="_blank" rel="noreferrer"><Instagram size={19} /> @hnry.dev</a></div></div></div></section>
 
-      <footer className="site-footer"><a className="brand" href="#top"><span className="brand-mark"><Asterisk size={18} /></span><span>StarGod</span></a><span>{t.footer}</span><span>© 2026</span></footer>
+      <footer className="site-footer"><a className="brand" href="#top"><span className="brand-mark"><StarGodMark /></span><span>StarGod</span></a><span>{t.footer}</span><span>© 2026</span></footer>
     </main>
     </MotionConfig>
   );

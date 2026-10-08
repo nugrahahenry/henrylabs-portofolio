@@ -156,12 +156,12 @@ test("dust spirals only inward and terminates at the actual horizon center", () 
   }
   const material = gravityMaterial(target, .027, false, true);
   assert.match(material.vertexShader, /horizonFade/);
-  assert.doesNotMatch(material.vertexShader, /- uTime \*|travel \* \.2/);
+  assert.doesNotMatch(material.vertexShader, /- uTime \*|travel \* \.2\b/);
   assert.match(material.vertexShader, /smoothstep\(0\.0, \.10, phase\)/);
   material.dispose();
 });
 
-test("upper dust remains visible until horizon absorption instead of curling past the right edge", () => {
+test("all dust lanes circle through multiple horizon quadrants while contracting", () => {
   for (const [width, height] of [[1440, 900], [390, 844], [360, 800], [844, 390]]) {
     const camera = new THREE.PerspectiveCamera(44, width / height, .1, 100);
     camera.position.z = 6.8;
@@ -170,25 +170,30 @@ test("upper dust remains visible until horizon absorption instead of curling pas
     target.multiplyScalar((-4.8 - camera.position.z) / target.z).add(camera.position);
     const viewHeight = 2 * Math.tan(THREE.MathUtils.degToRad(22)) * 11.6;
     const horizon = viewHeight * Math.min(width * .95, height * .8) / height * .5;
+    let paintedCandidates = 0;
+    const quadrants = new Set();
     for (let i = 0; i < FEEDING_DUST_COUNT; i++) {
-      if (i % 4 >= 2) continue;
       const normalized = dustStreamSource(i);
       const source = new THREE.Vector3(normalized.x, normalized.y, .5).applyMatrix4(camera.projectionMatrixInverse);
       source.multiplyScalar(normalized.z / source.z).applyMatrix4(camera.matrixWorld);
       let distance = Infinity;
       for (let step = 1; step <= 90; step++) {
-        const point = infallPoint(source, target, step / 100, ((i + .5) * .618033989) % 1, new THREE.Vector3(), true);
+        const point = infallPoint(source, target, step / 100, ((i + .5) * .618033989) % 1);
         const current = point.distanceTo(target);
-        assert.ok(current < distance, "the upper stream must always contract");
+        assert.ok(current < distance, "orbital movement must not fling dust outward");
         distance = current;
         if (current < horizon * 1.2) continue;
+        const offset = point.clone().sub(target);
+        quadrants.add(Math.floor((Math.atan2(offset.y, offset.x) + Math.PI) / (Math.PI / 2)) % 4);
         point.project(camera);
-        assert.ok(Math.abs(point.x) <= 1.02 && Math.abs(point.y) <= 1.02, `upper dust escaped before absorption at ${width}x${height}`);
+        if (Math.abs(point.x) < .98 && Math.abs(point.y) < .98) paintedCandidates++;
       }
     }
+    assert.equal(quadrants.size, 4, "the paths must wrap around all sides, including the cropped disk");
+    assert.ok(paintedCandidates > 200, `spiral paths must retain a visible stream at ${width}x${height}`);
   }
   const material = gravityMaterial(new THREE.Vector3(), 0, true, true);
-  assert.match(material.vertexShader, /clamp\(startAngle - 1\.72, 0\.0, \.55\)/);
+  assert.match(material.vertexShader, /6\.2831853 \* \(1\.15 \+ seed \* \.35\)/);
   assert.match(material.vertexShader, /phase - aTail \* \.014/);
   assert.match(material.vertexShader, /smoothstep\(\.78, \.96, phase \* uTravelScale\)/);
   material.dispose();
@@ -401,7 +406,7 @@ test("feeding grains and wisps can retrace their cached spiral without reversing
 test("the bounded feeding stream includes visible upper, side and lower sources at every aspect ratio", () => {
   assert.equal(FEEDING_DUST_COUNT, 240);
   const sources = Array.from({ length: FEEDING_DUST_COUNT }, (_, i) => dustStreamSource(i));
-  assert.equal(sources.filter((_, i) => i % 4 < 2).length, 120);
+  for (let lane = 0; lane < 4; lane++) assert.equal(sources.filter((_, i) => i % 4 === lane).length, 60);
   for (const aspect of [1440 / 900, 390 / 844, 844 / 390]) {
     const camera = new THREE.PerspectiveCamera(44, aspect, .1, 100);
     camera.position.set(.3, -.1, 6.4);
@@ -413,7 +418,10 @@ test("the bounded feeding stream includes visible upper, side and lower sources 
       ray.multiplyScalar(source.z / ray.z).applyMatrix4(camera.matrixWorld).project(camera);
       assert.ok(Math.abs(ray.x - source.x) < 1e-10 && Math.abs(ray.y - source.y) < 1e-10);
       assert.ok(Math.abs(ray.x) < 1 && Math.abs(ray.y) < 1, "sources must start inside the visible sky");
-      if (i % 4 < 2) assert.ok(ray.y > .63, "half of the pool must enter from the upper sky");
+      if (i % 4 === 0) assert.ok(ray.y > .63);
+      if (i % 4 === 1) assert.ok(ray.x < -.85);
+      if (i % 4 === 2) assert.ok(ray.y < -.73);
+      if (i % 4 === 3) assert.ok(ray.x > .63);
     }
   }
   const material = gravityMaterial(new THREE.Vector3(), .027, false, true);

@@ -26,6 +26,8 @@ try {
     await expect(intro).toBeVisible();
     await expect(intro).toContainText("StarGod");
     await expect(intro).not.toContainText("I build things");
+    assert.equal(await intro.locator(".stargod-mark").evaluate(image => image.complete && image.naturalWidth > 0), true, "the authored StarGod mark must decode before reveal");
+    await page.screenshot({ path: `test-results/${viewport.width}-stargod-entry.png` });
     if (viewport.width === 1440) await page.getByRole("button", { name: "Skip intro" }).click();
     else await page.clock.runFor(1600);
     const bounds = await page.locator(".arrival-content").boundingBox();

@@ -81,9 +81,10 @@ try {
     await expect(background).toHaveAttribute("data-visitor-capacity", "5");
     await expect(background).toHaveAttribute("data-bright-stars", "18");
     await expect(background).toHaveAttribute("data-dust-flow", "inward");
-    await expect(background).toHaveAttribute("data-dust-sources", "top,left,bottom");
+    await expect(background).toHaveAttribute("data-dust-sources", "top,left,bottom,right");
+    await expect(background).toHaveAttribute("data-dust-motion", "orbital-accretion");
     await expect(background).toHaveAttribute("data-feeding-dust-count", "240");
-    await expect(background).toHaveAttribute("data-upper-dust-streaks", "60");
+    await expect(background).toHaveAttribute("data-dust-streaks", "60");
     await expect(background).toHaveAttribute("data-distant-star-pull", "0.000");
     await expect(background).toHaveAttribute("data-star-twinkle", "on");
     await expect(background).toHaveAttribute("data-distant-stars", viewport.width < 700 ? "1000" : "1800");

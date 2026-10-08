@@ -5,12 +5,14 @@ import { chromium, expect } from "@playwright/test";
 const url = process.env.PORTFOLIO_URL ?? "http://localhost:3002/";
 const browser = await chromium.launch({ headless: true, executablePath: process.env.CHROME_PATH ?? "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe" });
 
-async function upperDustPixel(page) {
-  return page.locator(".worldline-backdrop canvas").evaluate((canvas) => {
+async function dustPixel(page, index) {
+  return page.locator(".worldline-backdrop canvas").evaluate((canvas, index) => {
     const gl = canvas.getContext("webgl2");
     const host = canvas.parentElement;
-    const x = Math.round(Number(host.dataset.upperDustX) / host.clientWidth * gl.drawingBufferWidth);
-    const y = Math.round((1 - Number(host.dataset.upperDustY) / host.clientHeight) * gl.drawingBufferHeight);
+    const probe = JSON.parse(host.dataset.dustProbes).find(probe => probe.index === index);
+    const x = Math.round(probe.x / host.clientWidth * gl.drawingBufferWidth);
+    const y = Math.round((1 - probe.y / host.clientHeight) * gl.drawingBufferHeight);
+    if (x < 5 || x > gl.drawingBufferWidth - 5 || y < 5 || y > gl.drawingBufferHeight - 5) return 0;
     const pixels = new Uint8Array(9 * 9 * 4);
     gl.readPixels(x - 4, y - 4, 9, 9, gl.RGBA, gl.UNSIGNED_BYTE, pixels);
     let center = 0, surrounding = 0, count = 0;
@@ -21,12 +23,23 @@ async function upperDustPixel(page) {
       else { surrounding += light; count++; }
     }
     return center - surrounding / count;
-  });
+  }, index);
+}
+
+async function paintedDust(page) {
+  const probes = await page.locator(".worldline-backdrop").evaluate(host => JSON.parse(host.dataset.dustProbes).filter(probe => probe.x > 12 && probe.x < innerWidth - 12 && probe.y > 12 && probe.y < innerHeight - 12 && probe.travel > .07 && probe.travel < .7));
+  let best = { light: 0, point: null };
+  for (const point of probes) {
+    const light = await dustPixel(page, point.index);
+    if (light > best.light) best = { light, point };
+  }
+  return best;
 }
 
 try {
   mkdirSync("test-results", { recursive: true });
-  for (const viewport of [{ width: 1440, height: 900 }, { width: 390, height: 844 }]) {
+  const viewports = [{ width: 1440, height: 900 }, { width: 390, height: 844 }];
+  for (const viewport of process.argv.includes("--desktop") ? viewports.slice(0, 1) : process.argv.includes("--phone") ? viewports.slice(1) : viewports) {
     const page = await browser.newPage({ viewport });
     const errors = [];
     page.on("pageerror", (error) => errors.push(error.message));
@@ -74,15 +87,15 @@ try {
     await expect(field).toHaveAttribute("data-visitor-opacity", "0.000");
     await expect(field).toHaveAttribute("data-feeding-dust", "true");
     await expect(field).toHaveAttribute("data-distant-star-pull", "0.000");
-    await expect(field).toHaveAttribute("data-upper-dust-streaks", "60");
-    const upperY = Number(await field.getAttribute("data-upper-dust-y"));
-    const upperX = Number(await field.getAttribute("data-upper-dust-x"));
-    assert.ok(upperY > 0 && upperY < viewport.height * .42 && upperX > 0 && upperX < viewport.width, "the upper stream must actually occupy the upper viewport");
-    assert.ok(await upperDustPixel(page) > 8, "an upper dust grain must paint a local highlight, not just expose coordinates");
+    await expect(field).toHaveAttribute("data-dust-streaks", "60");
+    await expect(field).toHaveAttribute("data-dust-motion", "orbital-accretion");
+    const firstDust = await paintedDust(page);
+    assert.ok(firstDust.light > 8, "the orbital stream must paint a local grain, not just expose coordinates");
     await page.screenshot({ path: `test-results/${viewport.width}-black-hole-rest.png` });
     await advanceTo(33.5);
-    assert.ok(Number(await field.getAttribute("data-upper-dust-y")) > upperY + 5, "the upper dust grain must visibly move downward toward the horizon");
-    assert.ok(await upperDustPixel(page) > 8, "the moving upper grain must remain painted");
+    const nextDust = JSON.parse(await field.getAttribute("data-dust-probes")).find(probe => probe.index === firstDust.point.index);
+    assert.ok(Math.hypot(nextDust.x - firstDust.point.x, nextDust.y - firstDust.point.y) > 5, "the sampled grain must actually move along its spiral");
+    assert.ok((await paintedDust(page)).light > 8, "the rotating stream must remain painted while individual paths pass outside the cropped viewport");
     await advanceTo(61);
     await expect(field).toHaveAttribute("data-gravity-cycle", "0");
     await expect(field).toHaveAttribute("data-gravity-phase", "rest");
@@ -109,20 +122,23 @@ try {
     const count = "5";
     await expect(field).toHaveAttribute("data-gravity-phase", "rest");
     async function retreatTo(value) {
-      await page.locator("#contact").evaluate((contact, p) => {
+      const scrollTolerance = await page.locator("#contact").evaluate((contact, p) => {
         const rect = contact.getBoundingClientRect();
         const start = scrollY + rect.top - innerHeight * .65;
         const end = scrollY + rect.bottom - innerHeight;
         window.scrollTo({ top: start + (end - start) * p + (p === 0 ? -2 : p === 1 ? 2 : 0), behavior: "instant" });
+        return 1 / Math.max(1, end - start) + .001;
       }, value);
       for (let i = 0; i < 80; i++) {
         await page.clock.fastForward(250);
         const p = Number(await field.getAttribute("data-closing-presence"));
-        const settled = value === 0 || value === 1 ? p === value : Math.abs(p - value) < .002;
-        if (settled && Math.abs(Number(await field.getAttribute("data-contact-progress")) - value) < .003) return;
+        const measured = Number(await field.getAttribute("data-contact-progress"));
+        const settled = value === 0 || value === 1 ? p === value : Math.abs(p - measured) < .002;
+        if (settled && Math.abs(measured - value) < scrollTolerance) return;
         await new Promise((resolve) => setTimeout(resolve, 10));
       }
-      assert.fail(`closing return did not settle at ${value}`);
+      const state = await field.evaluate(host => ({ progress: host.dataset.contactProgress, presence: host.dataset.closingPresence, scroll: scrollY, height: document.querySelector("#contact").offsetHeight, viewport: innerHeight }));
+      assert.fail(`closing return did not settle at ${value}: ${JSON.stringify(state)}`);
     }
     await retreatTo(.7);
     await expect(field).toHaveAttribute("data-gravity-phase", "return");
@@ -130,16 +146,17 @@ try {
     await expect(field).toHaveAttribute("data-gravity-cycle", cycle);
     await expect(field).toHaveAttribute("data-visitor-count", count);
     const frozenAge = await field.getAttribute("data-gravity-age");
-    const returningY = Number(await field.getAttribute("data-upper-dust-y"));
+    const returnDust = await paintedDust(page);
     assert.ok(Number(await field.getAttribute("data-pull")) < .6);
     assert.ok(Number(await field.getAttribute("data-visible-visitors")) > 0, "the same absorbed orbit must actually re-emerge");
-    assert.ok(await upperDustPixel(page) > 3, "a returning upper grain must remain painted");
+    assert.ok(returnDust.light > 3, "returning orbital grains must remain painted");
     await expect(field).toHaveAttribute("data-hole-growth", "1.000");
     await page.screenshot({ path: `test-results/${viewport.width}-black-hole-returning.png` });
     await retreatTo(.58);
     assert.equal(await field.getAttribute("data-gravity-age"), frozenAge, "scroll reversal must not advance into another visitor cycle");
-    assert.ok(Number(await field.getAttribute("data-upper-dust-y")) < returningY - 5, "upper dust must actually retrace upward to its source");
-    assert.ok(await upperDustPixel(page) > 3, "the reverse-moving upper grain must still paint pixels");
+    const retreatDust = JSON.parse(await field.getAttribute("data-dust-probes")).find(probe => probe.index === returnDust.point.index);
+    assert.ok(retreatDust.travel < returnDust.point.travel, "scroll reversal must retrace the same grain's spiral toward its source");
+    assert.ok((await paintedDust(page)).light > 3, "the reverse-moving stream must still paint pixels");
     const returnedProgress = Number(await field.getAttribute("data-visitor-progress"));
     await retreatTo(1);
     await expect(field).toHaveAttribute("data-gravity-cycle", cycle);

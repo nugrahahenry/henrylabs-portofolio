@@ -1,6 +1,6 @@
 <div align="center">
 
-# StarGod Portfolio v0.83.0
+# StarGod Portfolio v0.84.0
 
 **I build things I actually see.**
 
@@ -23,9 +23,9 @@ Designed and developed by **Henry Nugraha**, a product-minded developer in Indon
 
 Three galaxies. Ten project worlds. One maker.
 
-StarGod is the working name of the universe, drawn from Henry's longtime alias. **HenryLabs** remains its personal-project galaxy.
+StarGod is the working name of the universe, drawn from Henry's longtime alias. **HenryLabs** remains its personal-project galaxy. An authored stellar-orbit mark connects the header, quiet entrance, maker signature, and footer.
 
-Enter a living map of **HenryLabs**, **University**, and **Client Work**. Choose a galaxy, follow a curved camera approach into its planets, and explore the work behind each identity. Returning retraces that journey without rebuilding the scene. Technologies orbit the projects they belong to; an optional reading panel brings the context, ownership, and evidence into view.
+Enter a living map of **HenryLabs**, **University**, and **Client Work**. Choose a galaxy, follow a curved camera approach into its planets, and explore the work behind each identity. Returning retraces that journey without rebuilding the scene. The opening headline stays free of project overlays when scrolling back up; Explore the universe reopens the three-galaxy overview. Technologies orbit the projects they belong to; an optional reading panel brings the context, ownership, and evidence into view.
 
 Beyond the map: one preview following the selected project, Henry's working method, a technology orbit, and five featured original credentials. The full project and certificate lists live in their own libraries, not repeated down Home. A continuous Three.js universe connects the journey, from distant stars and nebulae to a reversible black-hole encounter at Contact. Natural background planets remain in orbit throughout the reading sections, moving into a smaller peripheral composition rather than disappearing. A metallic UFO and its pursuing scout add a small story along the way: banking through real depth, missed tracer shots, a luminous wormhole, the UFO entering first, and the scout following. After the portal closes, thirty quiet seconds pass before the next encounter. The scene pauses outside its clear flight areas and respects reduced motion.
 
@@ -34,6 +34,8 @@ Prefer a closer read? **Projects** opens a searchable catalog of all ten worlds,
 **Credentials** is a separate library of all 26 original records. Filter by issuer or type, search a title, and open a full-size document with zoom and available source PDFs. A small preview remains visible while the original loads, with a retry option on failure. English/Indonesian and motion choices travel with the internal links.
 
 English is the default, with Indonesian available throughout the main experience. Keyboard navigation, touch controls, reduced motion, and a WebGL fallback keep the work accessible.
+
+At Contact, feeding grains and wisps arrive from above, below, left, and right. Their winding paths contract through several sides of the black-hole horizon rather than streaming toward one visible entry point. Scroll back to retrace the encounter; distant stars stay beyond the pull. This is an authored visual interpretation, not a scientific gravity simulation.
 
 The animation above is a short recording of the actual portfolio, not a concept render. It focuses on the orbit experience and predates the StarGod naming and dedicated reading libraries. The live experience is interactive; the README is a preview. Public hosting is still deferred.
 

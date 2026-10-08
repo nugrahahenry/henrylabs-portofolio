@@ -129,7 +129,7 @@ test("portfolio surface keeps its core experience contracts", () => {
   assert.match(canvas, /createGalaxySystem/);
   assert.match(canvas, /galaxy-label/);
   assert.match(canvas, /viewBlend/);
-  assert.match(read("components/gravity-field.ts"), /pow\(travel, 1\.7\)/);
+  assert.match(read("components/gravity-field.ts"), /travel \* \(\.75 \+ travel \* \.25\) \* turn/);
   assert.match(backdrop, /gravityMaterial/);
   assert.match(canvas, /satelliteTexture/);
   assert.match(canvas, /renderer\.forceContextLoss/);

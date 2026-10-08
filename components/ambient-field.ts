@@ -55,7 +55,8 @@ export function dustStreamSource(index: number, out = new THREE.Vector3()) {
   const u = spread(index, .754877666), v = spread(index, .569840296);
   const lane = index % 4;
   const depth = -(11 + spread(index, .438579) * 3);
-  if (lane < 2) return out.set(-.96 + u * 1.6, .64 + v * .32, depth);
-  if (lane === 2) return out.set(-.98 + u * .12, -.5 + v * 1.2, depth);
-  return out.set(-.96 + u * 1.3, -.96 + v * .22, depth);
+  if (lane === 0) return out.set(-.96 + u * 1.6, .64 + v * .32, depth);
+  if (lane === 1) return out.set(-.98 + u * .12, -.5 + v * 1.2, depth);
+  if (lane === 2) return out.set(-.96 + u * 1.3, -.96 + v * .22, depth);
+  return out.set(.64 + u * .32, .12 + v * .8, depth);
 }

@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import type { MotionValue } from "motion/react";
-import { Minus, Plus, RotateCcw } from "lucide-react";
+import { ArrowUpRight, Minus, Plus, RotateCcw } from "lucide-react";
 import * as THREE from "three";
 import { createGalaxySystem, galaxies, type GalaxyId } from "./galaxy-system";
 import { advanceGalaxyFlight, sampleGalaxyFlight } from "./galaxy-flight";
@@ -405,6 +405,7 @@ export function CosmicCanvas({ activeId, onSelect, onPrevious, onNext, motionOn,
     let pitch = 0;
     let viewBlend = state.current.view === "universe" ? 0 : 1;
     let universeAngle = 0;
+    const galaxyEmphasis = [0, 0, 0];
     const flightPose = { pan: 0, approach: 0, orbitScale: 0, selectedVisibility: 1, otherVisibility: 1, arc: 0 };
     const mapFrame = host.closest<HTMLElement>(".cosmic-frame");
     const cameraTarget = new THREE.Vector3();
@@ -466,7 +467,7 @@ export function CosmicCanvas({ activeId, onSelect, onPrevious, onNext, motionOn,
       Object.entries(sectorPlanets).forEach(([id, family]) => family.forEach(({ group }) => { group.visible = id === sector; }));
       universe.clusters.forEach(({ id, disk, material, nucleus, cloud, dustMaterial }, index) => {
         const highlighted = galaxyHover.current === index || galaxyLabels.current[index] === document.activeElement;
-        const emphasis = highlighted ? 1 : 0;
+        const emphasis = galaxyEmphasis[index] = state.current.motionOn ? THREE.MathUtils.damp(galaxyEmphasis[index], highlighted ? 1 : 0, 8, dt) : highlighted ? 1 : 0;
         disk.rotation.y = -.15 + index * .23 + elapsed * (.018 + index * .005);
         const visibility = id === sector ? flightPose.selectedVisibility : flightPose.otherVisibility;
         material.opacity = (id === sector ? .07 + visibility * .88 : .85 * visibility) + emphasis * .12 * visibility;
@@ -777,7 +778,7 @@ export function CosmicCanvas({ activeId, onSelect, onPrevious, onNext, motionOn,
       <button type="button" onClick={() => setViewZoom(0)} aria-label="Reset planet zoom" title="Reset zoom"><RotateCcw size={13} /></button>
     </div>}
     {view === "universe" && galaxies.map((galaxy, index) => <button key={galaxy.id} ref={(element) => { galaxyLabels.current[index] = element; }} type="button" className="galaxy-label" style={{ "--galaxy-color": galaxy.color } as React.CSSProperties} onFocus={() => wakeRef.current()} onBlur={() => wakeRef.current()} onPointerEnter={() => { galaxyHover.current = index; wakeRef.current(); }} onPointerLeave={() => { galaxyHover.current = -1; wakeRef.current(); }} onClick={() => { galaxyHover.current = -1; setViewZoom(0); onGalaxySelect(galaxy.id); }} aria-label={`${language === "en" ? "Explore" : "Jelajahi"} ${galaxy.name[language]} ${language === "en" ? "galaxy" : "galaksi"}`}>
-      <span>{galaxy.name[language]}</span><small>{String(galaxy.count).padStart(2, "0")} {language === "en" ? "worlds" : "dunia"}</small>
+      <span className="galaxy-label-name">{galaxy.name[language]}<ArrowUpRight size={13} aria-hidden="true" /></span><small>{String(galaxy.count).padStart(2, "0")} {language === "en" ? "worlds" : "dunia"}</small>
     </button>)}
     {view === "orbit" && worlds.map((world, index) => <button
       ref={(element) => { labels.current[index] = element; }}
