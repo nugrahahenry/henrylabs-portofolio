@@ -85,8 +85,8 @@ The portfolio includes **26 original certificates, badges, and participation rec
       <strong>Gemini Certified Educator</strong><br />Google for Education
     </td>
     <td width="50%" align="center">
-      <a href="public/assets/certificates/previews/dicoding-oop.png"><img src="public/assets/readme/dicoding-oop.webp" alt="Henry's original Dicoding object-oriented programming course completion record. Open the full-size image." width="430" /></a><br />
-      <strong>Object-Oriented Programming</strong><br />Dicoding course completion
+      <a href="public/assets/certificates/previews/dicoding-oop.png"><img src="public/assets/readme/dicoding-oop.webp" alt="Henry's original Dicoding Belajar Prinsip Pemrograman SOLID course completion record. Open the full-size image." width="430" /></a><br />
+      <strong>Belajar Prinsip Pemrograman SOLID</strong><br />Dicoding course completion
     </td>
   </tr>
 </table>
