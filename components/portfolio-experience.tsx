@@ -366,7 +366,7 @@ export function PortfolioExperience() {
 
   return (
     <MotionConfig reducedMotion={motionOn ? "never" : "always"} transition={{ duration: motionOn ? 0.55 : 0, ease: [0.16, 1, 0.3, 1] }}>
-    <main className="site-shell" data-motion={motionOn ? "on" : "off"}>
+    <main className="site-shell" id="main-content" tabIndex={-1} data-motion={motionOn ? "on" : "off"}>
       <SmoothScroll enabled={motionOn} />
       <WorldlineBackdrop activeId={activeProject.id} motionOn={motionOn} progress={worldlineProgress} contactProgress={contactProgress} contactVisible={contactVisible} mapActive={heroPhase === "worlds"} />
       <div className={cx("intro-loader", "arrival-intro", introDone && "intro-loader--done")} aria-hidden={introDone} inert={introDone}>

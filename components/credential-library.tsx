@@ -18,7 +18,7 @@ export function CredentialLibrary() {
   const results = certificates.filter(record => (kind === "All" || record.kind === kind) && (!issuer || record.issuer === issuer) && terms.every(term => `${record.title} ${record.issuer} ${record.kind}`.toLocaleLowerCase().includes(term)));
   const active = certificates.find(record => record.id === query.get("record")) ?? null;
   const clear = () => updateQuery({ q: null, kind: null, issuer: null, record: null });
-  return <main className="library-page credential-library" id="main-content">
+  return <main className="library-page credential-library" id="main-content" tabIndex={-1}>
     <div className="library-heading"><h1>{isEn ? "Credentials." : "Jejak belajar."}</h1><p>{isEn ? "26 learning records. Certifications, coursework, community, and the steps in between." : "26 jejak belajar. Sertifikasi, kelas, komunitas, dan perjalanan di antaranya."}</p></div>
     <p className="credential-public-note"><ShieldCheck size={17} />{isEn ? "Public copies are watermarked. Unmarked masters are kept privately." : "Salinan publik ber-watermark. Master tanpa watermark disimpan privat."}</p>
     <div className="library-controls credential-filters"><label className="library-search"><Search size={18} /><span className="sr-only">{isEn ? "Search credentials" : "Cari kredensial"}</span><input type="search" value={search} placeholder={isEn ? "Title or issuer" : "Judul atau penerbit"} onChange={event => updateQuery({ q: event.target.value || null }, true)} /></label><label>{isEn ? "Type" : "Jenis"}<select value={kind} onChange={event => updateQuery({ kind: event.target.value === "All" ? null : event.target.value })}>{certificateFilters.map(item => <option value={item} key={item}>{item === "All" ? (isEn ? "All types" : "Semua jenis") : item}</option>)}</select></label><label>{isEn ? "Issuer" : "Penerbit"}<select value={issuer} onChange={event => updateQuery({ issuer: event.target.value || null })}><option value="">{isEn ? "All issuers" : "Semua penerbit"}</option>{issuers.map(item => <option key={item}>{item}</option>)}</select></label></div>
@@ -28,7 +28,7 @@ export function CredentialLibrary() {
       <div className="credential-record-copy"><span className="record-status">{record.issuer} / {record.kind}</span><h2>{record.title}</h2><div className="credential-record-foot"><span>{record.date === "Date not shown" && !isEn ? "Tanggal tidak tercantum" : record.date}</span>{record.source && <a href={record.source} target="_blank" rel="noreferrer">{isEn ? "PDF preview" : "Preview PDF"}<ArrowUpRight size={14} /></a>}</div></div>
     </article>)}</div>
     {results.length === 0 && <div className="library-empty"><Search size={28} /><h2>{isEn ? "No matching records." : "Belum ada dokumen yang cocok."}</h2><button className="library-text-link" type="button" onClick={clear}><X size={16} />{isEn ? "Clear filters" : "Hapus filter"}</button></div>}
-    <CredentialViewer record={active} onClose={() => updateQuery({ record: null }, true)} />
+    <CredentialViewer record={active} collection={results} onSelect={record => updateQuery({ record: record.id }, true)} onClose={() => updateQuery({ record: null }, true)} />
     <LibraryFooter />
   </main>;
 }

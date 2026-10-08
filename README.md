@@ -1,6 +1,6 @@
 <div align="center">
 
-# StarGod Portfolio v0.88.0
+# StarGod Portfolio v0.89.0
 
 **I build things I actually see.**
 
@@ -33,9 +33,9 @@ Twenty-five technologies surround the portrait as lit 3D satellites. Scroll thro
 
 A continuous Three.js universe connects the journey, from distant stars and nebulae to a reversible black-hole encounter at Contact. Natural background planets remain in orbit throughout the reading sections, moving into a smaller peripheral composition rather than disappearing. A metallic UFO and its pursuing scout add a small story along the way: banking through real depth, missed tracer shots, a luminous wormhole, the UFO entering first, and the scout following. After the portal closes, thirty quiet seconds pass before the next encounter. The scene pauses outside its clear flight areas and respects reduced motion.
 
-Prefer a closer read? **Projects** opens a searchable catalog of all ten worlds, filtered by HenryLabs, University, or Client Work. Each planet and catalog record leads to the same project detail, with ownership, workflow, stack, and honest access boundaries. Return to the universe to continue from that planet; its reading panel stays closed until requested.
+Prefer a closer read? **Projects** opens a searchable catalog of all ten worlds, filtered by HenryLabs, University, or Client Work. Each planet and catalog record leads to the same project detail, with ownership, workflow, stack, and honest access boundaries. Continue to the previous or next project within the same galaxy or filtered selection, or return to the universe from that planet; its reading panel stays closed until requested.
 
-**Credentials** is a separate library of all 26 learning records. Filter by issuer or type, search a title, and open a full-size watermarked preview with zoom and available PDF previews. A small preview remains visible while the full-size image loads, with a retry option on failure. English/Indonesian and motion choices travel with the internal links.
+**Credentials** is a separate library of all 26 learning records. Filter by issuer or type, search a title, and open a full-size watermarked preview with zoom and available PDF previews. Browse the current selection without closing the viewer; Home keeps its gallery limited to the five featured records. Arrow keys move between documents at fitted size and pan the image when zoomed. A small preview remains visible while the full-size image loads, with a retry option on failure. English/Indonesian and motion choices travel with the internal links.
 
 English is the default, with Indonesian available throughout the main experience. Keyboard navigation, touch controls, reduced motion, and a WebGL fallback keep the work accessible.
 

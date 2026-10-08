@@ -101,7 +101,7 @@ export function MakerChapter() {
         {featured.map((certificate, index) => <Evidence key={certificate.id} record={certificate} index={index} spatial={spatial} language={language} progress={scrollYProgress} onOpen={() => setRecord(certificate)} />)}
       </div>
     </div>
-    <CredentialViewer record={record} onClose={() => setRecord(null)} />
+    <CredentialViewer record={record} collection={featured} onSelect={setRecord} onClose={() => setRecord(null)} />
   </section>;
 }
 

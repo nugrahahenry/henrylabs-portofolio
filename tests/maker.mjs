@@ -120,6 +120,12 @@ try {
     await card.click();
     await expect(page.locator(".credential-dialog")).toBeVisible();
     await expect(page.locator(".credential-dialog-stage")).toHaveAttribute("data-image-state", "ready");
+    await expect(page.locator(".credential-dialog-count")).toHaveText("01 / 05");
+    await page.getByRole("button", { name: "Next certificate", exact: true }).click();
+    await expect(page.locator(".credential-dialog-count")).toHaveText("02 / 05");
+    await expect(page.locator(".credential-dialog-stage")).toHaveAttribute("data-image-state", "ready");
+    await page.keyboard.press("ArrowLeft");
+    await expect(page.locator(".credential-dialog-count")).toHaveText("01 / 05");
     await page.keyboard.press("Escape");
     await expect(card).toBeFocused();
     if (wide) { await move(page, .06); await expect(page.locator(".maker-chapter")).toHaveAttribute("data-proof", "false"); }

@@ -1,5 +1,13 @@
 # Changelog
 
+## StarGod Portfolio v0.89.0 - 2026-10-09
+
+- Browse certificates inside one persistent viewer, with previous/next controls, keyboard navigation, a collection counter, and per-document zoom/loading reset.
+- Keep library browsing scoped to current filters and Home browsing scoped to five featured records. Record changes replace URL state without filling browser history.
+- Continue between project details within the originating galaxy or filtered catalog, preserving the return path and language/motion preferences.
+- Align tablet credential filters, give short landscape previews more image space, and refine mobile navigation dismissal and current-page feedback.
+- Add a keyboard skip-to-content link across Home and reading pages. Preserve all public watermarks, project facts, and existing 3D scenes.
+
 ## StarGod Portfolio v0.88.0 - 2026-10-09
 
 - Unify camera/reveal scroll timing and give Universe a stable exploration window with consistent entry and return positions.
