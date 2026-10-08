@@ -1,15 +1,21 @@
 <div align="center">
 
-<img src="public/assets/background/cosmic-nebula.png" alt="A luminous nebula across the HenryLabs universe" width="960" />
-
 # HenryLabs Portfolio v0.79.0
 
 **I build things I actually see.**
+
+<picture>
+  <source media="(prefers-reduced-motion: reduce)" srcset="public/assets/readme/universe-poster.webp" />
+  <source type="image/webp" srcset="public/assets/readme/living-universe.webp" />
+  <img src="public/assets/readme/living-universe.gif" alt="The real HenryLabs portfolio: three galaxies, a flight into HenryLabs, Catmoji and Nalira with orbiting technologies, then a return to the universe." width="960" />
+</picture>
 
 A personal universe of products, client systems, and things built while learning.
 Designed and developed by **Henry Nugraha**, a product-minded developer in Indonesia.
 
 [The Worlds](#the-worlds) · [University](#university) · [Client Work](#client-work) · [Credentials](#credentials) · [Contact](#contact)
+
+[View the still image](public/assets/readme/universe-poster.webp)
 
 </div>
 
@@ -23,7 +29,18 @@ Beyond the map: Henry's working method, a technology orbit, and original credent
 
 English is the default, with Indonesian available throughout the main experience. Keyboard navigation, touch controls, reduced motion, and a WebGL fallback keep the work accessible.
 
+The animation above is a short recording of the actual portfolio, not a concept render. The live experience is interactive; the README is a preview. Public hosting is still deferred.
+
 ## The Worlds
+
+<details>
+<summary><strong>A closer look at the project orbits</strong></summary>
+
+<img src="public/assets/readme/project-orbits.webp" alt="Catmoji at the center of the HenryLabs orbit, surrounded by Nalira, Canox, Hengs, Polara, and their technology satellites. The reading panel is closed." width="960" />
+
+Original project marks become transparent three-dimensional identities. Select a world to bring it into focus, follow its technology satellites, and open its context when you want to read.
+
+</details>
 
 | World | What I Built | Explore |
 | :-- | :-- | :-- |
@@ -55,6 +72,25 @@ Three projects I built end to end, from the business flow to the interface and s
 
 The portfolio includes **26 original certificates, badges, and participation records**, with five featured records shown first. **Google Student Ambassador, Class of 2026** leads the selection, alongside Google/Gemini learning, Dicoding coursework, competitions, and workshops.
 
+<p align="center">
+  <a href="public/assets/certificates/source/google-student-ambassador.pdf">
+    <img src="public/assets/readme/google-student-ambassador.webp" alt="Original Google Student Ambassador certificate for Henry Nugraha, Class of 2026. Open the source PDF." width="720" />
+  </a>
+</p>
+
+<table>
+  <tr>
+    <td width="50%" align="center">
+      <a href="public/assets/certificates/previews/gemini-certified-educator.png"><img src="public/assets/readme/gemini-certified-educator.webp" alt="Henry's original Gemini Certified Educator record. Open the full-size image." width="430" /></a><br />
+      <strong>Gemini Certified Educator</strong><br />Google for Education
+    </td>
+    <td width="50%" align="center">
+      <a href="public/assets/certificates/previews/dicoding-oop.png"><img src="public/assets/readme/dicoding-oop.webp" alt="Henry's original Dicoding object-oriented programming course completion record. Open the full-size image." width="430" /></a><br />
+      <strong>Object-Oriented Programming</strong><br />Dicoding course completion
+    </td>
+  </tr>
+</table>
+
 Records retain their issuer and type, with full-size previews and source PDFs where available. Course completions, badges, and professional certifications remain distinguishable.
 
 ## Built With
@@ -73,6 +109,22 @@ npm run dev
 Open the local address printed by Next.js. For verification: `npm test`, `npm run typecheck`, and `npm run build`. Browser checks live in `tests/`.
 
 This portfolio is **actively being developed**. Hosting is deferred; the planned personal portrait and dedicated project/credential libraries are not yet part of the shipped interface. The original `henrylabs-useful-worlds.html` remains a legacy prototype.
+
+<details>
+<summary>About the README visuals</summary>
+
+All media is stored in this repository. The animated tour and stills are captured from the running portfolio. Certificate thumbnails are resized from the original public records, linked above; no certificate content is generated or altered. The still image is also supplied for reduced-motion readers.
+
+To refresh the preview after an interface change, start the portfolio on port 3002 and run:
+
+```sh
+node scripts/capture-readme.mjs
+python scripts/encode-readme.py
+```
+
+The capture uses the installed Playwright package and an isolated Chrome instance. Set `PORTFOLIO_URL` or `CHROME_PATH` for a different local address or Chrome executable. Encoding requires Pillow. Raw captures stay in the ignored `test-results/readme-frames/` directory; only the optimized exports in `public/assets/readme/` are published. Animated WebP preserves the nebula colors; GIF is the fallback. Their export budgets are two and six megabytes respectively, and the GIF uses one shared palette to avoid color flicker.
+
+</details>
 
 ## Contact
 
