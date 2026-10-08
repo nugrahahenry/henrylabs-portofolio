@@ -472,9 +472,9 @@ export function CosmicCanvas({ activeId, onSelect, onPrevious, onNext, motionOn,
         const visibility = id === sector ? flightPose.selectedVisibility : flightPose.otherVisibility;
         material.opacity = (id === sector ? .07 + visibility * .88 : .85 * visibility) + emphasis * .12 * visibility;
         nucleus.material.opacity = (.72 + emphasis * .25) * visibility;
-        cloud.material.opacity = (.09 + emphasis * .12) * visibility;
-        dustMaterial.opacity = (.62 + emphasis * .12) * visibility;
-        nucleus.scale.setScalar(THREE.MathUtils.damp(nucleus.scale.x, highlighted ? .4 : .28, 8, dt));
+        cloud.material.opacity = (.025 + emphasis * .02) * visibility;
+        dustMaterial.opacity = (.4 + emphasis * .08) * visibility;
+        nucleus.scale.setScalar(THREE.MathUtils.damp(nucleus.scale.x, highlighted ? .22 : .17, 8, dt));
         galaxyLabels.current[index]?.setAttribute("data-highlighted", String(highlighted));
       });
       if (state.current.motionOn && !dragging && state.current.view === "orbit") angle += dt * .055;

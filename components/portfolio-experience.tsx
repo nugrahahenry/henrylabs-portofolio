@@ -6,11 +6,7 @@ import {
   ArrowDown,
   ArrowLeft,
   ArrowUpRight,
-  Brackets,
   CarFront,
-  ChevronLeft,
-  ChevronRight,
-  Code2,
   FlaskConical,
   Github,
   Instagram,
@@ -21,7 +17,6 @@ import {
   PanelRightOpen,
   ShoppingCart,
   X,
-  Zap,
 } from "lucide-react";
 import { AnimatePresence, MotionConfig, motion, useInView, useMotionValue, useMotionValueEvent, useScroll, useSpring, useTransform } from "motion/react";
 import { CosmicCanvas, type OrbitId, type ProjectId, type SatelliteId, type SatelliteWorld } from "./cosmic-canvas";
@@ -30,12 +25,11 @@ import { WorldlineBackdrop } from "./worldline-backdrop";
 import type { GalaxyId } from "./galaxy-system";
 
 import { projects, academicProjects as academicData, clientProjects as clientData, clientStacks, type Language } from "@/content/projects";
-import { stackGroups, orbitTechNodes } from "@/content/technologies";
-import { certificates } from "@/content/credentials";
+import { orbitTechNodes } from "@/content/technologies";
 import { HomeProjectPreview } from "./home-project-preview";
 import { findWorld } from "@/content/catalog";
 import { SiteLink, useSitePreferences, useQuery, updateQuery } from "./site-preferences";
-import { CredentialViewer } from "./credential-viewer";
+import { MakerChapter } from "./maker-chapter";
 import { StarGodMark } from "./stargod-mark";
 
 const academicProjects = academicData.map((record, index) => ({ ...record, icon: [CarFront, ShoppingCart, FlaskConical][index] }));
@@ -100,7 +94,6 @@ const copy = {
 
 
 
-const techNodes = stackGroups.flatMap((group) => group.items.map(([label, slug, color]) => ({ label, slug, color, projectIds: projects.filter((project) => project.stack.includes(label)).map((project) => project.id as ProjectId) })));
 
 
 
@@ -143,15 +136,6 @@ const satelliteCatalog = { university: universityWorlds, client: clientWorlds };
 
 function cx(...names: Array<string | false | null | undefined>) {
   return names.filter(Boolean).join(" ");
-}
-
-function TechIcon({ label, slug, color }: { label: string; slug: string; color: string }) {
-  const [status, setStatus] = useState("loading");
-  const mark = label === "JavaScript" ? "JS" : label === "Python" ? "PY" : label === "OpenAI" ? "AI" : label === "Next.js" ? "N" : label.slice(0, 3).toUpperCase();
-  return <span className="tech-icon" data-status={status} aria-hidden="true">
-    {status !== "ready" && <span className="tech-icon-fallback">{mark}</span>}
-    {status !== "failed" && <img src={`https://cdn.simpleicons.org/${slug}/${color}`} alt="" loading="lazy" onLoad={() => setStatus("ready")} onError={() => setStatus("failed")} />}
-  </span>;
 }
 
 function ProjectSignature({ project, language, compact = false }: { project: (typeof projects)[number]; language: Language; compact?: boolean }) {
@@ -216,25 +200,17 @@ export function PortfolioExperience() {
   const [activeSector, setActiveSector] = useState<Sector>("main");
   const [mapView, setMapView] = useState<"universe" | "orbit">("universe");
   const [activeSatellites, setActiveSatellites] = useState({ university: "rental" as SatelliteId, client: "yventures" as SatelliteId });
-  const [activeCertificate, setActiveCertificate] = useState<(typeof certificates)[number] | null>(null);
-  const [spotlightIndex, setSpotlightIndex] = useState(0);
   const [introDone, setIntroDone] = useState(false);
-  const [methodStep, setMethodStep] = useState(0);
   const [worldlineStage, setWorldlineStage] = useState<WorldlineStage>("world");
   const [heroPhase, setHeroPhase] = useState("intro");
   const [showProjectShowcase, setShowProjectShowcase] = useState(false);
   const heroRef = useRef<HTMLElement>(null);
   const fieldRef = useRef<HTMLDivElement>(null);
   const workRef = useRef<HTMLElement>(null);
-  const methodRef = useRef<HTMLElement>(null);
-  const stackRef = useRef<HTMLElement>(null);
   const contactRef = useRef<HTMLElement>(null);
-  const stackVisible = useInView(stackRef, { margin: "150px" });
   const contactVisible = useInView(contactRef, { amount: .15 });
   const { scrollYProgress: contactProgress } = useScroll({ target: contactRef, offset: ["start 65%", "end end"] });
-  const { scrollYProgress: methodProgress } = useScroll({ target: methodRef, offset: ["start 85%", "center center"] });
   const { scrollYProgress: worldlineProgress } = useScroll({ target: fieldRef, offset: ["start 72%", "end 30%"] });
-  const methodY = useTransform(methodProgress, [0, 1], [42, 0]);
   const pointerX = useMotionValue(-100);
   const pointerY = useMotionValue(-100);
   const cursorX = useSpring(pointerX, { stiffness: 240, damping: 28, mass: 0.28 });
@@ -246,16 +222,9 @@ export function PortfolioExperience() {
   const mapEntryOpacity = useTransform(scrollYProgress, [.18, .32], [0, 1]);
   const mapExitOpacity = useTransform(scrollYProgress, [.86, .98], [1, 0]);
   const mapExitY = useTransform(scrollYProgress, [.86, 1], [0, -44]);
-  const stackStageRotate = useTransform(scrollYProgress, [0, 1], [-3, 3]);
-  const stackStageY = useTransform(scrollYProgress, [0, 1], [28, -22]);
-  const stackStageScale = useTransform(scrollYProgress, [0, .45, 1], [.94, 1, .96]);
   useMotionValueEvent(scrollYProgress, "change", (value) => {
     const phase = value < .18 ? "intro" : value < .32 ? "transition" : value < .92 ? "worlds" : "departing";
     setHeroPhase((previous) => previous === phase ? previous : phase);
-  });
-  useMotionValueEvent(methodProgress, "change", (value) => {
-    const nextStep = value < 0.34 ? 0 : value < 0.68 ? 1 : 2;
-    setMethodStep((previous) => previous === nextStep ? previous : nextStep);
   });
   useMotionValueEvent(worldlineProgress, "change", (value) => {
     const nextStage: WorldlineStage = value < 0.34 ? "world" : value < 0.68 ? "method" : "stack";
@@ -263,15 +232,10 @@ export function PortfolioExperience() {
   });
 
   const t = copy[language];
-  const activeMethodStep = motionOn ? methodStep : 2;
   const activeProject = projects.find((project) => project.id === activeId) ?? projects[0];
   const sectorRecords = activeSector === "university" ? universityRecords : clientRecords;
   const activeSatellite = sectorRecords.find((record) => record.id === (activeSector === "university" ? activeSatellites.university : activeSatellites.client)) ?? sectorRecords[0];
   const focusedWorld = activeSector === "main" ? activeProject : activeSatellite;
-  const visibleCertificates = certificates.filter(certificate => certificate.featuredOrder !== null);
-  const spotlightPool = visibleCertificates.slice(0, Math.min(5, visibleCertificates.length));
-  const spotlightCertificate = spotlightPool[spotlightIndex % Math.max(spotlightPool.length, 1)] ?? certificates[0];
-  const shelfCertificates = visibleCertificates.filter((certificate) => certificate.title !== spotlightCertificate.title);
 
   useEffect(() => {
     const migrateLegacyFragment = () => {
@@ -336,7 +300,7 @@ export function PortfolioExperience() {
     const onPointerMove = (event: PointerEvent) => {
       if (event.pointerType === "touch") return;
       const target = event.target instanceof Element ? event.target : null;
-      document.documentElement.dataset.cursor = target?.closest(".site-header, h1, h2, h3, p, a, button, .signal-steps, .project-index") ? "quiet" : "visible";
+      document.documentElement.dataset.cursor = target?.closest(".site-header, h1, h2, h3, p, a, button, .portrait-reveal, .signal-steps, .project-index") ? "quiet" : "visible";
       pointerX.set(event.clientX);
       pointerY.set(event.clientY);
     };
@@ -351,15 +315,6 @@ export function PortfolioExperience() {
     setActiveId(id);
     setActiveSector("main");
     setMapView("orbit");
-  };
-
-  const focusStackProject = (label: string) => {
-    const project = projects.find((candidate) => candidate.stack.includes(label));
-    if (project) {
-      setActiveId(project.id);
-      setActiveSector("main");
-      setMapView("orbit");
-    }
   };
 
   const cycleProject = (direction: -1 | 1) => {
@@ -396,11 +351,6 @@ export function PortfolioExperience() {
     setShowProjectShowcase(false);
     setMapView("universe");
     window.scrollTo({ top: scrollY + hero.getBoundingClientRect().top + Math.max(0, hero.offsetHeight - innerHeight) * .7, behavior: motionOn ? "smooth" : "instant" });
-  };
-
-  const cycleSpotlight = (direction: -1 | 1) => {
-    if (spotlightPool.length < 2) return;
-    setSpotlightIndex((index) => (index + direction + spotlightPool.length) % spotlightPool.length);
   };
 
   return (
@@ -474,77 +424,9 @@ export function PortfolioExperience() {
         <HomeProjectPreview project={findWorld(focusedWorld.id)!} />
       </motion.section>
 
-      <section ref={methodRef}
-        className="signal-chapter"
-        id="method"
-        aria-labelledby="method-title"
-      >
-        <div className="signal-inner">
-          <div className="signal-layout">
-            <div className="signal-heading">
-              <p className="section-kicker section-kicker-dark">{t.method.kicker} <span className="worldline-context">/ {focusedWorld.name}</span></p>
-              <motion.h2 id="method-title" style={{ y: motionOn ? methodY : 0 }}>{t.method.title.split("\n").map((line) => <span key={line}>{line}</span>)}</motion.h2>
-            </div>
-            <div className="signal-copy">
-              <p>{t.method.body}</p>
-              <div className="signal-steps" aria-label="The Henry method steps">
-                <motion.span className="signal-progress" aria-hidden="true" style={{ scaleX: motionOn ? methodProgress : 1 }} />
-                {t.method.steps.map((step, index) => <span key={step} className={index === activeMethodStep ? "signal-step--active" : undefined} aria-current={index === activeMethodStep ? "step" : undefined}>
-                  <i>{String(index + 1).padStart(2, "0")}</i><strong>{step}</strong>
-                  <small>{index === activeMethodStep ? "current signal" : "next useful move"}</small>
-                </span>)}
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section ref={stackRef} className="stack-section" id="stack" aria-labelledby="stack-title" data-visible={stackVisible}>
-        <div className="content-section stack-intro"><div className="section-heading"><div><p className="section-kicker section-kicker-dark">Tech orbit <span className="worldline-context">/ {activeProject.name}</span></p><h2 id="stack-title">{t.stack.title}</h2></div><p>{t.stack.body}</p></div></div>
-        <div className="maker-orbit content-section" aria-label="Technology stack orbit">
-          <motion.div className="maker-orbit-stage" style={{ rotate: motionOn ? stackStageRotate : 0, y: motionOn ? stackStageY : 0, scale: motionOn ? stackStageScale : 1 }}>
-            <span className="maker-orbit-path maker-orbit-path--build" aria-hidden="true" />
-            <span className="maker-orbit-path maker-orbit-path--interface" aria-hidden="true" />
-            <span className="maker-orbit-path maker-orbit-path--systems" aria-hidden="true" />
-            <motion.div className="maker-core" data-active-world={activeProject.id} whileHover={motionOn ? { scale: 1.04, rotate: -2 } : undefined} transition={{ type: "spring", stiffness: 230, damping: 18 }}>
-              <span className="maker-core-orbit-dot maker-core-orbit-dot--one" aria-hidden="true" />
-              <span className="maker-core-orbit-dot maker-core-orbit-dot--two" aria-hidden="true" />
-              <div className="maker-core-portrait" aria-hidden="true">
-                <span className="maker-core-portrait-grid" />
-                <span className="maker-core-mark"><StarGodMark size={30} /></span>
-                <span className="maker-core-portrait-scan" />
-                <small>MAKER SIGNAL / {String(activeProject.stack.length).padStart(2, "0")}</small>
-              </div>
-              <span className="maker-core-meta">HENRY / MAKER</span>
-              <strong>one point<br /><em>of view.</em></strong>
-              <small>{activeProject.name} · {activeProject.stack.length} linked signals</small>
-            </motion.div>
-            {stackGroups.map((group, groupIndex) => <div className={cx("maker-orbit-track", `maker-orbit-track--${groupIndex + 1}`)} key={group.label}>{group.items.map(([label, slug, color], itemIndex) => { const linkedProject = projects.find((project) => project.stack.includes(label)); const linked = activeProject.stack.includes(label); return <button type="button" className={cx("maker-tech", linked && "is-linked", !linkedProject && "is-unmapped")} style={{ "--node-angle": `${itemIndex * (360 / group.items.length)}deg`, "--node-color": `#${color}` } as React.CSSProperties} key={label} title={linkedProject ? `${label} · ${linkedProject.name}` : label} aria-pressed={linked} aria-label={linkedProject ? `Focus ${linkedProject.name} through ${label}` : label} disabled={!linkedProject} onClick={() => focusStackProject(label)}><span className="maker-tech-icon"><TechIcon label={label} slug={slug} color={color} /></span><b>{label}</b></button>; })}</div>)}
-          </motion.div>
-          <div className="maker-orbit-legend">{stackGroups.map((group, groupIndex) => <span key={group.label}><i>{String(groupIndex + 1).padStart(2, "0")}</i>{group.label}</span>)}<p>One orbit. Three ways to make.</p></div>
-          <motion.div className="maker-orbit-inspector" key={activeProject.id} style={{ "--inspector-color": activeProject.color } as React.CSSProperties} initial={motionOn ? { opacity: .45, y: 8 } : false} animate={{ opacity: 1, y: 0 }} transition={{ duration: motionOn ? .35 : 0, ease: [0.16, 1, 0.3, 1] }} aria-live="polite"><div><span>ACTIVE LINK</span><strong>{activeProject.name}</strong><small>{activeProject.access[language]} · {activeProject.stack.length} signals</small></div><div className="maker-orbit-inspector-stack">{activeProject.stack.map((item) => <span key={item}>{item}</span>)}</div></motion.div>
-        </div>
-        <div className="stack-foot content-section"><span><Brackets size={19} /> from interface to systems</span><span><Zap size={19} /> motion with a reason</span><span><Code2 size={19} /> honest about the state</span></div>
-      </section>
+      <div className="maker-approach" aria-hidden="true" />
+      <MakerChapter />
       </div>
-
-
-
-      <section className="content-section proof-section" id="proof" aria-labelledby="proof-title">
-        <div className="section-heading"><div><p className="section-kicker">Credentials / 05 featured</p><h2 id="proof-title">{t.proof.title}</h2></div><p>{t.proof.body}</p></div>
-        <SiteLink className="library-text-link" href="/credentials">{language === "en" ? "All 26 credentials" : "Semua 26 kredensial"}<ArrowUpRight size={17} /></SiteLink>
-        <div className="certificate-feature certificate-card">
-          <button type="button" className="certificate-feature-preview" onClick={() => { setActiveCertificate(spotlightCertificate); }} aria-label={`Inspect ${spotlightCertificate.title} certificate`}>
-            {spotlightPool.slice(1, 4).map((certificate, index) => <span className={cx("certificate-feature-ghost", `certificate-feature-ghost--${index + 1}`)} key={certificate.title} aria-hidden="true"><img src={certificate.thumbnail} alt="" /></span>)}
-            <AnimatePresence mode="wait" initial={false}><motion.img key={spotlightCertificate.title} src={spotlightCertificate.thumbnail} alt={spotlightCertificate.alt} initial={motionOn ? { opacity: 0, x: 28, rotate: 3 } : false} animate={{ opacity: 1, x: 0, rotate: 0 }} exit={motionOn ? { opacity: 0, x: -22, rotate: -3 } : undefined} transition={{ duration: motionOn ? .42 : 0, ease: [0.22, 1, .36, 1] }} /></AnimatePresence>
-            <span className="certificate-index">{String((spotlightPool.indexOf(spotlightCertificate) + 1).toString().padStart(2, "0"))} / FEATURED RECORD</span><span className="certificate-view">inspect full <ArrowUpRight size={13} /></span>
-          </button>
-          <div className="certificate-feature-copy"><div className="certificate-meta"><span>{spotlightCertificate.issuer}</span><span>{spotlightCertificate.kind}</span></div><div className="certificate-feature-title"><h3>{spotlightCertificate.title}</h3><div className="certificate-feature-switcher"><span>{String(spotlightPool.indexOf(spotlightCertificate) + 1).padStart(2, "0")} / {String(spotlightPool.length).padStart(2, "0")}</span><button type="button" onClick={() => cycleSpotlight(-1)} aria-label="Previous featured credential"><ChevronLeft size={15} /></button><button type="button" onClick={() => cycleSpotlight(1)} aria-label="Next featured credential"><ChevronRight size={15} /></button></div></div><p>One original record from the shelf, kept large enough to read and specific enough to trust.</p><div className="certificate-feature-specs"><span><small>Issued</small><strong>{spotlightCertificate.date}</strong></span><span><small>{language === "en" ? "Featured" : "Pilihan"}</small><strong>{String(visibleCertificates.length).padStart(2, "0")} visible</strong></span></div><button type="button" className="certificate-feature-open" onClick={() => { setActiveCertificate(spotlightCertificate); }}>Open the record <ArrowUpRight size={15} /></button>{spotlightCertificate.source && <a className="certificate-feature-source" href={spotlightCertificate.source} target="_blank" rel="noreferrer">Source PDF <ArrowUpRight size={13} /></a>}</div>
-        </div>
-        <div className="certificate-shelf certificate-shelf--compact"><AnimatePresence initial={false} mode="popLayout">{shelfCertificates.map((certificate, index) => <motion.article layout className="certificate-card" key={certificate.title} initial={motionOn ? { opacity: 0, y: 26, scale: .98 } : false} whileInView={motionOn ? { opacity: 1, y: 0, scale: 1 } : undefined} viewport={{ once: false, amount: .18, margin: "0px 0px -8% 0px" }} exit={motionOn ? { opacity: 0, y: -14, scale: .96 } : undefined} transition={{ duration: motionOn ? .42 : 0, delay: motionOn ? (index % 3) * .045 : 0, ease: [0.22, 1, .36, 1] }}><button type="button" className="certificate-preview" onClick={() => { setActiveCertificate(certificate); }} aria-label={`Inspect ${certificate.title} certificate`}><img src={certificate.thumbnail} alt={certificate.alt} loading="lazy" /><span className="certificate-index">{String(index + 2).padStart(2, "0")}</span><span className="certificate-view">inspect full <ArrowUpRight size={13} /></span></button><div className="certificate-copy"><div className="certificate-meta"><span>{certificate.issuer}</span><span>{certificate.kind}</span></div><h3>{certificate.title}</h3><div className="certificate-foot"><span>{certificate.date}</span>{certificate.source ? <a href={certificate.source} target="_blank" rel="noreferrer">Source PDF <ArrowUpRight size={13} /></a> : <span className="certificate-muted">Original image</span>}</div></div></motion.article>)}</AnimatePresence></div>
-      </section>
-
-      <CredentialViewer record={activeCertificate} onClose={() => setActiveCertificate(null)} />
 
       <section ref={contactRef} className="contact-section" id="contact" aria-labelledby="contact-title"><div className="content-section contact-content"><div><p className="section-kicker section-kicker-dark">Make the next useful thing</p><h2 id="contact-title">{t.contact.title}</h2></div><div className="contact-copy"><p>{t.contact.body}</p><div className="contact-actions"><a className="button button-bright" href="https://wa.me/6289513559554" target="_blank" rel="noreferrer"><MessageCircle size={18} /> WhatsApp <ArrowUpRight size={16} /></a><a className="button button-outline" href="mailto:henrynugraha1210@gmail.com"><Mail size={18} /> Email <ArrowUpRight size={16} /></a></div><div className="social-links"><a href="https://github.com/nugrahahenry" target="_blank" rel="noreferrer"><Github size={19} /> GitHub</a><a href="https://www.linkedin.com/in/nugrahahenry/" target="_blank" rel="noreferrer"><Linkedin size={19} /> LinkedIn</a><a href="https://instagram.com/hnry.dev" target="_blank" rel="noreferrer"><Instagram size={19} /> @hnry.dev</a></div></div></div></section>
 

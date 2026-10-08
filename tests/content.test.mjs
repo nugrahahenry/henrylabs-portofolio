@@ -6,7 +6,7 @@ const root = new URL("..", import.meta.url);
 const read = (path) => readFileSync(new URL(path, root), "utf8");
 
 test("portfolio surface keeps its core experience contracts", () => {
-  const experience = ["components/portfolio-experience.tsx", "components/home-project-preview.tsx", "content/projects.ts", "content/credentials.ts", "content/technologies.ts", "components/site-header.tsx", "components/site-preferences.tsx", "components/credential-viewer.tsx"].map(read).join("\n");
+  const experience = ["components/portfolio-experience.tsx", "components/home-project-preview.tsx", "content/projects.ts", "content/credentials.ts", "content/technologies.ts", "components/site-header.tsx", "components/site-preferences.tsx", "components/credential-viewer.tsx", "components/maker-chapter.tsx", "components/portrait-reveal.tsx"].map(read).join("\n");
   const canvas = read("components/cosmic-canvas.tsx");
   const backdrop = read("components/worldline-backdrop.tsx");
   const styles = read("app/globals.css");
@@ -17,8 +17,9 @@ test("portfolio surface keeps its core experience contracts", () => {
 
   assert.match(experience, /I build things I actually see\./);
   assert.match(experience, /Aku membangun hal yang benar-benar kulihat\./);
-  assert.match(experience, /certificate-shelf/);
   assert.match(experience, /HomeProjectPreview/);
+  assert.match(experience, /MakerChapter/);
+  assert.doesNotMatch(read("components/portfolio-experience.tsx"), /certificate-shelf|proof-section|stack-section|signal-chapter/);
   assert.match(experience, /featuredOrder !== null/);
   assert.doesNotMatch(experience, /className="academic-card"|className="client-card"|showCertificateArchive|certificate-archive-toggle/);
   assert.match(experience, /credential-dialog/);
@@ -26,8 +27,6 @@ test("portfolio surface keeps its core experience contracts", () => {
   assert.match(experience, /gemini-certified-educator\.png/);
   assert.match(experience, /google-student-ambassador\.png/);
   assert.match(experience, /The Henry method/);
-  assert.match(experience, /Technology stack orbit/);
-  assert.match(experience, /maker-orbit/);
   assert.match(experience, /CarFront/);
   assert.match(experience, /FlaskConical/);
   assert.match(experience, /ShoppingCart/);
@@ -35,7 +34,6 @@ test("portfolio surface keeps its core experience contracts", () => {
   assert.match(experience, /catmoji-hero\.png/);
   assert.match(experience, /polara-og\.png/);
   assert.match(experience, /\["PHP", "php"/);
-  assert.match(experience, /tech-icon-fallback/);
   assert.match(experience, /arrival-mark/);
   assert.match(experience, /Skip intro/);
   assert.doesNotMatch(experience, /loader-system/);
@@ -51,26 +49,14 @@ test("portfolio surface keeps its core experience contracts", () => {
   assert.match(experience, /access: Record<Language, string>/);
   assert.doesNotMatch(experience, /className="chapter-rail"/);
   assert.match(experience, /id="method"/);
-  assert.match(experience, /signal-progress/);
   assert.doesNotMatch(experience, /PhaseBridge/);
-  assert.match(experience, /--node-color/);
-  assert.match(experience, /maker-orbit-inspector/);
   assert.match(experience, /SmoothScroll/);
   assert.match(experience, /data-lenis-prevent/);
-  assert.match(experience, /maker-core-portrait/);
   assert.match(experience, /data-active-world=\{activeProject.id\}/);
   assert.doesNotMatch(experience, /method-scene/);
-  assert.match(experience, /offset: \["start 85%", "center center"\]/);
-  assert.match(experience, /activeMethodStep = motionOn \? methodStep : 2/);
-  assert.match(experience, /aria-current=\{index === activeMethodStep \? "step" : undefined\}/);
   assert.match(experience, /ProjectSignature/);
   assert.match(experience, /project signature/);
-  assert.match(experience, /stackStageRotate/);
   assert.match(experience, /field-continuum/);
-  assert.match(experience, /is-active/);
-  assert.match(experience, /whileInView=\{motionOn \? \{ opacity: 1, y: 0, scale: 1 \} : undefined\}/);
-  assert.match(experience, /current signal/);
-  assert.match(experience, /Focus \$\{linkedProject.name\} through \$\{label\}/);
   assert.match(experience, /POS_APBDS/);
   assert.match(experience, /labQ-Android/);
   assert.match(experience, /className="mobile-nav"/);

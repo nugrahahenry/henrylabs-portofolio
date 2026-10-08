@@ -28,23 +28,23 @@ try {
     const errors = [];
     page.on("pageerror", (error) => errors.push(error.message));
     await page.goto(baseUrl, { waitUntil: "domcontentloaded" });
-    await page.locator(".certificate-shelf").waitFor();
+    await page.locator(".maker-chapter").waitFor();
     await page.locator(".intro-loader").waitFor({ state: "hidden" });
     const result = await page.evaluate(() => ({
       viewport: innerWidth,
       scrollWidth: document.documentElement.scrollWidth,
       planets: document.querySelectorAll(".planet-label").length,
       galaxies: document.querySelectorAll(".galaxy-label").length,
-      certificates: document.querySelectorAll(".certificate-card").length,
+      certificates: document.querySelectorAll(".maker-evidence-card").length,
       sourceLinks: document.querySelectorAll("a[href*='/assets/certificates/source/']").length,
       chapterRails: document.querySelectorAll(".chapter-rail").length,
       phaseBridges: document.querySelectorAll(".phase-bridge").length,
       stackMarquees: document.querySelectorAll(".stack-marquee").length,
       stackOrbits: document.querySelectorAll(".stack-orbit").length,
-      stackGroups: document.querySelectorAll(".maker-orbit-track").length,
-      techNodes: document.querySelectorAll(".maker-tech").length,
-      stackInspector: document.querySelectorAll(".maker-orbit-inspector").length,
-      makerPortrait: document.querySelectorAll(".maker-core-portrait").length,
+      stackGroups: document.querySelectorAll(".maker-groups button").length,
+      techNodes: document.querySelectorAll(".maker-tool").length,
+      stackInspector: document.querySelectorAll(".maker-tool-detail").length,
+      makerPortrait: document.querySelectorAll(".portrait-reveal").length,
       makerActiveWorld: document.querySelector(".maker-core")?.dataset.activeWorld ?? "",
       academicSourceLinks: document.querySelectorAll(".academic-card-foot a[href*='github.com']").length,
       academicCards: document.querySelectorAll(".academic-card").length,
@@ -70,16 +70,16 @@ try {
     assert.equal(result.planets, 0);
     assert.equal(result.galaxies, 3);
     assert.equal(result.certificates, 5);
-    assert.equal(result.sourceLinks, 5);
+    assert.equal(result.sourceLinks, 0);
     assert.equal(result.chapterRails, 0);
     assert.equal(result.phaseBridges, 0);
     assert.equal(result.stackMarquees, 0);
     assert.equal(result.stackOrbits, 0);
     assert.equal(result.stackGroups, 3);
-    assert.equal(result.techNodes, 21);
+    assert.equal(result.techNodes, 6);
     assert.equal(result.stackInspector, 1);
     assert.equal(result.makerPortrait, 1);
-    assert.equal(result.makerActiveWorld, "catmoji");
+
     assert.equal(result.academicSourceLinks, 0);
     assert.equal(result.academicCards, 0);
     assert.equal(result.academicStackChips, 0);
@@ -98,39 +98,12 @@ try {
     assert.equal(result.worldlineBackdrops, 1);
     assert.equal(result.worldlineBackdropPosition, "fixed");
     assert.equal(result.scrollDriver, "lenis-gsap");
-    const evidenceTheme = await page.evaluate(() => {
-      const style = (selector) => getComputedStyle(document.querySelector(selector));
-      return {
-        proofText: style(".proof-section").color,
-        credentialText: style(".certificate-card").color,
-        credentialMatte: style(".certificate-feature-preview").backgroundColor,
-        proofBackground: style(".proof-section").backgroundColor,
-      };
-    });
-    assert.equal(evidenceTheme.proofText, "rgb(244, 245, 239)");
-    assert.equal(evidenceTheme.credentialText, evidenceTheme.proofText);
-    assert.equal(evidenceTheme.credentialMatte, "rgb(12, 18, 34)");
-    assert.equal(evidenceTheme.proofBackground, "rgba(0, 0, 0, 0)");
-    for (const [selector, name] of [["#work", "selected-preview"], ["#proof", "credentials"]]) {
-      await page.locator(selector).evaluate((section) => window.scrollTo({ top: scrollY + section.getBoundingClientRect().top - 96, behavior: "instant" }));
-      await expect(page.locator(`${selector} h2`)).toBeInViewport();
-      await page.screenshot({ path: `test-results/${viewport.width}-${name}.png` });
-    }
-    await page.locator(".certificate-feature").screenshot({ path: `test-results/${viewport.width}-credential-feature.png` });
     await expect(page.locator(".home-project-preview")).toHaveCount(1);
-    await expect(page.locator(".home-project-preview")).toHaveAttribute("data-project", "catmoji");
-    assert.equal(await page.locator(".certificate-feature-preview > img").getAttribute("src"), "/assets/certificates/thumbnails/google-student-ambassador.webp");
-    await expect(page.getByRole("link", { name: /All 26 credentials/ })).toHaveAttribute("href", /\/credentials/);
+    await expect(page.locator(".maker-evidence-card img").first()).toHaveAttribute("src", "/assets/certificates/thumbnails/google-student-ambassador.webp");
+    await expect(page.getByRole("link", { name: /Credential library/ })).toHaveAttribute("href", /\/credentials/);
     await expect(page.getByRole("button", { name: /Open full archive/ })).toHaveCount(0);
-    const featuredTitle = await page.locator(".certificate-feature-copy h3").innerText();
-    await page.getByRole("button", { name: "Next featured credential" }).click();
-    await expect.poll(async () => page.locator(".certificate-feature-copy h3").innerText()).not.toBe(featuredTitle);
-    await page.getByRole("button", { name: "Previous featured credential" }).click();
-    await expect.poll(async () => page.locator(".certificate-feature-copy h3").innerText()).toBe(featuredTitle);
     await expect(page.locator('a[href="https://www.linkedin.com/in/nugrahahenry/"]')).toHaveCount(1);
-
-    await page.locator("#stack").scrollIntoViewIfNeeded();
-    await expect(page.locator(".field-continuum")).toHaveAttribute("data-worldline-stage", "stack");
+    await page.locator("#stack").evaluate(node => window.scrollTo({top: scrollY + node.getBoundingClientRect().top, behavior: "instant"}));
     const worldlineBackdropMetrics = await page.locator(".worldline-backdrop canvas").evaluate((canvas) => new Promise((resolve) => {
       requestAnimationFrame(() => {
         const gl = canvas.getContext("webgl2") || canvas.getContext("webgl");
@@ -144,15 +117,13 @@ try {
     }));
     assert.equal(worldlineBackdropMetrics.painted, true, "Worldline backdrop must contain painted WebGL pixels");
     assert.equal(worldlineBackdropMetrics.ready, "true", "Worldline backdrop must render after entering the field");
-    await page.getByRole("button", { name: /Focus Nalira through Supabase/ }).click({ force: true });
-    await expect(page.locator(".maker-orbit-inspector")).toContainText("Nalira");
-    await expect(page.locator(".home-project-media > img")).toHaveAttribute("src", "/assets/projects/nalira-ambient.svg");
-    await expect.poll(() => page.locator(".home-project-media > img").evaluate((image) => image.complete && image.naturalWidth > 0), { message: "Nalira artwork must render" }).toBe(true);
-    assert.equal(await page.locator(".maker-tech.is-linked").count(), 4);
-
     await page.locator(".hero-stage").evaluate((hero) => window.scrollTo({ top: scrollY + hero.getBoundingClientRect().top + (hero.offsetHeight - innerHeight) * .7, behavior: "instant" }));
     await expect(page.locator(".hero-stage")).toHaveAttribute("data-phase", "worlds");
     const scene = page.locator(".cosmic-canvas");
+    await page.getByRole("button", { name: "Explore HenryLabs galaxy", exact: true }).focus();
+    await page.keyboard.press("Enter");
+    await expect(scene).toHaveAttribute("data-flight", "1.000");
+    await page.locator(".planet-label").filter({ hasText: "Nalira" }).press("Enter");
     await expect(scene).toHaveAttribute("data-ready", "true");
     await expect(scene).toHaveAttribute("data-tech-count", "15");
     await expect(scene).toHaveAttribute("data-linked-tech-count", "4");
@@ -170,6 +141,7 @@ try {
       });
     }));
     assert.equal(hasPixels, true, "WebGL scene must contain painted pixels");
+    await page.getByRole("button", { name: "Reset planet zoom" }).click();
     await page.getByRole("button", { name: "Zoom in on planets" }).click();
     await expect(scene).toHaveAttribute("data-view-zoom", "0.12");
     await page.getByRole("button", { name: "Reset planet zoom" }).click();
@@ -227,7 +199,8 @@ try {
     await expect(page.locator(".home-project-preview")).toHaveAttribute("data-project", "catmoji");
     await expect(page.locator(".home-project-preview a").last()).toHaveAttribute("href", /\/projects\/catmoji/);
     assert.equal(await page.locator(".home-project-media > img").count(), 1);
-    await page.locator(".certificate-feature-preview").click();
+    await page.locator(".maker-chapter").evaluate(node => window.scrollTo({top: scrollY + node.getBoundingClientRect().top + Math.max(0, node.offsetHeight-innerHeight)*.94, behavior: "instant"}));
+    await page.locator(".maker-evidence-card").first().click();
     await page.getByRole("dialog").waitFor();
     assert.match(await page.getByRole("dialog").innerText(), /Google Student Ambassador/i);
     assert.equal(await page.locator(".credential-dialog").evaluate((modal) => getComputedStyle(modal).backgroundColor), "rgb(15, 23, 31)");
@@ -237,7 +210,7 @@ try {
     await expect.poll(async () => (await page.getByRole("button", { name: "Close certificate viewer" }).boundingBox())?.height ?? 0).toBeGreaterThanOrEqual(44);
     await page.keyboard.press("Escape");
     await page.getByRole("dialog").waitFor({ state: "detached" });
-    await expect(page.locator(".certificate-feature-preview")).toBeFocused();
+    await expect(page.locator(".maker-evidence-card").first()).toBeFocused();
     await page.locator("#contact").scrollIntoViewIfNeeded();
     await expect(page.locator("#contact h2")).toBeInViewport();
     await page.waitForTimeout(500);
@@ -255,7 +228,7 @@ try {
     await expect(reducedPage.locator(".intro-loader")).toHaveClass(/intro-loader--done/);
     await expect(reducedPage.locator(".site-shell")).toHaveAttribute("data-motion", "off");
     await expect(reducedPage.locator(".hero-stage")).toHaveAttribute("data-phase", "all");
-    await expect(reducedPage.locator('#method [aria-current="step"] i')).toHaveText("03");
+    await expect(reducedPage.locator(".maker-principles span")).toHaveCount(3);
     await expect(reducedPage.locator(".method-scene")).toHaveCount(0);
     await reducedPage.close();
     console.log(`browser QA passed at ${viewport.width}x${viewport.height}`);

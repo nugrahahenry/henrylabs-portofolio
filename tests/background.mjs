@@ -103,13 +103,14 @@ try {
     await page.locator("#work").evaluate(section => window.scrollTo({ top: scrollY + section.getBoundingClientRect().top + section.offsetHeight / 2 - innerHeight / 2, behavior: "instant" }));
     await readingPlanets(page, "selected project");
     await page.locator("#method").evaluate((section) => window.scrollTo({ top: scrollY + section.getBoundingClientRect().top + section.offsetHeight / 2 - innerHeight / 2, behavior: "instant" }));
-    await expect(page.locator('#method [aria-current="step"] i')).toHaveText("03");
+    await expect(page.locator(".maker-principles span")).toHaveCount(3);
     await expect(background).toHaveAttribute("data-hole-opacity", "0.000");
     await readingPlanets(page, "method");
     await page.screenshot({ path: `test-results/${viewport.width}-connected-background.png` });
-    await page.locator("#stack-title").scrollIntoViewIfNeeded();
+    await page.locator("#maker-title").scrollIntoViewIfNeeded();
     await readingPlanets(page, "technology orbit");
-    await page.locator("#proof h2").scrollIntoViewIfNeeded();
+    if (viewport.width >= 1000 && viewport.height >= 650) await page.locator(".maker-chapter").evaluate(node => window.scrollTo({top: scrollY + node.getBoundingClientRect().top + (node.offsetHeight-innerHeight)*.9, behavior: "instant"}));
+    else await page.locator(".maker-proof-heading").scrollIntoViewIfNeeded();
     await expect(background).toHaveAttribute("data-hole-opacity", "0.000");
     await expect(background).toHaveAttribute("data-pull", "0.000");
     await readingPlanets(page, "credentials");
@@ -141,7 +142,8 @@ try {
     await expect.poll(async () => Number(await background.getAttribute("data-visitor-opacity"))).toBeGreaterThan(.35);
     await expect(page.locator('#contact a[href*="wa.me"]')).toBeInViewport();
     await page.screenshot({ path: `test-results/${viewport.width}-gravity-infall.png` });
-    await page.locator("#proof h2").scrollIntoViewIfNeeded();
+    if (viewport.width >= 1000 && viewport.height >= 650) await page.locator(".maker-chapter").evaluate(node => window.scrollTo({top: scrollY + node.getBoundingClientRect().top + (node.offsetHeight-innerHeight)*.9, behavior: "instant"}));
+    else await page.locator(".maker-proof-heading").scrollIntoViewIfNeeded();
     await expect(background).toHaveAttribute("data-gravity-active", "false");
     await expect(background).toHaveAttribute("data-pull", "0.000");
     const pausedAge = await background.getAttribute("data-gravity-age");

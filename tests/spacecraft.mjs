@@ -47,7 +47,7 @@ try {
       await page.locator("#method").evaluate((section) => window.scrollTo({ top: scrollY + section.getBoundingClientRect().top, behavior: "instant" }));
       for (let i = 0; i < 12; i++) await page.clock.fastForward(250);
       if (await field.getAttribute("data-flight-band") !== "true") {
-        await page.locator("#method .signal-steps").evaluate(el => window.scrollTo({top: scrollY + el.getBoundingClientRect().bottom - innerHeight * .45, behavior: "instant"}));
+        await page.locator("#work").evaluate(el => window.scrollTo({top: scrollY + el.getBoundingClientRect().bottom - innerHeight * .45, behavior: "instant"}));
         await page.clock.runFor(500);
       }
     }

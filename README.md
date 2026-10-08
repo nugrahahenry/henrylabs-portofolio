@@ -1,6 +1,6 @@
 <div align="center">
 
-# StarGod Portfolio v0.84.0
+# StarGod Portfolio v0.85.0
 
 **I build things I actually see.**
 
@@ -27,7 +27,11 @@ StarGod is the working name of the universe, drawn from Henry's longtime alias. 
 
 Enter a living map of **HenryLabs**, **University**, and **Client Work**. Choose a galaxy, follow a curved camera approach into its planets, and explore the work behind each identity. Returning retraces that journey without rebuilding the scene. The opening headline stays free of project overlays when scrolling back up; Explore the universe reopens the three-galaxy overview. Technologies orbit the projects they belong to; an optional reading panel brings the context, ownership, and evidence into view.
 
-Beyond the map: one preview following the selected project, Henry's working method, a technology orbit, and five featured original credentials. The full project and certificate lists live in their own libraries, not repeated down Home. A continuous Three.js universe connects the journey, from distant stars and nebulae to a reversible black-hole encounter at Contact. Natural background planets remain in orbit throughout the reading sections, moving into a smaller peripheral composition rather than disappearing. A metallic UFO and its pursuing scout add a small story along the way: banking through real depth, missed tracer shots, a luminous wormhole, the UFO entering first, and the scout following. After the portal closes, thirty quiet seconds pass before the next encounter. The scene pauses outside its clear flight areas and respects reduced motion.
+Beyond the map: one preview following the selected project, then Henry himself. A crowned StarGod portrait opens locally under the cursor to reveal Henry in a dark suit: sunglasses, clear glasses, then his unobscured face. The approved portraits share one composition; this is a layered photographic reveal, not a rotatable head model. Four appearance controls also work with touch, keyboard, or reduced motion.
+
+Twenty-five technologies surround the portrait, grouped into Build, Interface, and Systems. Select a tool to see the projects that use it. Scroll further and the orbit recedes as original credentials rise around the same figure. Home no longer repeats a separate technology chapter and certificate shelf; the full project and credential collections live in their own libraries. Compact screens use a readable sequence with floating tool icons and complete documents.
+
+A continuous Three.js universe connects the journey, from distant stars and nebulae to a reversible black-hole encounter at Contact. Natural background planets remain in orbit throughout the reading sections, moving into a smaller peripheral composition rather than disappearing. A metallic UFO and its pursuing scout add a small story along the way: banking through real depth, missed tracer shots, a luminous wormhole, the UFO entering first, and the scout following. After the portal closes, thirty quiet seconds pass before the next encounter. The scene pauses outside its clear flight areas and respects reduced motion.
 
 Prefer a closer read? **Projects** opens a searchable catalog of all ten worlds, filtered by HenryLabs, University, or Client Work. Each planet and catalog record leads to the same project detail, with ownership, workflow, stack, and honest access boundaries. Return to the universe to continue from that planet; its reading panel stays closed until requested.
 
@@ -116,7 +120,7 @@ npm run dev
 
 Open the local address printed by Next.js. For verification: `npm test`, `npm run typecheck`, and `npm run build`. Browser checks live in `tests/`.
 
-This portfolio is **actively being developed**. Hosting is deferred. The project and credential libraries are available; the personal cosmic portrait and its scroll transition are still being developed separately. Home already uses selected previews rather than duplicate university/client lists and a full credential archive. The current method and technology chapter remain until the portrait replacement is ready. The original `henrylabs-useful-worlds.html` remains a legacy prototype.
+This portfolio is **actively being developed**. Hosting is deferred. The project and credential libraries, four-state personal portrait, and technology-to-credentials scroll chapter are available. Home uses selected previews instead of repeated project lists or a full credential archive. The portrait choreography and StarGod identity remain open to refinement. The original `henrylabs-useful-worlds.html` remains a legacy prototype.
 
 ### Reading Routes
 

@@ -138,8 +138,8 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, contactProgres
     const flightWorld = new THREE.Vector3(), flightView = new THREE.Vector3();
     const heroCopy = document.querySelector<HTMLElement>(".hero-copy");
     const heroKicker = document.querySelector<HTMLElement>(".hero-kicker");
-    const methodSteps = document.querySelector<HTMLElement>("#method .signal-steps");
-    const stackKicker = document.querySelector<HTMLElement>("#stack .section-kicker");
+    const methodSteps = document.querySelector<HTMLElement>("#work");
+    const stackKicker = document.querySelector<HTMLElement>(".maker-heading");
     let bandDirty = true, bandTop = 0, bandBottom = 0;
     let headerHeight = 76;
     const camera = new THREE.PerspectiveCamera(44, 1, .1, 100);

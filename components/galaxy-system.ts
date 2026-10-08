@@ -9,7 +9,7 @@ export const galaxies = [
 ] as const;
 
 function galaxyDustTexture(arms: number, color: string, seed: number) {
-  const width = 384;
+  const width = 768;
   const canvas = document.createElement("canvas");
   canvas.width = canvas.height = width;
   const data = new Uint8ClampedArray(width * width * 4);
@@ -59,13 +59,13 @@ export function createGalaxySystem() {
   const clusters = galaxies.map((galaxy, index) => {
     const cluster = new THREE.Group();
     const disk = new THREE.Group();
-    const positions = new Float32Array(820 * 3);
-    const colors = new Float32Array(820 * 3);
+    const positions = new Float32Array(1800 * 3);
+    const colors = new Float32Array(1800 * 3);
     const tint = new THREE.Color(galaxy.color);
     const coreColor = new THREE.Color("#fff6de");
     const color = new THREE.Color();
     THREE.MathUtils.seededRandom(1703 + index * 97);
-    for (let i = 0; i < 820; i++) {
+    for (let i = 0; i < 1800; i++) {
       const seed = THREE.MathUtils.seededRandom();
       const bulge = i < 170;
       const radius = bulge ? Math.pow(seed, .65) * .36 : Math.pow(seed, .72) * 1.62;
@@ -81,7 +81,7 @@ export function createGalaxySystem() {
     const geometry = new THREE.BufferGeometry();
     geometry.setAttribute("position", new THREE.BufferAttribute(positions, 3));
     geometry.setAttribute("color", new THREE.BufferAttribute(colors, 3));
-    const material = new THREE.PointsMaterial({ map: texture, vertexColors: true, size: .043, sizeAttenuation: true, transparent: true, opacity: .9, depthWrite: false, blending: THREE.AdditiveBlending });
+    const material = new THREE.PointsMaterial({ map: texture, vertexColors: true, size: .022, sizeAttenuation: true, transparent: true, opacity: .9, depthWrite: false, blending: THREE.AdditiveBlending });
     const points = new THREE.Points(geometry, material);
     disk.add(points);
     const dustMap = galaxyDustTexture(galaxy.arms, galaxy.color, 17 + index * 13);
