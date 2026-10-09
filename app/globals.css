@@ -672,6 +672,10 @@ html[data-motion="off"] *, html[data-motion="off"] *::before, html[data-motion="
 .field-continuum .stack-section { background: transparent; }
 .field-continuum .stack-intro { padding-top: 90px; padding-bottom: 42px; }
 .field-continuum .maker-orbit { padding-top: 10px; }
+.maker-approach { position: relative; height: clamp(180px, 24svh, 240px); overflow: hidden; isolation: isolate; }
+.maker-approach::before { content: ""; position: absolute; top: 50%; right: 7%; left: 7%; height: 1px; background: linear-gradient(90deg, transparent, rgba(110,231,244,.18) 18%, rgba(244,245,239,.24) 50%, rgba(255,130,200,.18) 82%, transparent); transform: rotate(-2deg); transform-origin: center; }
+.maker-approach::after { content: ""; position: absolute; top: calc(50% - 3px); left: 7%; width: 6px; height: 6px; border-radius: 50%; background: var(--cyan); box-shadow: 0 0 18px var(--cyan), 0 0 42px rgba(110,231,244,.28); animation: maker-approach-signal 6.8s var(--ease) infinite; }
+@keyframes maker-approach-signal { 0%, 10% { opacity: 0; transform: translateX(0) scale(.6); } 18% { opacity: .8; } 72% { opacity: .72; } 92%, 100% { opacity: 0; transform: translateX(calc(86vw)) scale(1); } }
 .worldline-backdrop { position: fixed; z-index: 0; inset: 0; width: 100%; height: 100vh; height: 100svh; overflow: hidden; background: #03060c; opacity: calc(.92 + var(--black-hole-strength, 0) * .08); pointer-events: none; }
 .site-shell:has(.worldline-backdrop[data-ready="true"]) .star-field { display: none; }
 .worldline-backdrop::after { content: ""; position: absolute; inset: 0; background: radial-gradient(ellipse at 50% 42%, transparent 0 22%, rgba(7,9,27,.04) 54%, rgba(7,9,27,.24) 100%); opacity: calc(1 - var(--black-hole-strength, 0) * .85); pointer-events: none; }
@@ -780,6 +784,9 @@ html[data-motion="off"] *, html[data-motion="off"] *::before, html[data-motion="
   .field-continuum-visual { right: -56vw; width: 148vw; min-height: 3200px; opacity: .5; }
   .field-continuum .signal-inner { padding-top: 68px; padding-bottom: 76px; }
   .field-continuum .stack-intro { padding-top: 72px; padding-bottom: 30px; }
+  .maker-approach { height: clamp(156px, 21svh, 205px); }
+  .maker-approach::before { right: 3%; left: 3%; }
+  @keyframes maker-approach-signal { 0%, 10% { opacity: 0; transform: translateX(0) scale(.6); } 18% { opacity: .8; } 72% { opacity: .72; } 92%, 100% { opacity: 0; transform: translateX(94vw) scale(1); } }
   .field-continuum-node { font-size: .44rem; }
   .field-continuum-node i { width: 39px; height: 39px; }
   .field-continuum-node img { width: 23px; height: 23px; }
@@ -799,7 +806,7 @@ html[data-motion="off"] *, html[data-motion="off"] *::before, html[data-motion="
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .field-continuum-orbit, .field-continuum-signal, .field-continuum::before { animation: none; }
+  .field-continuum-orbit, .field-continuum-signal, .field-continuum::before, .maker-approach::after { animation: none; }
 }
 
 /* University builds: a connected shelf of solo build records, not three empty cards. */

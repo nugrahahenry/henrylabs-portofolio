@@ -1,5 +1,12 @@
 # Changelog
 
+## StarGod Portfolio v0.93.0 - 2026-10-09
+
+- Refine the Home handoff from the living map into the selected-world preview with a compact selected-world marker that keeps the active galaxy legible without adding another panel.
+- Add layered scroll choreography to the preview heading, artwork, and project facts so the selected world approaches with restrained depth instead of arriving as one flat block.
+- Turn the existing empty bridge before the maker chapter into a single atmospheric orbit trace with a reduced-motion freeze, preserving the same spacing and mobile sequence.
+- Extend journey and responsive verification without changing project records, credentials, portrait assets, renderers, or public/private boundaries.
+
 ## StarGod Portfolio v0.92.0 - 2026-10-09
 
 - Give the shared library nebula restrained cursor and scroll depth without adding a renderer, points, or animation loops. Freeze the camera in Still/reduced motion and recover after WebGL context restoration.
