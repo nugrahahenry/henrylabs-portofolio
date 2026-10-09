@@ -1,13 +1,13 @@
 {
   "name": "henrylabs-portfolio",
-  "version": "0.89.1",
+  "version": "0.90.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
     "typecheck": "tsc --noEmit",
-    "test": "node --test tests/content.test.mjs tests/catalog.test.mjs tests/gravity-sequence.test.mjs tests/planet-materials.test.mjs tests/tech-orbit.test.mjs tests/public-previews.test.mjs",
+    "test": "node --test tests/content.test.mjs tests/catalog.test.mjs tests/gravity-sequence.test.mjs tests/planet-materials.test.mjs tests/tech-orbit.test.mjs tests/public-previews.test.mjs tests/header-scroll.test.mjs",
     "test:libraries": "node tests/libraries.mjs",
     "test:browser": "node tests/browser.mjs",
     "test:maker": "node tests/maker.mjs",
@@ -15,6 +15,7 @@
     "test:closing": "node tests/closing-loop.mjs",
     "test:spacecraft": "node tests/spacecraft.mjs",
     "test:arrival": "node tests/arrival.mjs",
+    "test:header": "node tests/header.mjs",
     "test:galaxies": "node tests/galaxies.mjs",
     "test:sectors": "node tests/sectors.mjs"
   },

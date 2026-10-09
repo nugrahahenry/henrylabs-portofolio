@@ -1,6 +1,6 @@
 <div align="center">
 
-# StarGod Portfolio v0.89.1
+# StarGod Portfolio v0.90.0
 
 **I build things I actually see.**
 
@@ -38,6 +38,8 @@ Prefer a closer read? **Projects** opens a searchable catalog of all ten worlds,
 **Credentials** is a separate library of all 26 learning records. Filter by issuer or type, search a title, and open a full-size watermarked preview with zoom and available PDF previews. Browse the current selection without closing the viewer; Home keeps its gallery limited to the five featured records. Arrow keys move between documents at fitted size and pan the image when zoomed. A small preview remains visible while the full-size image loads, with a retry option on failure. English/Indonesian and motion choices travel with the internal links.
 
 English is the default, with Indonesian available throughout the main experience. Keyboard navigation, touch controls, reduced motion, and a WebGL fallback keep the work accessible.
+
+Navigation steps out of view as you scroll down, leaving more room for the universe. Scroll up to bring it back. It remains visible while using the mobile menu or navigating its controls by keyboard, across Home, Projects, and Credentials.
 
 The nebula is a sampled 3D density field with illuminated filaments and darker rifts, accompanied by fine stars and occasional brighter glints. At Contact, a dark void interrupts the sky, framed by a flowing accretion disk and bent far-side light. Feeding grains and wisps arrive from above, below, left, and right. Their winding paths contract through several sides of the black-hole horizon rather than streaming toward one visible entry point. Scroll back to retrace the encounter; distant stars stay beyond the pull. These are authored visual interpretations, not a scientific gravity simulation or photographic astronomy assets.
 

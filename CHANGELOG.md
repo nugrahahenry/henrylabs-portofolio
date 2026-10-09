@@ -1,5 +1,12 @@
 # Changelog
 
+## StarGod Portfolio v0.90.0 - 2026-10-09
+
+- Hide the shared header on downward scroll and reveal it sooner on upward scroll, leaving the universe and reading pages unobstructed without shifting content.
+- Keep navigation visible near the top, while the mobile menu is open, and during keyboard use. Reset on route changes and width changes without reacting to mobile browser chrome height changes.
+- Ignore small direction reversals and clamp overscroll to avoid flicker. Reduced motion and Still mode use effectively instant transitions.
+- Enlarge phone header controls to at least 44px and add focused direction, keyboard, touch, responsive, and cross-page regression tests.
+
 ## StarGod Portfolio v0.89.1 - 2026-10-09
 
 - Unify the optional Active World panel across all ten projects using the same bilingual catalog records as their detail pages.
