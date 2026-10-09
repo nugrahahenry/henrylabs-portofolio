@@ -45,11 +45,13 @@ export function SiteHeader() {
     window.addEventListener("scroll", onScroll, { passive: true });
     window.addEventListener("resize", onResize);
     window.addEventListener("pageshow", reset);
+    window.addEventListener("stargod:reveal-header", reset);
     return () => {
       cancelAnimationFrame(frame);
       window.removeEventListener("scroll", onScroll);
       window.removeEventListener("resize", onResize);
       window.removeEventListener("pageshow", reset);
+      window.removeEventListener("stargod:reveal-header", reset);
     };
   }, [pathname]);
   useEffect(() => {

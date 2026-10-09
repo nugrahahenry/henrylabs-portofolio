@@ -198,9 +198,14 @@ export function CosmicCanvas({ activeId, onSelect, onPrevious, onNext, motionOn,
   const [fallback, setFallback] = useState(false);
   const rendererEpoch = useRef(0);
   const galaxyHover = useRef(-1);
+  const planetHover = useRef(-1);
 
   useEffect(() => {
-    if (state.current.view !== view) focusRequest.current = view;
+    if (state.current.view !== view) {
+      focusRequest.current = view;
+      galaxyHover.current = -1;
+      planetHover.current = -1;
+    }
     state.current = { activeId, motionOn, viewZoom, sector, view, readingOpen };
     wakeRef.current();
   }, [activeId, motionOn, viewZoom, sector, view, readingOpen]);
@@ -406,10 +411,12 @@ export function CosmicCanvas({ activeId, onSelect, onPrevious, onNext, motionOn,
     let pitch = 0;
     let viewBlend = state.current.view === "universe" ? 0 : 1;
     let universeAngle = 0;
+    let focusReady = false;
     const galaxyEmphasis = [0, 0, 0];
     const flightPose = { pan: 0, approach: 0, orbitScale: 0, selectedVisibility: 1, otherVisibility: 1, arc: 0 };
     const mapFrame = host.closest<HTMLElement>(".cosmic-frame");
     const cameraTarget = new THREE.Vector3();
+    const focusPosition = new THREE.Vector3();
     const projected = new THREE.Vector3();
     const pointer = new THREE.Vector2();
     const raycaster = new THREE.Raycaster();
@@ -451,18 +458,24 @@ export function CosmicCanvas({ activeId, onSelect, onPrevious, onNext, motionOn,
       universe.layout(portrait, universeAngle);
       universe.center.material.opacity = .42 * (1 - viewBlend);
       const focus = universe.clusters.find((galaxy) => galaxy.id === sector)!.cluster.position;
+      if (!focusReady) {
+        focusPosition.copy(focus);
+        focusReady = true;
+      } else {
+        focusPosition.lerp(focus, state.current.motionOn ? 1 - Math.exp(-dt * 8) : 1);
+      }
       const halfWidth = portrait ? 3.8 : 4.7;
       const fittedDistance = Math.max(10.5, halfWidth / (Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) * camera.aspect));
       const overviewDistance = Math.max(14.5, 4.3 / (Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) * camera.aspect));
-      camera.position.set(focus.x * flightPose.pan, .05 + focus.y * flightPose.pan, THREE.MathUtils.lerp(overviewDistance + (1 - zoom) * 3, focus.z + fittedDistance - state.current.viewZoom * 2.7, flightPose.approach));
+      camera.position.set(focusPosition.x * flightPose.pan, .05 + focusPosition.y * flightPose.pan, THREE.MathUtils.lerp(overviewDistance + (1 - zoom) * 3, focusPosition.z + fittedDistance - state.current.viewZoom * 2.7, flightPose.approach));
       const arcDirection = sector === "university" ? -1 : 1;
       camera.position.x += flightPose.arc * arcDirection * (portrait ? .65 : 1.4);
       camera.position.y += flightPose.arc * .3;
       camera.position.z += departure * departure * 26;
-      cameraTarget.set(focus.x * flightPose.pan, focus.y * flightPose.pan, focus.z * flightPose.pan);
+      cameraTarget.set(focusPosition.x * flightPose.pan, focusPosition.y * flightPose.pan, focusPosition.z * flightPose.pan);
       camera.lookAt(cameraTarget);
       camera.rotateZ(flightPose.arc * arcDirection * -.025);
-      system.position.copy(focus);
+      system.position.copy(focusPosition);
       system.scale.setScalar(Math.max(.0001, flightPose.orbitScale));
       system.visible = flightPose.orbitScale > .0001;
       Object.entries(sectorPlanets).forEach(([id, family]) => family.forEach(({ group }) => { group.visible = id === sector; }));
@@ -606,6 +619,7 @@ export function CosmicCanvas({ activeId, onSelect, onPrevious, onNext, motionOn,
           const offset = host.clientHeight < 250 ? 14 : portrait ? 26 : 55;
           label.dataset.coreX = x.toFixed(1);
           label.dataset.coreY = y.toFixed(1);
+          label.dataset.selected = String(sector === galaxies[index].id);
           label.style.transform = `translate(-50%, 0) translate(${Math.max(62, Math.min(host.clientWidth - 62, x))}px, ${Math.max(4, Math.min(host.clientHeight - 54, y + offset))}px)`;
         }
       });
@@ -615,7 +629,13 @@ export function CosmicCanvas({ activeId, onSelect, onPrevious, onNext, motionOn,
         projected.project(camera);
         const label = labels.current[index];
         const radiusPixels = (.37 + index * .02) * group.scale.x * host.clientHeight / (2 * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) * depth);
-        if (label) label.style.transform = `translate(-50%, 0) translate(${(projected.x * .5 + .5) * host.clientWidth}px, ${(-projected.y * .5 + .5) * host.clientHeight + radiusPixels + 8}px)`;
+        if (label) {
+          const focused = labels.current[index] === document.activeElement;
+          label.dataset.highlighted = String(planetHover.current === index || focused);
+          label.dataset.selected = String(worlds[index].id === state.current.activeId);
+          label.dataset.depth = (camera.position.z - group.position.z).toFixed(3);
+          label.style.transform = `translate(-50%, 0) translate(${(projected.x * .5 + .5) * host.clientWidth}px, ${(-projected.y * .5 + .5) * host.clientHeight + radiusPixels + 8}px)`;
+        }
       });
       host.dataset.ready = "true";
       host.dataset.time = elapsed.toFixed(2);
@@ -681,8 +701,14 @@ export function CosmicCanvas({ activeId, onSelect, onPrevious, onNext, motionOn,
     };
     const move = (event: PointerEvent) => {
       if (!dragging) {
-        galaxyHover.current = state.current.view === "universe" ? findPlanetAt(event) : -1;
-        canvas.style.cursor = galaxyHover.current >= 0 ? "pointer" : "";
+        if (state.current.view === "universe") {
+          galaxyHover.current = findPlanetAt(event);
+          planetHover.current = -1;
+        } else {
+          planetHover.current = findPlanetAt(event);
+          galaxyHover.current = -1;
+        }
+        canvas.style.cursor = galaxyHover.current >= 0 || planetHover.current >= 0 ? "pointer" : "";
         wake();
         return;
       }
@@ -696,8 +722,9 @@ export function CosmicCanvas({ activeId, onSelect, onPrevious, onNext, motionOn,
     const up = (event: PointerEvent) => {
       if (!dragging) return;
       if (!pointerMoved && pressedPlanet >= 0) {
-        if (state.current.view === "universe") { galaxyHover.current = -1; setViewZoom(0); galaxySelectRef.current(universe.clusters[pressedPlanet].id); }
+        if (state.current.view === "universe") { galaxyHover.current = -1; planetHover.current = -1; setViewZoom(0); galaxySelectRef.current(universe.clusters[pressedPlanet].id); }
         else {
+          planetHover.current = -1;
           setViewZoom(.2);
           selectRef.current(sectorWorlds[state.current.sector][pressedPlanet].id);
         }
@@ -708,7 +735,7 @@ export function CosmicCanvas({ activeId, onSelect, onPrevious, onNext, motionOn,
       if (canvas.hasPointerCapture(event.pointerId)) canvas.releasePointerCapture(event.pointerId);
     };
     const cancel = () => { dragging = false; pointerMoved = false; pressedPlanet = -1; };
-    const leave = () => { galaxyHover.current = -1; canvas.style.cursor = ""; wake(); };
+    const leave = () => { galaxyHover.current = -1; planetHover.current = -1; canvas.style.cursor = ""; wake(); };
     canvas.addEventListener("pointerdown", down);
     canvas.addEventListener("pointermove", move);
     canvas.addEventListener("pointerup", up);
@@ -778,14 +805,14 @@ export function CosmicCanvas({ activeId, onSelect, onPrevious, onNext, motionOn,
       <button type="button" onClick={() => setViewZoom((value) => Math.max(0, value - .12))} aria-label="Zoom out of planets" title="Zoom out"><Minus size={14} /></button>
       <button type="button" onClick={() => setViewZoom(0)} aria-label="Reset planet zoom" title="Reset zoom"><RotateCcw size={13} /></button>
     </div>}
-    {view === "universe" && galaxies.map((galaxy, index) => <button key={galaxy.id} ref={(element) => { galaxyLabels.current[index] = element; }} type="button" className="galaxy-label" style={{ "--galaxy-color": galaxy.color } as React.CSSProperties} onFocus={() => wakeRef.current()} onBlur={() => wakeRef.current()} onPointerEnter={() => { galaxyHover.current = index; wakeRef.current(); }} onPointerLeave={() => { galaxyHover.current = -1; wakeRef.current(); }} onClick={() => { galaxyHover.current = -1; setViewZoom(0); onGalaxySelect(galaxy.id); }} aria-label={`${language === "en" ? "Explore" : "Jelajahi"} ${galaxy.name[language]} ${language === "en" ? "galaxy" : "galaksi"}`}>
+    {view === "universe" && galaxies.map((galaxy, index) => <button key={galaxy.id} ref={(element) => { galaxyLabels.current[index] = element; }} type="button" className="galaxy-label" style={{ "--galaxy-color": galaxy.color } as React.CSSProperties} data-selected={sector === galaxy.id} onFocus={() => wakeRef.current()} onBlur={() => wakeRef.current()} onPointerEnter={() => { galaxyHover.current = index; wakeRef.current(); }} onPointerLeave={() => { galaxyHover.current = -1; wakeRef.current(); }} onClick={() => { galaxyHover.current = -1; setViewZoom(0); onGalaxySelect(galaxy.id); }} aria-label={`${language === "en" ? "Explore" : "Jelajahi"} ${galaxy.name[language]} ${language === "en" ? "galaxy" : "galaksi"}`}>
       <span className="galaxy-label-name">{galaxy.name[language]}<ArrowUpRight size={13} aria-hidden="true" /></span><small>{String(galaxy.count).padStart(2, "0")} {language === "en" ? "worlds" : "dunia"}</small>
     </button>)}
     {view === "orbit" && worlds.map((world, index) => <button
       ref={(element) => { labels.current[index] = element; }}
       key={world.id} type="button" className="planet-label"
       style={{ "--world-color": world.color } as React.CSSProperties}
-      aria-pressed={activeId === world.id} onClick={() => { setViewZoom(.2); onSelect(world.id); }}>
+      aria-pressed={activeId === world.id} data-selected={activeId === world.id} onFocus={() => wakeRef.current()} onBlur={() => wakeRef.current()} onClick={() => { setViewZoom(.2); onSelect(world.id); }}>
       <span />{world.name}
     </button>)}
   </div>;

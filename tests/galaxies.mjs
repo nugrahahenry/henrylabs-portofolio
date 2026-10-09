@@ -70,6 +70,7 @@ try {
     await expect(scene).toHaveAttribute("data-view", "universe");
     await expect(page.locator(".planet-label")).toHaveCount(0);
     await expect(page.locator(".galaxy-label")).toHaveCount(3);
+    await expect(page.locator(".galaxy-label[data-selected='true']")).toHaveCount(1);
     await expect(page.locator(".sector-navigation")).toHaveCount(0);
     const overviewAngle = Number(await scene.getAttribute("data-universe-angle"));
     await expect.poll(async () => Number(await scene.getAttribute("data-universe-angle"))).toBeGreaterThan(overviewAngle + .003);
@@ -108,6 +109,7 @@ try {
     await expect(scene).toHaveAttribute("data-flight-ready", "true");
     await expect(scene).toHaveAttribute("data-orbit-scale", "1.000");
     await expect(page.locator(".planet-label")).toHaveCount(5);
+    await expect(page.locator(".planet-label[data-selected='true']")).toHaveCount(1);
     if (viewport.width <= 640) for (const planet of await page.locator(".planet-label").all()) {
       await expect(planet).toBeInViewport({ ratio: .99 });
       const box = await planet.boundingBox();

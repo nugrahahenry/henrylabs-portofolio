@@ -1,6 +1,6 @@
 <div align="center">
 
-# StarGod Portfolio v0.94.0
+# StarGod Portfolio v0.95.0
 
 **I build things I actually see.**
 
@@ -25,7 +25,7 @@ Three galaxies. Ten project worlds. One maker.
 
 StarGod is the working name of the universe, drawn from Henry's longtime alias. **HenryLabs** remains its personal-project galaxy. An authored stellar-orbit mark connects the header, quiet entrance, maker signature, and footer.
 
-Enter a living map of **HenryLabs**, **University**, and **Client Work**. Choose a galaxy, follow a curved camera approach into its planets, and explore the work behind each identity. Returning retraces that journey without rebuilding the scene. Explore the universe lands in a stable, fully visible exploration window, with space to browse before the camera recedes. The opening headline stays free of project overlays when scrolling back up. Technologies orbit the projects they belong to; an optional reading panel shares the same layout across all ten worlds, with context, ownership, workflow, and technology. It stays closed until requested. Read a project in detail or close the panel to return to the orbit, with keyboard focus preserved throughout.
+Enter a living map of **HenryLabs**, **University**, and **Client Work**. Choose a galaxy, follow a curved camera approach into its planets, and explore the work behind each identity. The active galaxy and planet keep a restrained halo, readable label, and selected state while pointer and keyboard focus reveal the same target. The camera eases through a moving focus point when changing sectors, so the scene does not jump to a new center. Returning retraces that journey without rebuilding the scene. Explore the universe lands in a stable, fully visible exploration window, with space to browse before the camera recedes. The opening headline stays free of project overlays when scrolling back up. Technologies orbit the projects they belong to; an optional reading panel shares the same layout across all ten worlds, with context, ownership, workflow, and technology. It stays closed until requested. Read a project in detail or close the panel to return to the orbit, with keyboard focus preserved throughout.
 
 Beyond the map: one preview following the selected project, then Henry himself. The selected world hands off through a small worldline marker before its clearly labeled artwork preview opens large, zooms, pans, and returns to the reading flow without pretending artwork is an app screenshot. The preview media and facts arrive with a restrained depth offset, then a quiet orbit signal carries the eye toward the maker chapter. A crowned StarGod portrait opens locally under the cursor to reveal Henry in a dark suit: sunglasses, clear glasses, then his unobscured face. The approved portraits share one composition; this is a layered photographic reveal, not a rotatable head model. Four appearance controls also work with touch, keyboard, or reduced motion.
 

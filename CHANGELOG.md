@@ -1,5 +1,12 @@
 # Changelog
 
+## StarGod Portfolio v0.95.0 - 2026-10-10
+
+- Make galaxy and planet selection legible with persistent selected states, hover/focus highlighting, depth metadata, active halos, and a small planet marker that follows the projected object.
+- Smooth sector changes through an eased camera focus point so the local system, background galaxy, and labels trade places without a center teleport.
+- Reveal the header after an explicit Explore-the-universe landing completes, keeping language and navigation reachable while preserving hide-on-scroll focus behavior.
+- Extend galaxy browser coverage for selected galaxy/planet state across desktop, tablet, phone, landscape, reduced motion, touch, and no-WebGL paths.
+
 ## StarGod Portfolio v0.94.0 - 2026-10-10
 
 - Deepen the maker orbit with two restrained 3D orbital traces that clarify the shared system without adding a dense connection graph or exceeding the renderer budget.

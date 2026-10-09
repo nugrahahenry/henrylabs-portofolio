@@ -196,6 +196,7 @@ export function PortfolioExperience() {
       const map = heroRef.current?.querySelector<HTMLElement>(".cosmic-canvas");
       if (Math.abs(window.scrollY - mapLanding) < 2 && map && !map.closest("[inert]")) {
         map.focus({ preventScroll: true });
+        window.dispatchEvent(new Event("stargod:reveal-header"));
         cancel();
       } else frame = requestAnimationFrame(arrive);
     };
