@@ -1,5 +1,13 @@
 # Changelog
 
+## StarGod Portfolio v0.91.0 - 2026-10-09
+
+- Shorten the visual handoff between the selected world and Henry's maker chapter so the portrait arrives sooner without cutting the space scene short.
+- Bring the five featured credential cards in earlier and keep them settled together longer, with the same reversible scroll path and no hidden focus targets while they are still moving.
+- Add honest project artwork previews to Home and project details. Open artwork in a focused viewer, zoom/pan it, retry failed media, and return focus to the original preview. Label artwork as artwork instead of implying it is an application screenshot.
+- Preserve privacy boundaries for projects without public media and keep Nalira's ambient asset explicitly marked as concept artwork.
+- Add journey, artwork, reduced-motion, responsive, focus, and failed-media recovery coverage.
+
 ## StarGod Portfolio v0.90.0 - 2026-10-09
 
 - Hide the shared header on downward scroll and reveal it sooner on upward scroll, leaving the universe and reading pages unobstructed without shifting content.

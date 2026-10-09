@@ -21,7 +21,7 @@ const { sampleOrbit, orbitalSpeed } = await loadModule("orbital-path");
 const { createStellarCore } = await loadModule("stellar-core");
 const { advanceGalaxyFlight, sampleGalaxyFlight } = await loadModule("galaxy-flight");
 const { createDeepSpace } = await loadModule("deep-space");
-const { makerGroupAt, advanceMakerRotation, portraitCoversSatellite, MAKER_RETREAT_START, MAKER_PROOF_START } = await loadModule("maker-motion");
+const { makerGroupAt, makerEvidenceAt, advanceMakerRotation, portraitCoversSatellite, MAKER_RETREAT_START, MAKER_PROOF_START } = await loadModule("maker-motion");
 const { infallPoint, gravityMaterial, dustWarmth } = await loadModule("gravity-field");
 const { createSpacecraft, spacecraftPose, routeSpacecraft, flightPresence, pursuitPulse, pursuitMiss, wormholePresence, createWormhole, clearShot, advancePursuit, pursuitEnd, pursuitPeriod, PURSUIT_DELAY, PURSUIT_REST } = await loadModule("spacecraft");
 const { distantStarPoint, dustStreamSource, stellarTwinkle, createDistantStarMaterial, DISTANT_STAR_COUNT, COMPACT_STAR_COUNT, FEEDING_DUST_COUNT } = await loadModule("ambient-field");
@@ -147,6 +147,22 @@ test("deep space is a bounded real density volume with deterministic cached voxe
 test("maker scroll has four reversible tech chapters followed by a separate proof exchange", () => {
   for (const [progress, group] of [[0,0],[.13,0],[.14,1],[.27,1],[.28,2],[.42,2],[.43,3],[.61,3]]) assert.equal(makerGroupAt(progress), group);
   assert.ok(MAKER_RETREAT_START > .6 && MAKER_PROOF_START > MAKER_RETREAT_START);
+});
+
+test("proof cards arrive together early enough for a reading hold, and reverse on the same path", () => {
+  for (let index = 0; index < 5; index++) {
+    assert.equal(makerEvidenceAt(MAKER_PROOF_START, index).travel, 0);
+    assert.equal(makerEvidenceAt(.87, index).arrived, true);
+    let last = 0;
+    const trace = [];
+    for (let step = 0; step <= 100; step++) {
+      const state = makerEvidenceAt(step / 100, index);
+      assert.ok(state.eased >= last && state.eased <= 1);
+      assert.equal(state.arrived, state.travel >= .95);
+      trace.push(state); last = state.eased;
+    }
+    for (let step = 100; step >= 0; step--) assert.deepEqual(makerEvidenceAt(step / 100, index), trace[step]);
+  }
 });
 
 test("maker swipes retain bounded momentum without fighting a live drag or pause", () => {

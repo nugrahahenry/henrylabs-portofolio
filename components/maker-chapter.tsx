@@ -10,7 +10,7 @@ import { PortraitReveal } from "./portrait-reveal";
 import { SiteLink, useSitePreferences } from "./site-preferences";
 import { CredentialViewer } from "./credential-viewer";
 import { MakerOrbitField } from "./maker-orbit-field";
-import { makerGroupAt, MAKER_RETREAT_START, MAKER_PROOF_START, type OrbitRotation } from "./maker-motion";
+import { makerGroupAt, makerEvidenceAt, MAKER_RETREAT_START, MAKER_PROOF_START, type OrbitRotation } from "./maker-motion";
 
 const featured = certificates.filter(record => record.featuredOrder !== null);
 const groups = [...stackGroups.map((group, i) => ({ label: group.label, items: orbitTechNodes.filter(tech => group.items.some(item => item[0] === tech.label) || i === 2 && !stackGroups.some(entry => entry.items.some(item => item[0] === tech.label))) })), { label: "All", items: orbitTechNodes }];
@@ -110,14 +110,13 @@ function Evidence({ record, index, spatial, language, progress, onOpen }: { reco
   const update = (value: number) => {
     const node = element.current;
     if (!node) return;
-    const t = spatial ? Math.min(1, Math.max(0, (value - .72 - index * .025) / .12)) : 1;
-    const eased = 1 - Math.pow(1 - t, 3);
+    const { travel: t, eased, arrived } = makerEvidenceAt(spatial ? value : 1, index);
     node.style.setProperty("--evidence-rise", `${(1 - eased) * 85}svh`);
     node.style.setProperty("--evidence-turn", `${(1 - eased) * (index % 2 ? -22 : 22)}deg`);
     node.style.setProperty("--evidence-drift", `${Math.sin(value * Math.PI * 2 + index * 1.8) * 9}px`);
     node.style.setProperty("--evidence-opacity", String(Math.min(1, t * 4)));
-    node.dataset.arrived = String(t > .95);
-    node.inert = spatial && t < .95;
+    node.dataset.arrived = String(arrived);
+    node.inert = !arrived;
   };
   useMotionValueEvent(progress, "change", update);
   useEffect(() => {

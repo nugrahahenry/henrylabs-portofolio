@@ -1,6 +1,11 @@
 export const MAKER_RETREAT_START = .62;
 export const MAKER_PROOF_START = .71;
 
+export function makerEvidenceAt(progress: number, index: number) {
+  const travel = Math.min(1, Math.max(0, (progress - MAKER_PROOF_START - .005 - index * .012) / .105));
+  return { travel, eased: 1 - Math.pow(1 - travel, 3), arrived: travel >= .95 };
+}
+
 export function makerGroupAt(progress: number) {
   return progress < .14 ? 0 : progress < .28 ? 1 : progress < .43 ? 2 : 3;
 }

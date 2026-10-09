@@ -7,7 +7,7 @@ export type CatalogProject = {
   id: string; slug: string; category: Category; name: string; color: string;
   summary: Text; flow: Record<Language, string[]>; role: Text; ownership: Text;
   status: Text; access: Text; evidence: Text; next: Text; stack: string[];
-  logo?: string; media?: string; mediaAlt?: string; source?: string;
+  logo?: string; media?: string; mediaAlt?: string; mediaKind?: "artwork" | "concept"; source?: string;
   link?: string; linkLabel?: Text;
 };
 export const categories: Record<"all" | Category, Text> = {

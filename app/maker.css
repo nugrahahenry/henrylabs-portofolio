@@ -1,4 +1,4 @@
-.maker-approach { height: min(35svh, 315px); }
+.maker-approach { height: clamp(180px, 24svh, 240px); }
 .maker-chapter { position: relative; min-height: 420svh; color: var(--paper); --maker-progress: 0; --tool-retreat: 0; --maker-header: 76px; }
 .maker-sticky { position: sticky; top: var(--maker-header); height: calc(100svh - var(--maker-header)); max-width: 1600px; margin-inline: auto; isolation: isolate; }
 .maker-proof-anchor { position: absolute; top: 93%; scroll-margin-top: 65svh; }
@@ -131,6 +131,7 @@
   .maker-proof-anchor { top: 60%; scroll-margin-top: 80px; }
 }
 html[data-motion="off"] .maker-chapter { min-height: 0; }
+html[data-motion="off"] .maker-approach { height: 48px; }
 html[data-motion="off"] .maker-sticky { position: relative; top: 0; }
 html[data-motion="off"] .maker-evidence-card { opacity: 1; translate: none; rotate: none; }
 .maker-chapter[data-motion="false"] { padding: 70px 5%; }
