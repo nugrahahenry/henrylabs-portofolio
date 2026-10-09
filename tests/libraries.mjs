@@ -4,7 +4,7 @@ import { chromium, expect } from "@playwright/test";
 
 const base = (process.env.PORTFOLIO_URL ?? "http://localhost:3002").replace(/\/$/, "");
 const browser = await chromium.launch({ headless: true, executablePath: process.env.CHROME_PATH ?? "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe" });
-const viewports = [{ width: 1440, height: 900 }, { width: 1024, height: 768 }, { width: 768, height: 1024 }, { width: 390, height: 844 }, { width: 360, height: 740 }, { width: 844, height: 390 }];
+const viewports = [{ width: 1440, height: 900 }, { width: 1024, height: 768 }, { width: 768, height: 1024 }, { width: 390, height: 844 }, { width: 360, height: 740 }, { width: 320, height: 740 }, { width: 844, height: 390 }];
 mkdirSync("test-results/libraries", { recursive: true });
 async function fits(page) {
   await expect(page.locator("html")).toHaveAttribute("data-preferences-ready", "true", { timeout: 20000 });
@@ -19,6 +19,12 @@ async function fits(page) {
     for (let i = 0; i < pixels.length; i += 4) if (pixels[i] + pixels[i + 1] + pixels[i + 2] > 30) lit++;
     return lit > canvas.width * canvas.height * .02;
   }), "Reading sky must paint real nebula pixels");
+  if (await page.locator(".library-heading").count()) {
+    const heading = await page.locator(".library-heading h1").boundingBox();
+    const action = await page.locator(".library-heading a").boundingBox();
+    assert.ok(heading.x + heading.width <= action.x + 1 || heading.y + heading.height <= action.y + 1, "Library title and universe action never overlap");
+    assert.ok(action.height >= 44 - .00001, `Universe action remains touch sized: ${action.height}`);
+  }
 }
 try {
   for (const viewport of process.argv.includes("--integration") ? [] : viewports) {
@@ -43,6 +49,9 @@ try {
     await expect(page.getByRole("searchbox")).toHaveValue("Laravel");
     await page.reload({ waitUntil: "domcontentloaded" });
     await expect(page.locator(".project-record")).toHaveCount(1);
+    await page.getByRole("button", { name: "Clear filters", exact: true }).click();
+    await expect(page.locator(".project-record")).toHaveCount(10);
+    await expect(page.getByRole("searchbox")).toHaveValue("");
     await page.goto(`${base}/projects/pos-z-shoes?category=university`);
     await expect(page.locator(".detail-continuation a")).toHaveCount(2);
     await page.locator(".detail-continuation").scrollIntoViewIfNeeded();
@@ -57,6 +66,8 @@ try {
     await expect(page.locator(".credential-record")).toHaveCount(26);
     await fits(page);
     await expect(page.locator(".credential-record").first()).toContainText("Google Student Ambassador");
+    await expect(page.locator(".credential-record .library-thumbnail").first()).toHaveAttribute("data-image-state", "ready");
+    await expect(page.getByRole("link", { name: "Back to the universe", exact: true })).toHaveAttribute("href", "/?view=universe");
     if (viewport.width <= 1000) {
       const search = await page.locator(".credential-filters .library-search").boundingBox();
       const type = await page.getByRole("combobox", { name: "Type", exact: true }).boundingBox();
@@ -181,7 +192,7 @@ try {
   await expect(page.locator("h1")).toHaveText("LabQ");
   await expect(page).toHaveURL(/\/projects\/labq\?lang=id&motion=off/);
   await page.goto(`${base}/#client-work`);
-  await page.waitForURL(/\/projects\?category=client/, { waitUntil: "domcontentloaded", timeout: 20000 });
+  await expect(page).toHaveURL(/\/projects\?category=client/, { timeout: 20000 });
   await fits(page);
   await expect(page.locator(".project-record")).toHaveCount(2);
   await expect(page).toHaveURL(/category=client/);
@@ -227,20 +238,59 @@ try {
   await expect(reduced.locator("html")).toHaveAttribute("data-motion", "off");
   await expect(reduced.locator(".motion-toggle")).toBeDisabled();
   const still = await reduced.locator(".reading-sky").getAttribute("data-time");
+  const stillCamera = await reduced.locator(".reading-sky").getAttribute("data-camera");
+  await reduced.mouse.move(1250, 20);
+  await reduced.evaluate(() => window.scrollTo(0, 900));
   await reduced.waitForTimeout(200);
   assert.equal(await reduced.locator(".reading-sky").getAttribute("data-time"), still);
+  assert.equal(await reduced.locator(".reading-sky").getAttribute("data-camera"), stillCamera);
+  assert.equal(await reduced.locator(".project-library-grid").evaluate(node => getComputedStyle(node).animationName), "none");
   await reduced.close();
   const sky = await browser.newPage({ viewport: { width: 390, height: 844 } });
   await sky.goto(`${base}/projects`);
   await fits(sky);
   const before = Number(await sky.locator(".reading-sky").getAttribute("data-time"));
   await expect.poll(async () => Number(await sky.locator(".reading-sky").getAttribute("data-time"))).toBeGreaterThan(before + .1);
-  await sky.locator(".reading-sky canvas").evaluate(canvas => canvas.getContext("webgl2").getExtension("WEBGL_lose_context").loseContext());
+  const cameraBefore = await sky.locator(".reading-sky").getAttribute("data-camera");
+  await sky.mouse.move(360, 40);
+  await expect.poll(() => sky.locator(".reading-sky").getAttribute("data-camera")).not.toBe(cameraBefore);
+  await sky.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
+  await expect.poll(async () => Number((await sky.locator(".reading-sky").getAttribute("data-camera")).split(",")[2])).toBeLessThan(6.35);
+  await sky.evaluate(() => window.scrollTo(0, 0));
+  await sky.locator(".reading-sky canvas").evaluate(canvas => {
+    window.readingContextTest = canvas.getContext("webgl2").getExtension("WEBGL_lose_context");
+    window.readingContextTest.loseContext();
+  });
   await expect(sky.locator(".reading-sky")).toHaveAttribute("data-fallback", "true");
   await expect(sky.getByRole("link", { name: "Catmoji", exact: true })).toBeVisible();
+  await sky.evaluate(() => window.readingContextTest.restoreContext());
+  await expect(sky.locator(".reading-sky")).not.toHaveAttribute("data-fallback", "true");
+  await fits(sky);
   await sky.getByRole("link", { name: "Catmoji", exact: true }).click();
   await expect(sky.locator("h1")).toHaveText("Catmoji");
   await sky.close();
+  for (const language of ["en", "id"]) {
+    const thumbnails = await browser.newPage({ viewport: { width: 390, height: 844 } });
+    let release;
+    const waiting = new Promise(resolve => { release = resolve; });
+    await thumbnails.route("**/assets/certificates/thumbnails/**", async route => { await waiting; await route.abort(); });
+    try {
+      await thumbnails.goto(`${base}/credentials?lang=${language}&motion=off`, { waitUntil: "domcontentloaded" });
+      const preview = thumbnails.locator(".credential-record-preview").first();
+      await expect(preview.locator(".library-thumbnail")).toHaveAttribute("data-image-state", "loading");
+      const waitingBox = await preview.boundingBox();
+      release();
+      await expect(preview.locator(".library-thumbnail")).toHaveAttribute("data-image-state", "error");
+      const failedBox = await preview.boundingBox();
+      assert.equal(failedBox.width, waitingBox.width, "Thumbnail failure preserves certificate width");
+      assert.equal(failedBox.height, waitingBox.height, "Thumbnail failure preserves certificate height");
+      await expect(preview).toContainText(language === "en" ? "Preview unavailable" : "Preview belum tersedia");
+      await preview.click();
+      await expect(thumbnails.locator(".credential-dialog-stage")).toHaveAttribute("data-image-state", "ready");
+      await thumbnails.keyboard.press("Escape");
+      await expect(preview).toBeFocused();
+    } finally { release(); await thumbnails.close(); }
+  }
   for (const language of ["en", "id"]) {
     const recovery = await browser.newPage({ viewport: { width: 390, height: 844 } });
     const errors = [];

@@ -1,6 +1,6 @@
 <div align="center">
 
-# StarGod Portfolio v0.91.0
+# StarGod Portfolio v0.92.0
 
 **I build things I actually see.**
 
@@ -36,6 +36,8 @@ A continuous Three.js universe connects the journey, from distant stars and nebu
 Prefer a closer read? **Projects** opens a searchable catalog of all ten worlds, filtered by HenryLabs, University, or Client Work. Each planet and catalog record leads to the same project detail, with ownership, workflow, stack, and honest access boundaries. Continue to the previous or next project within the same galaxy or filtered selection, or return to the universe from that planet; its reading panel stays closed until requested.
 
 **Credentials** is a separate library of all 26 learning records. Filter by issuer or type, search a title, and open a full-size watermarked preview with zoom and available PDF previews. Browse the current selection without closing the viewer; Home keeps its gallery limited to the five featured records. Arrow keys move between documents at fitted size and pan the image when zoomed. A small preview remains visible while the full-size image loads, with a retry option on failure. English/Indonesian and motion choices travel with the internal links.
+
+The libraries stay inside the same volumetric nebula, with subtle cursor and scroll parallax that leaves the reading surface steady. Both offer a direct return to the universe. Reduced motion freezes the sky; interrupted graphics can recover without reloading the page. A missing thumbnail preserves its space and does not block project details or the full certificate viewer.
 
 English is the default, with Indonesian available throughout the main experience. Keyboard navigation, touch controls, reduced motion, and a WebGL fallback keep the work accessible.
 

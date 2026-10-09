@@ -1,5 +1,13 @@
 # Changelog
 
+## StarGod Portfolio v0.92.0 - 2026-10-09
+
+- Give the shared library nebula restrained cursor and scroll depth without adding a renderer, points, or animation loops. Freeze the camera in Still/reduced motion and recover after WebGL context restoration.
+- Align Projects and Credentials headings with their universe return links in a responsive grid; remove absolute positioning and preserve readable mobile flow. Add a short, already-visible collection entrance with no recurring decorative motion.
+- Add a direct universe return to Credentials, a clear-filter action for nonempty project results, and proper spacing for the watermark note.
+- Keep thumbnail loading/failure inside stable media frames while project details and full-size watermarked previews remain accessible. Correct credential metadata to describe public watermarked previews.
+- Extend responsive, reduced-motion, graphics recovery, thumbnail failure, filter reset, and navigation regression checks.
+
 ## StarGod Portfolio v0.91.0 - 2026-10-09
 
 - Shorten the visual handoff between the selected world and Henry's maker chapter so the portrait arrives sooner without cutting the space scene short.
