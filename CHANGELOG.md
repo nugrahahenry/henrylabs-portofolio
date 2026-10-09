@@ -1,5 +1,12 @@
 # Changelog
 
+## StarGod Portfolio v0.94.0 - 2026-10-10
+
+- Deepen the maker orbit with two restrained 3D orbital traces that clarify the shared system without adding a dense connection graph or exceeding the renderer budget.
+- Give technology satellites front/back contrast, a wider touch target, and clearer depth hierarchy while preserving keyboard access, alpha occlusion, drag momentum, and no-WebGL semantic controls.
+- Fade the selected-tool detail with the orbit retreat and add a quiet horizon cue before the five featured credentials take over the same centered portrait.
+- Extend maker browser regression coverage through desktop, tablet, phone, short landscape, reduced motion, failed icon, native touch, and no-WebGL paths.
+
 ## StarGod Portfolio v0.93.0 - 2026-10-09
 
 - Refine the Home handoff from the living map into the selected-world preview with a compact selected-world marker that keeps the active galaxy legible without adding another panel.
