@@ -6,8 +6,6 @@ import {
   ArrowDown,
   ArrowLeft,
   ArrowUpRight,
-  CarFront,
-  FlaskConical,
   Github,
   Instagram,
   Linkedin,
@@ -15,8 +13,6 @@ import {
   MessageCircle,
   MousePointer2,
   PanelRightOpen,
-  ShoppingCart,
-  X,
 } from "lucide-react";
 import { AnimatePresence, MotionConfig, motion, useInView, useMotionValue, useMotionValueEvent, useScroll, useSpring, useTransform } from "motion/react";
 import { CosmicCanvas, type OrbitId, type ProjectId, type SatelliteId, type SatelliteWorld } from "./cosmic-canvas";
@@ -24,17 +20,16 @@ import { SmoothScroll } from "./smooth-scroll";
 import { WorldlineBackdrop } from "./worldline-backdrop";
 import type { GalaxyId } from "./galaxy-system";
 
-import { projects, academicProjects as academicData, clientProjects as clientData, clientStacks, type Language } from "@/content/projects";
+import { projects, academicProjects, clientProjects, clientStacks } from "@/content/projects";
 import { orbitTechNodes } from "@/content/technologies";
 import { HomeProjectPreview } from "./home-project-preview";
+import { WorldInspector } from "./world-inspector";
 import { findWorld } from "@/content/catalog";
-import { SiteLink, useSitePreferences, useQuery, updateQuery } from "./site-preferences";
+import { useSitePreferences, useQuery } from "./site-preferences";
 import { MakerChapter } from "./maker-chapter";
 import { StarGodMark } from "./stargod-mark";
 import { UNIVERSE_CHAPTER as chapter, universeLanding, chapterBlend } from "./universe-chapter";
 
-const academicProjects = academicData.map((record, index) => ({ ...record, icon: [CarFront, ShoppingCart, FlaskConical][index] }));
-const clientProjects = clientData.map((record, index) => ({ ...record, icon: [MessageCircle, Instagram][index] }));
 type WorldlineStage = "world" | "method" | "stack";
 type Sector = GalaxyId;
 
@@ -139,60 +134,6 @@ function cx(...names: Array<string | false | null | undefined>) {
   return names.filter(Boolean).join(" ");
 }
 
-function ProjectSignature({ project, language, compact = false }: { project: (typeof projects)[number]; language: Language; compact?: boolean }) {
-  return <div className={cx("project-signature", compact && "project-signature--compact")} aria-label={`${project.name} project signature`}>
-    <span className="project-signature-label">project signature</span>
-    <div className="project-signature-track">
-      {project.signature[language].map((step, index) => <span key={step} className="project-signature-node">
-        <i>{String(index + 1).padStart(2, "0")}</i>
-        <b>{step}</b>
-      </span>)}
-    </div>
-  </div>;
-}
-
-function SatelliteReadout({ record, records, language, motionOn, onSelect, onClose }: {
-  record: SatelliteRecord;
-  records: readonly SatelliteRecord[];
-  language: Language;
-  motionOn: boolean;
-  onSelect: (id: SatelliteId) => void;
-  onClose: () => void;
-}) {
-  const Icon = record.icon;
-  const flow = record.sector === "university" ? record.signal : record.signal[language];
-  const output = record.sector === "university" ? record.output : record.output[language];
-  return <motion.section className="project-showcase satellite-readout" data-lenis-prevent key={record.id}
-    aria-label={`Active project: ${record.name}`} style={{ "--project-showcase-color": record.color } as CSSProperties}
-    initial={motionOn ? { opacity: 0, x: 18 } : false} animate={{ opacity: 1, x: 0 }}
-    exit={motionOn ? { opacity: 0, x: -12 } : undefined} transition={{ duration: motionOn ? .35 : 0 }}>
-    <div className="project-showcase-topline"><span>{record.sector === "university" ? "UNIVERSITY" : "CLIENT WORK"}</span>
-      <div className="project-showcase-nav">
-        <button type="button" aria-label="Close active world" onClick={onClose}><X size={15} /></button>
-      </div>
-    </div>
-    <div className="satellite-index" aria-label={language === "en" ? "Sector projects" : "Project sektor"}>
-      {records.map((item) => { const ItemIcon = item.icon; return <button type="button" aria-label={`Focus ${item.name}`} aria-pressed={item.id === record.id} title={item.name}
-        key={item.id} style={{ "--world-color": item.color } as CSSProperties} onClick={() => onSelect(item.id)}><ItemIcon size={18} aria-hidden="true" /></button>; })}
-    </div>
-    <div className="project-showcase-identity"><span className="project-showcase-mark"><Icon size={24} /></span>
-      <div><span>{record.access[language]}</span><h2>{record.name}</h2></div>
-    </div>
-    <p className="project-showcase-summary">{record.body}</p>
-    <dl className="satellite-facts">
-      <div><dt>{language === "en" ? "Ownership" : "Kontribusi"}</dt><dd>{record.ownership[language]}</dd></div>
-      <div><dt>{language === "en" ? "Workflow" : "Alur"}</dt><dd>{flow}</dd></div>
-      <div><dt>Output</dt><dd>{output}</dd></div>
-    </dl>
-    <div className="project-showcase-actions">
-      <SiteLink href={`/projects/${findWorld(record.id)!.slug}?from=universe`} onClick={() => updateQuery({ world: record.id }, true)}>{language === "en" ? "Read project" : "Baca proyek"}<ArrowUpRight size={14} /></SiteLink>
-      {record.sector === "university" && record.link
-        ? <a href={record.link} target="_blank" rel="noreferrer">{language === "en" ? "View source" : "Lihat source"}<ArrowUpRight size={14} /></a>
-        : record.sector === "client" && <a href="#contact">{language === "en" ? "Request walkthrough" : "Minta walkthrough"}<ArrowUpRight size={14} /></a>}
-    </div>
-  </motion.section>;
-}
-
 export function PortfolioExperience() {
   const { language, motionOn } = useSitePreferences();
   const query = useQuery();
@@ -206,6 +147,8 @@ export function PortfolioExperience() {
   const [worldlineStage, setWorldlineStage] = useState<WorldlineStage>("world");
   const [heroPhase, setHeroPhase] = useState("intro");
   const [showProjectShowcase, setShowProjectShowcase] = useState(false);
+  const restoreInspectorFocus = useRef(false);
+  const [mapLanding, setMapLanding] = useState<number | null>(null);
   const heroRef = useRef<HTMLElement>(null);
   const fieldRef = useRef<HTMLDivElement>(null);
   const workRef = useRef<HTMLElement>(null);
@@ -240,6 +183,31 @@ export function PortfolioExperience() {
   const sectorRecords = activeSector === "university" ? universityRecords : clientRecords;
   const activeSatellite = sectorRecords.find((record) => record.id === (activeSector === "university" ? activeSatellites.university : activeSatellites.client)) ?? sectorRecords[0];
   const focusedWorld = activeSector === "main" ? activeProject : activeSatellite;
+
+  useEffect(() => {
+    if (mapLanding === null) return;
+    const opener = document.activeElement;
+    let frame = 0;
+    const started = performance.now();
+    const cancel = () => setMapLanding(null);
+    const arrive = () => {
+      const focusMoved = document.activeElement !== opener && document.activeElement !== document.body;
+      if (focusMoved || performance.now() - started > 3000) { cancel(); return; }
+      const map = heroRef.current?.querySelector<HTMLElement>(".cosmic-canvas");
+      if (Math.abs(window.scrollY - mapLanding) < 2 && map && !map.closest("[inert]")) {
+        map.focus({ preventScroll: true });
+        cancel();
+      } else frame = requestAnimationFrame(arrive);
+    };
+    frame = requestAnimationFrame(arrive);
+    // An explicit Explore action hands focus to the map; ordinary scroll never does.
+    const events = ["wheel", "touchstart", "pointerdown", "keydown"] as const;
+    events.forEach(event => window.addEventListener(event, cancel, { passive: true }));
+    return () => {
+      cancelAnimationFrame(frame);
+      events.forEach(event => window.removeEventListener(event, cancel));
+    };
+  }, [mapLanding]);
 
   useEffect(() => {
     const migrateLegacyFragment = () => {
@@ -350,6 +318,7 @@ export function PortfolioExperience() {
     setMapView("orbit");
   };
   const returnToUniverse = () => {
+    restoreInspectorFocus.current = false;
     setShowProjectShowcase(false);
     setMapView("universe");
     const hero = heroRef.current;
@@ -361,7 +330,12 @@ export function PortfolioExperience() {
     setShowProjectShowcase(false);
     setMapView("universe");
     const top = motionOn ? universeLanding(hero.offsetTop, hero.offsetHeight, innerHeight) : hero.offsetTop + (hero.querySelector<HTMLElement>(".cosmic-frame-wrap")?.offsetTop ?? 0) - 84;
+    setMapLanding(top);
     window.scrollTo({ top, behavior: motionOn ? "smooth" : "instant" });
+  };
+  const closeWorldInspector = () => {
+    restoreInspectorFocus.current = true;
+    setShowProjectShowcase(false);
   };
 
   return (
@@ -393,8 +367,7 @@ export function PortfolioExperience() {
           if (event.key !== "Escape" || !showProjectShowcase || document.querySelector('[role="dialog"]')) return;
           event.preventDefault();
           event.stopPropagation();
-          setShowProjectShowcase(false);
-          heroRef.current?.querySelector<HTMLElement>(".cosmic-canvas")?.focus({ preventScroll: true });
+          closeWorldInspector();
         }}>
           <motion.div className="hero-copy" inert={motionOn && heroPhase !== "intro"} style={{ y: motionOn ? heroCopyY : 0 }}>
             <p className="hero-kicker"><span className="live-pulse" /> product-minded developer / Indonesia</p>
@@ -411,15 +384,13 @@ export function PortfolioExperience() {
               <div className="frame-topline"><span>{t.field.label}</span><span>{mapView === "universe" ? "03 GALAXIES / 10 WORLDS" : `${focusedWorld.name} / ${activeSector === "main" ? activeProject.status[language] : activeSatellite.access[language]}`}</span></div>
               <CosmicCanvas activeId={activeSector === "main" ? activeId : activeSatellite.id} onSelect={focusOrbitWorld} onPrevious={() => cycleOrbitWorld(-1)} onNext={() => cycleOrbitWorld(1)} motionOn={motionOn} progress={scrollYProgress} techNodes={orbitTechNodes} satelliteCatalog={satelliteCatalog} sector={activeSector} view={mapView} language={language} readingOpen={showProjectShowcase} onGalaxySelect={enterGalaxy} onUniverse={returnToUniverse} />
               <AnimatePresence mode="wait" initial={false}>
-                {mapView === "orbit" && (showProjectShowcase ? (activeSector === "main" ? <motion.section className="project-showcase" data-lenis-prevent key={activeProject.id} aria-label={`Active project: ${activeProject.name}`} style={{ "--project-showcase-color": activeProject.color } as CSSProperties} initial={motionOn ? { opacity: 0, x: 22 } : false} animate={{ opacity: 1, x: 0 }} exit={motionOn ? { opacity: 0, x: -16 } : undefined} transition={{ duration: motionOn ? .4 : 0, ease: [0.16, 1, 0.3, 1] }}>
-                  <div className="project-showcase-topline"><span>ACTIVE WORLD / {String(projects.findIndex((project) => project.id === activeProject.id) + 1).padStart(2, "0")}</span><button type="button" className="project-showcase-close" onClick={() => setShowProjectShowcase(false)} aria-label="Close active world" title="Close active world"><X size={13} /></button></div>
-                  <div className="project-showcase-index" role="tablist" aria-label="Project worlds">{projects.map((project, index) => <button type="button" role="tab" aria-selected={activeId === project.id} className={cx(activeId === project.id && "is-active")} style={{ "--world-color": project.color } as CSSProperties} onClick={() => focusProject(project.id)} aria-label={`Focus ${project.name}`} title={project.name} key={project.id}><span className="project-showcase-index-mark"><img src={project.logo} alt="" /></span><span>{String(index + 1).padStart(2, "0")}</span></button>)}</div>
-                  <div className="project-showcase-identity"><span className="project-showcase-mark"><img src={activeProject.logo} alt="" /></span><div><span>{activeProject.status[language]} · {activeProject.visibility[language]}</span><h2>{activeProject.name}</h2></div></div>
-                  <p className="project-showcase-summary">{activeProject.summary[language]}</p>
-                  <ProjectSignature project={activeProject} language={language} />
-                  <div className="project-showcase-stack">{activeProject.stack.slice(0, 4).map((item) => <span key={item}>{item}</span>)}</div>
-                  <div className="project-showcase-actions"><SiteLink href={`/projects/${activeProject.id}?from=universe`} onClick={() => updateQuery({ world: activeProject.id }, true)}>{language === "en" ? "Read project" : "Baca proyek"}<ArrowUpRight size={14} /></SiteLink><a href={activeProject.link} target={activeProject.link.startsWith("http") ? "_blank" : undefined} rel={activeProject.link.startsWith("http") ? "noreferrer" : undefined}>{t.field.open}<ArrowUpRight size={13} /></a></div>
-                </motion.section> : <SatelliteReadout key={activeSatellite.id} record={activeSatellite} records={sectorRecords} language={language} motionOn={motionOn} onSelect={selectSatellite} onClose={() => setShowProjectShowcase(false)} />) : <motion.button className="project-showcase-reopen" type="button" key="reopen-project-showcase" onClick={() => setShowProjectShowcase(true)} aria-expanded="false" aria-label="Open active world"><span><PanelRightOpen size={15} /> Active world</span><small>{focusedWorld.name}</small></motion.button>)}
+                {mapView === "orbit" && (showProjectShowcase
+                  ? <WorldInspector key="active-world-inspector" project={findWorld(focusedWorld.id)!} language={language} motionOn={motionOn} onSelect={id => focusOrbitWorld(id as OrbitId)} onClose={closeWorldInspector} />
+                  : <motion.button className="project-showcase-reopen" type="button" key="reopen-project-showcase"
+                    ref={node => { if (node && restoreInspectorFocus.current) { node.focus({ preventScroll: true }); restoreInspectorFocus.current = false; } }}
+                    onClick={() => setShowProjectShowcase(true)} aria-expanded="false" aria-controls="active-world-inspector" aria-label={language === "en" ? "Open active world" : "Buka dunia aktif"}>
+                    <span><PanelRightOpen size={15} />{language === "en" ? "Active world" : "Dunia aktif"}</span><small>{focusedWorld.name}</small>
+                  </motion.button>)}
               </AnimatePresence>
               <div className="frame-bottomline"><span>{mapView === "universe" ? "03 galaxies / 10 worlds" : `${String(activeSector === "main" ? projects.length : sectorRecords.length).padStart(2, "0")} worlds / 01 maker`}</span><span>{mapView === "orbit" ? <><MousePointer2 size={13} /> {t.field.hint}</> : "HENRY NUGRAHA"}</span></div>
             </div>

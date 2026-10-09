@@ -1,5 +1,13 @@
 # Changelog
 
+## StarGod Portfolio v0.89.1 - 2026-10-09
+
+- Unify the optional Active World panel across all ten projects using the same bilingual catalog records as their detail pages.
+- Fix cramped titles, undersized controls, and inconsistent type. Keep planet selectors at least 44px, expose every project's stack, and make the detail link easier to find.
+- Preserve keyboard focus when switching worlds. Opening focuses the close control; closing or Escape returns to the opener without changing the selected planet.
+- Hand focus from Explore to the settled galaxy map without stealing it during manual scroll or interrupted navigation. Preserve the default-closed inspector and existing 3D scenes.
+- Keep the reading surface unframed with stronger text contrast, and keep short-screen inspector scrolling clear of the map footer.
+
 ## StarGod Portfolio v0.89.0 - 2026-10-09
 
 - Browse certificates inside one persistent viewer, with previous/next controls, keyboard navigation, a collection counter, and per-document zoom/loading reset.

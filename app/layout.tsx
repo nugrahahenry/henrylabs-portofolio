@@ -3,6 +3,7 @@ import "./globals.css";
 import "./library.css";
 import "./maker.css";
 import "./typography.css";
+import "./world-inspector.css";
 import { SitePreferences } from "@/components/site-preferences";
 import { SiteHeader } from "@/components/site-header";
 import { ReadingSky } from "@/components/reading-sky";

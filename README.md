@@ -1,6 +1,6 @@
 <div align="center">
 
-# StarGod Portfolio v0.89.0
+# StarGod Portfolio v0.89.1
 
 **I build things I actually see.**
 
@@ -25,7 +25,7 @@ Three galaxies. Ten project worlds. One maker.
 
 StarGod is the working name of the universe, drawn from Henry's longtime alias. **HenryLabs** remains its personal-project galaxy. An authored stellar-orbit mark connects the header, quiet entrance, maker signature, and footer.
 
-Enter a living map of **HenryLabs**, **University**, and **Client Work**. Choose a galaxy, follow a curved camera approach into its planets, and explore the work behind each identity. Returning retraces that journey without rebuilding the scene. Explore the universe lands in a stable, fully visible exploration window, with space to browse before the camera recedes. The opening headline stays free of project overlays when scrolling back up. Technologies orbit the projects they belong to; an optional reading panel brings the context, ownership, and evidence into view.
+Enter a living map of **HenryLabs**, **University**, and **Client Work**. Choose a galaxy, follow a curved camera approach into its planets, and explore the work behind each identity. Returning retraces that journey without rebuilding the scene. Explore the universe lands in a stable, fully visible exploration window, with space to browse before the camera recedes. The opening headline stays free of project overlays when scrolling back up. Technologies orbit the projects they belong to; an optional reading panel shares the same layout across all ten worlds, with context, ownership, workflow, and technology. It stays closed until requested. Read a project in detail or close the panel to return to the orbit, with keyboard focus preserved throughout.
 
 Beyond the map: one preview following the selected project, then Henry himself. A crowned StarGod portrait opens locally under the cursor to reveal Henry in a dark suit: sunglasses, clear glasses, then his unobscured face. The approved portraits share one composition; this is a layered photographic reveal, not a rotatable head model. Four appearance controls also work with touch, keyboard, or reduced motion.
 

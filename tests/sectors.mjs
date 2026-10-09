@@ -4,8 +4,9 @@ import { chromium, expect } from "@playwright/test";
 
 const url = process.env.PORTFOLIO_URL ?? "http://localhost:3002/";
 const browser = await chromium.launch({ headless: true, executablePath: process.env.CHROME_PATH ?? "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe" });
-const viewports = [{ width: 1440, height: 900 }, { width: 1024, height: 768 }, { width: 768, height: 1024 }, { width: 390, height: 844 }, { width: 360, height: 800 }, { width: 844, height: 390 }];
-const targets = process.argv.includes("--landscape") ? viewports.filter((viewport) => viewport.width === 844) : viewports;
+const viewports = [{ width: 1440, height: 900 }, { width: 1024, height: 768 }, { width: 768, height: 1024 }, { width: 699, height: 748 }, { width: 390, height: 844 }, { width: 360, height: 800 }, { width: 844, height: 390 }];
+const targets = process.argv.includes("--landscape") ? viewports.filter((viewport) => viewport.width === 844)
+  : process.argv.includes("--confirm") ? viewports.filter((viewport) => [1440, 699, 390].includes(viewport.width)) : viewports;
 
 async function enterOrbit(page) {
   await page.locator(".intro-loader").waitFor({ state: "hidden" });
@@ -67,7 +68,9 @@ try {
     const errors = [];
     page.on("pageerror", (error) => errors.push(error.message));
     await page.goto(url, { waitUntil: "domcontentloaded" });
-    await enterOrbit(page);
+    await page.locator(".intro-loader").waitFor({ state: "hidden" });
+    await page.getByRole("button", { name: "Explore the universe", exact: true }).click();
+    await expect(page.locator(".cosmic-canvas")).toBeFocused();
     await chooseGalaxy(page, "University");
     const scene = page.locator(".cosmic-canvas");
     await expect(scene).toHaveAttribute("data-world-count", "3");
@@ -80,10 +83,13 @@ try {
     await expect(scene).toHaveAttribute("data-active-world", "pos");
     await expect(page.locator(".project-showcase")).toHaveCount(0);
     await page.getByRole("button", { name: "Open active world" }).click();
+    await expect(page.getByRole("button", { name: "Close active world" })).toBeFocused();
     await expect(page.locator(".satellite-readout")).toContainText("POS Z Shoes");
     await expect(page.locator('.satellite-readout a[href="https://github.com/nugrahahenry/POS_APBDS"]')).toHaveCount(1);
     await expect(page.locator(".satellite-readout").getByRole("button", { name: /^(Previous|Next) project$/ })).toHaveCount(0);
     await page.locator(".satellite-readout").getByRole("button", { name: "Focus LabQ", exact: true }).click();
+    await expect(page.getByRole("button", { name: "Focus LabQ", exact: true })).toBeFocused();
+    await expect(page.getByRole("button", { name: "Focus LabQ", exact: true })).toHaveAttribute("aria-pressed", "true");
     await expect(page.locator(".satellite-readout")).toContainText("LabQ");
     await expect(page.locator(".home-project-preview")).toHaveAttribute("data-project", "labq");
     await expect.poll(() => page.locator(".satellite-readout").evaluate((panel) => Number(getComputedStyle(panel).opacity))).toBe(1);
@@ -124,15 +130,36 @@ try {
     await page.screenshot({ path: `test-results/${viewport.width}-client-sector.png` });
     await expect(page.locator('.satellite-readout a[href^="/projects/soreva"]')).toHaveCount(1);
     await page.getByRole("button", { name: "Close active world" }).click();
+    await expect(page.getByRole("button", { name: "Open active world" })).toBeFocused();
     await chooseGalaxy(page, "HenryLabs");
     await expect(scene).toHaveAttribute("data-world-count", "5");
     await expect(scene).toHaveAttribute("data-tech-count", "15");
     await expect(scene).toHaveAttribute("data-active-world", "catmoji");
     await paintedScene(page);
     await expect(page.locator(".project-showcase")).toHaveCount(0);
+    await page.getByRole("button", { name: "Open active world" }).click();
+    for (const name of ["Nalira", "Canox", "Hengs", "Polara", "Catmoji"]) {
+      const select = page.getByRole("button", { name: `Focus ${name}`, exact: true });
+      await select.click();
+      await expect(select).toBeFocused();
+      await expect(page.locator("#active-world-title")).toHaveText(name);
+      const box = await select.boundingBox();
+      assert.ok(box.width >= 44 && box.height >= 44, "world selectors retain touch targets");
+    }
+    await page.screenshot({ path: `test-results/${viewport.width}-world-inspector.png` });
+    await page.keyboard.press("Escape");
+    await expect(page.getByRole("button", { name: "Open active world" })).toBeFocused();
+    await expect(scene).toHaveAttribute("data-view", "orbit");
     await chooseGalaxy(page, "University");
     await expect(scene).toHaveAttribute("data-active-world", "labq");
     await page.getByRole("button", { name: "Toggle language" }).click();
+    await page.getByRole("button", { name: "Buka dunia aktif" }).click();
+    await expect(page.getByRole("button", { name: "Tutup dunia aktif" })).toBeFocused();
+    await page.getByRole("button", { name: "Pilih RentalMobil.SG" }).click();
+    await expect(page.locator(".world-inspector-summary")).toContainText("Sistem rental mobil berbasis web");
+    await expect(page.locator(".world-inspector")).toContainText("Dibangun sendiri oleh Henry");
+    await page.keyboard.press("Escape");
+    await expect(page.getByRole("button", { name: "Buka dunia aktif" })).toBeFocused();
     await expect(page.getByRole("button", { name: "Kembali ke semesta" })).toBeVisible();
     await page.getByRole("button", { name: "Kembali ke semesta" }).click();
     await expect(page.getByRole("group", { name: "Peta galaksi" })).toBeVisible();
@@ -145,6 +172,8 @@ try {
   const reduced = await browser.newPage({ viewport: { width: 390, height: 844 }, reducedMotion: "reduce" });
   await reduced.goto(url);
   await reduced.locator(".intro-loader").waitFor({ state: "hidden" });
+  await reduced.getByRole("button", { name: "Explore the universe", exact: true }).click();
+  await expect(reduced.locator(".cosmic-canvas")).toBeFocused();
   await reduced.getByRole("button", { name: "Explore University galaxy" }).click();
   await expect(reduced.locator(".cosmic-canvas")).toHaveAttribute("data-world-count", "3");
   const time = await reduced.locator(".cosmic-canvas").getAttribute("data-time");
@@ -167,10 +196,27 @@ try {
   await expect(fallback.locator(".planet-label")).toHaveCount(2);
   await fallback.getByRole("button", { name: "Soreva", exact: true }).click();
   await fallback.getByRole("button", { name: "Open active world" }).click();
+  await expect(fallback.getByRole("button", { name: "Close active world" })).toBeFocused();
   await expect(fallback.locator(".satellite-readout")).toContainText("Soreva");
   await fallback.screenshot({ path: "test-results/390-sectors-webgl-fallback.png" });
+  await fallback.keyboard.press("Escape");
+  await expect(fallback.getByRole("button", { name: "Open active world" })).toBeFocused();
   await fallback.close();
   console.log("sector reduced motion and WebGL fallback passed");
+
+  const interrupted = await browser.newPage({ viewport: { width: 1024, height: 768 } });
+  await interrupted.goto(url);
+  await interrupted.locator(".intro-loader").waitFor({ state: "hidden" });
+  await interrupted.getByRole("button", { name: "Explore the universe", exact: true }).click();
+  const language = interrupted.getByRole("button", { name: "Toggle language" });
+  await language.focus();
+  await expect(interrupted.locator(".hero-stage")).toHaveAttribute("data-phase", "worlds");
+  await interrupted.waitForTimeout(400);
+  await expect(language).toBeFocused();
+  await enterOrbit(interrupted);
+  await expect(language).toBeFocused();
+  await interrupted.close();
+  console.log("Explore interruption and manual scroll preserve the visitor's chosen focus");
 } finally {
   await browser.close();
 }

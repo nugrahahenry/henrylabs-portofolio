@@ -6,7 +6,7 @@ const root = new URL("..", import.meta.url);
 const read = (path) => readFileSync(new URL(path, root), "utf8");
 
 test("portfolio surface keeps its core experience contracts", () => {
-  const experience = ["components/portfolio-experience.tsx", "components/home-project-preview.tsx", "content/projects.ts", "content/credentials.ts", "content/technologies.ts", "components/site-header.tsx", "components/site-preferences.tsx", "components/credential-viewer.tsx", "components/maker-chapter.tsx", "components/portrait-reveal.tsx"].map(read).join("\n");
+  const experience = ["components/portfolio-experience.tsx", "components/world-inspector.tsx", "components/project-library.tsx", "components/home-project-preview.tsx", "content/projects.ts", "content/credentials.ts", "content/technologies.ts", "components/site-header.tsx", "components/site-preferences.tsx", "components/credential-viewer.tsx", "components/maker-chapter.tsx", "components/portrait-reveal.tsx"].map(read).join("\n");
   const canvas = read("components/cosmic-canvas.tsx");
   const backdrop = read("components/worldline-backdrop.tsx");
   const styles = read("app/globals.css");
@@ -45,7 +45,7 @@ test("portfolio surface keeps its core experience contracts", () => {
   assert.match(experience, /WorldlineBackdrop/);
   assert.doesNotMatch(experience, /signal-constellation/);
   assert.doesNotMatch(experience, /world-chain/);
-  assert.match(experience, /project-showcase-index/);
+  assert.match(experience, /world-inspector-index/);
   assert.match(experience, /access: Record<Language, string>/);
   assert.doesNotMatch(experience, /className="chapter-rail"/);
   assert.match(experience, /id="method"/);
@@ -54,8 +54,8 @@ test("portfolio surface keeps its core experience contracts", () => {
   assert.match(experience, /data-lenis-prevent/);
   assert.match(experience, /data-active-world=\{activeProject.id\}/);
   assert.doesNotMatch(experience, /method-scene/);
-  assert.match(experience, /ProjectSignature/);
-  assert.match(experience, /project signature/);
+  assert.match(experience, /WorldInspector/);
+  assert.match(experience, /project\.flow\[language\]/);
   assert.match(experience, /field-continuum/);
   assert.match(experience, /POS_APBDS/);
   assert.match(experience, /labQ-Android/);
@@ -108,7 +108,9 @@ test("portfolio surface keeps its core experience contracts", () => {
   assert.doesNotMatch(experience, /className="sector-navigation"/);
   assert.match(experience, /universe-return/);
   assert.match(experience, /useState<"universe" \| "orbit">\("universe"\)/);
-  assert.match(experience, /SatelliteReadout/);
+  assert.match(experience, /world-inspector/);
+  assert.doesNotMatch(read("components/world-inspector.tsx"), /role="tablist"|role="tab"/);
+  assert.match(read("components/world-inspector.tsx"), /aria-pressed=\{project.id === item.id\}/);
   assert.match(experience, /anchor: `academic-/);
   assert.match(experience, /anchor: `client-/);
   assert.match(canvas, /satelliteCatalog/);
