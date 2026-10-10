@@ -23,6 +23,8 @@ Designed and developed by **Henry Nugraha**, a product-minded developer in Indon
 
 Three galaxies. Ten project worlds. One maker.
 
+The living map is backed by a procedural volumetric nebula: layered filaments, distant stellar depth, and a slow parallax drift keep the sky feeling like space rather than a flat backdrop while the project systems remain readable.
+
 StarGod is the working name of the universe, drawn from Henry's longtime alias. **HenryLabs** remains its personal-project galaxy. An authored stellar-orbit mark connects the header, quiet entrance, maker signature, and footer.
 
 Enter a living map of **HenryLabs**, **University**, and **Client Work**. Choose a galaxy, follow a curved camera approach into its planets, and explore the work behind each identity. The active galaxy and planet keep a restrained halo, readable label, and selected state while pointer and keyboard focus reveal the same target. The camera eases through a moving focus point when changing sectors, so the scene does not jump to a new center. Returning retraces that journey without rebuilding the scene. Explore the universe lands in a stable, fully visible exploration window, with space to browse before the camera recedes. The opening headline stays free of project overlays when scrolling back up. Technologies orbit the projects they belong to; an optional reading panel shares the same layout across all ten worlds, with context, ownership, workflow, and technology. It stays closed until requested. Read a project in detail or close the panel to return to the orbit, with keyboard focus preserved throughout.

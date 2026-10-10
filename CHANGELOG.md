@@ -1,5 +1,11 @@
 # Changelog
 
+## StarGod Portfolio v0.96.0 - 2026-10-10
+
+- Rework the 3D nebula density field into layered volumetric filaments with multi-scale cloud detail, depth-based color temperature, and darker lanes that give the background more photographic space depth without using a wallpaper plate.
+- Keep the nebula enhancement inside the existing single ray-marched volume, preserving the WebGL fallback, reduced-motion behavior, star budget, and foreground project readability.
+- Add background QA coverage for the explicit volumetric-filament nebula contract.
+
 ## StarGod Portfolio v0.95.0 - 2026-10-10
 
 - Make galaxy and planet selection legible with persistent selected states, hover/focus highlighting, depth metadata, active halos, and a small planet marker that follows the projected object.

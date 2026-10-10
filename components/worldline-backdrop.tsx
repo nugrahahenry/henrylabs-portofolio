@@ -780,6 +780,7 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, contactProgres
       host.dataset.holeDiameter = diameter.toFixed(1);
       host.dataset.pull = pull.toFixed(3);
       host.dataset.backgroundGalaxies = "3";
+      host.dataset.nebulaModel = "volumetric-filaments";
       host.dataset.planetSurface = "opaque-terrain";
       host.dataset.solarVisibility = solarVisibility.toFixed(3);
       host.dataset.readingBlend = readingBlend.toFixed(3);

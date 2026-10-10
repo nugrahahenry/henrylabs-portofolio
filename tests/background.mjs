@@ -79,6 +79,7 @@ try {
     await expect(background).toHaveAttribute("data-solar-orbits", "5");
     await expect(background).toHaveAttribute("data-central-star", "true");
     await expect(background).toHaveAttribute("data-background-source", "volumetric-3d");
+    await expect(background).toHaveAttribute("data-nebula-model", "volumetric-filaments");
     await expect(background).toHaveAttribute("data-visitor-capacity", "5");
     await expect(background).toHaveAttribute("data-bright-stars", "18");
     await expect(background).toHaveAttribute("data-dust-flow", "inward");
