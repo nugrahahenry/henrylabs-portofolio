@@ -1,5 +1,12 @@
 # Changelog
 
+## StarGod Portfolio v0.98.0 - 2026-10-11
+
+- Replace the short opaque loader with an 8.2-second StarGod universe search gate that keeps the real 3D map visible behind a restrained scan veil.
+- Add a visual coordinate lock sequence with orbit planes, galaxy nodes, status phases, accessible progress semantics, and a trustworthy 000–100% readout.
+- Keep Skip Intro available throughout the sequence, restore the hero cleanly after dismissal, and preserve direct-entry/session/reduced-motion behavior.
+- Add arrival regression coverage for the search progress bar and Skip Intro control across desktop, tablet, phone, landscape, and reduced-motion paths.
+
 ## StarGod Portfolio v0.97.0 - 2026-10-10
 
 - Turn the lower-right black hole into a cinematic void/photon-flow surface with asymmetrical multi-lane accretion, curved filaments, and depth-aware color.

@@ -31,6 +31,7 @@ import { StarGodMark } from "./stargod-mark";
 import { UNIVERSE_CHAPTER as chapter, universeLanding, chapterBlend } from "./universe-chapter";
 
 type WorldlineStage = "world" | "method" | "stack";
+type IntroPhase = "searching" | "mapping" | "locking" | "ready";
 type Sector = GalaxyId;
 
 
@@ -144,6 +145,9 @@ export function PortfolioExperience() {
   const [mapView, setMapView] = useState<"universe" | "orbit">("universe");
   const [activeSatellites, setActiveSatellites] = useState({ university: "rental" as SatelliteId, client: "yventures" as SatelliteId });
   const [introDone, setIntroDone] = useState(false);
+  const [introProgress, setIntroProgress] = useState(0);
+  const [introPhase, setIntroPhase] = useState<IntroPhase>("searching");
+  const introStopRef = useRef(false);
   const [worldlineStage, setWorldlineStage] = useState<WorldlineStage>("world");
   const [heroPhase, setHeroPhase] = useState("intro");
   const [showProjectShowcase, setShowProjectShowcase] = useState(false);
@@ -183,6 +187,16 @@ export function PortfolioExperience() {
   const sectorRecords = activeSector === "university" ? universityRecords : clientRecords;
   const activeSatellite = sectorRecords.find((record) => record.id === (activeSector === "university" ? activeSatellites.university : activeSatellites.client)) ?? sectorRecords[0];
   const focusedWorld = activeSector === "main" ? activeProject : activeSatellite;
+  const introStatus = language === "en"
+    ? { searching: "Scanning the field", mapping: "Mapping three galaxies", locking: "Locking StarGod coordinates", ready: "Universe indexed" }
+    : { searching: "Memindai medan", mapping: "Memetakan tiga galaksi", locking: "Mengunci koordinat StarGod", ready: "Semesta terindeks" };
+
+  const skipIntro = () => {
+    introStopRef.current = true;
+    setIntroProgress(100);
+    setIntroPhase("ready");
+    setIntroDone(true);
+  };
 
   useEffect(() => {
     if (mapLanding === null) return;
@@ -232,20 +246,47 @@ export function PortfolioExperience() {
   }, []);
 
   useEffect(() => {
+    introStopRef.current = true;
     let introSeen = false;
     try { introSeen = window.sessionStorage.getItem("henrylabs-intro-seen") === "1"; } catch { /* The introduction also works without storage. */ }
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const replay = new URLSearchParams(window.location.search).get("intro") === "1";
     const directEntry = Boolean(window.location.hash || new URLSearchParams(window.location.search).get("world") || new URLSearchParams(window.location.search).get("view") === "universe");
     if ((introSeen || directEntry) && !replay || reduced) {
+      setIntroProgress(100);
+      setIntroPhase("ready");
       setIntroDone(true);
       return;
     }
     if (window.scrollY > 0) window.scrollTo({ top: 0, behavior: "auto" });
-    const timer = window.setTimeout(() => {
-      setIntroDone(true);
-    }, 1250);
-    return () => window.clearTimeout(timer);
+    introStopRef.current = false;
+    const duration = 8200;
+    const startedAt = performance.now();
+    let frame = 0;
+    let lastPaint = startedAt - 100;
+    const tick = (now: number) => {
+      if (introStopRef.current) return;
+      const ratio = Math.min(1, (now - startedAt) / duration);
+      if (now - lastPaint >= 80 || ratio === 1) {
+        const progress = Math.round(ratio * 100);
+        setIntroProgress(progress);
+        setIntroPhase(ratio < .2 ? "searching" : ratio < .54 ? "mapping" : ratio < .84 ? "locking" : "ready");
+        lastPaint = now;
+      }
+      if (ratio >= 1) {
+        introStopRef.current = true;
+        setIntroProgress(100);
+        setIntroPhase("ready");
+        setIntroDone(true);
+        return;
+      }
+      frame = requestAnimationFrame(tick);
+    };
+    frame = requestAnimationFrame(tick);
+    return () => {
+      introStopRef.current = true;
+      cancelAnimationFrame(frame);
+    };
   }, []);
 
   useEffect(() => {
@@ -341,17 +382,38 @@ export function PortfolioExperience() {
 
   return (
     <MotionConfig reducedMotion={motionOn ? "never" : "always"} transition={{ duration: motionOn ? 0.55 : 0, ease: [0.16, 1, 0.3, 1] }}>
-    <main className="site-shell" id="main-content" tabIndex={-1} data-motion={motionOn ? "on" : "off"}>
+    <main className="site-shell" id="main-content" tabIndex={-1} data-motion={motionOn ? "on" : "off"} data-intro={introDone ? "done" : "active"}>
       <SmoothScroll enabled={motionOn} />
       <WorldlineBackdrop activeId={activeProject.id} motionOn={motionOn} progress={worldlineProgress} contactProgress={contactProgress} contactVisible={contactVisible} mapActive={heroPhase === "worlds"} />
-      <div className={cx("intro-loader", "arrival-intro", introDone && "intro-loader--done")} aria-hidden={introDone} inert={introDone}>
-        <div className="arrival-content">
-          <StarGodMark className="arrival-mark" size={88} />
-          <strong>StarGod</strong>
-          <span className="arrival-rule" aria-hidden="true" />
-          <p>{language === "en" ? "Entering the universe" : "Memasuki semesta"}</p>
+      <div className={cx("intro-loader", "arrival-intro", introDone && "intro-loader--done")} data-intro-phase={introPhase} data-intro-progress={introProgress} aria-hidden={introDone} inert={introDone}>
+        <div className="arrival-universe" aria-hidden="true">
+          <span className="arrival-universe-plane arrival-universe-plane--wide" />
+          <span className="arrival-universe-plane arrival-universe-plane--tall" />
+          <span className="arrival-universe-plane arrival-universe-plane--tight" />
+          <span className="arrival-universe-core"><StarGodMark className="arrival-universe-mark arrival-mark" size={46} /></span>
+          <span className="arrival-universe-node arrival-universe-node--a" />
+          <span className="arrival-universe-node arrival-universe-node--b" />
+          <span className="arrival-universe-node arrival-universe-node--c" />
+          <span className="arrival-universe-node arrival-universe-node--d" />
         </div>
-        <button type="button" className="arrival-skip" onClick={() => setIntroDone(true)}>{language === "en" ? "Skip intro" : "Lewati intro"}<ArrowUpRight size={15} /></button>
+        <div className="arrival-content">
+          <div className="arrival-meta"><span>UNIVERSE INDEX / 001</span><strong>{String(introProgress).padStart(3, "0")}%</strong></div>
+          <div className="arrival-query" aria-label={language === "en" ? "Searching the StarGod universe" : "Mencari semesta StarGod"}>
+            <span className="arrival-query-prompt">&gt;</span>
+            <span className="arrival-query-label">{language === "en" ? "SEARCHING UNIVERSE" : "MENCARI SEMESTA"}</span>
+            <strong>StarGod</strong>
+            <span className="arrival-caret" aria-hidden="true" />
+          </div>
+          <div className="arrival-result">
+            <span className="arrival-result-kicker">{introPhase === "ready" ? "UNIVERSE FOUND / 01" : "SIGNAL TRACE / STARGOD"}</span>
+            <strong>StarGod</strong>
+            <p>{language === "en" ? "Henry Nugraha's universe" : "Semesta milik Henry Nugraha"}</p>
+            <div className="arrival-result-meta"><span>03 {language === "en" ? "galaxies" : "galaksi"}</span><span>10 {language === "en" ? "worlds" : "dunia"}</span><span>01 {language === "en" ? "maker" : "maker"}</span></div>
+          </div>
+          <div className="arrival-progress" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={introProgress} aria-label={language === "en" ? "Universe search progress" : "Progress pencarian semesta"}><span style={{ transform: `scaleX(${introProgress / 100})` }} /></div>
+          <div className="arrival-status"><span>{introStatus[introPhase]}</span><span>{language === "en" ? "Coordinates are stabilizing" : "Koordinat sedang distabilkan"}</span></div>
+        </div>
+        <button type="button" className="arrival-skip" onClick={skipIntro}>{language === "en" ? "Skip intro" : "Lewati intro"}<ArrowUpRight size={15} /></button>
       </div>
 
       <motion.div className="cursor-guide" style={{ x: cursorX, y: cursorY }} aria-hidden="true">
@@ -379,7 +441,7 @@ export function PortfolioExperience() {
           </motion.div>
 
           {mapView === "orbit" && <motion.button type="button" className="universe-return" style={{ opacity: motionOn ? mapExitOpacity : 1 }} inert={motionOn && heroPhase !== "worlds"} onClick={returnToUniverse} aria-label={language === "en" ? "Back to universe" : "Kembali ke semesta"} title={language === "en" ? "Back to universe" : "Kembali ke semesta"}><ArrowLeft size={16} /><StarGodMark size={20} /><span>{language === "en" ? "Universe" : "Semesta"}</span></motion.button>}
-          <motion.div className="cosmic-frame-wrap" data-view={mapView} data-lenis-prevent={showProjectShowcase ? "true" : undefined} inert={motionOn && heroPhase !== "worlds"} style={{ opacity: motionOn ? mapEntryOpacity : 1, scale: motionOn ? fieldScale : 1, y: motionOn ? fieldY : 0 }}>
+          <motion.div className="cosmic-frame-wrap" data-view={mapView} data-lenis-prevent={showProjectShowcase ? "true" : undefined} inert={motionOn && heroPhase !== "worlds"} style={{ opacity: motionOn ? (introDone ? mapEntryOpacity : .3) : 1, scale: motionOn ? (introDone ? fieldScale : .92) : 1, y: motionOn ? (introDone ? fieldY : 0) : 0 }}>
             <motion.div className="map-departure" style={{ opacity: motionOn ? mapExitOpacity : 1, y: motionOn ? mapExitY : 0 }}>
             <div className="cosmic-frame" data-view={mapView} data-sector={activeSector} style={{ "--active-world-color": mapView === "universe" ? "#78cdbb" : focusedWorld.color } as CSSProperties}>
               <div className="frame-topline"><span>{t.field.label}</span><span>{mapView === "universe" ? "03 GALAXIES / 10 WORLDS" : `${focusedWorld.name} / ${activeSector === "main" ? activeProject.status[language] : activeSatellite.access[language]}`}</span></div>
