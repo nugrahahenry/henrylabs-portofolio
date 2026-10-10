@@ -1,12 +1,12 @@
 # Changelog
 
-## StarGod Portfolio v0.99.0 - 2026-10-11
+## StarGod Portfolio v0.100.0 - 2026-10-11
 
-- Turn the opening into a six-candidate multiverse search that scans, rejects, and finally locks the StarGod universe instead of revealing it immediately.
-- Add orbiting candidate universes with active, rejected, and selected states; reduce label noise so only the current signal and final lock compete with the search copy.
-- Combine the search percentage into one centered progress track and keep the Skip Intro control available throughout the 8.2-second gate.
-- Use the deterministic UFO-first, scout-second wormhole chase as the arrival sequence, then park the ambient pursuit clock through a quiet interval so it does not feel randomly injected after entry.
-- Extend spacecraft regression timing to cover the intentional post-intro park without weakening clearance, portal order, shot-miss, or 30-second rest assertions.
+- Turn the opening into a camera-like search through 128 universe signatures, then route the signal through Cosmic Web, Supercluster, and StarGod Galaxy stages before locking the coordinates.
+- Replace the six-node constellation with a spherical multiverse field, deterministic scan target `ORION-89`, visible web filaments, and a hierarchy readout that makes the arrival story legible without adding another page.
+- Keep the percentage in one centered progress track and hold the final lock briefly so the UFO and scout visibly cross the wormhole before the hero scene takes over.
+- Add seven varied moonlets on project-world orbits with one shared instanced mesh and one shared orbit-line buffer, preserving the existing renderer budget while making the solar system feel inhabited.
+- Extend arrival and planet contracts so the intro craft and non-uniform moon counts are verified alongside the existing clearance, fallback, and reduced-motion paths.
 
 ## StarGod Portfolio v0.98.0 - 2026-10-11
 

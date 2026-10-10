@@ -1,6 +1,6 @@
 <div align="center">
 
-# StarGod Portfolio v0.99.0
+# StarGod Portfolio v0.100.0
 
 **I build things I actually see.**
 
@@ -23,7 +23,7 @@ Designed and developed by **Henry Nugraha**, a product-minded developer in Indon
 
 Three galaxies. Ten project worlds. One maker.
 
-The opening behaves like a multiverse search: six candidate universes orbit in the field, unresolved signals are dimmed one by one, and the StarGod coordinates lock before the real chase arrives. The single centered progress line shows the search percentage while the UFO and scout pass through their wormhole in sequence.
+The opening behaves like a camera searching a spherical multiverse: 128 universe signatures sweep past the lens, unresolved signals dim, and the trace travels through the Cosmic Web and Supercluster before `ORION-89` resolves into StarGod. The single centered progress line shows the search percentage while the UFO and scout pass through their wormhole during the final arrival lock.
 
 The living map is backed by a procedural volumetric nebula: layered filaments, distant stellar depth, and a slow parallax drift keep the sky feeling like space rather than a flat backdrop while the project systems remain readable.
 
@@ -35,7 +35,7 @@ Beyond the map: one preview following the selected project, then Henry himself. 
 
 Twenty-five technologies surround the portrait as lit 3D satellites. Scroll through **Build, Interface, Systems, then All**, or choose a group directly. Two restrained orbital traces make the shared system legible without turning it into a web of connections. Drag left or right to turn the orbit with momentum; arrow controls offer the same motion without dragging. Tools pass in front of and behind Henry with depth-aware contrast and larger touch targets; select one to see the projects that use it. Scroll further and the orbit recedes earlier, while the five featured credentials arrive together with a longer reading hold around the same anchored figure. A thin horizon signal leads that exchange before the credential cards settle. Each credential can open in the shared watermarked viewer. This exchange also works in tablet and phone windows. Short landscape screens and reduced motion retain a readable sequence. Home no longer repeats a separate technology chapter and certificate shelf; the full collections live in their own libraries.
 
-A continuous Three.js universe connects the journey, from distant stars and nebulae to a reversible black-hole encounter at Contact. Natural background planets remain in orbit throughout the reading sections, moving into a smaller peripheral composition rather than disappearing. A metallic UFO and its pursuing scout add a small story along the way: banking through real depth, missed tracer shots, a luminous wormhole, the UFO entering first, and the scout following. After the portal closes, thirty quiet seconds pass before the next encounter. The scene pauses outside its clear flight areas and respects reduced motion.
+A continuous Three.js universe connects the journey, from distant stars and nebulae to a reversible black-hole encounter at Contact. Natural background planets remain in orbit throughout the reading sections, moving into a smaller peripheral composition rather than disappearing; each selected world now carries a different number of small moonlets on its own local orbit. A metallic UFO and its pursuing scout add a small story along the way: banking through real depth, missed tracer shots, a luminous wormhole, the UFO entering first, and the scout following. After the portal closes, thirty quiet seconds pass before the next encounter. The scene pauses outside its clear flight areas and respects reduced motion.
 
 Prefer a closer read? **Projects** opens a searchable catalog of all ten worlds, filtered by HenryLabs, University, or Client Work. Each planet and catalog record leads to the same project detail, with ownership, workflow, stack, and honest access boundaries. Continue to the previous or next project within the same galaxy or filtered selection, or return to the universe from that planet; its reading panel stays closed until requested.
 

@@ -372,6 +372,9 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, contactProgres
     const projectedVisitor = new THREE.Vector3();
     let visitorIndex = -1;
 
+    const moonCounts = [2, 1, 0, 3, 1];
+    const moonRecords: Array<{ ownerIndex: number; orbitRadius: number; phase: number; eccentricity: number; lineOffset: number; size: number }> = [];
+    let moonLineCursor = 0;
     const orbitPlanets = projectWorlds.map((world, index) => {
       const pivot = new THREE.Group();
       const body = new THREE.Group();
@@ -393,8 +396,37 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, contactProgres
       planetSystem.add(pivot);
       const cloud = maps.cloud ? new THREE.Mesh(new THREE.SphereGeometry(radius * 1.012, 24, 16), new THREE.MeshStandardMaterial({ map: maps.cloud, transparent: true, opacity: .65, depthWrite: false, roughness: 1 })) : null;
       if (cloud) body.add(cloud);
+      for (let moonIndex = 0; moonIndex < moonCounts[index]; moonIndex++) {
+        moonRecords.push({
+          ownerIndex: index,
+          orbitRadius: radius * (.58 + moonIndex * .24),
+          phase: phase + moonIndex * 2.12 + index * .47,
+          eccentricity: .04 + moonIndex * .045,
+          lineOffset: moonLineCursor++,
+          size: radius * (.075 + ((index + moonIndex) % 3) * .018),
+        });
+      }
       return { pivot, body, surface, atmosphere, ring, cloud, radius, phase, orbitRadius: 1.45 + index * .64, index };
     });
+
+    const moonGeometry = new THREE.SphereGeometry(1, 10, 8);
+    const moonMaterial = new THREE.MeshStandardMaterial({ color: 0xb8c9d4, roughness: .82, metalness: .02, vertexColors: true });
+    const moonMesh = new THREE.InstancedMesh(moonGeometry, moonMaterial, moonRecords.length);
+    moonMesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+    const moonDummy = new THREE.Object3D();
+    const moonPalette = [0xb8c9d4, 0xd4b892, 0x9ea9d9, 0xc6d2bd, 0xb79ebf];
+    moonRecords.forEach((moon, index) => { moonDummy.scale.setScalar(moon.size); moonDummy.updateMatrix(); moonMesh.setMatrixAt(index, moonDummy.matrix); moonMesh.setColorAt(index, new THREE.Color(moonPalette[index % moonPalette.length])); });
+    moonMesh.instanceMatrix.needsUpdate = true;
+    if (moonMesh.instanceColor) moonMesh.instanceColor.needsUpdate = true;
+    planetSystem.add(moonMesh);
+    const moonLinePositions = new Float32Array(moonRecords.length * 160 * 2 * 3);
+    const moonOrbitLines = new THREE.LineSegments(
+      new THREE.BufferGeometry().setAttribute("position", new THREE.BufferAttribute(moonLinePositions, 3)),
+      new THREE.LineBasicMaterial({ color: 0xabc5ce, transparent: true, opacity: .16, depthWrite: false }),
+    );
+    planetSystem.add(moonOrbitLines);
+    host.dataset.moonOrbits = String(moonRecords.length);
+    host.dataset.moonCounts = moonCounts.join(",");
 
     const solarOrbits = orbitPlanets.map(({ orbitRadius }, index) => {
       const line = new THREE.LineLoop(orbitGeometry(.08 + index * .015), new THREE.LineBasicMaterial({ color: 0xa7b7bd, transparent: true, opacity: .065, depthWrite: false }));
@@ -444,6 +476,9 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, contactProgres
     let solarVisibility = 1;
     let readingBlend = 0;
     const solarBodies = orbitPlanets.map(() => ({ x: 0, y: 0, radius: 0 }));
+    const moonPoint = new THREE.Vector3();
+    const moonNextPoint = new THREE.Vector3();
+    const moonWorldPoint = new THREE.Vector3();
     const render = (time: number) => {
       frame = 0;
       if (!visible || document.hidden || !enhanced) return;
@@ -458,10 +493,13 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, contactProgres
       planetSystem.visible = true;
       if (state.current.motionOn) elapsed += dt;
       const drift = state.current.motionOn ? elapsed : 0;
+      const introMode = state.current.introActive && state.current.motionOn;
+      const introReveal = introMode ? THREE.MathUtils.smoothstep(state.current.introProgress, 48, 82) : 1;
       starField.rotation.y = drift * .004 + scroll * .08;
       stars.rotation.z = Math.sin(drift * .02) * .018;
       galaxyDust.rotation.y = drift * .006 + scroll * .035;
       galaxyDust.rotation.z = Math.sin(drift * .012) * .018;
+      starField.visible = !introMode || state.current.introProgress > 38;
       const solarPortrait = camera.aspect < .9;
       const readingChapter = scroll > .005 && !state.current.contactVisible && !state.current.mapActive;
       const readingTarget = readingChapter ? 1 : 0;
@@ -475,7 +513,7 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, contactProgres
       );
       const solarStrength = state.current.mapActive ? .38 : THREE.MathUtils.lerp(1, .76, readingBlend);
       solarVisibility = state.current.motionOn ? THREE.MathUtils.damp(solarVisibility, solarStrength, 5, dt) : solarStrength;
-      planetSystem.visible = solarVisibility > .005;
+      planetSystem.visible = solarVisibility > .005 && (!introMode || state.current.introProgress > 58);
       planetSystem.rotation.y = Math.sin(drift * .016) * .08 + scroll * .22;
       planetSystem.rotation.x = Math.sin(scroll * Math.PI * 1.4) * .12;
       planetSystem.rotation.z = Math.sin(drift * .012) * .018;
@@ -493,11 +531,34 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, contactProgres
         body.rotation.z = Math.sin(drift * .18 + index) * .12;
         const selected = projectWorlds[index].id === state.current.activeId;
         body.scale.setScalar(selected ? 1.3 : .9);
+        body.updateMatrix();
         surface.material.opacity = solarVisibility;
         atmosphere.material.uniforms.uOpacity.value = .6 * solarVisibility;
         ring.material.opacity = (selected ? .9 : .7) * solarVisibility;
         if (cloud) { cloud.rotation.y = drift * .013; cloud.material.opacity = .65 * solarVisibility; }
       });
+      moonRecords.forEach((moon, moonIndex) => {
+        const owner = orbitPlanets[moon.ownerIndex];
+        const moonPhase = moon.phase + drift * orbitalSpeed(moon.orbitRadius) * 2.3 + scroll * .2;
+        sampleOrbit(moon.orbitRadius, moonPhase, moon.eccentricity, moonPoint);
+        moonWorldPoint.copy(moonPoint).applyMatrix4(owner.body.matrix).add(owner.pivot.position);
+        moonDummy.position.copy(moonWorldPoint);
+        moonDummy.scale.setScalar(moon.size * owner.body.scale.x);
+        moonDummy.updateMatrix();
+        moonMesh.setMatrixAt(moonIndex, moonDummy.matrix);
+        const lineStart = moon.lineOffset * 160 * 2 * 3;
+        for (let segment = 0; segment < 160; segment++) {
+          const a = moon.phase + drift * orbitalSpeed(moon.orbitRadius) * 2.3 + scroll * .2 + segment / 160 * Math.PI * 2;
+          sampleOrbit(moon.orbitRadius, a, moon.eccentricity, moonPoint).applyMatrix4(owner.body.matrix).add(owner.pivot.position);
+          sampleOrbit(moon.orbitRadius, a + Math.PI * 2 / 160, moon.eccentricity, moonNextPoint).applyMatrix4(owner.body.matrix).add(owner.pivot.position);
+          const offset = lineStart + segment * 6;
+          moonLinePositions[offset] = moonPoint.x; moonLinePositions[offset + 1] = moonPoint.y; moonLinePositions[offset + 2] = moonPoint.z;
+          moonLinePositions[offset + 3] = moonNextPoint.x; moonLinePositions[offset + 4] = moonNextPoint.y; moonLinePositions[offset + 5] = moonNextPoint.z;
+        }
+      });
+      moonMesh.instanceMatrix.needsUpdate = true;
+      moonOrbitLines.geometry.attributes.position.needsUpdate = true;
+      moonOrbitLines.material.opacity = .16 * solarVisibility;
       solarOrbits.forEach((line) => { line.material.opacity = .065 * solarVisibility; });
       sectorSystem.visible = solarVisibility > .6;
       const sectorAngle = drift * .026 + scroll * Math.PI * .72;
@@ -552,7 +613,8 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, contactProgres
       const restoring = state.current.motionOn && closing.presence < 1 && birth.ready && holeOpacity > .001;
       const streamVisible = birth.ready && state.current.motionOn && holeOpacity > .001 && (gravityActive || returning || closing.presence < 1);
       deepSpace.material.uniforms.uTime.value = drift;
-      deepSpace.material.uniforms.uPresence.value = THREE.MathUtils.damp(deepSpace.material.uniforms.uPresence.value, state.current.mapActive ? .48 : 1, 4, dt);
+      const targetSkyPresence = state.current.mapActive ? .48 : introReveal;
+      deepSpace.material.uniforms.uPresence.value = THREE.MathUtils.damp(deepSpace.material.uniforms.uPresence.value, targetSkyPresence, 4, dt);
       deepSpace.material.uniforms.uPull.value = pull;
       deepSpace.material.uniforms.uTarget.value.copy(gravityTarget);
       [starMaterial, galaxyMaterial, streakMaterial, brightMaterial].forEach((material) => {
@@ -594,7 +656,6 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, contactProgres
       const readingLane = readingChapter && bandBottom - bandTop >= 120;
       const laneCenter = 1 - (bandTop + bandBottom) / height;
       const chapterAllowsFlight = holeOpacity < .05 && !state.current.mapActive && !compactOpening && (!readingChapter || readingLane);
-      const introMode = state.current.introActive && state.current.motionOn;
       if (introMode) introExitHandled = false;
       else if (state.current.introProgress >= 100 && !introExitHandled) {
         // After the cinematic arrival, give the sky a full quiet interval before the ambient pursuit can recur.
@@ -604,10 +665,12 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, contactProgres
         introExitHandled = true;
       }
       if (!introMode) advancePursuit(pursuit, dt, Boolean(chapterAllowsFlight), state.current.motionOn, requestedDelay, portalOpacity < .001 && flights.every(flight => flight.presence < .001));
-      const introAge = THREE.MathUtils.clamp(state.current.introProgress / 100, 0, 1) * pursuitEnd(PURSUIT_DELAY);
-      const flightAllowed = introMode ? state.current.introProgress > 2 && state.current.introProgress < 100 : chapterAllowsFlight && !pursuit.interrupted && pursuit.delay === requestedDelay;
+      // Keep the chase in the locked arrival frame: the UFO reaches the wormhole,
+      // but does not retire before the intro overlay hands off to the hero scene.
+      const introAge = THREE.MathUtils.clamp(state.current.introProgress / 100, 0, 1) * 17.4;
+      const flightAllowed = introMode ? state.current.introProgress > 2 && state.current.introProgress <= 100 : chapterAllowsFlight && !pursuit.interrupted && pursuit.delay === requestedDelay;
       const flightAge = introMode ? introAge : pursuit.age;
-      const flightDelay = introMode ? PURSUIT_DELAY : pursuit.delay;
+      const flightDelay = introMode ? (compactFlight ? COMPACT_PURSUIT_DELAY : PURSUIT_DELAY) : pursuit.delay;
       flights.forEach(({ model, pose }) => spacecraftPose(flightAge, state.current.motionOn, model.kind, pose, flightDelay));
       const flightActive = flights.some(({ pose, presence }) => pose.visible && flightAllowed || presence > 0);
       const tangent = Math.tan(THREE.MathUtils.degToRad(camera.fov / 2));
@@ -619,7 +682,7 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, contactProgres
         flightObstacles[index].y = flightWorld.y;
         flightObstacles[index].radius = radius / (tangent * Math.max(.1, -flightView.z)) * 1.12;
       };
-      if (flightActive && solarVisibility > .05) {
+      if (flightActive && solarVisibility > .05 && !introMode) {
         planetSystem.updateWorldMatrix(true, true);
         obstacle(stellarCore.group, .63 * stellarCore.group.scale.x * planetSystem.scale.x, 0);
         orbitPlanets.forEach(({ body, radius, ring }, index) => obstacle(body, radius * body.scale.x * planetSystem.scale.x * (ring.visible ? 1.93 : 1.3), index + 1));
@@ -627,12 +690,18 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, contactProgres
           if (sectorSystem.visible) obstacle(body, size * body.scale.x * planetSystem.scale.x * 1.26, index + 6);
           else { flightObstacles[index + 6].x = 100; flightObstacles[index + 6].radius = 0; }
         });
+      } else if (introMode) {
+        // The planets are intentionally hidden during the search. Keep the
+        // arrival chase clean instead of routing a ship around stale silhouettes.
+        celestialObstacles.forEach(body => { body.x = 100; body.y = 100; body.radius = 0; });
       } else if (solarVisibility <= .05) {
         celestialObstacles.forEach(body => { body.x = 100; body.radius = 0; });
       }
       flightObstacles[11].radius = 0;
       flightObstacles[11].x = 100;
-      const readingEdge = (flightActive || portalOpacity > 0) && heroCopy && !heroCopy.inert && heroKicker ? heroKicker.getBoundingClientRect().top : null;
+      // During the arrival film the overlay owns the copy, so the craft may use
+      // the full sky instead of being squeezed into the compact hero-text lane.
+      const readingEdge = !introMode && (flightActive || portalOpacity > 0) && heroCopy && !heroCopy.inert && heroKicker ? heroKicker.getBoundingClientRect().top : null;
       const portalPixels = Math.min(38, width * .105, readingEdge === null ? 38 : Math.max(0, readingEdge - headerHeight - 28) / 3);
       const portalRadius = portalPixels / height * 2;
       const portalFloor = readingLane ? 1 - (bandBottom - portalPixels) / height * 2 : compactFlight ? -1 + portalRadius + 32 / height : readingEdge === null ? .18 : 1 - (readingEdge - portalRadius * height / 2 - 12) / height * 2;

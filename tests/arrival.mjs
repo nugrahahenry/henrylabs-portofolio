@@ -3,7 +3,7 @@ import { mkdirSync } from "node:fs";
 import { chromium, expect } from "@playwright/test";
 
 const url = process.env.PORTFOLIO_URL ?? "http://localhost:3002/";
-const INTRO_DURATION = 8200;
+const INTRO_DURATION = 12600;
 const browser = await chromium.launch({ headless: true, executablePath: process.env.CHROME_PATH ?? "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe" });
 async function hydrateWithClock(page) {
   // Advance React's scheduler without consuming the short entrance timeline.
@@ -26,11 +26,18 @@ try {
     const intro = page.locator(".arrival-intro");
     await expect(intro).toBeVisible();
     await expect(intro).toContainText("StarGod");
+    await expect(intro).toContainText("128 UNIVERSES");
+    await expect(intro).toContainText("COSMIC WEB");
     await expect(intro).not.toContainText("I build things");
     await expect(intro.getByRole("progressbar")).toHaveAttribute("aria-valuenow", /[0-9]+/);
     await expect(page.getByRole("button", { name: "Skip intro" })).toBeVisible();
     assert.equal(await intro.locator(".stargod-mark").evaluate(image => image.complete && image.naturalWidth > 0), true, "the authored StarGod mark must decode before reveal");
     await page.screenshot({ path: `test-results/${viewport.width}-stargod-entry.png` });
+    await page.clock.runFor(8200);
+    await expect(page.locator(".worldline-backdrop")).toHaveAttribute("data-spacecraft-visible", "true");
+    await expect(page.locator(".worldline-backdrop")).toHaveAttribute("data-scout-visible", "true");
+    await expect(page.locator(".worldline-backdrop")).toHaveAttribute("data-moon-orbits", "7");
+    await expect(page.locator(".worldline-backdrop")).toHaveAttribute("data-moon-counts", "2,1,0,3,1");
     if (viewport.width === 1440) await page.getByRole("button", { name: "Skip intro" }).click();
     else await page.clock.runFor(INTRO_DURATION + 100);
     const bounds = await page.locator(".arrival-content").boundingBox();
@@ -72,7 +79,7 @@ try {
     await page.goto(`${url}?intro=1`, { waitUntil: "domcontentloaded" });
     await hydrateWithClock(page);
     await expect(intro).toBeVisible();
-    await page.clock.runFor(INTRO_DURATION + 100);
+    await page.clock.runFor(INTRO_DURATION + 1200);
     await expect(intro).toBeHidden();
     assert.deepEqual(errors, []);
     await page.close();
