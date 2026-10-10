@@ -53,7 +53,9 @@ try {
     }
     let seenPair = false, seenLeader = false, seenShot = false, leadEntry = false, scoutEntry = false, portalClosed = false, shotSignal = 0, nextTrace = 14;
     const depthSamples = [], yawSamples = [];
-    for (let i = 0; i < 1000; i++) {
+    // The intro arrival parks the ambient clock after its cinematic pass.
+    // Give the browser clock enough frames to cross the intentional 30s quiet interval.
+    for (let i = 0; i < 1600; i++) {
       await page.clock.fastForward(250);
       if (i % 8 !== 0) continue;
       const sample = await field.evaluate((host) => ({ time: Number(host.dataset.flightTime), lead: host.dataset.spacecraftVisible === "true", scout: host.dataset.scoutVisible === "true", scoutX: Number(host.dataset.scoutX), scoutRadius: Number(host.dataset.scoutRadius), leadGap: Number(host.dataset.ufoClearance), scoutGap: Number(host.dataset.scoutClearance), calls: Number(host.dataset.drawCalls) }));
@@ -102,7 +104,7 @@ try {
         assert.ok(leadEntry, "the UFO enters before the scout"); scoutEntry = true;
         await page.screenshot({ path: `test-results/${viewport.width}-scout-portal.png` });
       }
-      if (sample.time > 21.3 + delay && portal < .001) { portalClosed = true; break; }
+      if (leadEntry && scoutEntry && sample.time > 21.3 + delay && portal < .001) { portalClosed = true; break; }
     }
     assert.ok(seenLeader && seenPair, `the UFO must arrive first, then its scout follower (${viewport.width}px, headroom=${openingGap.toFixed(1)}, leader=${seenLeader}, pair=${seenPair})`);
     if (viewport.width === 1440) assert.ok(seenShot && shotSignal > 30, `the desktop pursuit must paint a visible shot (contrast=${shotSignal})`);

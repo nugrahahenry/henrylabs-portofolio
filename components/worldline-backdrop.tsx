@@ -101,22 +101,24 @@ function createBlackHole() {
   return { group, horizon, diskMaterial, lensMaterial };
 }
 
-export function WorldlineBackdrop({ activeId, motionOn, progress, contactProgress, contactVisible, mapActive }: {
+export function WorldlineBackdrop({ activeId, motionOn, progress, contactProgress, contactVisible, mapActive, introActive, introProgress }: {
   activeId: ProjectId;
   motionOn: boolean;
   progress: MotionValue<number>;
   contactProgress: MotionValue<number>;
   contactVisible: boolean;
   mapActive: boolean;
+  introActive: boolean;
+  introProgress: number;
 }) {
   const hostRef = useRef<HTMLDivElement>(null);
-  const state = useRef({ activeId, motionOn, contactVisible, mapActive });
+  const state = useRef({ activeId, motionOn, contactVisible, mapActive, introActive, introProgress });
   const wakeRef = useRef<() => void>(() => {});
 
   useEffect(() => {
-    state.current = { activeId, motionOn, contactVisible, mapActive };
+    state.current = { activeId, motionOn, contactVisible, mapActive, introActive, introProgress };
     wakeRef.current();
-  }, [activeId, motionOn, contactVisible, mapActive]);
+  }, [activeId, motionOn, contactVisible, mapActive, introActive, introProgress]);
 
   useEffect(() => {
     const host = hostRef.current;
@@ -434,6 +436,7 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, contactProgres
     let lastTime = 0;
     let elapsed = 0;
     const pursuit = { age: 0, cycle: 0, delay: PURSUIT_DELAY, interrupted: false };
+    let introExitHandled = false;
     let birthAge = 0;
     let gravityAge = 0;
     const closing = { peak: 0, presence: 0, returning: false };
@@ -591,9 +594,20 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, contactProgres
       const readingLane = readingChapter && bandBottom - bandTop >= 120;
       const laneCenter = 1 - (bandTop + bandBottom) / height;
       const chapterAllowsFlight = holeOpacity < .05 && !state.current.mapActive && !compactOpening && (!readingChapter || readingLane);
-      advancePursuit(pursuit, dt, Boolean(chapterAllowsFlight), state.current.motionOn, requestedDelay, portalOpacity < .001 && flights.every(flight => flight.presence < .001));
-      const flightAllowed = chapterAllowsFlight && !pursuit.interrupted && pursuit.delay === requestedDelay;
-      const flightAge = pursuit.age, flightDelay = pursuit.delay;
+      const introMode = state.current.introActive && state.current.motionOn;
+      if (introMode) introExitHandled = false;
+      else if (state.current.introProgress >= 100 && !introExitHandled) {
+        // After the cinematic arrival, give the sky a full quiet interval before the ambient pursuit can recur.
+        pursuit.age = pursuitEnd(PURSUIT_DELAY);
+        pursuit.delay = PURSUIT_DELAY;
+        pursuit.interrupted = false;
+        introExitHandled = true;
+      }
+      if (!introMode) advancePursuit(pursuit, dt, Boolean(chapterAllowsFlight), state.current.motionOn, requestedDelay, portalOpacity < .001 && flights.every(flight => flight.presence < .001));
+      const introAge = THREE.MathUtils.clamp(state.current.introProgress / 100, 0, 1) * pursuitEnd(PURSUIT_DELAY);
+      const flightAllowed = introMode ? state.current.introProgress > 2 && state.current.introProgress < 100 : chapterAllowsFlight && !pursuit.interrupted && pursuit.delay === requestedDelay;
+      const flightAge = introMode ? introAge : pursuit.age;
+      const flightDelay = introMode ? PURSUIT_DELAY : pursuit.delay;
       flights.forEach(({ model, pose }) => spacecraftPose(flightAge, state.current.motionOn, model.kind, pose, flightDelay));
       const flightActive = flights.some(({ pose, presence }) => pose.visible && flightAllowed || presence > 0);
       const tangent = Math.tan(THREE.MathUtils.degToRad(camera.fov / 2));
@@ -623,7 +637,7 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, contactProgres
       const portalRadius = portalPixels / height * 2;
       const portalFloor = readingLane ? 1 - (bandBottom - portalPixels) / height * 2 : compactFlight ? -1 + portalRadius + 32 / height : readingEdge === null ? .18 : 1 - (readingEdge - portalRadius * height / 2 - 12) / height * 2;
       const portalCeiling = readingLane ? 1 - (bandTop + portalPixels) / height * 2 : compactFlight ? -.6 : 1 - (headerHeight + portalPixels + 10) / height * 2;
-      const cycle = pursuit.cycle;
+      const cycle = introMode ? 9001 : pursuit.cycle;
       if (portalCycle !== cycle) { portalCycle = cycle; portalSafe.visible = false; }
       routeSpacecraft(portalX * camera.aspect, readingLane ? laneCenter : portalOpacity > .01 ? portalSafe.y : compactFlight ? -.78 : .64, portalRadius, celestialObstacles, portalFloor, portalCeiling, portalCandidate);
       if (portalOpacity < .01 || portalCandidate.visible && Math.abs(portalCandidate.y - portalSafe.y) < .1) Object.assign(portalSafe, portalCandidate);
@@ -648,7 +662,7 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, contactProgres
       host.dataset.wormholeClear = String(portalClear);
       flights.forEach((flight, index) => {
         const { model, pose, safe, candidate } = flight;
-        const cycle = pursuit.cycle;
+        const cycle = introMode ? 9001 : pursuit.cycle;
         if (cycle !== flight.cycle) { flight.cycle = cycle; flight.retired = false; flight.portalEntry = null; }
         if (!state.current.motionOn) flight.retired = false;
         pose.x = -1.15 + (pose.x + 1.15) / (WORMHOLE_X + 1.15) * (portalX + 1.15);
@@ -835,7 +849,7 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, contactProgres
       host.dataset.flightBand = String(readingLane);
       host.dataset.flightBandTop = bandTop.toFixed(2);
       host.dataset.flightBandBottom = bandBottom.toFixed(2);
-      host.dataset.pursuitPhase = pursuit.interrupted ? "retiring" : flightAge >= pursuitEnd(flightDelay) ? "rest" : flightAllowed ? "flying" : "paused";
+      host.dataset.pursuitPhase = introMode ? "arrival" : pursuit.interrupted ? "retiring" : flightAge >= pursuitEnd(flightDelay) ? "rest" : flightAllowed ? "flying" : "paused";
       host.dataset.brightStars = "18";
       host.dataset.dustFlow = returning ? "outward-return" : "inward";
       host.dataset.dustSources = "top,left,bottom,right";

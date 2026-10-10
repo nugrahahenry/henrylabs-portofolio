@@ -146,6 +146,7 @@ export function PortfolioExperience() {
   const [activeSatellites, setActiveSatellites] = useState({ university: "rental" as SatelliteId, client: "yventures" as SatelliteId });
   const [introDone, setIntroDone] = useState(false);
   const [introProgress, setIntroProgress] = useState(0);
+  const [introCandidate, setIntroCandidate] = useState(0);
   const [introPhase, setIntroPhase] = useState<IntroPhase>("searching");
   const introStopRef = useRef(false);
   const [worldlineStage, setWorldlineStage] = useState<WorldlineStage>("world");
@@ -193,6 +194,7 @@ export function PortfolioExperience() {
 
   const skipIntro = () => {
     introStopRef.current = true;
+    setIntroCandidate(5);
     setIntroProgress(100);
     setIntroPhase("ready");
     setIntroDone(true);
@@ -253,6 +255,7 @@ export function PortfolioExperience() {
     const replay = new URLSearchParams(window.location.search).get("intro") === "1";
     const directEntry = Boolean(window.location.hash || new URLSearchParams(window.location.search).get("world") || new URLSearchParams(window.location.search).get("view") === "universe");
     if ((introSeen || directEntry) && !replay || reduced) {
+      setIntroCandidate(5);
       setIntroProgress(100);
       setIntroPhase("ready");
       setIntroDone(true);
@@ -269,6 +272,7 @@ export function PortfolioExperience() {
       const ratio = Math.min(1, (now - startedAt) / duration);
       if (now - lastPaint >= 80 || ratio === 1) {
         const progress = Math.round(ratio * 100);
+        setIntroCandidate(Math.min(5, Math.floor(ratio * 6)));
         setIntroProgress(progress);
         setIntroPhase(ratio < .2 ? "searching" : ratio < .54 ? "mapping" : ratio < .84 ? "locking" : "ready");
         lastPaint = now;
@@ -384,9 +388,15 @@ export function PortfolioExperience() {
     <MotionConfig reducedMotion={motionOn ? "never" : "always"} transition={{ duration: motionOn ? 0.55 : 0, ease: [0.16, 1, 0.3, 1] }}>
     <main className="site-shell" id="main-content" tabIndex={-1} data-motion={motionOn ? "on" : "off"} data-intro={introDone ? "done" : "active"}>
       <SmoothScroll enabled={motionOn} />
-      <WorldlineBackdrop activeId={activeProject.id} motionOn={motionOn} progress={worldlineProgress} contactProgress={contactProgress} contactVisible={contactVisible} mapActive={heroPhase === "worlds"} />
-      <div className={cx("intro-loader", "arrival-intro", introDone && "intro-loader--done")} data-intro-phase={introPhase} data-intro-progress={introProgress} aria-hidden={introDone} inert={introDone}>
+      <WorldlineBackdrop activeId={activeProject.id} motionOn={motionOn} progress={worldlineProgress} contactProgress={contactProgress} contactVisible={contactVisible} mapActive={heroPhase === "worlds"} introActive={!introDone} introProgress={introProgress} />
+      <div className={cx("intro-loader", "arrival-intro", introDone && "intro-loader--done")} data-intro-phase={introPhase} data-intro-progress={introProgress} data-intro-candidate={introCandidate} aria-hidden={introDone} inert={introDone}>
         <div className="arrival-universe" aria-hidden="true">
+          <div className="arrival-multiverse" aria-hidden="true">
+            {[
+              ["Orion-07", "cyan"], ["Helix-22", "violet"], ["Eidolon-04", "pink"],
+              ["Nova-31", "yellow"], ["Aster-12", "mint"], ["StarGod", "cyan"],
+            ].map(([name, color], index) => <span key={name} className={cx("arrival-universe-candidate", `arrival-universe-candidate--${color}`, introCandidate > index && "is-rejected", introCandidate === index && "is-scanning", introCandidate === 5 && index === 5 && "is-selected")}><i>{name}</i></span>)}
+          </div>
           <span className="arrival-universe-plane arrival-universe-plane--wide" />
           <span className="arrival-universe-plane arrival-universe-plane--tall" />
           <span className="arrival-universe-plane arrival-universe-plane--tight" />
@@ -397,7 +407,7 @@ export function PortfolioExperience() {
           <span className="arrival-universe-node arrival-universe-node--d" />
         </div>
         <div className="arrival-content">
-          <div className="arrival-meta"><span>UNIVERSE INDEX / 001</span><strong>{String(introProgress).padStart(3, "0")}%</strong></div>
+          <div className="arrival-meta"><span>MULTIVERSE SEARCH / 006 CANDIDATES</span><span>QUERY / STARGOD</span></div>
           <div className="arrival-query" aria-label={language === "en" ? "Searching the StarGod universe" : "Mencari semesta StarGod"}>
             <span className="arrival-query-prompt">&gt;</span>
             <span className="arrival-query-label">{language === "en" ? "SEARCHING UNIVERSE" : "MENCARI SEMESTA"}</span>
@@ -410,7 +420,8 @@ export function PortfolioExperience() {
             <p>{language === "en" ? "Henry Nugraha's universe" : "Semesta milik Henry Nugraha"}</p>
             <div className="arrival-result-meta"><span>03 {language === "en" ? "galaxies" : "galaksi"}</span><span>10 {language === "en" ? "worlds" : "dunia"}</span><span>01 {language === "en" ? "maker" : "maker"}</span></div>
           </div>
-          <div className="arrival-progress" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={introProgress} aria-label={language === "en" ? "Universe search progress" : "Progress pencarian semesta"}><span style={{ transform: `scaleX(${introProgress / 100})` }} /></div>
+          <div className="arrival-search-log"><span>{introCandidate === 0 ? (language === "en" ? "Scanning candidate / signal unresolved" : "Memindai kandidat / sinyal belum pasti") : introCandidate < 5 ? (language === "en" ? "Candidate rejected / continuing scan" : "Kandidat ditolak / lanjut memindai") : (language === "en" ? "Candidate accepted / lock confirmed" : "Kandidat diterima / kunci terkonfirmasi")}</span><strong>{String(Math.max(0, 6 - introCandidate)).padStart(2, "0")} {language === "en" ? "remain" : "tersisa"}</strong></div>
+          <div className="arrival-progress" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={introProgress} aria-label={language === "en" ? "Universe search progress" : "Progress pencarian semesta"}><span style={{ transform: `scaleX(${introProgress / 100})` }} /><strong>{String(introProgress).padStart(3, "0")}%</strong></div>
           <div className="arrival-status"><span>{introStatus[introPhase]}</span><span>{language === "en" ? "Coordinates are stabilizing" : "Koordinat sedang distabilkan"}</span></div>
         </div>
         <button type="button" className="arrival-skip" onClick={skipIntro}>{language === "en" ? "Skip intro" : "Lewati intro"}<ArrowUpRight size={15} /></button>

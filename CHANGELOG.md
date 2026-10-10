@@ -1,5 +1,13 @@
 # Changelog
 
+## StarGod Portfolio v0.99.0 - 2026-10-11
+
+- Turn the opening into a six-candidate multiverse search that scans, rejects, and finally locks the StarGod universe instead of revealing it immediately.
+- Add orbiting candidate universes with active, rejected, and selected states; reduce label noise so only the current signal and final lock compete with the search copy.
+- Combine the search percentage into one centered progress track and keep the Skip Intro control available throughout the 8.2-second gate.
+- Use the deterministic UFO-first, scout-second wormhole chase as the arrival sequence, then park the ambient pursuit clock through a quiet interval so it does not feel randomly injected after entry.
+- Extend spacecraft regression timing to cover the intentional post-intro park without weakening clearance, portal order, shot-miss, or 30-second rest assertions.
+
 ## StarGod Portfolio v0.98.0 - 2026-10-11
 
 - Replace the short opaque loader with an 8.2-second StarGod universe search gate that keeps the real 3D map visible behind a restrained scan veil.

@@ -1,6 +1,6 @@
 <div align="center">
 
-# StarGod Portfolio v0.98.0
+# StarGod Portfolio v0.99.0
 
 **I build things I actually see.**
 
@@ -22,6 +22,8 @@ Designed and developed by **Henry Nugraha**, a product-minded developer in Indon
 ## The Experience
 
 Three galaxies. Ten project worlds. One maker.
+
+The opening behaves like a multiverse search: six candidate universes orbit in the field, unresolved signals are dimmed one by one, and the StarGod coordinates lock before the real chase arrives. The single centered progress line shows the search percentage while the UFO and scout pass through their wormhole in sequence.
 
 The living map is backed by a procedural volumetric nebula: layered filaments, distant stellar depth, and a slow parallax drift keep the sky feeling like space rather than a flat backdrop while the project systems remain readable.
 
