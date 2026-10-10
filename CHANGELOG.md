@@ -1,5 +1,11 @@
 # Changelog
 
+## StarGod Portfolio v0.97.0 - 2026-10-10
+
+- Turn the lower-right black hole into a cinematic void/photon-flow surface with asymmetrical multi-lane accretion, curved filaments, and depth-aware color.
+- Preserve the slow gravity sequence, four-direction particle intake, cropped horizon, return-on-scroll behavior, fallback, and draw-call budget.
+- Add browser coverage for the black-hole material contract and terminal visual.
+
 ## StarGod Portfolio v0.96.0 - 2026-10-10
 
 - Rework the 3D nebula density field into layered volumetric filaments with multi-scale cloud detail, depth-based color temperature, and darker lanes that give the background more photographic space depth without using a wallpaper plate.

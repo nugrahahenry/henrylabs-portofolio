@@ -36,18 +36,26 @@ function createBlackHole() {
         if (apparentRadius < .97) discard;
         float radius = length(vDisk);
         float angle = atan(vDisk.y, vDisk.x);
-        float edge = smoothstep(.51, .59, radius) * (1.0 - smoothstep(.98, 1.7, radius));
-        float flow = angle * 3.0 + log(radius) * 22.0 - uTime * .8;
-        float ribbon = sin(flow + sin(angle * 7.0 + radius * 13.0) * .38);
-        float detail = sin(radius * 170.0 + angle * 9.0 - uTime * 1.2);
-        float heat = pow(clamp(1.4 - radius, 0.0, 1.0), 1.4);
-        float filament = pow(.5 + .5 * sin(flow * 3.0), 8.0);
-        float brightness = (.38 + ribbon * .20 + detail * .08 + filament * .4) * (1.0 + .55 * cos(angle - .7));
-        vec3 color = mix(vec3(.08, .35, .85), vec3(1.0, .32, .08), smoothstep(.1,.6,heat));
-        color = mix(color, vec3(1.0, .89, .57), smoothstep(.6,.84,heat));
+        float edge = smoothstep(.49, .56, radius) * (1.0 - smoothstep(1.14, 1.7, radius));
+        float logRadius = log(max(radius, .52));
+        float flow = angle * 3.0 + logRadius * 20.0 - uTime * .75;
+        float shear = sin(angle * 2.0 + radius * 11.0 - uTime * .2) * .18;
+        float laneA = pow(max(0.0, .5 + .5 * sin(flow + shear)), 7.0);
+        float laneB = pow(max(0.0, .5 + .5 * sin(flow * 1.72 - angle * .8 + radius * 4.0 + uTime * .16)), 9.0);
+        float laneC = pow(max(0.0, .5 + .5 * sin(flow * .58 + angle * 5.0 - radius * 17.0 - uTime * .3)), 11.0);
+        float detail = sin(radius * 145.0 + angle * 13.0 - uTime * 1.4) * .5 + .5;
+        float turbulent = .55 + .45 * sin(angle * 5.0 + radius * 23.0 - uTime * .4);
+        float heat = pow(clamp(1.38 - radius, 0.0, 1.0), 1.55);
+        float depth = smoothstep(.54, .92, radius);
+        float brightness = (.13 + laneA * .72 + laneB * .42 + laneC * .24 + detail * .10) * turbulent;
+        brightness *= 1.0 + .48 * cos(angle - .55) + .14 * sin(angle * 3.0 + uTime);
+        vec3 color = mix(vec3(.035, .18, .72), vec3(1.0, .20, .045), smoothstep(.08, .62, heat));
+        color = mix(color, vec3(1.0, .84, .40), smoothstep(.52, .86, heat));
+        color = mix(color, vec3(.22, .42, 1.0), clamp(depth * .5 + laneB * .18, 0.0, 1.0));
         vec2 screen = vec2(gl_FragCoord.x / uResolution.x, 1.0 - gl_FragCoord.y / uResolution.y);
         float readingMask = clamp(smoothstep(.77, .94, screen.y) + smoothstep(.85, .99, screen.x), 0.0, 1.0);
-        gl_FragColor = vec4(color * (brightness + heat * .9) * 1.4, edge * uStrength * mix(.18, 1.0, readingMask));
+        float brokenEdge = .72 + .28 * sin(angle * 2.7 + radius * 9.0 - uTime * .18);
+        gl_FragColor = vec4(color * (brightness + heat * .52) * 1.32, edge * brokenEdge * uStrength * mix(.15, 1.0, readingMask));
         #include <tonemapping_fragment>
         #include <colorspace_fragment>
       }
@@ -66,14 +74,18 @@ function createBlackHole() {
         float r = length(vLens), a = atan(vLens.y, vLens.x);
         float outside = smoothstep(.498, .514, r);
         float photon = exp(-pow((r - .518) / .013, 2.0));
-        float arcRadius = length(vec2(vLens.x, vLens.y * .92));
-        float arc = exp(-pow((arcRadius - .575) / .055, 2.0)) * smoothstep(-.12,.32,vLens.y);
-        float bands = .65 + .20 * sin(arcRadius * 240.0 + a * 4.0 - uTime) + .15 * sin(a * 19.0 + r * 93.0);
-        float glow = exp(-max(0.0, r - .52) * 24.0) * .12;
-        float beaming = .8 + .3 * cos(a - .5);
-        vec3 light = vec3(1.0,.76,.35) * photon * 1.8 + mix(vec3(1.0,.26,.08),vec3(1.0,.82,.48),bands) * arc * bands * 1.6;
-        light += vec3(.14,.32,.64) * glow;
-        gl_FragColor = vec4(light * beaming, clamp(photon + arc + glow,0.0,1.0) * outside * uStrength);
+        float arcRadius = length(vec2(vLens.x, vLens.y * .9));
+        float farArc = exp(-pow((arcRadius - .60) / .075, 2.0)) * smoothstep(-.18,.25,vLens.y);
+        float nearArc = exp(-pow((arcRadius - .548) / .023, 2.0)) * smoothstep(.04,.46,vLens.y);
+        float bands = .55 + .25 * sin(arcRadius * 215.0 + a * 5.0 - uTime * .9) + .20 * sin(a * 17.0 + r * 87.0 - uTime * .35);
+        float broken = .55 + .45 * (.5 + .5 * sin(a * 3.0 + arcRadius * 31.0 - uTime * .18));
+        float glow = exp(-max(0.0, r - .52) * 27.0) * (.08 + .05 * sin(a * 8.0 - uTime));
+        float beaming = .72 + .38 * cos(a - .62);
+        vec3 warm = mix(vec3(1.0,.20,.035), vec3(1.0,.85,.46), .5 + .5 * bands);
+        vec3 light = vec3(1.0,.72,.28) * photon * 1.35 + warm * (farArc * bands * 1.15 + nearArc * broken * 1.35);
+        light += vec3(.10,.28,.72) * glow;
+        float alpha = clamp(photon * 1.05 + farArc * broken + nearArc + glow, 0.0, 1.0) * outside * uStrength;
+        gl_FragColor = vec4(light * beaming, alpha);
         #include <tonemapping_fragment>
         #include <colorspace_fragment>
       }
@@ -828,6 +840,7 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, contactProgres
       host.dataset.dustFlow = returning ? "outward-return" : "inward";
       host.dataset.dustSources = "top,left,bottom,right";
       host.dataset.dustMotion = "orbital-accretion";
+      host.dataset.blackHoleModel = "void-photon-flow";
       host.dataset.feedingDustCount = String(flowGeometry.getAttribute("position").count);
       host.dataset.distantStars = String(distantGeometry.drawRange.count);
       host.dataset.distantStarPull = "0.000";
