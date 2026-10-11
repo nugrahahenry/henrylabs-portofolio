@@ -1,5 +1,10 @@
 # Changelog
 
+## StarGod Portfolio v0.101.3 - 2026-10-12
+
+- Soften the intro sky from near-black to a deep indigo/purple opening, with procedural far and near star bands that resolve progressively during the camera search instead of reading as a flat dark plate.
+- Extend the StarGod coordinate hold to 1.2 seconds so the target lock can be read before the portfolio nebula takes over.
+
 ## StarGod Portfolio v0.101.2 - 2026-10-12
 
 - Simplify the 3D arrival readout into one lower-corner story: search, trace, lock, and entry remain legible while the center stays open for the universe camera and target ring.

@@ -1,6 +1,6 @@
 <div align="center">
 
-# StarGod Portfolio v0.101.2
+# StarGod Portfolio v0.101.3
 
 **I build things I actually see.**
 
@@ -25,7 +25,7 @@ The universe handoff uses a bounded Lenis + GSAP scroll driver, so the jump from
 
 Three galaxies. Ten project worlds. One maker.
 
-The opening behaves like a real Three.js camera searching a spherical multiverse: 128 universe signatures sit at different depths, the lens moves from distant universe bubbles through the Cosmic Web and Supercluster, and `ORION-89` resolves into StarGod. The single centered progress line shows the search percentage. The UFO and scout begin only after the search hands off to the “I build things I actually see.” galaxy opening, so the arrival story has a clear before and after.
+The opening behaves like a real Three.js camera searching a spherical multiverse: 128 universe signatures sit at different depths, a layered star field opens from deep indigo into a denser cosmic scale, the lens moves through the Cosmic Web and Supercluster, and `ORION-89` resolves into StarGod. The single centered progress line shows the search percentage, then holds the lock briefly before the nebula-backed portfolio takes over. The UFO and scout begin only after that handoff to the “I build things I actually see.” galaxy opening, so the arrival story has a clear before and after.
 
 The living map is backed by a procedural volumetric nebula: layered filaments, distant stellar depth, and a slow parallax drift keep the sky feeling like space rather than a flat backdrop while the project systems remain readable.
 

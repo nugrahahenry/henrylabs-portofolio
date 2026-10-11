@@ -17,8 +17,8 @@
   --mono: "Cascadia Mono", "SFMono-Regular", Consolas, monospace;
 }
 
-.intro-loader.arrival-intro { background: rgba(4, 7, 18, .14); opacity: 1; padding: 24px; overflow: hidden; isolation: isolate; transition: opacity .72s var(--ease), visibility 0s .72s; }
-.intro-loader.arrival-intro::before { position: absolute; inset: 0; height: 100%; background: radial-gradient(circle at 50% 45%, rgba(11, 24, 48, .08), transparent 34%), linear-gradient(180deg, rgba(4, 7, 18, .28), rgba(4, 7, 18, .08) 48%, rgba(4, 7, 18, .38)); box-shadow: none; animation: none; transition: opacity .72s var(--ease); }
+.intro-loader.arrival-intro { background: rgba(4, 7, 18, .04); opacity: 1; padding: 24px; overflow: hidden; isolation: isolate; transition: opacity .72s var(--ease), visibility 0s .72s; }
+.intro-loader.arrival-intro::before { position: absolute; inset: 0; height: 100%; background: radial-gradient(circle at 55% 42%, rgba(120, 91, 219, .16), transparent 31%), radial-gradient(circle at 18% 72%, rgba(50, 131, 193, .11), transparent 36%), linear-gradient(180deg, rgba(4, 7, 18, .1), rgba(8, 10, 34, .02) 48%, rgba(4, 7, 18, .2)); box-shadow: none; animation: none; transition: opacity .72s var(--ease); }
 .intro-loader.arrival-intro::after { display: block; content: ""; position: absolute; z-index: 1; inset: 0; pointer-events: none; opacity: .22; background: linear-gradient(180deg, transparent 0 44%, rgba(110, 231, 244, .14) 50%, transparent 56%), repeating-linear-gradient(90deg, transparent 0 15%, rgba(244,245,239,.035) 15.05%, transparent 15.12%); mix-blend-mode: screen; animation: arrival-scan 18s linear infinite; }
 .intro-loader.arrival-intro.intro-loader--done::before { opacity: 0; }
 .intro-loader.arrival-intro.intro-loader--done::after { opacity: 0; }

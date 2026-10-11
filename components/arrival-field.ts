@@ -8,7 +8,10 @@ const seed = (n: number) => { const v = Math.sin(n * 127.1 + 311.7) * 43758.5453
 // A stylized navigation atlas, not a claim that observable universes have spherical boundaries.
 export function createArrivalField() {
   const scene = new THREE.Scene();
-  scene.background = new THREE.Color("#02040a");
+  const openingSky = new THREE.Color("#06091b");
+  const deepSky = new THREE.Color("#15113a");
+  const skyBackground = openingSky.clone();
+  scene.background = skyBackground;
   const camera = new THREE.PerspectiveCamera(48, 1, .002, 180);
   const positions = Array.from({ length: 128 }, (_, i) => {
     const y = 1 - (i + .5) / 128 * 2, a = i * 2.399963;
@@ -55,6 +58,27 @@ export function createArrivalField() {
     scene.add(cloud);
     return cloud;
   };
+  // Two depth bands create the same scale cue as a true zoom-out: the distant field
+  // is present immediately, while closer stars resolve as the target approaches.
+  const farStarPoints: number[] = [], farStarColors: number[] = [];
+  const nearStarPoints: number[] = [], nearStarColors: number[] = [];
+  const starPalette = ["#e7e7ff", "#9edbff", "#eac5ff", "#f7dca3", "#b9c9ff"];
+  for (let i = 0; i < 1500; i++) {
+    const latitude = 1 - seed(i + 1400) * 2, angle = i * 2.399963, radius = 32 + seed(i + 1500) * 48;
+    const planar = Math.sqrt(1 - latitude * latitude), x = Math.cos(angle) * planar * radius, y = latitude * radius, z = Math.sin(angle) * planar * radius;
+    farStarPoints.push(x, y, z);
+    const color = new THREE.Color(starPalette[i % starPalette.length]);
+    farStarColors.push(color.r, color.g, color.b);
+  }
+  for (let i = 0; i < 420; i++) {
+    const latitude = 1 - seed(i + 2400) * 2, angle = i * 2.399963, radius = 9 + seed(i + 2500) * 22;
+    const planar = Math.sqrt(1 - latitude * latitude), x = Math.cos(angle) * planar * radius, y = latitude * radius, z = Math.sin(angle) * planar * radius;
+    nearStarPoints.push(x, y, z);
+    const color = new THREE.Color(starPalette[(i + 2) % starPalette.length]);
+    nearStarColors.push(color.r, color.g, color.b);
+  }
+  const farStars = dots(farStarPoints, farStarColors, .045);
+  const nearStars = dots(nearStarPoints, nearStarColors, .026);
   const particles: number[] = [], colors: number[] = [];
   positions.forEach((p, i) => {
     const c = new THREE.Color(palette[i % palette.length]);
@@ -127,6 +151,12 @@ export function createArrivalField() {
     const lockRing = blend(p, .72, .92);
     focusRing.scale.setScalar(radii[focus] * (focus === 89 ? .72 + lockRing * .2 : 1.1) * (1 + Math.sin(p * 90) * .025));
     focusRing.material.opacity = Math.max(searchRing * .75, lockRing * .92);
+    const skyReveal = blend(p, .04, .64);
+    skyBackground.lerpColors(openingSky, deepSky, skyReveal * .72);
+    farStars.material.uniforms.uOpacity.value = .2 + skyReveal * .46 - blend(p, .84, 1) * .14;
+    nearStars.material.uniforms.uOpacity.value = blend(p, .16, .7) * .52;
+    farStars.material.uniforms.uSize.value = .035 + skyReveal * .02;
+    nearStars.material.uniforms.uSize.value = .02 + blend(p, .25, .72) * .022;
     sphereMaterial.uniforms.uFade.value = 1 - blend(p, .44, .59);
     sphereMaterial.uniforms.uTime.value = p * 18;
     interiors.material.uniforms.uOpacity.value = 1 - blend(p, .44, .59);

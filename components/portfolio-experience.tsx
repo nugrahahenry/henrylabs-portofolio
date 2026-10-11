@@ -288,7 +288,7 @@ export function PortfolioExperience() {
         setIntroProgress(100);
         setIntroPhase("ready");
         // Hold the final coordinates before handing the sky to the opening scene.
-        finishTimer = window.setTimeout(() => setIntroDone(true), 900);
+        finishTimer = window.setTimeout(() => setIntroDone(true), 1200);
         return;
       }
       frame = requestAnimationFrame(tick);
