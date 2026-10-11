@@ -3,7 +3,7 @@ import { mkdirSync } from "node:fs";
 import { chromium, expect } from "@playwright/test";
 
 const url = process.env.PORTFOLIO_URL ?? "http://localhost:3002/";
-const INTRO_DURATION = 12600;
+const INTRO_DURATION = 18000;
 const browser = await chromium.launch({ headless: true, executablePath: process.env.CHROME_PATH ?? "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe" });
 async function hydrateWithClock(page) {
   // Advance React's scheduler without consuming the short entrance timeline.
@@ -14,7 +14,9 @@ async function hydrateWithClock(page) {
 }
 try {
   mkdirSync("test-results", { recursive: true });
-  for (const viewport of process.argv.includes("--reduced") ? [] : [{ width: 1440, height: 900 }, { width: 1024, height: 768 }, { width: 768, height: 1024 }, { width: 390, height: 844 }, { width: 360, height: 800 }, { width: 844, height: 390 }]) {
+  const viewports = [{ width: 1440, height: 900 }, { width: 1024, height: 768 }, { width: 768, height: 1024 }, { width: 390, height: 844 }, { width: 360, height: 800 }, { width: 844, height: 390 }];
+  const selected = process.argv.includes("--landscape") ? viewports.slice(-1) : viewports;
+  for (const viewport of process.argv.includes("--reduced") ? [] : selected) {
     const page = await browser.newPage({ viewport, reducedMotion: "no-preference" });
     const errors = [];
     page.on("pageerror", (error) => errors.push(error.message));
@@ -24,6 +26,10 @@ try {
     await hydrateWithClock(page);
     await page.clock.runFor(500);
     const intro = page.locator(".arrival-intro");
+    const expectIntroDone = async () => {
+      await expect(intro).toHaveClass(/intro-loader--done/);
+      await expect(intro).toHaveAttribute("aria-hidden", "true");
+    };
     await expect(intro).toBeVisible();
     await expect(intro).toContainText("StarGod");
     await expect(intro).toContainText("128 UNIVERSES");
@@ -34,17 +40,24 @@ try {
     assert.equal(await intro.locator(".stargod-mark").evaluate(image => image.complete && image.naturalWidth > 0), true, "the authored StarGod mark must decode before reveal");
     await page.screenshot({ path: `test-results/${viewport.width}-stargod-entry.png` });
     await page.clock.runFor(8200);
-    await expect(page.locator(".worldline-backdrop")).toHaveAttribute("data-spacecraft-visible", "true");
-    await expect(page.locator(".worldline-backdrop")).toHaveAttribute("data-scout-visible", "true");
-    await expect(page.locator(".worldline-backdrop")).toHaveAttribute("data-moon-orbits", "7");
-    await expect(page.locator(".worldline-backdrop")).toHaveAttribute("data-moon-counts", "2,1,0,3,1");
+    await expect(page.locator(".worldline-backdrop")).toHaveAttribute("data-spacecraft-visible", "false");
+    await expect(page.locator(".worldline-backdrop")).toHaveAttribute("data-scout-visible", "false");
+    await expect(page.locator(".worldline-backdrop")).toHaveAttribute("data-pursuit-phase", "scanning");
+    await expect(page.locator(".worldline-backdrop")).toHaveAttribute("data-moon-orbits", "9");
+    await expect(page.locator(".worldline-backdrop")).toHaveAttribute("data-moon-counts", "2,1,2,3,1");
     if (viewport.width === 1440) await page.getByRole("button", { name: "Skip intro" }).click();
-    else await page.clock.runFor(INTRO_DURATION + 100);
+    else await page.clock.runFor(Math.max(0, INTRO_DURATION - 8200) + 100);
     const bounds = await page.locator(".arrival-content").boundingBox();
     assert.ok(bounds.x >= 0 && bounds.x + bounds.width <= viewport.width);
     assert.ok(bounds.y >= 0 && bounds.y + bounds.height <= viewport.height);
-    await page.clock.runFor(900);
-    await expect(intro).toBeHidden();
+    await page.clock.runFor(1800);
+    await expectIntroDone();
+    // The leader appears as soon as the hero opens; the scout follows its compact/desktop delay.
+    await page.clock.runFor(11200);
+    if (viewport.width >= 390 || viewport.height >= 900) {
+      await expect(page.locator(".worldline-backdrop")).toHaveAttribute("data-spacecraft-visible", "true");
+      await expect(page.locator(".worldline-backdrop")).toHaveAttribute("data-scout-visible", "true");
+    }
     await page.screenshot({ path: `test-results/${viewport.width}-arrival.png` });
     const heroText = await page.locator('.hero-copy').evaluate(el => [...el.querySelectorAll('h1,p,.hero-actions')].map(item => {
       const r = item.getBoundingClientRect(); return { x:r.x, y:r.y, right:r.right, bottom:r.bottom };
@@ -70,7 +83,7 @@ try {
     await page.reload({ waitUntil: "domcontentloaded" });
     await hydrateWithClock(page);
     await page.clock.runFor(900);
-    await expect(intro).toBeHidden();
+    await expectIntroDone();
     await page.goto(`${url}?view=universe`, {waitUntil:'domcontentloaded'});
     await hydrateWithClock(page); await page.clock.runFor(1200);
     const landed = await page.locator('.hero-stage').evaluate(hero => (scrollY-hero.offsetTop)/(hero.offsetHeight-innerHeight));
@@ -79,8 +92,8 @@ try {
     await page.goto(`${url}?intro=1`, { waitUntil: "domcontentloaded" });
     await hydrateWithClock(page);
     await expect(intro).toBeVisible();
-    await page.clock.runFor(INTRO_DURATION + 1200);
-    await expect(intro).toBeHidden();
+    await page.clock.runFor(INTRO_DURATION + 2000);
+    await expectIntroDone();
     assert.deepEqual(errors, []);
     await page.close();
     console.log(`arrival, skip, session return, and direct galaxy handoff passed at ${viewport.width}px`);

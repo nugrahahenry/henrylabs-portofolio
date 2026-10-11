@@ -1,5 +1,12 @@
 # Changelog
 
+## StarGod Portfolio v0.101.0 - 2026-10-11
+
+- Replace the CSS-only multiverse search with a real Three.js arrival field: 128 depth-layered universe spheres, interior star clouds, cosmic-web filaments, a camera path, and a controlled lock into `ORION-89`.
+- Move the UFO/scout pursuit out of the intro and into the first Henry galaxy opening, immediately after the search handoff. Compact layouts now use the same readable opening lane instead of silently deferring the story to a later section.
+- Give all five project worlds visible moonlets with varied size, speed, and local orbit traces, and keep the shared instanced mesh and line buffer for bounded rendering cost.
+- Fix the Next.js hydration warning caused by numeric CSS custom properties and remove the Three.js `instanceColor` shader compile error that surfaced as the red issues badge.
+
 ## StarGod Portfolio v0.100.0 - 2026-10-11
 
 - Turn the opening into a camera-like search through 128 universe signatures, then route the signal through Cosmic Web, Supercluster, and StarGod Galaxy stages before locking the coordinates.

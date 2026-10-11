@@ -372,8 +372,8 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, contactProgres
     const projectedVisitor = new THREE.Vector3();
     let visitorIndex = -1;
 
-    const moonCounts = [2, 1, 0, 3, 1];
-    const moonRecords: Array<{ ownerIndex: number; orbitRadius: number; phase: number; eccentricity: number; lineOffset: number; size: number }> = [];
+    const moonCounts = [2, 1, 2, 3, 1];
+    const moonRecords: Array<{ ownerIndex: number; orbitRadius: number; phase: number; eccentricity: number; lineOffset: number; size: number; speed: number }> = [];
     let moonLineCursor = 0;
     const orbitPlanets = projectWorlds.map((world, index) => {
       const pivot = new THREE.Group();
@@ -403,14 +403,15 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, contactProgres
           phase: phase + moonIndex * 2.12 + index * .47,
           eccentricity: .04 + moonIndex * .045,
           lineOffset: moonLineCursor++,
-          size: radius * (.075 + ((index + moonIndex) % 3) * .018),
+          size: radius * (.105 + ((index + moonIndex) % 3) * .022),
+          speed: 1.35 + ((index * 3 + moonIndex) % 5) * .28,
         });
       }
       return { pivot, body, surface, atmosphere, ring, cloud, radius, phase, orbitRadius: 1.45 + index * .64, index };
     });
 
     const moonGeometry = new THREE.SphereGeometry(1, 10, 8);
-    const moonMaterial = new THREE.MeshStandardMaterial({ color: 0xb8c9d4, roughness: .82, metalness: .02, vertexColors: true });
+    const moonMaterial = new THREE.MeshStandardMaterial({ color: 0xb8c9d4, roughness: .78, metalness: .02, emissive: 0x142b3a, emissiveIntensity: .28, vertexColors: true });
     const moonMesh = new THREE.InstancedMesh(moonGeometry, moonMaterial, moonRecords.length);
     moonMesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
     const moonDummy = new THREE.Object3D();
@@ -418,12 +419,14 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, contactProgres
     moonRecords.forEach((moon, index) => { moonDummy.scale.setScalar(moon.size); moonDummy.updateMatrix(); moonMesh.setMatrixAt(index, moonDummy.matrix); moonMesh.setColorAt(index, new THREE.Color(moonPalette[index % moonPalette.length])); });
     moonMesh.instanceMatrix.needsUpdate = true;
     if (moonMesh.instanceColor) moonMesh.instanceColor.needsUpdate = true;
+    moonMesh.renderOrder = 3;
     planetSystem.add(moonMesh);
     const moonLinePositions = new Float32Array(moonRecords.length * 160 * 2 * 3);
     const moonOrbitLines = new THREE.LineSegments(
       new THREE.BufferGeometry().setAttribute("position", new THREE.BufferAttribute(moonLinePositions, 3)),
       new THREE.LineBasicMaterial({ color: 0xabc5ce, transparent: true, opacity: .16, depthWrite: false }),
     );
+    moonOrbitLines.renderOrder = 2;
     planetSystem.add(moonOrbitLines);
     host.dataset.moonOrbits = String(moonRecords.length);
     host.dataset.moonCounts = moonCounts.join(",");
@@ -539,7 +542,7 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, contactProgres
       });
       moonRecords.forEach((moon, moonIndex) => {
         const owner = orbitPlanets[moon.ownerIndex];
-        const moonPhase = moon.phase + drift * orbitalSpeed(moon.orbitRadius) * 2.3 + scroll * .2;
+        const moonPhase = moon.phase + drift * orbitalSpeed(moon.orbitRadius) * moon.speed + scroll * .2;
         sampleOrbit(moon.orbitRadius, moonPhase, moon.eccentricity, moonPoint);
         moonWorldPoint.copy(moonPoint).applyMatrix4(owner.body.matrix).add(owner.pivot.position);
         moonDummy.position.copy(moonWorldPoint);
@@ -548,7 +551,7 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, contactProgres
         moonMesh.setMatrixAt(moonIndex, moonDummy.matrix);
         const lineStart = moon.lineOffset * 160 * 2 * 3;
         for (let segment = 0; segment < 160; segment++) {
-          const a = moon.phase + drift * orbitalSpeed(moon.orbitRadius) * 2.3 + scroll * .2 + segment / 160 * Math.PI * 2;
+          const a = moon.phase + drift * orbitalSpeed(moon.orbitRadius) * moon.speed + scroll * .2 + segment / 160 * Math.PI * 2;
           sampleOrbit(moon.orbitRadius, a, moon.eccentricity, moonPoint).applyMatrix4(owner.body.matrix).add(owner.pivot.position);
           sampleOrbit(moon.orbitRadius, a + Math.PI * 2 / 160, moon.eccentricity, moonNextPoint).applyMatrix4(owner.body.matrix).add(owner.pivot.position);
           const offset = lineStart + segment * 6;
@@ -647,7 +650,6 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, contactProgres
       const compactFlight = width < 1100 || camera.aspect < .9 || height < 620;
       const portalX = compactFlight ? .48 : WORMHOLE_X;
       const requestedDelay = compactFlight ? COMPACT_PURSUIT_DELAY : PURSUIT_DELAY;
-      const compactOpening = compactFlight && heroCopy && !heroCopy.inert;
       if (bandDirty) {
         bandTop = Math.max(headerHeight + 16, (methodSteps?.getBoundingClientRect().bottom ?? height) + 16);
         bandBottom = Math.min(height - 24, (stackKicker?.getBoundingClientRect().top ?? 0) - 16);
@@ -655,22 +657,20 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, contactProgres
       }
       const readingLane = readingChapter && bandBottom - bandTop >= 120;
       const laneCenter = 1 - (bandTop + bandBottom) / height;
-      const chapterAllowsFlight = holeOpacity < .05 && !state.current.mapActive && !compactOpening && (!readingChapter || readingLane);
+      const chapterAllowsFlight = !introMode && holeOpacity < .05 && !state.current.mapActive && (!readingChapter || readingLane);
       if (introMode) introExitHandled = false;
       else if (state.current.introProgress >= 100 && !introExitHandled) {
-        // After the cinematic arrival, give the sky a full quiet interval before the ambient pursuit can recur.
-        pursuit.age = pursuitEnd(PURSUIT_DELAY);
-        pursuit.delay = PURSUIT_DELAY;
+        // The chase belongs to the Henry galaxy opening, immediately after the search handoff.
+        // Starting at zero keeps the first UFO entrance readable instead of parking it in the intro.
+        pursuit.age = 0;
+        pursuit.delay = requestedDelay;
         pursuit.interrupted = false;
         introExitHandled = true;
       }
       if (!introMode) advancePursuit(pursuit, dt, Boolean(chapterAllowsFlight), state.current.motionOn, requestedDelay, portalOpacity < .001 && flights.every(flight => flight.presence < .001));
-      // Keep the chase in the locked arrival frame: the UFO reaches the wormhole,
-      // but does not retire before the intro overlay hands off to the hero scene.
-      const introAge = THREE.MathUtils.clamp(state.current.introProgress / 100, 0, 1) * 17.4;
-      const flightAllowed = introMode ? state.current.introProgress > 2 && state.current.introProgress <= 100 : chapterAllowsFlight && !pursuit.interrupted && pursuit.delay === requestedDelay;
-      const flightAge = introMode ? introAge : pursuit.age;
-      const flightDelay = introMode ? (compactFlight ? COMPACT_PURSUIT_DELAY : PURSUIT_DELAY) : pursuit.delay;
+      const flightAllowed = !introMode && chapterAllowsFlight && !pursuit.interrupted && pursuit.delay === requestedDelay;
+      const flightAge = introMode ? 0 : pursuit.age;
+      const flightDelay = introMode ? requestedDelay : pursuit.delay;
       flights.forEach(({ model, pose }) => spacecraftPose(flightAge, state.current.motionOn, model.kind, pose, flightDelay));
       const flightActive = flights.some(({ pose, presence }) => pose.visible && flightAllowed || presence > 0);
       const tangent = Math.tan(THREE.MathUtils.degToRad(camera.fov / 2));
@@ -702,7 +702,7 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, contactProgres
       // During the arrival film the overlay owns the copy, so the craft may use
       // the full sky instead of being squeezed into the compact hero-text lane.
       const readingEdge = !introMode && (flightActive || portalOpacity > 0) && heroCopy && !heroCopy.inert && heroKicker ? heroKicker.getBoundingClientRect().top : null;
-      const portalPixels = Math.min(38, width * .105, readingEdge === null ? 38 : Math.max(0, readingEdge - headerHeight - 28) / 3);
+      const portalPixels = Math.min(38, width * .105, compactFlight || readingEdge === null ? 38 : Math.max(0, readingEdge - headerHeight - 28) / 3);
       const portalRadius = portalPixels / height * 2;
       const portalFloor = readingLane ? 1 - (bandBottom - portalPixels) / height * 2 : compactFlight ? -1 + portalRadius + 32 / height : readingEdge === null ? .18 : 1 - (readingEdge - portalRadius * height / 2 - 12) / height * 2;
       const portalCeiling = readingLane ? 1 - (bandTop + portalPixels) / height * 2 : compactFlight ? -.6 : 1 - (headerHeight + portalPixels + 10) / height * 2;
@@ -746,7 +746,7 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, contactProgres
         const widthRatio = compactIntro ? model.kind === "ufo" ? .11 : .13 : model.kind === "ufo" ? .14 : .17;
         const baseSize = Math.min(model.kind === "ufo" ? 76 : 90, Math.min(width, height) * widthRatio);
         const peakPerspective = (camera.position.z + 2.8) / (camera.position.z + .7);
-        const availableHeight = readingLane ? bandBottom - bandTop - 8 : readingEdge === null ? Infinity : Math.max(0, readingEdge - headerHeight - 30);
+        const availableHeight = readingLane ? bandBottom - bandTop - 8 : compactFlight ? Math.max(84, height * .28 - 16) : readingEdge === null ? Infinity : Math.max(0, readingEdge - headerHeight - 30);
         // Reserve separation for both silhouettes even at their closest depth and in a narrow heading gap.
         const pairSpacing = flightDelay / 18 * (portalX + 1.15) * width * .5;
         const pairRadius = Math.max(0, (pairSpacing - .045 * height * .5) * .5);
@@ -918,7 +918,7 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, contactProgres
       host.dataset.flightBand = String(readingLane);
       host.dataset.flightBandTop = bandTop.toFixed(2);
       host.dataset.flightBandBottom = bandBottom.toFixed(2);
-      host.dataset.pursuitPhase = introMode ? "arrival" : pursuit.interrupted ? "retiring" : flightAge >= pursuitEnd(flightDelay) ? "rest" : flightAllowed ? "flying" : "paused";
+      host.dataset.pursuitPhase = introMode ? "scanning" : pursuit.interrupted ? "retiring" : flightAge >= pursuitEnd(flightDelay) ? "rest" : flightAllowed ? "flying" : "paused";
       host.dataset.brightStars = "18";
       host.dataset.dustFlow = returning ? "outward-return" : "inward";
       host.dataset.dustSources = "top,left,bottom,right";

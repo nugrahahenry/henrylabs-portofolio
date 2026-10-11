@@ -5,7 +5,7 @@ import { chromium, expect } from "@playwright/test";
 const url = process.env.PORTFOLIO_URL ?? "http://localhost:3002/";
 const browser = await chromium.launch({ headless: true, executablePath: process.env.CHROME_PATH ?? "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe" });
 const sizes = [{ width: 1440, height: 900 }, { width: 1024, height: 768 }, { width: 768, height: 1024 }, { width: 390, height: 844 }, { width: 360, height: 800 }, { width: 844, height: 390 }];
-const targets = process.argv.includes("--phone") ? sizes.slice(3, 5) : process.argv.includes("--landscape") ? sizes.slice(-1) : process.argv.includes("--desktop") ? sizes.slice(0, 1) : process.argv.includes("--tablet") ? sizes.slice(2, 3) : sizes;
+const targets = process.argv.includes("--phone") ? sizes.slice(3, 5) : process.argv.includes("--landscape") ? sizes.slice(-1) : process.argv.includes("--desktop") ? sizes.slice(0, 1) : process.argv.includes("--medium") ? sizes.slice(1, 2) : process.argv.includes("--tablet") ? sizes.slice(2, 3) : sizes;
 
 async function signalPixels(page, kind) {
   return page.locator(".worldline-backdrop canvas").evaluate((canvas, kind) => {

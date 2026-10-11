@@ -18,6 +18,8 @@ import { AnimatePresence, MotionConfig, motion, useInView, useMotionValue, useMo
 import { CosmicCanvas, type OrbitId, type ProjectId, type SatelliteId, type SatelliteWorld } from "./cosmic-canvas";
 import { SmoothScroll } from "./smooth-scroll";
 import { WorldlineBackdrop } from "./worldline-backdrop";
+import { ARRIVAL_DURATION } from "./arrival-field";
+import { ArrivalField } from "./arrival-field-canvas";
 import type { GalaxyId } from "./galaxy-system";
 
 import { projects, academicProjects, clientProjects, clientStacks } from "@/content/projects";
@@ -134,23 +136,6 @@ const satelliteCatalog = { university: universityWorlds, client: clientWorlds };
 function cx(...names: Array<string | false | null | undefined>) {
   return names.filter(Boolean).join(" ");
 }
-
-const multiverseUniverses = Array.from({ length: 128 }, (_, index) => {
-  const angle = index * 2.399963;
-  const radius = 17 + (index % 9) * 2.35;
-  const wobble = Math.sin(index * 1.71) * 4.2;
-  const x = 50 + Math.cos(angle) * radius;
-  const y = 50 + Math.sin(angle) * radius * .72 + wobble * .2;
-  const palette = ["cyan", "violet", "pink", "yellow", "mint"] as const;
-  return {
-    id: index === 89 ? "ORION-89" : `U-${String(index + 1).padStart(3, "0")}`,
-    x: Math.max(4, Math.min(96, x)),
-    y: Math.max(5, Math.min(95, y)),
-    size: 3.8 + (index % 4) * .9,
-    depth: .46 + ((index * 37) % 100) / 190,
-    color: palette[index % palette.length],
-  };
-});
 
 export function PortfolioExperience() {
   const { language, motionOn } = useSitePreferences();
@@ -283,7 +268,7 @@ export function PortfolioExperience() {
     }
     if (window.scrollY > 0) window.scrollTo({ top: 0, behavior: "auto" });
     introStopRef.current = false;
-    const duration = 12600;
+    const duration = ARRIVAL_DURATION;
     const startedAt = performance.now();
     let frame = 0;
     let lastPaint = startedAt - 100;
@@ -294,16 +279,16 @@ export function PortfolioExperience() {
       if (now - lastPaint >= 80 || ratio === 1) {
         const progress = Math.round(ratio * 100);
         setIntroCandidate(Math.min(5, Math.floor(ratio * 6)));
-        setIntroUniverseIndex(ratio < .46 ? Math.min(127, Math.floor(ratio / .46 * 128)) : 89);
+        setIntroUniverseIndex(ratio < .18 ? 17 : ratio < .32 ? 61 : 89);
         setIntroProgress(progress);
-        setIntroPhase(ratio < .28 ? "searching" : ratio < .54 ? "mapping" : ratio < .72 ? "cluster" : ratio < .93 ? "locking" : "ready");
+        setIntroPhase(ratio < .43 ? "searching" : ratio < .61 ? "mapping" : ratio < .78 ? "cluster" : ratio < .93 ? "locking" : "ready");
         lastPaint = now;
       }
       if (ratio >= 1) {
         introStopRef.current = true;
         setIntroProgress(100);
         setIntroPhase("ready");
-        // Hold the locked camera frame long enough for the UFO and scout to cross the wormhole.
+        // Hold the final coordinates before handing the sky to the opening scene.
         finishTimer = window.setTimeout(() => setIntroDone(true), 900);
         return;
       }
@@ -414,27 +399,8 @@ export function PortfolioExperience() {
       <SmoothScroll enabled={motionOn} />
       <WorldlineBackdrop activeId={activeProject.id} motionOn={motionOn} progress={worldlineProgress} contactProgress={contactProgress} contactVisible={contactVisible} mapActive={heroPhase === "worlds"} introActive={!introDone} introProgress={introProgress} />
       <div className={cx("intro-loader", "arrival-intro", introDone && "intro-loader--done")} data-intro-phase={introPhase} data-intro-progress={introProgress} data-intro-candidate={introCandidate} data-intro-universe={introUniverseIndex} aria-hidden={introDone} inert={introDone}>
-        <div className="arrival-universe" aria-hidden="true">
-          <div className="arrival-multiverse" aria-hidden="true">
-            <div className="arrival-cosmic-web" aria-hidden="true">
-              {Array.from({ length: 9 }, (_, index) => <span key={index} style={{ "--web-angle": `${index * 20 - 80}deg`, "--web-length": `${54 + (index % 4) * 11}%` } as CSSProperties} />)}
-            </div>
-            {multiverseUniverses.map((universe, index) => {
-              const active = index === introUniverseIndex;
-              const selected = index === 89 && introPhase === "ready";
-              const rejected = introProgress < 46 && index < introUniverseIndex;
-              return <span key={universe.id} className={cx("arrival-universe-point", `arrival-universe-point--${universe.color}`, active && "is-scanning", rejected && "is-rejected", selected && "is-selected")} style={{ "--point-x": `${universe.x}%`, "--point-y": `${universe.y}%`, "--point-size": `${universe.size}px`, "--point-depth": universe.depth } as CSSProperties}><i>{active || selected ? universe.id : ""}</i></span>;
-            })}
-          </div>
-          <span className="arrival-universe-plane arrival-universe-plane--wide" />
-          <span className="arrival-universe-plane arrival-universe-plane--tall" />
-          <span className="arrival-universe-plane arrival-universe-plane--tight" />
-          <span className="arrival-universe-core"><StarGodMark className="arrival-universe-mark arrival-mark" size={46} /></span>
-          <span className="arrival-universe-node arrival-universe-node--a" />
-          <span className="arrival-universe-node arrival-universe-node--b" />
-          <span className="arrival-universe-node arrival-universe-node--c" />
-          <span className="arrival-universe-node arrival-universe-node--d" />
-        </div>
+        <ArrivalField progress={introProgress} motionOn={motionOn} active={!introDone} />
+        <div className="arrival-target" aria-hidden="true"><StarGodMark className="arrival-mark" size={32} /><span>{introPhase === "searching" ? `U-${String(introUniverseIndex).padStart(3, "0")}` : "ORION-89"}</span></div>
         <div className="arrival-content">
           <div className="arrival-meta"><span>MULTIVERSE SEARCH / 128 UNIVERSES</span><span>CAMERA TRACE / STARGOD</span></div>
           <div className="arrival-query" aria-label={language === "en" ? "Searching the StarGod universe" : "Mencari semesta StarGod"}>
