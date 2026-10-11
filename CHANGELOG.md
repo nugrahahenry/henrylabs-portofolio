@@ -1,5 +1,10 @@
 # Changelog
 
+## StarGod Portfolio v0.101.1 - 2026-10-12
+
+- Route Explore Universe and Return to Universe through the existing Lenis + GSAP scroll driver instead of mixing native smooth scrolling with the cinematic map handoff.
+- Keep the motion bounded and interruptible: the same fallback remains available when motion is disabled, while programmatic jumps use a short eased lock so the map lands cleanly before focus is transferred.
+
 ## StarGod Portfolio v0.101.0 - 2026-10-11
 
 - Replace the CSS-only multiverse search with a real Three.js arrival field: 128 depth-layered universe spheres, interior star clouds, cosmic-web filaments, a camera path, and a controlled lock into `ORION-89`.

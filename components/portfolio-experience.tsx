@@ -16,7 +16,7 @@ import {
 } from "lucide-react";
 import { AnimatePresence, MotionConfig, motion, useInView, useMotionValue, useMotionValueEvent, useScroll, useSpring, useTransform } from "motion/react";
 import { CosmicCanvas, type OrbitId, type ProjectId, type SatelliteId, type SatelliteWorld } from "./cosmic-canvas";
-import { SmoothScroll } from "./smooth-scroll";
+import { requestSmoothScroll, SmoothScroll } from "./smooth-scroll";
 import { WorldlineBackdrop } from "./worldline-backdrop";
 import { ARRIVAL_DURATION } from "./arrival-field";
 import { ArrivalField } from "./arrival-field-canvas";
@@ -216,7 +216,6 @@ export function PortfolioExperience() {
       const map = heroRef.current?.querySelector<HTMLElement>(".cosmic-canvas");
       if (Math.abs(window.scrollY - mapLanding) < 2 && map && !map.closest("[inert]")) {
         map.focus({ preventScroll: true });
-        window.dispatchEvent(new Event("stargod:reveal-header"));
         cancel();
       } else frame = requestAnimationFrame(arrive);
     };
@@ -377,7 +376,7 @@ export function PortfolioExperience() {
     setShowProjectShowcase(false);
     setMapView("universe");
     const hero = heroRef.current;
-    if (hero && motionOn) window.scrollTo({ top: universeLanding(hero.offsetTop, hero.offsetHeight, innerHeight), behavior: "smooth" });
+    if (hero && motionOn) requestSmoothScroll(universeLanding(hero.offsetTop, hero.offsetHeight, innerHeight), 0.82);
   };
   const openGalaxyMap = () => {
     const hero = heroRef.current;
@@ -386,7 +385,8 @@ export function PortfolioExperience() {
     setMapView("universe");
     const top = motionOn ? universeLanding(hero.offsetTop, hero.offsetHeight, innerHeight) : hero.offsetTop + (hero.querySelector<HTMLElement>(".cosmic-frame-wrap")?.offsetTop ?? 0) - 84;
     setMapLanding(top);
-    window.scrollTo({ top, behavior: motionOn ? "smooth" : "instant" });
+    if (motionOn) requestSmoothScroll(top, 0.96);
+    else window.scrollTo({ top, behavior: "instant" });
   };
   const closeWorldInspector = () => {
     restoreInspectorFocus.current = true;

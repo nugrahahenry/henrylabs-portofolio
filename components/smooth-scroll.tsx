@@ -8,6 +8,26 @@ type SmoothScrollProps = {
   enabled: boolean;
 };
 
+type ScrollRequest = {
+  top: number;
+  duration?: number;
+};
+
+const SCROLL_EVENT = "stargod:scroll-to";
+
+export function requestSmoothScroll(top: number, duration = 0.9) {
+  if (typeof window === "undefined" || !Number.isFinite(top)) return;
+
+  if (document.documentElement.dataset.scrollDriver !== "lenis-gsap") {
+    window.scrollTo({ top, behavior: "smooth" });
+    return;
+  }
+
+  window.dispatchEvent(new CustomEvent<ScrollRequest>(SCROLL_EVENT, {
+    detail: { top, duration },
+  }));
+}
+
 export function SmoothScroll({ enabled }: SmoothScrollProps) {
   useEffect(() => {
     if (!enabled) return;
@@ -25,16 +45,29 @@ export function SmoothScroll({ enabled }: SmoothScrollProps) {
       if (document.hidden) lenis.stop();
       else lenis.start();
     };
+    const onScrollRequest = (event: Event) => {
+      const detail = (event as CustomEvent<ScrollRequest>).detail;
+      if (!detail || !Number.isFinite(detail.top)) return;
+
+      lenis.scrollTo(detail.top, {
+        duration: Math.min(1.2, Math.max(0.35, detail.duration ?? 0.9)),
+        easing: (time) => 1 - Math.pow(1 - time, 4),
+        force: true,
+        lock: true,
+      });
+    };
 
     gsap.ticker.add(tick);
     gsap.ticker.lagSmoothing(0);
     document.documentElement.dataset.scrollDriver = "lenis-gsap";
     document.addEventListener("visibilitychange", onVisibilityChange);
+    window.addEventListener(SCROLL_EVENT, onScrollRequest);
 
     return () => {
       gsap.ticker.remove(tick);
       document.documentElement.dataset.scrollDriver = "native";
       document.removeEventListener("visibilitychange", onVisibilityChange);
+      window.removeEventListener(SCROLL_EVENT, onScrollRequest);
       lenis.destroy();
     };
   }, [enabled]);
