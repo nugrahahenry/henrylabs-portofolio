@@ -192,8 +192,8 @@ export function PortfolioExperience() {
   const activeSatellite = sectorRecords.find((record) => record.id === (activeSector === "university" ? activeSatellites.university : activeSatellites.client)) ?? sectorRecords[0];
   const focusedWorld = activeSector === "main" ? activeProject : activeSatellite;
   const introStatus = language === "en"
-    ? { searching: "Scanning 128 universe signatures", mapping: "Following the cosmic web", cluster: "Resolving the supercluster", locking: "Locking StarGod coordinates", ready: "Universe indexed" }
-    : { searching: "Memindai 128 tanda semesta", mapping: "Mengikuti cosmic web", cluster: "Membaca supercluster", locking: "Mengunci koordinat StarGod", ready: "Semesta terindeks" };
+    ? { searching: "Scanning distant universes", mapping: "Following the cosmic web", cluster: "Narrowing the galaxy group", locking: "Locking onto StarGod", ready: "StarGod found · entering universe" }
+    : { searching: "Memindai semesta yang jauh", mapping: "Mengikuti cosmic web", cluster: "Mempersempit kelompok galaksi", locking: "Mengunci StarGod", ready: "StarGod ditemukan · masuk ke semesta" };
 
   const skipIntro = () => {
     introStopRef.current = true;
@@ -402,23 +402,16 @@ export function PortfolioExperience() {
         <ArrivalField progress={introProgress} motionOn={motionOn} active={!introDone} />
         <div className="arrival-target" aria-hidden="true"><StarGodMark className="arrival-mark" size={32} /><span>{introPhase === "searching" ? `U-${String(introUniverseIndex).padStart(3, "0")}` : "ORION-89"}</span></div>
         <div className="arrival-content">
-          <div className="arrival-meta"><span>MULTIVERSE SEARCH / 128 UNIVERSES</span><span>CAMERA TRACE / STARGOD</span></div>
           <div className="arrival-query" aria-label={language === "en" ? "Searching the StarGod universe" : "Mencari semesta StarGod"}>
             <span className="arrival-query-prompt">&gt;</span>
-            <span className="arrival-query-label">{language === "en" ? "SEARCHING UNIVERSE" : "MENCARI SEMESTA"}</span>
+            <span className="arrival-query-label">{introPhase === "ready" ? (language === "en" ? "UNIVERSE FOUND" : "SEMESTA DITEMUKAN") : (language === "en" ? "SEARCHING FOR" : "MENCARI")}</span>
             <strong>StarGod</strong>
             <span className="arrival-caret" aria-hidden="true" />
           </div>
-          <div className="arrival-result">
-            <span className="arrival-result-kicker">{introPhase === "ready" ? "COORDINATES FOUND / 01" : "SIGNAL TRACE / ORION-89"}</span>
-            <strong>StarGod</strong>
-            <p>{language === "en" ? "Henry Nugraha's universe" : "Semesta milik Henry Nugraha"}</p>
-            <div className="arrival-result-meta"><span>03 {language === "en" ? "galaxies" : "galaksi"}</span><span>10 {language === "en" ? "worlds" : "dunia"}</span><span>01 {language === "en" ? "maker" : "maker"}</span></div>
-          </div>
-          <div className="arrival-hierarchy" aria-live="polite"><span>UNIVERSE</span><b>→</b><span className={introPhase !== "searching" ? "is-lit" : ""}>COSMIC WEB</span><b>→</b><span className={introPhase === "cluster" || introPhase === "locking" || introPhase === "ready" ? "is-lit" : ""}>SUPERCLUSTER</span><b>→</b><strong className={introPhase === "ready" ? "is-lit" : ""}>STARGOD GALAXY</strong></div>
-          <div className="arrival-search-log"><span>{introPhase === "searching" ? (language === "en" ? `Camera sweep / ${128 - introUniverseIndex} signatures unresolved` : `Sapuan kamera / ${128 - introUniverseIndex} sinyal belum pasti`) : introPhase === "mapping" ? (language === "en" ? "Signal accepted / tracing cosmic web" : "Sinyal diterima / menelusuri cosmic web") : introPhase === "cluster" ? (language === "en" ? "Cluster resolved / narrowing the field" : "Cluster terbaca / mempersempit medan") : introPhase === "locking" ? (language === "en" ? "Approaching Orion-89 / coordinates stable" : "Mendekati Orion-89 / koordinat stabil") : (language === "en" ? "StarGod found / arrival lock confirmed" : "StarGod ditemukan / kunci kedatangan terkonfirmasi")}</span><strong>{introPhase === "searching" ? `${String(Math.max(0, 128 - introUniverseIndex)).padStart(3, "0")} REMAIN` : introPhase === "ready" ? "LOCKED" : "TRACE"}</strong></div>
+          <p className="arrival-message" aria-live="polite">{introPhase === "searching" ? (language === "en" ? "Scanning distant worlds for one signal." : "Memindai semesta jauh untuk satu sinyal.") : introPhase === "mapping" ? (language === "en" ? "The signal is moving through the cosmic web." : "Sinyal bergerak melewati cosmic web.") : introPhase === "cluster" ? (language === "en" ? "Filtering the galaxy group around the signal." : "Menyaring kelompok galaksi di sekitar sinyal.") : introPhase === "locking" ? (language === "en" ? "Coordinates found. Bringing StarGod into focus." : "Koordinat ditemukan. Memfokuskan StarGod.") : (language === "en" ? "StarGod located. Entering Henry Nugraha's universe." : "StarGod ditemukan. Memasuki semesta Henry Nugraha.")}</p>
+          <div className="arrival-trace" aria-hidden="true"><span>128 UNIVERSES</span><i>·</i><span>COSMIC WEB</span><i>·</i><span>{introPhase === "searching" ? `U-${String(introUniverseIndex).padStart(3, "0")}` : "ORION-89"}</span></div>
           <div className="arrival-progress" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={introProgress} aria-label={language === "en" ? "Universe search progress" : "Progress pencarian semesta"}><span style={{ transform: `scaleX(${introProgress / 100})` }} /><strong>{String(introProgress).padStart(3, "0")}%</strong></div>
-          <div className="arrival-status"><span>{introStatus[introPhase]}</span><span>{language === "en" ? "Coordinates are stabilizing" : "Koordinat sedang distabilkan"}</span></div>
+          <div className="arrival-status"><span>{introStatus[introPhase]}</span><span>{introPhase === "ready" ? "LOCKED" : (language === "en" ? "LIVE TRACE" : "TRACE LANGSUNG")}</span></div>
         </div>
         <button type="button" className="arrival-skip" onClick={skipIntro}>{language === "en" ? "Skip intro" : "Lewati intro"}<ArrowUpRight size={15} /></button>
       </div>

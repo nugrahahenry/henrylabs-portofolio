@@ -1,5 +1,11 @@
 # Changelog
 
+## StarGod Portfolio v0.101.2 - 2026-10-12
+
+- Simplify the 3D arrival readout into one lower-corner story: search, trace, lock, and entry remain legible while the center stays open for the universe camera and target ring.
+- Strengthen the final ORION-89 lock with a held target ring and a clearer “StarGod found” handoff instead of fading the focus marker before arrival.
+- Tighten pursuit tracers into short, clearance-tested near misses aimed just beyond the UFO, and give every project world a more readable moon system with eleven varied moonlets.
+
 ## StarGod Portfolio v0.101.1 - 2026-10-12
 
 - Route Explore Universe and Return to Universe through the existing Lenis + GSAP scroll driver instead of mixing native smooth scrolling with the cinematic map handoff.

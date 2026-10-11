@@ -43,8 +43,8 @@ try {
     await expect(page.locator(".worldline-backdrop")).toHaveAttribute("data-spacecraft-visible", "false");
     await expect(page.locator(".worldline-backdrop")).toHaveAttribute("data-scout-visible", "false");
     await expect(page.locator(".worldline-backdrop")).toHaveAttribute("data-pursuit-phase", "scanning");
-    await expect(page.locator(".worldline-backdrop")).toHaveAttribute("data-moon-orbits", "9");
-    await expect(page.locator(".worldline-backdrop")).toHaveAttribute("data-moon-counts", "2,1,2,3,1");
+    await expect(page.locator(".worldline-backdrop")).toHaveAttribute("data-moon-orbits", "11");
+    await expect(page.locator(".worldline-backdrop")).toHaveAttribute("data-moon-counts", "2,2,2,3,2");
     if (viewport.width === 1440) await page.getByRole("button", { name: "Skip intro" }).click();
     else await page.clock.runFor(Math.max(0, INTRO_DURATION - 8200) + 100);
     const bounds = await page.locator(".arrival-content").boundingBox();

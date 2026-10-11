@@ -36,13 +36,17 @@ export function wormholePresence(age: number, motionOn: boolean, delay = PURSUIT
   return motionOn ? THREE.MathUtils.smoothstep(time, 13.5, 15.3) * (1 - THREE.MathUtils.smoothstep(time, 18.9 + delay, 20.7 + delay)) : 0;
 }
 
-// Aim beyond the target on a tangent, not at its hull. The whole segment is clearance-tested.
+// Aim just past the target on a tight tangent. The whole segment is clearance-tested,
+// so the shot reads as a deliberate warning burst instead of a stray projectile.
 export function pursuitMiss(from: Pick<FlightObstacle, "x" | "y">, target: FlightObstacle, index: number, out = { x: 0, y: 0 }) {
   const dx = target.x - from.x, dy = target.y - from.y;
   const distance = Math.max(.001, Math.hypot(dx, dy));
-  const miss = (target.radius + .07) * 2.8 * (index % 2 ? -1 : 1);
-  out.x = from.x + dx * 1.4 - dy / distance * miss;
-  out.y = from.y + dy * 1.4 + dx / distance * miss;
+  const lead = Math.min(distance * .78, target.radius * (.32 + index * .08) + .035);
+  // The endpoint sits beyond the UFO, so compensate for the segment's
+  // diagonal approach and preserve a narrow, visible clearance envelope.
+  const tangent = (target.radius + .04) * (1 + lead / distance) * (1.02 + (index % 3) * .04) * (index % 2 ? -1 : 1);
+  out.x = target.x + dx / distance * lead - dy / distance * tangent;
+  out.y = target.y + dy / distance * lead + dx / distance * tangent;
   return out;
 }
 

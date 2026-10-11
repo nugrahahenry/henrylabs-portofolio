@@ -372,7 +372,9 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, contactProgres
     const projectedVisitor = new THREE.Vector3();
     let visitorIndex = -1;
 
-    const moonCounts = [2, 1, 2, 3, 1];
+    // Every project world gets a readable local system; the active world is
+    // larger, but it is no longer the only planet with visible companions.
+    const moonCounts = [2, 2, 2, 3, 2];
     const moonRecords: Array<{ ownerIndex: number; orbitRadius: number; phase: number; eccentricity: number; lineOffset: number; size: number; speed: number }> = [];
     let moonLineCursor = 0;
     const orbitPlanets = projectWorlds.map((world, index) => {
@@ -399,11 +401,11 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, contactProgres
       for (let moonIndex = 0; moonIndex < moonCounts[index]; moonIndex++) {
         moonRecords.push({
           ownerIndex: index,
-          orbitRadius: radius * (.58 + moonIndex * .24),
+          orbitRadius: radius * (.72 + moonIndex * .28),
           phase: phase + moonIndex * 2.12 + index * .47,
           eccentricity: .04 + moonIndex * .045,
           lineOffset: moonLineCursor++,
-          size: radius * (.105 + ((index + moonIndex) % 3) * .022),
+          size: radius * (.14 + ((index + moonIndex) % 3) * .026),
           speed: 1.35 + ((index * 3 + moonIndex) % 5) * .28,
         });
       }
@@ -561,7 +563,7 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, contactProgres
       });
       moonMesh.instanceMatrix.needsUpdate = true;
       moonOrbitLines.geometry.attributes.position.needsUpdate = true;
-      moonOrbitLines.material.opacity = .16 * solarVisibility;
+      moonOrbitLines.material.opacity = .22 * solarVisibility;
       solarOrbits.forEach((line) => { line.material.opacity = .065 * solarVisibility; });
       sectorSystem.visible = solarVisibility > .6;
       const sectorAngle = drift * .026 + scroll * Math.PI * .72;
@@ -805,7 +807,9 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, contactProgres
         const clear = canShoot && clearShot(scout.safe, shotEnd, flightObstacles);
         const pulse = clear ? pursuitPulse(flightAge, index, flightDelay) : -1;
         const size = pulse < 0 ? 0 : Math.sin(pulse * Math.PI);
-        boltPose.scale.set(size, size * .24, size);
+        // A short, thin tracer keeps the pursuit readable and makes each bolt
+        // feel aimed at the UFO rather than thrown across the whole frame.
+        boltPose.scale.set(size * .34, size * 1.55, size * .34);
         if (size > 0) {
           holeRay.set(shotEnd.x / camera.aspect, shotEnd.y, .5).unproject(camera).sub(camera.position).normalize();
           boltTarget.copy(camera.position).addScaledVector(holeRay, (scout.pose.depth - camera.position.z) / holeRay.z);

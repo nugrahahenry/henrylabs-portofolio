@@ -100,9 +100,9 @@ export function createArrivalField() {
     { at: .12, eye: positions[17].clone().add(new THREE.Vector3(3, 2, 9)), aim: positions[17] },
     { at: .24, eye: positions[61].clone().add(new THREE.Vector3(-4, 2, 8)), aim: positions[61] },
     { at: .43, eye: new THREE.Vector3(3, 1.8, 8), aim: new THREE.Vector3() },
-    { at: .61, eye: new THREE.Vector3(.55, .35, 1.8), aim: new THREE.Vector3() },
-    { at: .78, eye: new THREE.Vector3(.2, .12, .68), aim: new THREE.Vector3() },
-    { at: 1, eye: new THREE.Vector3(.045, .04, .18), aim: new THREE.Vector3() },
+    { at: .61, eye: new THREE.Vector3(.78, .46, 2.7), aim: new THREE.Vector3() },
+    { at: .78, eye: new THREE.Vector3(.34, .2, 2.08), aim: new THREE.Vector3() },
+    { at: 1, eye: new THREE.Vector3(.12, .1, 1.64), aim: new THREE.Vector3() },
   ];
   const update = (progress: number, aspect: number, height: number) => {
     const p = THREE.MathUtils.clamp(progress / 100, 0, 1);
@@ -123,8 +123,10 @@ export function createArrivalField() {
     camera.updateMatrixWorld();
     const focus = p < .18 ? 17 : p < .32 ? 61 : 89;
     focusRing.position.copy(positions[focus]); focusRing.quaternion.copy(camera.quaternion);
-    focusRing.scale.setScalar(radii[focus] * (1.1 + Math.sin(p * 90) * .025));
-    focusRing.material.opacity = (1 - blend(p, .44, .55)) * .75;
+    const searchRing = 1 - blend(p, .44, .55);
+    const lockRing = blend(p, .72, .92);
+    focusRing.scale.setScalar(radii[focus] * (focus === 89 ? .72 + lockRing * .2 : 1.1) * (1 + Math.sin(p * 90) * .025));
+    focusRing.material.opacity = Math.max(searchRing * .75, lockRing * .92);
     sphereMaterial.uniforms.uFade.value = 1 - blend(p, .44, .59);
     sphereMaterial.uniforms.uTime.value = p * 18;
     interiors.material.uniforms.uOpacity.value = 1 - blend(p, .44, .59);
