@@ -23,8 +23,10 @@ const ease = (value: number) => { const t = THREE.MathUtils.clamp(value, 0, 1); 
 const blend = (progress: number, from: number, to: number) => ease((progress - from) / (to - from));
 const seed = (n: number) => { const v = Math.sin(n * 127.1 + 311.7) * 43758.5453; return v - Math.floor(v); };
 
-export const ARRIVAL_FLYBYS = 84;
-export const ARRIVAL_COMPACT_FLYBYS = 42;
+// The near-camera lane is intentionally denser than the distant field. It starts at the
+// first search frame so the viewer feels motion before the first universe is selected.
+export const ARRIVAL_FLYBYS = 192;
+export const ARRIVAL_COMPACT_FLYBYS = 96;
 
 export function createArrivalCameraPath() {
   const times = [0, .10, .19, .30, .38];
@@ -55,8 +57,8 @@ export function createArrivalCameraPath() {
 // A stylized navigation atlas, not a claim that observable universes have spherical boundaries.
 export function createArrivalField() {
   const scene = new THREE.Scene();
-  const openingSky = new THREE.Color("#06091b");
-  const deepSky = new THREE.Color("#15113a");
+  const openingSky = new THREE.Color("#080b24");
+  const deepSky = new THREE.Color("#21154a");
   const skyBackground = openingSky.clone();
   scene.background = skyBackground;
   const camera = new THREE.PerspectiveCamera(48, 1, .002, 180);
@@ -124,7 +126,7 @@ export function createArrivalField() {
     const color = new THREE.Color(starPalette[i % starPalette.length]);
     farStarColors.push(color.r, color.g, color.b);
   }
-  for (let i = 0; i < 420; i++) {
+  for (let i = 0; i < 720; i++) {
     const latitude = 1 - seed(i + 2400) * 2, angle = i * 2.399963, radius = 9 + seed(i + 2500) * 22;
     const planar = Math.sqrt(1 - latitude * latitude), x = Math.cos(angle) * planar * radius, y = latitude * radius, z = Math.sin(angle) * planar * radius;
     nearStarPoints.push(x, y, z);
@@ -139,7 +141,7 @@ export function createArrivalField() {
   const direction = new THREE.Vector3(), viewDirection = new THREE.Vector3(), right = new THREE.Vector3(), up = new THREE.Vector3(), point = new THREE.Vector3();
   for (let i = 0; i < ARRIVAL_FLYBYS; i++) {
     // Interleave the compact subset across the whole flight, not just its first half.
-    const pass = .09 + ((i * 37) % ARRIVAL_FLYBYS) / ARRIVAL_FLYBYS * .74;
+    const pass = .012 + ((i * 37) % ARRIVAL_FLYBYS) / ARRIVAL_FLYBYS * .88;
     sampleCamera(pass - .022, before, aim);
     sampleCamera(pass + .022, after, aim);
     const scale = Math.max(.001, before.distanceTo(after));
@@ -150,10 +152,11 @@ export function createArrivalField() {
     up.crossVectors(right, viewDirection).normalize();
     const angle = i * 2.399963, radius = scale * (.06 + seed(i + 2900) * .17);
     // Keep the flyby just in front of the lens so it flashes through the frustum instead of clipping on its plane.
-    point.copy(eye).addScaledVector(viewDirection, scale * (.06 + seed(i + 3100) * .06)).addScaledVector(right, Math.cos(angle) * radius).addScaledVector(up, Math.sin(angle) * radius);
+    const lensDepth = scale * (.05 + seed(i + 3100) * .04) * (i % 5 === 0 ? 1.65 : 1);
+    point.copy(eye).addScaledVector(viewDirection, lensDepth).addScaledVector(right, Math.cos(angle) * radius).addScaledVector(up, Math.sin(angle) * radius);
     const color = new THREE.Color(starPalette[i % starPalette.length]);
     flybyPositions.push(...point.toArray()); flybyColors.push(color.r, color.g, color.b); flybyPasses.push(pass, scale);
-    trailPositions.push(...point.toArray(), ...point.clone().addScaledVector(direction, scale * (.045 + seed(i + 3000) * .09)).toArray());
+    trailPositions.push(...point.toArray(), ...point.clone().addScaledVector(direction, scale * (.10 + seed(i + 3000) * .20)).toArray());
     trailColors.push(color.r, color.g, color.b, color.r, color.g, color.b);
     trailPasses.push(pass, scale, pass, scale); trailAlpha.push(.55, 0);
   }
@@ -164,13 +167,13 @@ export function createArrivalField() {
     void main(){
       vec4 view=modelViewMatrix*vec4(position,1.); vec4 clip=projectionMatrix*view;
       vec2 ndc=clip.xy/max(.001,clip.w); float depth=-view.z/aPass.y;
-      float gate=smoothstep(aPass.x-.12,aPass.x-.045,uProgress)*(1.-smoothstep(aPass.x+.02,aPass.x+.09,uProgress));
-      float proximity=smoothstep(.04,.23,depth)*(1.-smoothstep(1.5,3.8,depth));
-      float center=smoothstep(.18,.42,length(ndc));
+      float gate=smoothstep(aPass.x-.16,aPass.x-.025,uProgress)*(1.-smoothstep(aPass.x+.035,aPass.x+.12,uProgress));
+      float proximity=smoothstep(.015,.34,depth)*(1.-smoothstep(2.2,5.2,depth));
+      float center=smoothstep(.12,.5,length(ndc));
       float reading=mix(1.,.12,(1.-smoothstep(-.2,.1,ndc.x))* (1.-smoothstep(-.25,.05,ndc.y)));
       reading*=mix(1.,smoothstep(-.25,.05,ndc.y),uCompact);
       vAlpha=gate*proximity*center*reading*aAlpha; vColor=color;
-      gl_PointSize=clamp(.006*aPass.y*uHeight/max(.01,-view.z),1.2,4.2);
+      gl_PointSize=clamp(.007*aPass.y*uHeight/max(.01,-view.z),1.4,6.2);
       gl_Position=clip;
     }`;
   const passageGeometry = (positions: number[], colors: number[], passes: number[], alpha: number[]) => new THREE.BufferGeometry()
@@ -189,7 +192,7 @@ export function createArrivalField() {
       }`,
     transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
   });
-  const flybys = new THREE.Points(passageGeometry(flybyPositions, flybyColors, flybyPasses, Array(ARRIVAL_FLYBYS).fill(.9)), passageMaterial(true));
+  const flybys = new THREE.Points(passageGeometry(flybyPositions, flybyColors, flybyPasses, Array(ARRIVAL_FLYBYS).fill(1)), passageMaterial(true));
   const trails = new THREE.LineSegments(passageGeometry(trailPositions, trailColors, trailPasses, trailAlpha), passageMaterial(false));
   flybys.name = "arrival-flybys"; trails.name = "arrival-trails";
   scene.add(flybys, trails);
@@ -207,11 +210,13 @@ export function createArrivalField() {
   // Every scale lives inside the selected parent. The camera visits actual nested geometry,
   // rather than dissolving between unrelated screens. Names describe an authored portfolio atlas.
   const superclusters: THREE.Points<THREE.BufferGeometry, THREE.ShaderMaterial>[] = [];
+  const superclusterCenters: THREE.Vector3[] = [];
   for (let group = 0; group < 17; group++) {
     const center = group === 0 ? new THREE.Vector3() : new THREE.Vector3(
       Math.cos(group * 2.4) * (1.2 + seed(group) * .6),
       (seed(group + 30) - .5) * 2.3,
       Math.sin(group * 2.4) * (1 + seed(group + 20) * .7));
+    superclusterCenters.push(center.clone());
     const radius = group === 0 ? .9 : .22 + seed(group + 40) * .25;
     const points: number[] = [], shades: number[] = [];
     const tint = new THREE.Color(group === 0 ? "#efc95f" : palette[group % palette.length]);
@@ -234,6 +239,27 @@ export function createArrivalField() {
     const a = i * 2.399963, r = .28 + seed(i + 510) * .48;
     galaxyCenters.push(new THREE.Vector3(Math.cos(a) * r, (seed(i + 470) - .5) * .48, Math.sin(a) * r));
   }
+  // A sparse authored web gives the middle scales a physical relationship. It is only
+  // visible while Laniakea and the Local Group overlap, so it cannot read as a connector UI.
+  const filamentPoints: number[] = [];
+  let filamentIndex = 0;
+  const addFilament = (from: THREE.Vector3, to: THREE.Vector3) => {
+    const bend = from.clone().lerp(to, .5).add(new THREE.Vector3(
+      (seed(filamentIndex + 6200) - .5) * .08,
+      (seed(filamentIndex + 6300) - .5) * .06,
+      (seed(filamentIndex + 6400) - .5) * .08,
+    ));
+    filamentPoints.push(...from.toArray(), ...bend.toArray(), ...bend.toArray(), ...to.toArray());
+    filamentIndex += 1;
+  };
+  for (let i = 1; i < superclusterCenters.length; i += 2) addFilament(superclusterCenters[0], superclusterCenters[i]);
+  for (let i = 1; i < 16; i += 2) addFilament(superclusterCenters[i], superclusterCenters[i + 1]);
+  for (let i = 3; i < galaxyCenters.length; i += 3) addFilament(galaxyCenters[0], galaxyCenters[i]);
+  const filamentGeometry = new THREE.BufferGeometry().setAttribute("position", new THREE.Float32BufferAttribute(filamentPoints, 3));
+  const filamentMaterial = new THREE.LineBasicMaterial({ color: "#8290ca", transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending });
+  const filamentField = new THREE.LineSegments(filamentGeometry, filamentMaterial);
+  filamentField.name = "cosmic-web-filaments";
+  scene.add(filamentField);
   const galaxies = galaxyCenters.map((center, index) => {
     const points: number[] = [], shades: number[] = [];
     const radius = index === 0 ? .072 : index < 3 ? .055 : .015 + seed(index + 110) * .026;
@@ -319,9 +345,11 @@ export function createArrivalField() {
     const skyReveal = blend(p, .04, .64);
     skyBackground.lerpColors(openingSky, deepSky, skyReveal * .72);
     farStars.material.uniforms.uOpacity.value = .2 + skyReveal * .46 - blend(p, .84, 1) * .14;
-    nearStars.material.uniforms.uOpacity.value = blend(p, .16, .7) * .52;
+    // Let the camera lane read before the first candidate resolves. The restrained
+    // baseline keeps the opening cinematic without turning the search into noise.
+    nearStars.material.uniforms.uOpacity.value = .16 + blend(p, .08, .7) * .48;
     farStars.material.uniforms.uSize.value = .035 + skyReveal * .02;
-    nearStars.material.uniforms.uSize.value = .02 + blend(p, .25, .72) * .022;
+    nearStars.material.uniforms.uSize.value = .024 + blend(p, .18, .72) * .02;
     sphereMaterial.uniforms.uFade.value = 1 - blend(p, .22, .34);
     sphereMaterial.uniforms.uSelection.value = selected;
     sphereMaterial.uniforms.uTime.value = p * 18;
@@ -330,6 +358,9 @@ export function createArrivalField() {
     const laniakeaExit = blend(p, .50, .65);
     const groupEntry = blend(p, .48, .60);
     const groupExit = blend(p, .72, .86);
+    filamentField.scale.setScalar(.72 + groupEntry * .28);
+    filamentField.rotation.y = (p - .3) * .08;
+    filamentMaterial.opacity = laniakeaEntry * (1 - blend(p, .68, .78)) * .045;
     superclusters[0].scale.setScalar(.9 + laniakeaEntry * .1);
     superclusters[0].rotation.y = (p - .24) * .14;
     superclusters[1].scale.setScalar(.72 + laniakeaEntry * .28);

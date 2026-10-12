@@ -94,11 +94,13 @@ test("near-camera passage geometry is bounded and distributed across the approac
   for (let i = 0; i < passes.count; i++) {
     const progress = passes.getX(i);
     const scale = passes.getY(i);
-    assert.ok(progress >= .09 && progress <= .83);
+    assert.ok(progress >= .01 && progress <= .90);
     assert.ok(scale > .025 && scale < 20, "flyby scale must stay bounded");
     seen.add(Math.floor(progress * 10));
   }
   assert.ok(seen.size >= 7, "flybys must cover the full camera approach");
+  const web = field.scene.getObjectByName("cosmic-web-filaments");
+  assert.ok(web && web.geometry.getAttribute("position").count > 40, "nested scales must share a sparse cosmic web");
 
   const before = new THREE.Vector3();
   const atPass = new THREE.Vector3();

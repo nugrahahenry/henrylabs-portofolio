@@ -1,5 +1,11 @@
 # Changelog
 
+## StarGod Portfolio v0.106.0 - 2026-10-13
+
+- Increase near-camera flyby density from the first universe-search frame, with a bounded compact lane for small screens.
+- Add sparse, phase-bound cosmic-web filaments so Laniakea and Local Group read as connected scales without adding permanent connector UI.
+- Keep distant stars, project facts, nested camera path, reduced-motion behavior, and the HenryLabs hero handoff unchanged.
+
 ## StarGod Portfolio v0.105.0 - 2026-10-13
 
 - Give Universe -> Laniakea -> Local Group -> HenryLabs its own continuous camera choreography instead of relying on opacity changes alone.
