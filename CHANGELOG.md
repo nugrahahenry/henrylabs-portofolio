@@ -1,5 +1,11 @@
 # Changelog
 
+## StarGod Portfolio v0.104.0 - 2026-10-13
+
+- Make HenryLabs the sole intro destination; University and Client Work remain sibling galaxies in the living map.
+- Bridge the final HenryLabs camera lock into the nebula-backed hero with a progressive handoff from 80% to 96%, revealing "I build things I actually see." before the intro closes.
+- Keep the hero non-interactive until the intro has fully handed off, while preserving Skip Intro, reduced motion, direct routes, and the WebGL fallback.
+
 ## StarGod Portfolio v0.103.0 - 2026-10-13
 
 - Reframe the Stage 1 arrival as a readable nested journey: Universe search, StarGod selection, Laniakea superclusters, Local Group galaxies, then the HenryLabs project galaxy.

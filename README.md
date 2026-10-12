@@ -1,6 +1,6 @@
 <div align="center">
 
-# StarGod Portfolio v0.103.0
+# StarGod Portfolio v0.104.0
 
 **I build things I actually see.**
 
@@ -13,7 +13,7 @@
 **StarGod** is Henry Nugraha's universe of products, client systems, and things built while learning.
 Designed and developed by **Henry Nugraha**, a product-minded developer in Indonesia.
 
-The universe handoff uses a bounded Lenis + GSAP scroll driver, so the jump from the opening signal into the living map stays cinematic without competing with native browser scrolling.
+The universe handoff uses a bounded Lenis + GSAP scroll driver, so the opening resolves into HenryLabs and the headline hero before the living map takes over, without competing with native browser scrolling.
 
 [The Worlds](#the-worlds) · [University](#university) · [Client Work](#client-work) · [Credentials](#credentials) · [Contact](#contact)
 

@@ -11,6 +11,10 @@ export function arrivalCandidate(progress: number) {
 export function arrivalPhase(progress: number) {
   return progress < .22 ? "searching" : progress < .32 ? "selected" : progress < .56 ? "mapping" : progress < .78 ? "cluster" : progress < .96 ? "locking" : "ready";
 }
+export function arrivalHandoff(progress: number) {
+  const t = THREE.MathUtils.clamp((progress - .80) / .16, 0, 1);
+  return t * t * (3 - 2 * t);
+}
 const ease = (value: number) => { const t = THREE.MathUtils.clamp(value, 0, 1); return t * t * (3 - 2 * t); };
 const blend = (progress: number, from: number, to: number) => ease((progress - from) / (to - from));
 const seed = (n: number) => { const v = Math.sin(n * 127.1 + 311.7) * 43758.5453; return v - Math.floor(v); };
