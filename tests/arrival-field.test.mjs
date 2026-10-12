@@ -67,14 +67,23 @@ test("near-camera passage geometry is bounded and distributed across the approac
   const atPass = new THREE.Vector3();
   const after = new THREE.Vector3();
   const aim = new THREE.Vector3();
+  const passAim = new THREE.Vector3();
+  const viewDirection = new THREE.Vector3();
+  const point = new THREE.Vector3();
+  const positions = flybys.geometry.getAttribute("position");
   const sample = arrival.createArrivalCameraPath();
   for (let i = 0; i < passes.count; i++) {
     const progress = passes.getX(i);
     sample(progress - .022, before, aim);
-    sample(progress, atPass, aim);
+    sample(progress, atPass, passAim);
     sample(progress + .022, after, aim);
     assert.ok(before.distanceTo(after) > .025);
     assert.ok(atPass.distanceTo(before) < 20 && atPass.distanceTo(after) < 20, "passage samples must remain spatially bounded");
+    point.fromBufferAttribute(positions, i);
+    viewDirection.copy(passAim).sub(atPass).normalize();
+    const forwardDepth = point.clone().sub(atPass).dot(viewDirection);
+    assert.ok(forwardDepth > 0, `flyby ${i} at ${progress.toFixed(3)} must sit in front of the camera lens (${forwardDepth})`);
+    assert.ok(forwardDepth < passes.getY(i) * .2, `flyby ${i} must stay close to the lens`);
   }
   field.dispose();
 });

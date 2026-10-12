@@ -102,7 +102,7 @@ export function createArrivalField() {
   const flybyPositions: number[] = [], flybyColors: number[] = [], flybyPasses: number[] = [];
   const trailPositions: number[] = [], trailColors: number[] = [], trailPasses: number[] = [], trailAlpha: number[] = [];
   const eye = new THREE.Vector3(), aim = new THREE.Vector3(), before = new THREE.Vector3(), after = new THREE.Vector3();
-  const direction = new THREE.Vector3(), right = new THREE.Vector3(), up = new THREE.Vector3(), point = new THREE.Vector3();
+  const direction = new THREE.Vector3(), viewDirection = new THREE.Vector3(), right = new THREE.Vector3(), up = new THREE.Vector3(), point = new THREE.Vector3();
   for (let i = 0; i < ARRIVAL_FLYBYS; i++) {
     // Interleave the compact subset across the whole flight, not just its first half.
     const pass = .09 + ((i * 37) % ARRIVAL_FLYBYS) / ARRIVAL_FLYBYS * .74;
@@ -111,10 +111,12 @@ export function createArrivalField() {
     const scale = Math.max(.025, before.distanceTo(after));
     direction.copy(after).sub(before).normalize();
     sampleCamera(pass, eye, aim);
-    right.crossVectors(direction, THREE.Object3D.DEFAULT_UP).normalize();
-    up.crossVectors(right, direction).normalize();
+    viewDirection.copy(aim).sub(eye).normalize();
+    right.crossVectors(viewDirection, THREE.Object3D.DEFAULT_UP).normalize();
+    up.crossVectors(right, viewDirection).normalize();
     const angle = i * 2.399963, radius = scale * (.06 + seed(i + 2900) * .17);
-    point.copy(eye).addScaledVector(right, Math.cos(angle) * radius).addScaledVector(up, Math.sin(angle) * radius);
+    // Keep the flyby just in front of the lens so it flashes through the frustum instead of clipping on its plane.
+    point.copy(eye).addScaledVector(viewDirection, scale * (.06 + seed(i + 3100) * .06)).addScaledVector(right, Math.cos(angle) * radius).addScaledVector(up, Math.sin(angle) * radius);
     const color = new THREE.Color(starPalette[i % starPalette.length]);
     flybyPositions.push(...point.toArray()); flybyColors.push(color.r, color.g, color.b); flybyPasses.push(pass, scale);
     trailPositions.push(...point.toArray(), ...point.clone().addScaledVector(direction, scale * (.045 + seed(i + 3000) * .09)).toArray());
