@@ -1,6 +1,6 @@
 <div align="center">
 
-# StarGod Portfolio v0.102.1
+# StarGod Portfolio v0.103.0
 
 **I build things I actually see.**
 
@@ -25,7 +25,7 @@ The universe handoff uses a bounded Lenis + GSAP scroll driver, so the jump from
 
 Three galaxies. Ten project worlds. One maker.
 
-The opening behaves like a real Three.js camera searching a spherical multiverse: 128 universe signatures sit at different depths, a layered star field opens from deep indigo into a denser cosmic scale, bounded near-camera stars cross the lens during the approach, the lens moves through the Cosmic Web and Supercluster, and `ORION-89` resolves into StarGod. The single centered progress line shows the search percentage, then holds the lock briefly before the nebula-backed portfolio takes over. The UFO and scout begin only after that handoff to the “I build things I actually see.” galaxy opening, so the arrival story has a clear before and after.
+The opening behaves like a real Three.js camera searching a spherical multiverse: 128 universe signatures sit at different depths, a layered star field opens from deep indigo into a denser cosmic scale, and bounded near-camera stars cross the lens during the approach. The chosen StarGod signal then travels through four readable authored scales: **Universe**, **Laniakea** with 17 superclusters, **Local Group** with 31 galaxies, and the **HenryLabs galaxy** with five project worlds. The centered progress line shows the search percentage and the route stays visible while the camera locks to the destination. The UFO and scout begin only after that handoff to the “I build things I actually see.” galaxy opening, so the arrival story has a clear before and after. This hierarchy is a visual portfolio atlas, not a scientific reconstruction of the observable universe.
 
 The living map is backed by a procedural volumetric nebula: layered filaments, distant stellar depth, and a slow parallax drift keep the sky feeling like space rather than a flat backdrop while the project systems remain readable.
 

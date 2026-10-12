@@ -18,7 +18,7 @@ import { AnimatePresence, MotionConfig, motion, useInView, useMotionValue, useMo
 import { CosmicCanvas, type OrbitId, type ProjectId, type SatelliteId, type SatelliteWorld } from "./cosmic-canvas";
 import { requestSmoothScroll, SmoothScroll } from "./smooth-scroll";
 import { WorldlineBackdrop } from "./worldline-backdrop";
-import { ARRIVAL_DURATION } from "./arrival-field";
+import { ARRIVAL_DURATION, ARRIVAL_CHAPTERS, arrivalChapter, arrivalCandidate, arrivalPhase } from "./arrival-field";
 import { ArrivalField } from "./arrival-field-canvas";
 import type { GalaxyId } from "./galaxy-system";
 
@@ -33,7 +33,6 @@ import { StarGodMark } from "./stargod-mark";
 import { UNIVERSE_CHAPTER as chapter, universeLanding, chapterBlend } from "./universe-chapter";
 
 type WorldlineStage = "world" | "method" | "stack";
-type IntroPhase = "searching" | "mapping" | "cluster" | "locking" | "ready";
 type Sector = GalaxyId;
 
 
@@ -148,9 +147,9 @@ export function PortfolioExperience() {
   const [activeSatellites, setActiveSatellites] = useState({ university: "rental" as SatelliteId, client: "yventures" as SatelliteId });
   const [introDone, setIntroDone] = useState(false);
   const [introProgress, setIntroProgress] = useState(0);
-  const [introCandidate, setIntroCandidate] = useState(0);
-  const [introUniverseIndex, setIntroUniverseIndex] = useState(0);
-  const [introPhase, setIntroPhase] = useState<IntroPhase>("searching");
+  const introPhase = arrivalPhase(introProgress / 100);
+  const introUniverseIndex = arrivalCandidate(introProgress / 100);
+  const introChapter = arrivalChapter(introProgress / 100);
   const introStopRef = useRef(false);
   const [worldlineStage, setWorldlineStage] = useState<WorldlineStage>("world");
   const [heroPhase, setHeroPhase] = useState("intro");
@@ -191,16 +190,14 @@ export function PortfolioExperience() {
   const sectorRecords = activeSector === "university" ? universityRecords : clientRecords;
   const activeSatellite = sectorRecords.find((record) => record.id === (activeSector === "university" ? activeSatellites.university : activeSatellites.client)) ?? sectorRecords[0];
   const focusedWorld = activeSector === "main" ? activeProject : activeSatellite;
-  const introStatus = language === "en"
-    ? { searching: "Scanning distant universes", mapping: "Following the cosmic web", cluster: "Narrowing the galaxy group", locking: "Locking onto StarGod", ready: "StarGod found · entering universe" }
-    : { searching: "Memindai semesta yang jauh", mapping: "Mengikuti cosmic web", cluster: "Mempersempit kelompok galaksi", locking: "Mengunci StarGod", ready: "StarGod ditemukan · masuk ke semesta" };
+  const introTitle = { searching: language === "en" ? "Finding StarGod" : "Mencari StarGod", selected: "StarGod", mapping: "Laniakea", cluster: "Local Group", locking: "HenryLabs", ready: "HenryLabs" };
+  const introMessage = language === "en"
+    ? { searching: "128 universes. Searching for Henry's signature.", selected: "Henry Nugraha's universe. Signature matched.", mapping: "Inside StarGod. Following one supercluster among many.", cluster: "Three familiar galaxies. Our destination: HenryLabs.", locking: "Five project worlds, inside one galaxy.", ready: "Destination reached. Entering the nebula." }
+    : { searching: "128 semesta. Mencari jejak Henry.", selected: "Semesta Henry Nugraha. Jejak ditemukan.", mapping: "Di dalam StarGod. Mengikuti satu dari banyak supercluster.", cluster: "Tiga galaksi yang kita kenal. Tujuan kita: HenryLabs.", locking: "Lima dunia project, di dalam satu galaksi.", ready: "Tujuan tercapai. Memasuki nebula." };
 
   const skipIntro = () => {
     introStopRef.current = true;
-    setIntroCandidate(5);
-    setIntroUniverseIndex(89);
     setIntroProgress(100);
-    setIntroPhase("ready");
     setIntroDone(true);
   };
 
@@ -258,10 +255,7 @@ export function PortfolioExperience() {
     const replay = new URLSearchParams(window.location.search).get("intro") === "1";
     const directEntry = Boolean(window.location.hash || new URLSearchParams(window.location.search).get("world") || new URLSearchParams(window.location.search).get("view") === "universe");
     if ((introSeen || directEntry) && !replay || reduced) {
-      setIntroCandidate(5);
-      setIntroUniverseIndex(89);
       setIntroProgress(100);
-      setIntroPhase("ready");
       setIntroDone(true);
       return;
     }
@@ -278,16 +272,12 @@ export function PortfolioExperience() {
       if (now - lastPaint >= 80 || ratio === 1) {
         // Keep the scene's camera clock continuous; round only at the semantic UI boundary.
         const progress = ratio * 100;
-        setIntroCandidate(Math.min(5, Math.floor(ratio * 6)));
-        setIntroUniverseIndex(ratio < .18 ? 17 : ratio < .32 ? 61 : 89);
         setIntroProgress(progress);
-        setIntroPhase(ratio < .43 ? "searching" : ratio < .61 ? "mapping" : ratio < .78 ? "cluster" : ratio < .93 ? "locking" : "ready");
         lastPaint = now;
       }
       if (ratio >= 1) {
         introStopRef.current = true;
         setIntroProgress(100);
-        setIntroPhase("ready");
         // Hold the final coordinates before handing the sky to the opening scene.
         finishTimer = window.setTimeout(() => setIntroDone(true), 1200);
         return;
@@ -399,20 +389,16 @@ export function PortfolioExperience() {
     <main className="site-shell" id="main-content" tabIndex={-1} data-motion={motionOn ? "on" : "off"} data-intro={introDone ? "done" : "active"}>
       <SmoothScroll enabled={motionOn} />
       <WorldlineBackdrop activeId={activeProject.id} motionOn={motionOn} progress={worldlineProgress} contactProgress={contactProgress} contactVisible={contactVisible} mapActive={heroPhase === "worlds"} introActive={!introDone} introProgress={introProgress} />
-      <div className={cx("intro-loader", "arrival-intro", introDone && "intro-loader--done")} data-intro-phase={introPhase} data-intro-progress={introProgress} data-intro-candidate={introCandidate} data-intro-universe={introUniverseIndex} aria-hidden={introDone} inert={introDone}>
-        <ArrivalField progress={introProgress} motionOn={motionOn} active={!introDone} />
-        <div className="arrival-target" aria-hidden="true"><StarGodMark className="arrival-mark" size={32} /><span>{introPhase === "searching" ? `U-${String(introUniverseIndex).padStart(3, "0")}` : "ORION-89"}</span></div>
+      <div className={cx("intro-loader", "arrival-intro", introDone && "intro-loader--done")} data-intro-phase={introPhase} data-intro-progress={introProgress} data-intro-universe={introUniverseIndex} aria-hidden={introDone} inert={introDone}>
+        <ArrivalField progress={introProgress} motionOn={motionOn} active={!introDone} projects={projects} />
         <div className="arrival-content">
-          <div className="arrival-query" aria-label={language === "en" ? "Searching the StarGod universe" : "Mencari semesta StarGod"}>
-            <span className="arrival-query-prompt">&gt;</span>
-            <span className="arrival-query-label">{introPhase === "ready" ? (language === "en" ? "UNIVERSE FOUND" : "SEMESTA DITEMUKAN") : (language === "en" ? "SEARCHING FOR" : "MENCARI")}</span>
-            <strong>StarGod</strong>
-            <span className="arrival-caret" aria-hidden="true" />
+          <div className="arrival-query">
+            <StarGodMark className="arrival-mark" size={28} />
+            <strong>{introTitle[introPhase]}</strong>
           </div>
-          <p className="arrival-message" aria-live="polite">{introPhase === "searching" ? (language === "en" ? "Scanning distant worlds for one signal." : "Memindai semesta jauh untuk satu sinyal.") : introPhase === "mapping" ? (language === "en" ? "The signal is moving through the cosmic web." : "Sinyal bergerak melewati cosmic web.") : introPhase === "cluster" ? (language === "en" ? "Filtering the galaxy group around the signal." : "Menyaring kelompok galaksi di sekitar sinyal.") : introPhase === "locking" ? (language === "en" ? "Coordinates found. Bringing StarGod into focus." : "Koordinat ditemukan. Memfokuskan StarGod.") : (language === "en" ? "StarGod located. Entering Henry Nugraha's universe." : "StarGod ditemukan. Memasuki semesta Henry Nugraha.")}</p>
-          <div className="arrival-trace" aria-hidden="true"><span>128 UNIVERSES</span><i>·</i><span>COSMIC WEB</span><i>·</i><span>{introPhase === "searching" ? `U-${String(introUniverseIndex).padStart(3, "0")}` : "ORION-89"}</span></div>
+          <p className="arrival-message" aria-live="polite">{introMessage[introPhase]}</p>
+          <ol className="arrival-route" aria-label={language === "en" ? "Journey through scale" : "Perjalanan skala"}>{ARRIVAL_CHAPTERS.map((name, i) => <li key={name} aria-current={introChapter === i ? "step" : undefined} data-passed={i < introChapter}>{i === 3 ? (language === "en" ? "Galaxy" : "Galaksi") : name}</li>)}</ol>
           <div className="arrival-progress" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(introProgress)} aria-label={language === "en" ? "Universe search progress" : "Progress pencarian semesta"}><span style={{ transform: `scaleX(${introProgress / 100})` }} /><strong>{String(Math.round(introProgress)).padStart(3, "0")}&#37;</strong></div>
-          <div className="arrival-status"><span>{introStatus[introPhase]}</span><span>{introPhase === "ready" ? "LOCKED" : (language === "en" ? "LIVE TRACE" : "TRACE LANGSUNG")}</span></div>
         </div>
         <button type="button" className="arrival-skip" onClick={skipIntro}>{language === "en" ? "Skip intro" : "Lewati intro"}<ArrowUpRight size={15} /></button>
       </div>

@@ -3,7 +3,7 @@ import { mkdirSync } from "node:fs";
 import { chromium, expect } from "@playwright/test";
 
 const url = process.env.PORTFOLIO_URL ?? "http://localhost:3002/";
-const INTRO_DURATION = 18000;
+const INTRO_DURATION = 24000;
 const browser = await chromium.launch({ headless: true, executablePath: process.env.CHROME_PATH ?? "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe" });
 async function hydrateWithClock(page) {
   // Advance React's scheduler without consuming the short entrance timeline.
@@ -32,8 +32,8 @@ try {
     };
     await expect(intro).toBeVisible();
     await expect(intro).toContainText("StarGod");
-    await expect(intro).toContainText("128 UNIVERSES");
-    await expect(intro).toContainText("COSMIC WEB");
+    await expect(intro).toContainText("128 universes");
+    await expect(intro).toContainText("Laniakea");
     await expect(intro).not.toContainText("I build things");
     await expect(intro.getByRole("progressbar")).toHaveAttribute("aria-valuenow", /[0-9]+/);
     await expect(page.getByRole("button", { name: "Skip intro" })).toBeVisible();

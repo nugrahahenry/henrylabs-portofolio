@@ -18,29 +18,59 @@ test("arrival camera remains continuous through the cosmic scale waypoints", () 
   const eye = new THREE.Vector3();
   const aim = new THREE.Vector3();
   const previousEye = new THREE.Vector3();
-  const previousAim = new THREE.Vector3();
   let previousDistance = 0;
 
-  for (let i = 0; i <= 930; i++) {
+  for (let i = 0; i <= 1000; i++) {
     const progress = i / 1000;
     sample(progress, eye, aim);
     assert.ok(Number.isFinite(eye.length()) && Number.isFinite(aim.length()));
     if (i > 0) {
       const distance = eye.distanceTo(previousEye);
-      assert.ok(distance < .35, `camera step too large at ${progress.toFixed(3)}: ${distance}`);
+      assert.ok(distance < .6, `camera step too large at ${progress.toFixed(3)}: ${distance}`);
       assert.ok(Math.abs(distance - previousDistance) < .12, `camera velocity jumps at ${progress.toFixed(3)}`);
       previousDistance = distance;
     }
     previousEye.copy(eye);
-    previousAim.copy(aim);
   }
 
-  sample(.93, eye, aim);
+  sample(.96, eye, aim);
   const lockEye = eye.clone();
-  for (const progress of [.94, .97, 1]) {
+  for (const progress of [.965, .97, 1]) {
     sample(progress, eye, aim);
     assert.ok(eye.distanceTo(lockEye) < .001, "final camera lock must hold after the approach");
   }
+});
+
+test("the nested atlas has many superclusters and galaxies, with a persistent selected destination", () => {
+  const field = arrival.createArrivalField();
+  assert.equal(field.scene.getObjectByName("other-superclusters").userData.structures, 16);
+  assert.equal(field.scene.getObjectByName("local-galaxies").userData.structures, 30);
+  assert.equal(field.scene.getObjectByName("universe-candidates").count, 128);
+  for (const [progress, name] of [[44, "laniakea"], [68, "local-galaxies"], [94, "henrylabs-galaxy"]]) {
+    field.update(progress, 1440 / 900, 900);
+    assert.ok(field.scene.getObjectByName(name).material.uniforms.uOpacity.value > .5, `${name} must be readable in its chapter`);
+  }
+  assert.deepEqual([.1, .44, .68, .94].map(arrival.arrivalChapter), [0, 1, 2, 3]);
+  assert.deepEqual([.1, .18, .22, .7].map(arrival.arrivalCandidate), [17, 61, 89, 89]);
+  assert.equal(arrival.arrivalPhase(.28), "selected");
+  assert.equal(arrival.arrivalPhase(.97), "ready");
+  const sample = arrival.createArrivalCameraPath(), eye = new THREE.Vector3(), aim = new THREE.Vector3();
+  let distance = Infinity;
+  for (let p = .301; p <= 1; p += .001) {
+    sample(p, eye, aim);
+    assert.ok(eye.length() <= distance + .00001, "nested approach must not jump back out");
+    assert.ok(eye.z > .1, "camera must not overshoot the chosen galaxy");
+    distance = eye.length();
+  }
+  for (const [width, height] of [[1440, 900], [390, 844], [844, 390]]) {
+    field.update(94, width / height, height);
+    for (const label of field.labels.slice(4)) {
+      assert.equal(label.visible, true);
+      assert.ok(label.opacity > .95);
+      assert.ok(label.x > 30 && label.x < width - 30 && label.y > 30 && label.y < height * .7);
+    }
+  }
+  field.dispose();
 });
 
 test("near-camera passage geometry is bounded and distributed across the approach", () => {

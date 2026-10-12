@@ -1,5 +1,13 @@
 # Changelog
 
+## StarGod Portfolio v0.103.0 - 2026-10-13
+
+- Reframe the Stage 1 arrival as a readable nested journey: Universe search, StarGod selection, Laniakea superclusters, Local Group galaxies, then the HenryLabs project galaxy.
+- Add 17 authored supercluster structures, 31 galaxy structures, three named galaxy anchors, and five real project identities inside the final galaxy while keeping the scene bounded to one short-lived Three.js renderer.
+- Make StarGod selection visually distinct by fading rejected universe shells, synchronizing the semantic lock label with the animated camera, and smoothing the focus ring as it changes scale.
+- Increase Local Group galaxy readability and adapt the five project marker orbit for narrow and landscape screens without changing project facts or later portfolio scenes.
+- Extend Stage 1 contracts for nested structure counts, monotonic camera travel, projected project labels, responsive bounds, and reduced-motion fallback behavior.
+
 ## StarGod Portfolio v0.102.1 - 2026-10-12
 
 - Keep near-camera flybys slightly in front of the lens with a camera-orthogonal basis, so their closest flash reads as 3D instead of clipping on the camera plane.

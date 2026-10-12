@@ -2,10 +2,11 @@
 
 import { useEffect, useRef } from "react";
 import * as THREE from "three";
-import { createArrivalField } from "./arrival-field";
+import { arrivalCandidate, arrivalChapter, createArrivalField } from "./arrival-field";
 
-export function ArrivalField({ progress, motionOn, active }: { progress: number; motionOn: boolean; active: boolean }) {
+export function ArrivalField({ progress, motionOn, active, projects }: { progress: number; motionOn: boolean; active: boolean; projects: readonly { id: string; name: string; logo: string }[] }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const labelsRef = useRef<HTMLDivElement>(null);
   const stateRef = useRef({ progress, motionOn, active });
   stateRef.current = { progress, motionOn, active };
 
@@ -26,6 +27,7 @@ export function ArrivalField({ progress, motionOn, active }: { progress: number;
       return;
     }
     let frame = 0, lastTime = performance.now(), displayedProgress = stateRef.current.progress;
+    const labels = Array.from(labelsRef.current?.children ?? []) as HTMLElement[];
     const resize = () => renderer.setSize(canvas.clientWidth || window.innerWidth, canvas.clientHeight || window.innerHeight, false);
     const render = (time: number) => {
       frame = 0;
@@ -41,6 +43,18 @@ export function ArrivalField({ progress, motionOn, active }: { progress: number;
       renderer.render(field.scene, field.camera);
       canvas.dataset.ready = "true";
       canvas.dataset.camera = field.camera.position.toArray().map(value => value.toFixed(3)).join(",");
+      canvas.dataset.chapter = String(arrivalChapter(displayedProgress / 100));
+      canvas.dataset.drawCalls = String(renderer.info.render.calls);
+      labels.forEach((element, i) => {
+        const anchor = field.labels[i];
+        element.style.transform = `translate3d(${anchor.x}px,${anchor.y}px,0)`;
+        element.style.opacity = String(anchor.visible ? anchor.opacity : 0);
+        if (i === 0) {
+        const uiProgress = current.progress / 100;
+        element.textContent = uiProgress < .22 ? `U-${arrivalCandidate(uiProgress)} / ...` : uiProgress < .32 ? "StarGod / Henry Nugraha" : "Laniakea";
+        element.dataset.matched = String(uiProgress >= .22);
+        }
+      });
       if (current.active && current.motionOn) frame = requestAnimationFrame(render);
     };
     const wake = () => {
@@ -54,5 +68,12 @@ export function ArrivalField({ progress, motionOn, active }: { progress: number;
     return () => { cancelAnimationFrame(frame); observer.disconnect(); document.removeEventListener("visibilitychange", wake); field.dispose(); renderer.dispose(); };
   }, [active, motionOn]);
 
-  return active ? <canvas ref={canvasRef} className="arrival-field-canvas" aria-hidden="true" data-active={String(active)} /> : null;
+  return active ? <>
+    <canvas ref={canvasRef} className="arrival-field-canvas" aria-hidden="true" data-active={String(active)} />
+    <div className="arrival-labels" ref={labelsRef} aria-hidden="true">
+      <span className="arrival-anchor arrival-destination" />
+      {["HenryLabs", "University", "Client Work"].map(name => <span className="arrival-anchor arrival-galaxy-label" key={name}><span>{name}</span></span>)}
+      {projects.map(project => <span className="arrival-anchor arrival-project-label" key={project.id}><span><img src={project.logo} alt="" width={28} height={28} /><b>{project.name}</b></span></span>)}
+    </div>
+  </> : null;
 }
