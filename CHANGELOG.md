@@ -1,5 +1,11 @@
 # Changelog
 
+## StarGod Portfolio v0.105.0 - 2026-10-13
+
+- Give Universe -> Laniakea -> Local Group -> HenryLabs its own continuous camera choreography instead of relying on opacity changes alone.
+- Add restrained orbital camera swoops, layer scale breaths, subtle galaxy rotation, and a short focus-ring pulse at each nested-scale threshold.
+- Preserve monotonic zoom, readable route copy, responsive labels, reduced motion, Skip Intro, and the HenryLabs hero handoff.
+
 ## StarGod Portfolio v0.104.0 - 2026-10-13
 
 - Make HenryLabs the sole intro destination; University and Client Work remain sibling galaxies in the living map.

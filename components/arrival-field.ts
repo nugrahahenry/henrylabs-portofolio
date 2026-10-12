@@ -15,6 +15,10 @@ export function arrivalHandoff(progress: number) {
   const t = THREE.MathUtils.clamp((progress - .80) / .16, 0, 1);
   return t * t * (3 - 2 * t);
 }
+export function arrivalTransition(progress: number, center: number, width = .07) {
+  const t = THREE.MathUtils.clamp(1 - Math.abs(progress - center) / width, 0, 1);
+  return t * t * (3 - 2 * t);
+}
 const ease = (value: number) => { const t = THREE.MathUtils.clamp(value, 0, 1); return t * t * (3 - 2 * t); };
 const blend = (progress: number, from: number, to: number) => ease((progress - from) / (to - from));
 const seed = (n: number) => { const v = Math.sin(n * 127.1 + 311.7) * 43758.5453; return v - Math.floor(v); };
@@ -38,7 +42,10 @@ export function createArrivalCameraPath() {
       // Logarithmic distance gives each nested scale its own readable approach without overshooting the origin.
       const t = ease((p - .3) / .66);
       const distance = Math.exp(THREE.MathUtils.lerp(Math.log(8.045), Math.log(.165), t));
-      const yaw = .102 * (1 - t), pitch = .226 + Math.sin(t * Math.PI) * .22;
+      // A restrained orbital swoop marks each scale change while the distance remains monotonic.
+      const orbitEnvelope = Math.sin(t * Math.PI);
+      const yaw = .102 * (1 - t) + Math.sin(t * Math.PI * 2.8) * .055 * orbitEnvelope;
+      const pitch = .226 + Math.sin(t * Math.PI) * .22 + Math.sin(t * Math.PI * 3) * .025 * orbitEnvelope;
       eye.set(Math.sin(yaw) * Math.cos(pitch), Math.sin(pitch), Math.cos(yaw) * Math.cos(pitch)).multiplyScalar(distance);
       aim.set(0, 0, 0);
     }
@@ -271,6 +278,9 @@ export function createArrivalField() {
   });
   const focusRing = new THREE.Mesh(new THREE.TorusGeometry(1, .006, 6, 96), new THREE.MeshBasicMaterial({ color: "#f4d696", transparent: true, opacity: .85, depthWrite: false }));
   scene.add(focusRing);
+  const ringColor = new THREE.Color();
+  const ringNeutral = new THREE.Color("#94bbc9");
+  const ringGold = new THREE.Color("#efc95f");
   const target = new THREE.Vector3(), projected = new THREE.Vector3();
   const labelAnchors = [new THREE.Vector3(), ...galaxyCenters.slice(0, 3).map(p => p.clone()), ...projectCenters.map(p => p.clone())];
   const labels = labelAnchors.map(() => ({ x: 0, y: 0, visible: false, opacity: 0 }));
@@ -292,6 +302,7 @@ export function createArrivalField() {
     trails.geometry.setDrawRange(0, (compact ? ARRIVAL_COMPACT_FLYBYS : ARRIVAL_FLYBYS) * 2);
     const focus = arrivalCandidate(p), chapter = arrivalChapter(p);
     const selected = blend(p, .22, .29);
+    const transitionPulse = Math.max(arrivalTransition(p, .30, .065), arrivalTransition(p, .57, .07), arrivalTransition(p, .80, .07));
     const focusPosition = positions[focus].clone().lerp(target, blend(p, .285, .325));
     focusRing.position.copy(focusPosition);
     focusRing.quaternion.copy(camera.quaternion);
@@ -301,9 +312,10 @@ export function createArrivalField() {
       : THREE.MathUtils.lerp(.86, .12, blend(p, .54, .80));
     const galaxyRadius = THREE.MathUtils.lerp(.12, .072, blend(p, .76, .84));
     const readableFocusRadius = chapter === 1 ? focusRadius : chapter === 2 ? galaxyRadius : chapter === 3 ? .072 : focusRadius;
-    focusRing.scale.setScalar(readableFocusRadius);
-    focusRing.material.opacity = (chapter === 0 ? .5 + selected * .25 : .26) * (1 - blend(p, .85, .91));
-    focusRing.material.color.set(focus === 89 ? "#efc95f" : "#94bbc9");
+    focusRing.scale.setScalar(readableFocusRadius * (1 + transitionPulse * .12));
+    focusRing.material.opacity = Math.min(1, (chapter === 0 ? .5 + selected * .25 : .26) * (1 - blend(p, .85, .91)) + transitionPulse * .2);
+    ringColor.copy(ringNeutral).lerp(ringGold, blend(p, .22, .34));
+    focusRing.material.color.copy(ringColor);
     const skyReveal = blend(p, .04, .64);
     skyBackground.lerpColors(openingSky, deepSky, skyReveal * .72);
     farStars.material.uniforms.uOpacity.value = .2 + skyReveal * .46 - blend(p, .84, 1) * .14;
@@ -314,11 +326,23 @@ export function createArrivalField() {
     sphereMaterial.uniforms.uSelection.value = selected;
     sphereMaterial.uniforms.uTime.value = p * 18;
     interiors.material.uniforms.uOpacity.value = (1 - blend(p, .31, .40)) * (1 - selected * .8);
+    const laniakeaEntry = blend(p, .24, .36);
+    const laniakeaExit = blend(p, .50, .65);
+    const groupEntry = blend(p, .48, .60);
+    const groupExit = blend(p, .72, .86);
+    superclusters[0].scale.setScalar(.9 + laniakeaEntry * .1);
+    superclusters[0].rotation.y = (p - .24) * .14;
+    superclusters[1].scale.setScalar(.72 + laniakeaEntry * .28);
+    superclusters[1].rotation.y = -(p - .24) * .09;
     superclusters.forEach((cloud, i) => {
-      cloud.material.uniforms.uOpacity.value = blend(p, .26, .36) * (1 - blend(p, i === 0 ? .56 : .45, i === 0 ? .70 : .59)) * (i === 0 ? .9 : .7);
+      cloud.material.uniforms.uOpacity.value = laniakeaEntry * (1 - (i === 0 ? laniakeaExit : blend(p, .45, .59))) * (i === 0 ? .92 : .7);
     });
+    galaxies[0].scale.setScalar(.78 + blend(p, .72, .86) * .22);
+    galaxies[0].rotation.y = (p - .58) * .22;
+    galaxies[1].scale.setScalar(.84 + groupEntry * .16);
+    galaxies[1].rotation.y = -(p - .48) * .18;
     galaxies.forEach((cloud, i) => {
-      cloud.material.uniforms.uOpacity.value = blend(p, .49, .61) * (i === 0 ? 1 : 1 - blend(p, .75, .87));
+      cloud.material.uniforms.uOpacity.value = groupEntry * (i === 0 ? 1 : 1 - groupExit);
     });
     const projectScale = aspect < .8
       ? THREE.MathUtils.lerp(.72, 1, THREE.MathUtils.clamp((aspect - .45) / .35, 0, 1))

@@ -58,6 +58,9 @@ test("the nested atlas has many superclusters and galaxies, with a persistent se
   assert.ok(arrival.arrivalHandoff(.88) > 0 && arrival.arrivalHandoff(.88) < 1);
   assert.equal(arrival.arrivalHandoff(.96), 1);
   assert.equal(arrival.arrivalHandoff(1), 1);
+  assert.ok(arrival.arrivalTransition(.30, .30) > .99);
+  assert.equal(arrival.arrivalTransition(.42, .30), 0);
+  assert.ok(arrival.arrivalTransition(.57, .57) > .99);
   const sample = arrival.createArrivalCameraPath(), eye = new THREE.Vector3(), aim = new THREE.Vector3();
   let distance = Infinity;
   for (let p = .301; p <= 1; p += .001) {
