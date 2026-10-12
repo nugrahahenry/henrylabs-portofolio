@@ -1,5 +1,12 @@
 # Changelog
 
+# StarGod Portfolio v0.102.0 - 2026-10-12
+
+- Make the intro camera travel continuously through its search waypoints instead of easing to a stop at each candidate, giving the multiverse a clearer change of scale.
+- Add a bounded 84-star near-camera passage lane with short depth-aware trails, a 42-star compact subset for small screens, and guards that keep the lower reading copy clear.
+- Keep the first frame indigo and legible, preserve the StarGod lock and handoff timing, and drive the scene from a continuous progress clock while the visible percentage stays rounded.
+- Add deterministic camera/path and passage-geometry tests; black-hole, nebula, project-planet, and companion-planet behavior remain unchanged for the next stages.
+
 ## StarGod Portfolio v0.101.3 - 2026-10-12
 
 - Soften the intro sky from near-black to a deep indigo/purple opening, with procedural far and near star bands that resolve progressively during the camera search instead of reading as a flat dark plate.

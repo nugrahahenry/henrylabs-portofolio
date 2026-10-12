@@ -276,7 +276,8 @@ export function PortfolioExperience() {
       if (introStopRef.current) return;
       const ratio = Math.min(1, (now - startedAt) / duration);
       if (now - lastPaint >= 80 || ratio === 1) {
-        const progress = Math.round(ratio * 100);
+        // Keep the scene's camera clock continuous; round only at the semantic UI boundary.
+        const progress = ratio * 100;
         setIntroCandidate(Math.min(5, Math.floor(ratio * 6)));
         setIntroUniverseIndex(ratio < .18 ? 17 : ratio < .32 ? 61 : 89);
         setIntroProgress(progress);
@@ -410,7 +411,7 @@ export function PortfolioExperience() {
           </div>
           <p className="arrival-message" aria-live="polite">{introPhase === "searching" ? (language === "en" ? "Scanning distant worlds for one signal." : "Memindai semesta jauh untuk satu sinyal.") : introPhase === "mapping" ? (language === "en" ? "The signal is moving through the cosmic web." : "Sinyal bergerak melewati cosmic web.") : introPhase === "cluster" ? (language === "en" ? "Filtering the galaxy group around the signal." : "Menyaring kelompok galaksi di sekitar sinyal.") : introPhase === "locking" ? (language === "en" ? "Coordinates found. Bringing StarGod into focus." : "Koordinat ditemukan. Memfokuskan StarGod.") : (language === "en" ? "StarGod located. Entering Henry Nugraha's universe." : "StarGod ditemukan. Memasuki semesta Henry Nugraha.")}</p>
           <div className="arrival-trace" aria-hidden="true"><span>128 UNIVERSES</span><i>·</i><span>COSMIC WEB</span><i>·</i><span>{introPhase === "searching" ? `U-${String(introUniverseIndex).padStart(3, "0")}` : "ORION-89"}</span></div>
-          <div className="arrival-progress" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={introProgress} aria-label={language === "en" ? "Universe search progress" : "Progress pencarian semesta"}><span style={{ transform: `scaleX(${introProgress / 100})` }} /><strong>{String(introProgress).padStart(3, "0")}%</strong></div>
+          <div className="arrival-progress" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(introProgress)} aria-label={language === "en" ? "Universe search progress" : "Progress pencarian semesta"}><span style={{ transform: `scaleX(${introProgress / 100})` }} /><strong>{String(Math.round(introProgress)).padStart(3, "0")}&#37;</strong></div>
           <div className="arrival-status"><span>{introStatus[introPhase]}</span><span>{introPhase === "ready" ? "LOCKED" : (language === "en" ? "LIVE TRACE" : "TRACE LANGSUNG")}</span></div>
         </div>
         <button type="button" className="arrival-skip" onClick={skipIntro}>{language === "en" ? "Skip intro" : "Lewati intro"}<ArrowUpRight size={15} /></button>

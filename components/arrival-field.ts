@@ -5,6 +5,25 @@ const ease = (value: number) => { const t = THREE.MathUtils.clamp(value, 0, 1); 
 const blend = (progress: number, from: number, to: number) => ease((progress - from) / (to - from));
 const seed = (n: number) => { const v = Math.sin(n * 127.1 + 311.7) * 43758.5453; return v - Math.floor(v); };
 
+export const ARRIVAL_FLYBYS = 84;
+export const ARRIVAL_COMPACT_FLYBYS = 42;
+
+export function createArrivalCameraPath() {
+  const times = [0, .12, .24, .43, .61, .78, .93];
+  const eyes = [4, 9, 39, 11, 5, 18, -10, 0, 13, 3, 1.8, 8, .78, .46, 2.7, .34, .2, 2.08, .12, .1, 1.64];
+  const aims = [0, 0, 0, 8, 3, 9, -6, -2, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+  const eyePath = new THREE.CubicInterpolant(times, eyes, 3);
+  const aimPath = new THREE.CubicInterpolant(times, aims, 3);
+  return (progress: number, eye: THREE.Vector3, aim: THREE.Vector3) => {
+    let p = THREE.MathUtils.clamp(progress, 0, .93);
+    // Continuous tangents through waypoints; only departure and final lock come to rest.
+    if (p < .06) { const t = p / .06; p = .06 * (2 * t * t - t * t * t); }
+    else if (p > .87) { const t = (.93 - p) / .06; p = .93 - .06 * (2 * t * t - t * t * t); }
+    eye.fromArray(eyePath.evaluate(p));
+    aim.fromArray(aimPath.evaluate(p));
+  };
+}
+
 // A stylized navigation atlas, not a claim that observable universes have spherical boundaries.
 export function createArrivalField() {
   const scene = new THREE.Scene();
@@ -13,6 +32,7 @@ export function createArrivalField() {
   const skyBackground = openingSky.clone();
   scene.background = skyBackground;
   const camera = new THREE.PerspectiveCamera(48, 1, .002, 180);
+  const sampleCamera = createArrivalCameraPath();
   const positions = Array.from({ length: 128 }, (_, i) => {
     const y = 1 - (i + .5) / 128 * 2, a = i * 2.399963;
     const r = 12 + seed(i + 4) * 13, planar = Math.sqrt(1 - y * y);
@@ -79,6 +99,64 @@ export function createArrivalField() {
   }
   const farStars = dots(farStarPoints, farStarColors, .045);
   const nearStars = dots(nearStarPoints, nearStarColors, .026);
+  const flybyPositions: number[] = [], flybyColors: number[] = [], flybyPasses: number[] = [];
+  const trailPositions: number[] = [], trailColors: number[] = [], trailPasses: number[] = [], trailAlpha: number[] = [];
+  const eye = new THREE.Vector3(), aim = new THREE.Vector3(), before = new THREE.Vector3(), after = new THREE.Vector3();
+  const direction = new THREE.Vector3(), right = new THREE.Vector3(), up = new THREE.Vector3(), point = new THREE.Vector3();
+  for (let i = 0; i < ARRIVAL_FLYBYS; i++) {
+    // Interleave the compact subset across the whole flight, not just its first half.
+    const pass = .09 + ((i * 37) % ARRIVAL_FLYBYS) / ARRIVAL_FLYBYS * .74;
+    sampleCamera(pass - .022, before, aim);
+    sampleCamera(pass + .022, after, aim);
+    const scale = Math.max(.025, before.distanceTo(after));
+    direction.copy(after).sub(before).normalize();
+    sampleCamera(pass, eye, aim);
+    right.crossVectors(direction, THREE.Object3D.DEFAULT_UP).normalize();
+    up.crossVectors(right, direction).normalize();
+    const angle = i * 2.399963, radius = scale * (.06 + seed(i + 2900) * .17);
+    point.copy(eye).addScaledVector(right, Math.cos(angle) * radius).addScaledVector(up, Math.sin(angle) * radius);
+    const color = new THREE.Color(starPalette[i % starPalette.length]);
+    flybyPositions.push(...point.toArray()); flybyColors.push(color.r, color.g, color.b); flybyPasses.push(pass, scale);
+    trailPositions.push(...point.toArray(), ...point.clone().addScaledVector(direction, scale * (.045 + seed(i + 3000) * .09)).toArray());
+    trailColors.push(color.r, color.g, color.b, color.r, color.g, color.b);
+    trailPasses.push(pass, scale, pass, scale); trailAlpha.push(.55, 0);
+  }
+  const passageUniforms = { uProgress: { value: 0 }, uHeight: { value: 900 }, uCompact: { value: 0 } };
+  const passageVertex = `attribute vec3 color; attribute vec2 aPass; attribute float aAlpha;
+    uniform float uProgress; uniform float uHeight; uniform float uCompact;
+    varying vec3 vColor; varying float vAlpha;
+    void main(){
+      vec4 view=modelViewMatrix*vec4(position,1.); vec4 clip=projectionMatrix*view;
+      vec2 ndc=clip.xy/max(.001,clip.w); float depth=-view.z/aPass.y;
+      float gate=smoothstep(aPass.x-.12,aPass.x-.045,uProgress)*(1.-smoothstep(aPass.x+.02,aPass.x+.09,uProgress));
+      float proximity=smoothstep(.04,.23,depth)*(1.-smoothstep(1.5,3.8,depth));
+      float center=smoothstep(.18,.42,length(ndc));
+      float reading=mix(1.,.12,(1.-smoothstep(-.2,.1,ndc.x))* (1.-smoothstep(-.25,.05,ndc.y)));
+      reading*=mix(1.,smoothstep(-.25,.05,ndc.y),uCompact);
+      vAlpha=gate*proximity*center*reading*aAlpha; vColor=color;
+      gl_PointSize=clamp(.006*aPass.y*uHeight/max(.01,-view.z),1.2,4.2);
+      gl_Position=clip;
+    }`;
+  const passageGeometry = (positions: number[], colors: number[], passes: number[], alpha: number[]) => new THREE.BufferGeometry()
+    .setAttribute("position", new THREE.Float32BufferAttribute(positions, 3))
+    .setAttribute("color", new THREE.Float32BufferAttribute(colors, 3))
+    .setAttribute("aPass", new THREE.Float32BufferAttribute(passes, 2))
+    .setAttribute("aAlpha", new THREE.Float32BufferAttribute(alpha, 1));
+  const passageMaterial = (core: boolean) => new THREE.ShaderMaterial({
+    uniforms: passageUniforms, vertexShader: passageVertex,
+    fragmentShader: `varying vec3 vColor; varying float vAlpha;
+      void main(){float alpha=vAlpha;
+        ${core ? "float r=length(gl_PointCoord-.5)*2.; if(r>1.)discard; alpha*=pow(1.-r,1.4);" : ""}
+        gl_FragColor=vec4(vColor,alpha);
+        #include <tonemapping_fragment>
+        #include <colorspace_fragment>
+      }`,
+    transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
+  });
+  const flybys = new THREE.Points(passageGeometry(flybyPositions, flybyColors, flybyPasses, Array(ARRIVAL_FLYBYS).fill(.9)), passageMaterial(true));
+  const trails = new THREE.LineSegments(passageGeometry(trailPositions, trailColors, trailPasses, trailAlpha), passageMaterial(false));
+  flybys.name = "arrival-flybys"; trails.name = "arrival-trails";
+  scene.add(flybys, trails);
   const particles: number[] = [], colors: number[] = [];
   positions.forEach((p, i) => {
     const c = new THREE.Color(palette[i % palette.length]);
@@ -118,26 +196,10 @@ export function createArrivalField() {
   const cluster = dots(clusterPositions, clusterColors, .0016);
   const focusRing = new THREE.Mesh(new THREE.TorusGeometry(1, .006, 6, 96), new THREE.MeshBasicMaterial({ color: "#f4d696", transparent: true, opacity: .85, depthWrite: false }));
   scene.add(focusRing);
-  const target = new THREE.Vector3(), offset = new THREE.Vector3();
-  const waypoints = [
-    { at: 0, eye: new THREE.Vector3(4, 9, 39), aim: new THREE.Vector3(0, 0, 0) },
-    { at: .12, eye: positions[17].clone().add(new THREE.Vector3(3, 2, 9)), aim: positions[17] },
-    { at: .24, eye: positions[61].clone().add(new THREE.Vector3(-4, 2, 8)), aim: positions[61] },
-    { at: .43, eye: new THREE.Vector3(3, 1.8, 8), aim: new THREE.Vector3() },
-    { at: .61, eye: new THREE.Vector3(.78, .46, 2.7), aim: new THREE.Vector3() },
-    { at: .78, eye: new THREE.Vector3(.34, .2, 2.08), aim: new THREE.Vector3() },
-    { at: 1, eye: new THREE.Vector3(.12, .1, 1.64), aim: new THREE.Vector3() },
-  ];
+  const target = new THREE.Vector3();
   const update = (progress: number, aspect: number, height: number) => {
     const p = THREE.MathUtils.clamp(progress / 100, 0, 1);
-    const index = waypoints.findIndex((point, i) => i > 0 && point.at >= p);
-    const next = Math.max(1, index), previous = next - 1;
-    const t = blend(p, waypoints[previous].at, waypoints[next].at);
-    camera.position.lerpVectors(waypoints[previous].eye, waypoints[next].eye, t);
-    target.lerpVectors(waypoints[previous].aim, waypoints[next].aim, t);
-    offset.copy(camera.position).sub(target);
-    offset.applyAxisAngle(THREE.Object3D.DEFAULT_UP, Math.sin(p * Math.PI * 5) * .13 * (1 - blend(p, .4, .65)));
-    camera.position.copy(target).add(offset);
+    sampleCamera(p, camera.position, target);
     camera.aspect = aspect;
     camera.fov = aspect < .8 ? 65 : 48;
     camera.updateProjectionMatrix();
@@ -145,6 +207,12 @@ export function createArrivalField() {
     // Keep the subject above the bottom-aligned HTML readout on every viewport.
     camera.setViewOffset(aspect * height, height, 0, height * .14, aspect * height, height);
     camera.updateMatrixWorld();
+    const compact = aspect * height < 600 || height < 500;
+    passageUniforms.uProgress.value = p;
+    passageUniforms.uHeight.value = height;
+    passageUniforms.uCompact.value = Number(compact);
+    flybys.geometry.setDrawRange(0, compact ? ARRIVAL_COMPACT_FLYBYS : ARRIVAL_FLYBYS);
+    trails.geometry.setDrawRange(0, (compact ? ARRIVAL_COMPACT_FLYBYS : ARRIVAL_FLYBYS) * 2);
     const focus = p < .18 ? 17 : p < .32 ? 61 : 89;
     focusRing.position.copy(positions[focus]); focusRing.quaternion.copy(camera.quaternion);
     const searchRing = 1 - blend(p, .44, .55);
@@ -163,7 +231,7 @@ export function createArrivalField() {
     web.material.opacity = blend(p, .39, .54) * (1 - blend(p, .68, .84)) * .24;
     webDust.material.uniforms.uOpacity.value = blend(p, .39, .54) * (1 - blend(p, .73, .88));
     cluster.material.uniforms.uOpacity.value = blend(p, .59, .78);
-    for (const cloud of [interiors, webDust, cluster]) cloud.material.uniforms.uHeight.value = height;
+    for (const cloud of [interiors, webDust, cluster, farStars, nearStars]) cloud.material.uniforms.uHeight.value = height;
     scene.visible = true;
     return focus;
   };
