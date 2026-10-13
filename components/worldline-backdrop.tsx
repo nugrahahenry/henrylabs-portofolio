@@ -6,7 +6,7 @@ import * as THREE from "three";
 import { projectWorlds, type ProjectId } from "./cosmic-canvas";
 import { createAtmosphere, createPlanetMaps, createPlanetRing, projectPlanetKinds } from "./planet-materials";
 import { gravityMaterial, infallPoint } from "./gravity-field";
-import { advanceGravityAge, closingReturn, updateClosingScroll, gravityApproachAngle, gravityBirth, gravitySequence, gravityVisitors, gravityVisitorEntry, GRAVITY_REST_SECONDS } from "./gravity-sequence";
+import { advanceGravityAge, closingReturn, updateClosingScroll, gravityBirth, gravitySequence, gravityVisitors, gravityVisitorEntry, gravityVisitorPose, gravityVisitorMember, gravityReadingVisibility, type ReadingRect, GRAVITY_REST_SECONDS } from "./gravity-sequence";
 import { orbitGeometry, orbitalSpeed, sampleOrbit } from "./orbital-path";
 import { createStellarCore } from "./stellar-core";
 import { createDeepSpace } from "./deep-space";
@@ -198,6 +198,9 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, contactProgres
     const heroKicker = document.querySelector<HTMLElement>(".hero-kicker");
     const heroNote = document.querySelector<HTMLElement>(".hero-note");
     const contactCopy = document.querySelector<HTMLElement>(".contact-copy");
+    const contactTitle = document.querySelector<HTMLElement>(".contact-content h2");
+    const footer = document.querySelector<HTMLElement>("footer");
+    const contactReading: ReadingRect[] = [];
     const methodSteps = document.querySelector<HTMLElement>("#work");
     const stackKicker = document.querySelector<HTMLElement>(".maker-heading");
     let bandDirty = true, bandTop = 0, bandBottom = 0;
@@ -374,23 +377,23 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, contactProgres
       const group = new THREE.Group();
       const radius = .15 + index % 3 * .025;
       const maps = wandererMaps[index % 3];
-      const material = new THREE.MeshStandardMaterial({ map: maps.map, bumpMap: maps.bump, bumpScale: .009, roughness: .86, metalness: 0, transparent: true });
+      const material = new THREE.MeshStandardMaterial({ map: maps.map, bumpMap: maps.bump, bumpScale: .009, roughness: .86, metalness: 0, transparent: true, depthWrite: false });
       const surface = new THREE.Mesh(new THREE.SphereGeometry(radius, 24, 18), material);
       const atmosphere = createAtmosphere(radius, "#88c5d1");
       const { ring, texture } = createPlanetRing(radius);
       planetTextures.push(texture);
       group.add(surface, atmosphere, ring);
       wanderer.add(group);
-      return { group, surface, material, atmosphere, ring };
+      return { group, surface, material, atmosphere, ring, radius };
     });
     const visitorStar = createStellarCore(.24);
     const visitorLight = new THREE.PointLight(0xffe1bd, 5, 8, 2);
     wanderer.add(visitorStar.group, visitorLight);
     scene.add(wanderer);
-    const visitorOrigin = new THREE.Vector3();
-    const visitorOffset = new THREE.Vector3();
     const visitorOrbit = new THREE.Vector3();
     const projectedVisitor = new THREE.Vector3();
+    const visitorView = new THREE.Vector3();
+    const visitorProbes = visitors.map(() => ({ x: 0, y: 0, radius: 0, extent: 0, depth: 0, opacity: 0 }));
     let visitorIndex = -1;
 
     // Every project world gets a readable local system; the active world is
@@ -626,9 +629,13 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, contactProgres
       blackHole.diskMaterial.uniforms.uStrength.value = holeOpacity;
       blackHole.diskMaterial.uniforms.uResolution.value.set(width * renderer.getPixelRatio(), height * renderer.getPixelRatio());
       blackHole.diskMaterial.uniforms.uVoid.value.set(holeX * width * renderer.getPixelRatio(), (1 - holeY) * height * renderer.getPixelRatio(), diameter * holeScale * .5 * renderer.getPixelRatio());
-      if (holeOpacity > .001 && contactCopy) {
-        const rect = contactCopy.getBoundingClientRect();
-        blackHole.diskMaterial.uniforms.uReadRect.value.set(rect.left - 12, rect.top - 12, rect.right + 12, rect.bottom + 12).multiplyScalar(renderer.getPixelRatio());
+      contactReading.length = 0;
+      if (holeOpacity > .001) {
+        for (const element of [contactTitle, contactCopy, footer]) if (element) contactReading.push(element.getBoundingClientRect());
+        if (contactCopy) {
+          const rect = contactCopy.getBoundingClientRect();
+          blackHole.diskMaterial.uniforms.uReadRect.value.set(rect.left - 12, rect.top - 12, rect.right + 12, rect.bottom + 12).multiplyScalar(renderer.getPixelRatio());
+        }
       }
       blackHole.horizon.material.opacity = holeOpacity;
       blackHole.lensMaterial.uniforms.uTime.value = drift * .35;
@@ -871,6 +878,7 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, contactProgres
       bolts.instanceMatrix.needsUpdate = true;
       host.dataset.pursuitBolts = String(visibleBolts);
       wanderer.visible = gravityActive && sequence.visitorVisible || restoring && visitorProgress > 0;
+      const visitorPose = gravityVisitorPose(visitorProgress, sequence.index, camera.aspect, holeX, holeY);
       if (wanderer.visible) {
         if (visitorIndex !== sequence.index) {
           visitorIndex = sequence.index;
@@ -881,30 +889,41 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, contactProgres
             visitor.ring.visible = (visitorIndex + index) % 3 === 2;
           });
         }
-        holeRay.set(visitorEntry.x, visitorEntry.y, .5).unproject(camera).sub(camera.position).normalize();
-        visitorOrigin.copy(camera.position).addScaledVector(holeRay, (visitorEntry.z - camera.position.z) / holeRay.z);
-        visitorOffset.copy(visitorOrigin).sub(gravityTarget);
-        const contraction = Math.pow(1 - visitorProgress, 1.3);
-        const angle = gravityApproachAngle(Math.atan2(visitorOffset.y, visitorOffset.x), visitorProgress);
-        const radius = Math.hypot(visitorOffset.x, visitorOffset.y) * contraction;
-        wanderer.position.set(gravityTarget.x + Math.cos(angle) * radius, gravityTarget.y + Math.sin(angle) * radius, gravityTarget.z + visitorOffset.z * contraction);
-        wanderer.scale.setScalar(viewHeight * Math.min(width, height) / height * .14 * (1 - visitorProgress * .78));
-        wanderer.rotation.set(.18, gravityAge * .04, visitorProgress * .7);
+        holeRay.set(visitorPose.x, visitorPose.y, .5).unproject(camera).sub(camera.position).normalize();
+        wanderer.position.copy(camera.position).addScaledVector(holeRay, (visitorPose.z - camera.position.z) / holeRay.z);
+        wanderer.scale.setScalar(viewHeight * Math.min(width, height) / height * .24 * visitorPose.scale);
+        wanderer.rotation.set(.18, gravityAge * .025, visitorPose.capture * .7);
+        wanderer.updateMatrixWorld(true);
       }
       const visitorOpacity = wanderer.visible ? holeOpacity * THREE.MathUtils.smoothstep(visitorProgress, 0, .012) * (1 - THREE.MathUtils.smoothstep(visitorProgress, .82, 1)) : 0;
       visitors.forEach((visitor, index) => {
-        visitor.group.visible = index < visitorGroup.count;
+        const member = gravityVisitorMember(visitorProgress, index);
         const radius = .55 + index * .18;
-        sampleOrbit(radius, index * 2.4 + gravityAge * orbitalSpeed(radius) * .35, .08, visitorOrbit);
+        sampleOrbit(radius, member.phase + sequence.index * .67 + gravityAge * orbitalSpeed(radius) * .25, .08, visitorOrbit);
+        visitorOrbit.z += member.depth;
         visitor.group.position.copy(visitorOrbit);
+        visitor.group.scale.setScalar(member.scale);
         visitor.surface.rotation.y = gravityAge * .12 + index;
-        visitor.material.opacity = visitorOpacity;
-        visitor.atmosphere.material.uniforms.uOpacity.value = visitorOpacity * .6;
-        visitor.ring.material.opacity = visitorOpacity * .7;
+        visitor.group.getWorldPosition(projectedVisitor);
+        visitorView.copy(projectedVisitor).applyMatrix4(camera.matrixWorldInverse);
+        projectedVisitor.project(camera);
+        const x = (projectedVisitor.x * .5 + .5) * width, y = (-projectedVisitor.y * .5 + .5) * height;
+        const projectedRadius = visitor.radius * member.scale * wanderer.scale.x / (tangent * Math.max(.1, -visitorView.z)) * height / 2;
+        const extent = projectedRadius * (visitor.ring.visible ? 1.93 : 1.26);
+        const clearance = gravityReadingVisibility(x, y, extent, width, height, contactReading);
+        const opacity = wanderer.visible && index < visitorGroup.count ? holeOpacity * member.opacity * clearance : 0;
+        visitor.group.visible = opacity > .001;
+        visitor.material.opacity = opacity;
+        visitor.atmosphere.material.uniforms.uOpacity.value = opacity * .6;
+        visitor.ring.material.opacity = opacity * .7;
+        Object.assign(visitorProbes[index], { x, y, radius: projectedRadius, extent, depth: -visitorView.z, opacity });
       });
+      visitorStar.group.getWorldPosition(projectedVisitor).project(camera);
+      const starRadius = .24 * 1.6 * wanderer.scale.x / (tangent * (camera.position.z - visitorPose.z)) * height / 2;
+      const starVisibility = gravityReadingVisibility((projectedVisitor.x * .5 + .5) * width, (-projectedVisitor.y * .5 + .5) * height, starRadius, width, height, contactReading);
       visitorStar.material.uniforms.uTime.value = gravityAge;
-      visitorStar.material.uniforms.uOpacity.value = visitorOpacity;
-      visitorStar.aura.material.uniforms.uOpacity.value = visitorOpacity * .4;
+      visitorStar.material.uniforms.uOpacity.value = visitorOpacity * starVisibility * .65;
+      visitorStar.aura.material.uniforms.uOpacity.value = visitorOpacity * starVisibility * .2;
       visitorLight.intensity = 5 * wanderer.scale.x ** 2;
       host.style.setProperty("--black-hole-strength", holeOpacity.toFixed(3));
       host.style.setProperty("--hole-growth", holeGrowth.toFixed(3));
@@ -937,9 +956,17 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, contactProgres
         solarBodies[index].radius = Number((radius * body.scale.x * planetSystem.scale.x / (tangent * Math.max(.1, -flightView.z)) * height / 2).toFixed(1));
       });
       host.dataset.solarBodies = JSON.stringify(solarBodies);
-      stellarCore.group.getWorldPosition(projectedStar).project(camera);
+      stellarCore.group.getWorldPosition(projectedStar);
+      flightView.copy(projectedStar).applyMatrix4(camera.matrixWorldInverse);
+      projectedStar.project(camera);
+      const coreRadius = .63 * stellarCore.group.scale.x * planetSystem.scale.x / (tangent * Math.max(.1, -flightView.z)) * height / 2;
+      const coreClearance = gravityReadingVisibility((projectedStar.x * .5 + .5) * width, (-projectedStar.y * .5 + .5) * height, coreRadius, width, height, contactReading);
+      const coreReading = 1 - holeOpacity * (1 - coreClearance) * .84;
+      stellarCore.material.uniforms.uOpacity.value = coreStrength * coreReading;
+      stellarCore.aura.material.uniforms.uOpacity.value = .55 * coreStrength * coreReading;
       host.dataset.stellarX = ((projectedStar.x * .5 + .5) * width).toFixed(1);
       host.dataset.stellarY = ((-projectedStar.y * .5 + .5) * height).toFixed(1);
+      host.dataset.stellarOpacity = stellarCore.material.uniforms.uOpacity.value.toFixed(3);
       host.dataset.gravityAge = gravityAge.toFixed(2);
       host.dataset.birthAge = birthAge.toFixed(2);
       host.dataset.holeGrowth = holeGrowth.toFixed(3);
@@ -954,6 +981,10 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, contactProgres
       host.dataset.visitorDirection = visitorGroup.direction;
       host.dataset.visitorEntryX = ((visitorEntry.x + 1) / 2).toFixed(3);
       host.dataset.visitorEntryY = ((1 - visitorEntry.y) / 2).toFixed(3);
+      host.dataset.visitorDepth = visitorPose.z.toFixed(3);
+      host.dataset.visitorApproach = visitorPose.approach.toFixed(3);
+      host.dataset.visitorCapture = visitorPose.capture.toFixed(3);
+      host.dataset.visitorProbes = JSON.stringify(visitorProbes);
       host.dataset.backgroundSource = "volumetric-3d";
       host.dataset.spacecraftVisible = String(flights[0].model.group.visible);
       host.dataset.scoutVisible = String(flights[1].model.group.visible);
@@ -997,9 +1028,8 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, contactProgres
       host.dataset.absorptionRadius = flowMaterial.uniforms.uHorizon.value.toFixed(3);
       renderer.render(scene, camera);
       let visibleVisitors = 0;
-      if (wanderer.visible && visitorOpacity > .1) visitors.forEach((visitor, index) => {
-        visitor.group.getWorldPosition(projectedVisitor).project(camera);
-        if (index < visitorGroup.count && Math.abs(projectedVisitor.x) < 1 && Math.abs(projectedVisitor.y) < 1 && projectedVisitor.z < 1) visibleVisitors++;
+      if (wanderer.visible) visitorProbes.forEach(probe => {
+        if (probe.opacity > .1 && probe.x > 0 && probe.x < width && probe.y > 0 && probe.y < height) visibleVisitors++;
       });
       host.dataset.visibleVisitors = String(visibleVisitors);
       host.dataset.drawCalls = String(renderer.info.render.calls);

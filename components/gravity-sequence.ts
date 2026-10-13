@@ -37,9 +37,55 @@ export function gravityVisitors(index: number) {
 }
 
 export function gravityVisitorEntry(index: number) {
-  // Normalized camera coordinates: visible upper-middle space, well outside the horizon.
+  // Camera coordinates keep the first distant silhouette above the Contact copy.
   const top = gravityVisitors(index).direction === "top";
-  return { x: top ? .08 : -.32, y: top ? .66 : .5, z: -7.5 };
+  const cycle = Math.max(0, Math.floor(Number.isFinite(index) ? index : 0));
+  return { x: top ? .16 : -.32, y: top ? .87 : .8, z: -30 - cycle % 3 * 4 };
+}
+
+export function gravityVisitorPose(progress: number, index: number, aspect: number, holeX: number, holeY: number) {
+  const p = Math.max(0, Math.min(1, Number.isFinite(progress) ? progress : 0));
+  const entry = gravityVisitorEntry(index);
+  const approach = smooth(p, 0, .3);
+  // Portrait layouts need a longer upper lane before crossing the Contact heading.
+  const compact = 1 - smooth(aspect, .8, 1.2);
+  const capture = smooth(p, .22 + compact * .28, 1);
+  const x = entry.x + (.48 - entry.x) * approach * compact + Math.sin(approach * Math.PI) * .06;
+  const y = entry.y - approach * (.1 - compact * .08);
+  const targetX = holeX * 2 - 1, targetY = 1 - holeY * 2;
+  const dx = (x - targetX) * aspect, dy = y - targetY;
+  const angle = gravityApproachAngle(Math.atan2(dy, dx), capture) + Math.sin(capture * Math.PI) * (index % 2 ? .16 : -.24) * (1 - compact);
+  const radius = Math.hypot(dx, dy) * Math.pow(1 - capture, 1.25);
+  return {
+    x: targetX + Math.cos(angle) * radius / aspect,
+    y: targetY + Math.sin(angle) * radius,
+    z: entry.z + (-8.8 - entry.z) * approach + capture * 4,
+    approach, capture,
+    scale: 1 - smooth(capture, .65, 1) * .65,
+  };
+}
+
+export function gravityVisitorMember(progress: number, index: number) {
+  const p = Math.max(0, Math.min(1, Number.isFinite(progress) ? progress : 0));
+  const slot = Math.max(0, Math.min(4, Math.floor(index)));
+  return {
+    scale: [.95, .74, 1.1, .66, .88][slot],
+    depth: [-.45, .7, -1.05, .34, -.7][slot],
+    phase: slot * 2.399,
+    opacity: smooth(p, slot * .002, .014 + slot * .004) * (1 - smooth(p, .76 + slot * .026, .87 + slot * .026)),
+  };
+}
+
+export type ReadingRect = { left: number; top: number; right: number; bottom: number };
+
+export function gravityReadingVisibility(x: number, y: number, radius: number, width: number, height: number, reading: ReadingRect[]) {
+  let clearance = Math.min(x, y, width - x, height - y) - radius;
+  for (const rect of reading) {
+    const dx = Math.max(rect.left - x, 0, x - rect.right);
+    const dy = Math.max(rect.top - y, 0, y - rect.bottom);
+    clearance = Math.min(clearance, Math.hypot(dx, dy) - radius - 8);
+  }
+  return smooth(clearance, 0, 24);
 }
 
 export function gravityApproachAngle(entryAngle: number, progress: number) {

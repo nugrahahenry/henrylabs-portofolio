@@ -1,5 +1,14 @@
 # Changelog
 
+## StarGod Portfolio v0.109.0 - 2026-10-13
+
+- Bring the Contact visitor systems in from deeper space, with a perspective approach before their curved descent into the black hole.
+- Give the cached three- and five-planet groups distinct body sizes, depth offsets, orbital phases, and absorption timing without creating new objects per encounter.
+- Keep portrait arrivals in a longer upper lane and feather whole planet silhouettes before they touch Contact text or the viewport edge.
+- Dim the original stellar core when it crosses Contact copy, retaining its presence and orbit without washing out the reading area.
+- Preserve the four-second black-hole birth, thirty-two-second intake, thirty-second rest, independent distant stars, and same-path scroll reversal.
+- Extend closing regression with painted arrival pixels, perspective growth, text clearance, repeated groups, and hidden-page clock recovery.
+
 ## StarGod Portfolio v0.108.0 - 2026-10-13
 
 - Reframe the Contact black hole so its dark center stays inside desktop and mobile viewports while the outer accretion disk retains its large-scale crop.

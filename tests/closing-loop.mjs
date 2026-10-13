@@ -36,6 +36,33 @@ async function paintedDust(page) {
   return best;
 }
 
+async function arrivalProbe(page) {
+  return page.locator(".worldline-backdrop canvas").evaluate(canvas => {
+    const gl = canvas.getContext("webgl2");
+    const points = JSON.parse(canvas.parentElement.dataset.visitorProbes);
+    const reading = [".contact-content h2", ".contact-copy", "footer"].map(selector => document.querySelector(selector).getBoundingClientRect());
+    const { stellarX, stellarY, stellarOpacity, holeOpacity } = canvas.parentElement.dataset;
+    if (Number(holeOpacity) > .99 && reading.some(rect => Number(stellarX) >= rect.left && Number(stellarX) <= rect.right && Number(stellarY) >= rect.top && Number(stellarY) <= rect.bottom)) {
+      if (Number(stellarOpacity) > .17) throw Error("original stellar core washes out Contact text");
+    }
+    let painted = 0;
+    for (const point of points.filter(p => p.opacity > .1)) {
+      if (point.x - point.extent <= 0 || point.y - point.extent <= 0 || point.x + point.extent >= innerWidth || point.y + point.extent >= innerHeight) throw Error("incoming planet clipped by viewport");
+      for (const rect of reading) {
+        const dx = Math.max(rect.left-point.x,0,point.x-rect.right), dy = Math.max(rect.top-point.y,0,point.y-rect.bottom);
+        if (Math.hypot(dx,dy) < point.extent + 8) throw Error("incoming planet overlaps Contact text");
+      }
+      const size = Math.max(2, Math.ceil(point.radius));
+      const pixels = new Uint8Array(size*size*16);
+      gl.readPixels(Math.round(point.x)-size,Math.round(innerHeight-point.y)-size,size*2,size*2,gl.RGBA,gl.UNSIGNED_BYTE,pixels);
+      let min=765,max=0;
+      for(let i=0;i<pixels.length;i+=4) {const value=pixels[i]+pixels[i+1]+pixels[i+2]; min=Math.min(min,value); max=Math.max(max,value);}
+      if(max-min>20) painted++;
+    }
+    return {points,painted};
+  });
+}
+
 try {
   mkdirSync("test-results", { recursive: true });
   const viewports = [{ width: 1440, height: 900 }, { width: 390, height: 844 }];
@@ -76,7 +103,17 @@ try {
     assert.ok(Number(await field.getAttribute("data-visitor-entry-y")) < .3);
     assert.ok(Number(await field.getAttribute("data-visitor-entry-x")) > .3);
     assert.ok(Number(await field.getAttribute("data-visible-visitors")) > 0, "the distant group must already be visible before it approaches the hole");
+    const distant = await arrivalProbe(page);
+    assert.ok(distant.painted > 0, "the distant arrival must paint actual shaded planets");
+    assert.ok(Number(await field.getAttribute("data-visitor-depth")) < -25);
+    await expect(field).toHaveAttribute("data-visitor-capture", "0.000");
     await page.screenshot({ path: `test-results/${viewport.width}-distant-arrival.png` });
+    await advanceTo(10);
+    const approach = await arrivalProbe(page);
+    assert.ok(approach.painted > 0, "the closer group must remain visible before capture");
+    assert.ok(approach.points.some((point,index)=>point.opacity>.1 && point.radius>distant.points[index].radius*1.7),"perspective approach must visibly enlarge a retained planet");
+    assert.ok(new Set(approach.points.map(p=>p.depth.toFixed(1))).size>=3);
+    await page.screenshot({path:`test-results/${viewport.width}-planet-approach.png`});
     await advanceTo(16);
     await page.evaluate(() => window.scrollTo({ top: document.documentElement.scrollHeight, behavior: "instant" }));
     await expect(page.locator("footer")).toBeInViewport();
@@ -86,7 +123,11 @@ try {
     await expect(field).toHaveAttribute("data-visitor-count", "3");
     await expect(field).toHaveAttribute("data-visitor-direction", "left");
     assert.ok(Number(await field.getAttribute("data-visible-visitors")) > 0, "the arriving orbit must actually enter the viewport");
+    await arrivalProbe(page);
     await page.screenshot({ path: `test-results/${viewport.width}-slow-gravity-middle.png` });
+    await advanceTo(26);
+    await arrivalProbe(page);
+    await page.screenshot({path:`test-results/${viewport.width}-planet-capture.png`});
     await advanceTo(32.25);
     await expect(field).toHaveAttribute("data-gravity-phase", "rest");
     await expect(field).toHaveAttribute("data-visitor-opacity", "0.000");
@@ -109,12 +150,14 @@ try {
     await expect(field).toHaveAttribute("data-visitor-count", "5");
     await expect(field).toHaveAttribute("data-visitor-direction", "top");
     assert.ok(Number(await field.getAttribute("data-visitor-opacity")) > .35, "a different cached planet must appear after the quiet interval");
+    assert.ok((await arrivalProbe(page)).painted>0,"the repeated distant group must paint actual planets");
     await expect(field).toHaveAttribute("data-pull", "1.000");
     await expect(field).toHaveAttribute("data-distant-star-pull", "0.000");
     await page.screenshot({ path: `test-results/${viewport.width}-second-gravity-visitor.png` });
     await advanceTo(78);
     await page.screenshot({ path: `test-results/${viewport.width}-five-gravity-visitors.png` });
     assert.ok(Number(await field.getAttribute("data-visible-visitors")) > 0, "the five-planet orbit must enter from above");
+    await arrivalProbe(page);
     assert.ok(Number(await field.getAttribute("data-draw-calls")) < 65);
     assert.equal(await page.locator("canvas").count(), 2);
     const contactHit = await page.locator('#contact a[href*="wa.me"]').evaluate((link) => {
@@ -122,6 +165,14 @@ try {
       return document.elementFromPoint(rect.x + rect.width / 2, rect.y + rect.height / 2)?.closest("a") === link;
     });
     assert.equal(contactHit, true, "the repeat visitor must not block the contact action");
+    // Exercise the visibilitychange boundary without depending on headless window focus.
+    const beforeHidden = Number(await field.getAttribute("data-gravity-age"));
+    await page.evaluate(()=>{Object.defineProperty(document,"hidden",{configurable:true,value:true});document.dispatchEvent(new Event("visibilitychange"));});
+    await page.clock.fastForward(60000);
+    assert.equal(Number(await field.getAttribute("data-gravity-age")),beforeHidden,"hidden tabs must freeze the encounter clock");
+    await page.evaluate(()=>{delete document.hidden;document.dispatchEvent(new Event("visibilitychange"));});
+    await page.clock.fastForward(16);
+    assert.ok(Number(await field.getAttribute("data-gravity-age"))<=beforeHidden+.26,"resuming must not fast-forward a hidden minute");
     await advanceTo(94.25);
     const cycle = await field.getAttribute("data-gravity-cycle");
     const count = "5";

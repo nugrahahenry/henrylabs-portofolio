@@ -5,16 +5,70 @@ import ts from "typescript";
 
 const source = readFileSync(new URL("../components/gravity-sequence.ts", import.meta.url), "utf8");
 const compiled = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.ESNext, target: ts.ScriptTarget.ES2020 } }).outputText;
-const { gravitySequence, gravityBirth, gravityVisitors, gravityVisitorEntry, gravityApproachAngle, advanceGravityAge, updateClosingScroll, closingReturn, GRAVITY_INTAKE_SECONDS, GRAVITY_REST_SECONDS } = await import(`data:text/javascript;base64,${Buffer.from(compiled).toString("base64")}`);
+const { gravitySequence, gravityBirth, gravityVisitors, gravityVisitorEntry, gravityVisitorPose, gravityVisitorMember, gravityReadingVisibility, gravityApproachAngle, advanceGravityAge, updateClosingScroll, closingReturn, GRAVITY_INTAKE_SECONDS, GRAVITY_REST_SECONDS } = await import(`data:text/javascript;base64,${Buffer.from(compiled).toString("base64")}`);
 
 test("arrivals originate in distant upper-middle space, not beside the cropped horizon", () => {
   for (let index = 0; index < 5; index++) {
     const entry = gravityVisitorEntry(index);
     const x = (entry.x + 1) / 2, y = (1 - entry.y) / 2;
-    assert.ok(x >= .3 && x <= .6 && y >= .15 && y <= .3);
-    assert.ok(Math.hypot(x - 1.01, y - .9) > .75);
-    assert.ok(entry.z < -4.8, "the incoming system starts behind the horizon's camera plane");
+    assert.ok(x >= .3 && x <= .6 && y >= .05 && y <= .12);
+    assert.ok(Math.hypot(x - .82, y - .86) > .75);
+    assert.ok(entry.z <= -30, "arrival must begin well behind the horizon's camera plane");
   }
+});
+
+test("visitors approach through true depth before the curved intake, then retrace the same path", () => {
+  for (const aspect of [1.6, .462, 2.16]) for (let cycle = 0; cycle < 5; cycle++) {
+    const hx = aspect < 1 ? .82 : .86, hy = .86;
+    const start = gravityVisitorPose(0, cycle, aspect, hx, hy);
+    assert.ok(start.z <= -30);
+    const near = gravityVisitorPose(.3, cycle, aspect, hx, hy);
+    assert.ok(near.z > -9 && near.capture < .05);
+    // Fixed physical bodies grow in projection, not through an artificial size pop.
+    assert.ok((6.4 - start.z) / (6.4 - near.z) > 2.3);
+    assert.equal(near.scale, 1);
+    let depth = -Infinity;
+    const frames = [];
+    for (let step = 0; step <= 100; step++) {
+      const pose = gravityVisitorPose(step / 100, cycle, aspect, hx, hy);
+      assert.ok(pose.z >= depth && pose.z <= -4.8 + 1e-10);
+      assert.ok(pose.scale >= .35 && pose.scale <= 1);
+      if (step) assert.ok(Math.hypot(pose.x - frames[step-1].x, pose.y - frames[step-1].y) < .08);
+      frames.push(pose); depth = pose.z;
+    }
+    for (let step = 100; step >= 0; step--) assert.deepEqual(gravityVisitorPose(step / 100, cycle, aspect, hx, hy), frames[step]);
+    assert.ok(Math.abs(frames[100].x - (hx * 2 - 1)) < 1e-12);
+    assert.ok(Math.abs(frames[100].y - (1 - hy * 2)) < 1e-12);
+  }
+});
+
+test("portrait arrivals retain an upper reading lane before the final descent", () => {
+  for (let cycle = 0; cycle < 5; cycle++) {
+    const portrait = gravityVisitorPose(.5, cycle, 390 / 844, .82, .86);
+    assert.equal(portrait.capture, 0);
+    assert.ok(portrait.y >= .78 && portrait.x < .6);
+    assert.ok(gravityVisitorPose(.5, cycle, 1.6, .86, .86).capture > .2);
+  }
+});
+
+test("five cached members have different depth, size, phase and absorption timing", () => {
+  const members = Array.from({length:5},(_,i)=>gravityVisitorMember(.85,i));
+  for (const key of ["depth", "scale", "phase", "opacity"]) assert.equal(new Set(members.map(m=>m[key])).size,5);
+  for (let i=0;i<5;i++) {
+    assert.equal(gravityVisitorMember(0,i).opacity,0);
+    assert.equal(gravityVisitorMember(.1,i).opacity,1);
+    assert.equal(gravityVisitorMember(1,i).opacity,0);
+  }
+});
+
+test("arrival reading protection covers the whole body and feathers before touching text or frame", () => {
+  const rects = [{left:100,top:200,right:300,bottom:350}];
+  assert.equal(gravityReadingVisibility(95,250,10,390,844,rects),0);
+  assert.equal(gravityReadingVisibility(150,220,10,390,844,rects),0);
+  assert.equal(gravityReadingVisibility(150,80,10,390,844,rects),1);
+  assert.equal(gravityReadingVisibility(5,80,10,390,844,rects),0);
+  const feather = gravityReadingVisibility(70,250,10,390,844,rects);
+  assert.ok(feather>0 && feather<1);
 });
 
 test("closing return restores objects before shrinking and fading the horizon", () => {
