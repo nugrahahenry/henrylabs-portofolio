@@ -1,5 +1,12 @@
 # Changelog
 
+## StarGod Portfolio v0.114.6 - 2026-10-13
+
+- Keep the opening journey and final hold on a visible-tab clock, so returning to a hidden tab does not skip ahead.
+- Honor Still mode before starting the intro, including replay URLs. Preserve reduced-motion, direct-entry and session bypasses.
+- Prevent background scrolling and hidden-content keyboard focus during the opening. Keep Skip accessible, support Escape, and hand focus to the homepage afterward.
+- Add opening-to-Explore regression coverage without changing the cinematic route, duration, galaxy brightness or landing position.
+
 ## StarGod Portfolio v0.114.5 - 2026-10-13
 
 - Keep the persistent background system in its upper reading lane when Contact begins, leaving visible room before black-hole capture.

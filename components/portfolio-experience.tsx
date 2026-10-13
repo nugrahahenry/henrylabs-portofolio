@@ -156,6 +156,8 @@ export function PortfolioExperience() {
   const introHandoff = arrivalHandoff(introProgress / 100);
   const introBridge = arrivalBridge(introProgress / 100);
   const introStopRef = useRef(false);
+  const skipIntroRef = useRef<HTMLButtonElement>(null);
+  const introFocusOwned = useRef(false);
   const [worldlineStage, setWorldlineStage] = useState<WorldlineStage>("world");
   const [heroPhase, setHeroPhase] = useState("intro");
   const [showProjectShowcase, setShowProjectShowcase] = useState(false);
@@ -264,49 +266,70 @@ export function PortfolioExperience() {
   }, []);
 
   useEffect(() => {
+    if (!motionReady) return;
+    if (introDone) {
+      if (introFocusOwned.current) {
+        document.getElementById("main-content")?.focus({ preventScroll: true });
+        introFocusOwned.current = false;
+      }
+    }
+  }, [introDone, motionReady]);
+
+  useEffect(() => {
+    if (!motionReady || introDone) return;
     introStopRef.current = true;
     let introSeen = false;
     try { introSeen = window.sessionStorage.getItem("henrylabs-intro-seen") === "1"; } catch { /* The introduction also works without storage. */ }
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const replay = new URLSearchParams(window.location.search).get("intro") === "1";
     const directEntry = Boolean(window.location.hash || new URLSearchParams(window.location.search).get("world") || new URLSearchParams(window.location.search).get("view") === "universe");
-    if ((introSeen || directEntry) && !replay || reduced) {
+    if ((introSeen || directEntry) && !replay || reduced || !motionOn) {
       setIntroProgress(100);
       setIntroDone(true);
       return;
     }
-    if (window.scrollY > 0) window.scrollTo({ top: 0, behavior: "auto" });
+    if (window.scrollY > 0) window.scrollTo({ top: 0, behavior: "instant" });
+    skipIntroRef.current?.focus({ preventScroll: true });
+    introFocusOwned.current = true;
     introStopRef.current = false;
     const duration = ARRIVAL_DURATION;
-    const startedAt = performance.now();
     let frame = 0;
-    let lastPaint = startedAt - 100;
-    let finishTimer: number | null = null;
+    let elapsed = 0;
+    let lastFrame = performance.now();
+    let lastPaint = -100;
     const tick = (now: number) => {
-      if (introStopRef.current) return;
-      const ratio = Math.min(1, (now - startedAt) / duration);
-      if (now - lastPaint >= 80 || ratio === 1) {
+      if (introStopRef.current || document.hidden) return;
+      elapsed += Math.max(0, Math.min(now - lastFrame, 250));
+      lastFrame = now;
+      const ratio = Math.min(1, elapsed / duration);
+      if (elapsed - lastPaint >= 80 || ratio === 1) {
         // Keep the scene's camera clock continuous; round only at the semantic UI boundary.
         const progress = ratio * 100;
         setIntroProgress(progress);
-        lastPaint = now;
+        lastPaint = elapsed;
       }
-      if (ratio >= 1) {
+      // The final hold uses the same visible-time clock as the journey.
+      if (elapsed >= duration + 1200) {
         introStopRef.current = true;
         setIntroProgress(100);
-        // Hold the final coordinates before handing the sky to the opening scene.
-        finishTimer = window.setTimeout(() => setIntroDone(true), 1200);
+        setIntroDone(true);
         return;
       }
       frame = requestAnimationFrame(tick);
     };
+    const onVisibilityChange = () => {
+      cancelAnimationFrame(frame);
+      lastFrame = performance.now();
+      if (!document.hidden && !introStopRef.current) frame = requestAnimationFrame(tick);
+    };
     frame = requestAnimationFrame(tick);
+    document.addEventListener("visibilitychange", onVisibilityChange);
     return () => {
       introStopRef.current = true;
       cancelAnimationFrame(frame);
-      if (finishTimer !== null) window.clearTimeout(finishTimer);
+      document.removeEventListener("visibilitychange", onVisibilityChange);
     };
-  }, []);
+  }, [introDone, motionReady, motionOn]);
 
   useEffect(() => {
     if (introDone) try { window.sessionStorage.setItem("henrylabs-intro-seen", "1"); } catch { /* Storage is optional. */ }
@@ -425,9 +448,12 @@ export function PortfolioExperience() {
   return (
     <MotionConfig reducedMotion={motionOn ? "never" : "always"} transition={{ duration: motionOn ? 0.55 : 0, ease: [0.16, 1, 0.3, 1] }}>
     <main className="site-shell" id="main-content" tabIndex={-1} data-motion={motionOn ? "on" : "off"} data-intro={introDone ? "done" : "active"} data-intro-handoff={introHandoff.toFixed(3)} style={{ "--intro-handoff": introHandoff, "--intro-nebula": introBridge.nebula, "--intro-field": introBridge.field, "--intro-labels": introBridge.labels, "--intro-readout": introBridge.readout, "--intro-hero-reveal": introBridge.hero } as CSSProperties}>
-      <SmoothScroll enabled={motionOn} />
+      <SmoothScroll enabled={motionOn && introDone} />
       <WorldlineBackdrop activeId={activeProject.id} motionOn={motionOn} progress={worldlineProgress} mapPresence={mapPresence} contactProgress={contactProgress} contactVisible={contactVisible} mapActive={heroPhase === "worlds"} introActive={!introDone} introProgress={introProgress} />
-      <div className={cx("intro-loader", "arrival-intro", introDone && "intro-loader--done")} data-intro-phase={introPhase} data-intro-progress={introProgress} data-intro-universe={introUniverseIndex} aria-hidden={introDone} inert={introDone}>
+      <div className={cx("intro-loader", "arrival-intro", introDone && "intro-loader--done")} data-intro-phase={introPhase} data-intro-progress={introProgress} data-intro-universe={introUniverseIndex} aria-hidden={introDone} inert={introDone} role={introDone ? undefined : "dialog"} aria-modal={introDone ? undefined : true} aria-label={language === "en" ? "Opening StarGod" : "Memasuki StarGod"} onKeyDown={event => {
+        if (event.key === "Tab") { event.preventDefault(); skipIntroRef.current?.focus(); }
+        if (event.key === "Escape") { event.preventDefault(); skipIntro(); }
+      }}>
         <ArrivalField progress={introProgress} motionOn={motionOn} active={!introDone} projects={projects} />
         <div className="arrival-content">
           <div className="arrival-query">
@@ -438,14 +464,14 @@ export function PortfolioExperience() {
           <ol className="arrival-route" aria-label={language === "en" ? "Journey through scale" : "Perjalanan skala"}>{ARRIVAL_CHAPTERS.map((name, i) => <li key={name} aria-current={introChapter === i ? "step" : undefined} data-passed={i < introChapter}>{i === 3 ? (language === "en" ? "Galaxy" : "Galaksi") : name}</li>)}</ol>
           <div className="arrival-progress" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(introProgress)} aria-label={language === "en" ? "Universe search progress" : "Progress pencarian semesta"}><span style={{ transform: `scaleX(${introProgress / 100})` }} /><strong>{String(Math.round(introProgress)).padStart(3, "0")}&#37;</strong></div>
         </div>
-        <button type="button" className="arrival-skip" onClick={skipIntro}>{language === "en" ? "Skip intro" : "Lewati intro"}<ArrowUpRight size={15} /></button>
+        <button ref={skipIntroRef} type="button" className="arrival-skip" onClick={skipIntro}>{language === "en" ? "Skip intro" : "Lewati intro"}<ArrowUpRight size={15} /></button>
       </div>
 
       <motion.div className="cursor-guide" style={{ x: cursorX, y: cursorY }} aria-hidden="true">
         <span>Henry</span><StarGodMark size={14} />
       </motion.div>
 
-      <section ref={heroRef} className="hero-stage" id="top" aria-labelledby="hero-title" data-phase={motionOn ? heroPhase : "all"}>
+      <section ref={heroRef} className="hero-stage" id="top" aria-labelledby="hero-title" data-phase={motionOn ? heroPhase : "all"} inert={!introDone}>
         <div className="space-backdrop" aria-hidden="true">
           <span className="star-field star-field--far" /><span className="star-field star-field--near" />
           <span className="star star-1" /><span className="star star-2" /><span className="star star-3" /><span className="star star-4" /><span className="star star-5" />
@@ -489,7 +515,7 @@ export function PortfolioExperience() {
         <button type="button" className="scroll-cue" onClick={openGalaxyMap}><span>Scroll to enter</span><ArrowDown size={18} /></button>
       </section>
 
-      <div ref={fieldRef} className="field-continuum" data-active-world={activeProject.id} data-worldline-stage={worldlineStage}>
+      <div ref={fieldRef} className="field-continuum" data-active-world={activeProject.id} data-worldline-stage={worldlineStage} inert={!introDone}>
       <motion.section ref={workRef} className="content-section work-section" id="work" aria-labelledby="work-title">
         <HomeProjectPreview project={findWorld(focusedWorld.id)!} onRead={() => rememberMap(focusedWorld.id)} />
       </motion.section>
@@ -498,9 +524,9 @@ export function PortfolioExperience() {
       <MakerChapter />
       </div>
 
-      <section ref={contactRef} className="contact-section" id="contact" aria-labelledby="contact-title"><div className="content-section contact-content"><div><p className="section-kicker section-kicker-dark">Make the next useful thing</p><h2 id="contact-title">{t.contact.title}</h2></div><div className="contact-copy"><p>{t.contact.body}</p><div className="contact-actions"><a className="button button-bright" href="https://wa.me/6289513559554" target="_blank" rel="noreferrer"><MessageCircle size={18} /> WhatsApp <ArrowUpRight size={16} /></a><a className="button button-outline" href="mailto:henrynugraha1210@gmail.com"><Mail size={18} /> Email <ArrowUpRight size={16} /></a></div><div className="social-links"><a href="https://github.com/nugrahahenry" target="_blank" rel="noreferrer"><Github size={19} /> GitHub</a><a href="https://www.linkedin.com/in/nugrahahenry/" target="_blank" rel="noreferrer"><Linkedin size={19} /> LinkedIn</a><a href="https://instagram.com/hnry.dev" target="_blank" rel="noreferrer"><Instagram size={19} /> @hnry.dev</a></div></div></div></section>
+      <section ref={contactRef} className="contact-section" id="contact" aria-labelledby="contact-title" inert={!introDone}><div className="content-section contact-content"><div><p className="section-kicker section-kicker-dark">Make the next useful thing</p><h2 id="contact-title">{t.contact.title}</h2></div><div className="contact-copy"><p>{t.contact.body}</p><div className="contact-actions"><a className="button button-bright" href="https://wa.me/6289513559554" target="_blank" rel="noreferrer"><MessageCircle size={18} /> WhatsApp <ArrowUpRight size={16} /></a><a className="button button-outline" href="mailto:henrynugraha1210@gmail.com"><Mail size={18} /> Email <ArrowUpRight size={16} /></a></div><div className="social-links"><a href="https://github.com/nugrahahenry" target="_blank" rel="noreferrer"><Github size={19} /> GitHub</a><a href="https://www.linkedin.com/in/nugrahahenry/" target="_blank" rel="noreferrer"><Linkedin size={19} /> LinkedIn</a><a href="https://instagram.com/hnry.dev" target="_blank" rel="noreferrer"><Instagram size={19} /> @hnry.dev</a></div></div></div></section>
 
-      <footer className="site-footer"><a className="brand" href="#top"><span className="brand-mark"><StarGodMark /></span><span>StarGod</span></a><span>{t.footer}</span><span>© 2026</span></footer>
+      <footer className="site-footer" inert={!introDone}><a className="brand" href="#top"><span className="brand-mark"><StarGodMark /></span><span>StarGod</span></a><span>{t.footer}</span><span>© 2026</span></footer>
     </main>
     </MotionConfig>
   );
