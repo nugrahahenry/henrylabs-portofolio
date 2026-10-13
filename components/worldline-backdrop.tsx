@@ -7,7 +7,7 @@ import { projectWorlds, type ProjectId } from "./cosmic-canvas";
 import { createAtmosphere, createCompanionMaterial, createPlanetMaps, createPlanetRing, projectPlanetKinds } from "./planet-materials";
 import { companionCounts, createCompanionOrbit, sampleCompanionOrbit, advanceCompanionTime, type CompanionOrbit } from "./companion-orbit";
 import { gravityMaterial, infallPoint } from "./gravity-field";
-import { advanceGravityAge, closingReturn, updateClosingScroll, gravityBirth, gravitySequence, gravityVisitors, gravityVisitorEntry, gravityVisitorPose, gravityVisitorMember, gravityReadingVisibility, type ReadingRect, GRAVITY_REST_SECONDS } from "./gravity-sequence";
+import { advanceGravityAge, closingReturn, updateClosingScroll, gravityBirth, gravitySequence, gravityVisitors, gravityVisitorEntry, gravityVisitorPose, gravityVisitorMember, gravityBackgroundPose, gravityReadingVisibility, type ReadingRect, GRAVITY_REST_SECONDS } from "./gravity-sequence";
 import { orbitGeometry, orbitalSpeed, sampleOrbit } from "./orbital-path";
 import { createStellarCore } from "./stellar-core";
 import { createDeepSpace } from "./deep-space";
@@ -232,6 +232,7 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, mapPresence, c
     const stellarLight = new THREE.PointLight(0xffe1b1, 34, 18, 2);
     planetSystem.add(stellarCore.group, stellarLight);
     const solarOrigin = new THREE.Vector3();
+    const solarCapture = { x: 0, y: 0, z: 0, scale: 1, turn: 0 };
     const solarTarget = new THREE.Vector3();
     const projectedStar = new THREE.Vector3();
     const blackHole = createBlackHole();
@@ -564,9 +565,10 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, mapPresence, c
       readingBlend = state.current.motionOn ? THREE.MathUtils.damp(readingBlend, readingTarget, 5, dt) : readingTarget;
       // Move the same system to the reading periphery instead of hiding its planets.
       const solarScale = (solarPortrait ? .8 : 1) * THREE.MathUtils.lerp(1, solarPortrait ? .7 : .9, readingBlend);
+      const upperLane = Math.max(readingBlend, holeOpacity);
       solarOrigin.set(
-        THREE.MathUtils.lerp(solarPortrait ? .72 : 2.8, solarPortrait ? .84 : 3.05, readingBlend),
-        THREE.MathUtils.lerp((solarPortrait ? 2.5 : 2.7) - scroll * 2.2, 2.15 - scroll * .25, readingBlend),
+        THREE.MathUtils.lerp(solarPortrait ? .72 : 2.8, solarPortrait ? .84 : 3.05, upperLane),
+        THREE.MathUtils.lerp((solarPortrait ? 2.5 : 2.7) - scroll * 2.2, 2.15 - scroll * .25, upperLane),
         -3.2,
       );
       const solarStrength = THREE.MathUtils.lerp(THREE.MathUtils.lerp(1, .76, readingBlend), .38, mapBlend);
@@ -749,9 +751,10 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, mapPresence, c
       distantMaterial.uniforms.uScale.value = height * renderer.getPixelRatio() * .5;
       distantMaterial.uniforms.uTime.value = drift;
       distantMaterial.uniforms.uMotion.value = state.current.motionOn ? 1 : 0;
-      planetSystem.scale.setScalar(solarScale * (1 - pull * .94));
-      planetSystem.position.copy(solarOrigin).lerp(gravityTarget, pull);
-      planetSystem.rotation.z += pull * pull * 4;
+      gravityBackgroundPose(pull, solarOrigin, gravityTarget, solarCapture);
+      planetSystem.scale.setScalar(solarScale * solarCapture.scale);
+      planetSystem.position.set(solarCapture.x, solarCapture.y, solarCapture.z);
+      planetSystem.rotation.z += solarCapture.turn * .6;
       stellarLight.intensity = 34 * (1 - pull);
       // Project real bodies into one height-normalized clearance space, including visible rings.
       const openingEdge = !state.current.introActive && heroCopy && !heroCopy.inert && heroKicker ? heroKicker.getBoundingClientRect().top : null;
@@ -1062,6 +1065,7 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, mapPresence, c
       host.dataset.visitorProgress = visitorProgress.toFixed(3);
       host.dataset.dustTravelScale = flowMaterial.uniforms.uTravelScale.value.toFixed(3);
       host.dataset.solarScale = planetSystem.scale.x.toFixed(3);
+      host.dataset.solarCapture = JSON.stringify(solarCapture);
       host.dataset.holeX = holeX.toFixed(3);
       host.dataset.holeY = String(holeY);
       host.dataset.holeDiameter = diameter.toFixed(1);

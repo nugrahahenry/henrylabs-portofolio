@@ -100,13 +100,18 @@ try {
     for (let i = 0; i < 18; i++) await page.clock.fastForward(250);
     await expect(field).toHaveAttribute("data-gravity-active", "true");
     await expect(field).toHaveAttribute("data-hole-growth", "1.000");
+    const backgroundStart = await field.evaluate(el => ({ x: +el.dataset.stellarX, y: +el.dataset.stellarY, hx: +el.dataset.holeX * innerWidth, hy: +el.dataset.holeY * innerHeight }));
+    assert.ok(backgroundStart.y < viewport.height * .4, "the retained sun must begin in the upper lane, not drop beside the hole");
+    assert.ok(Math.hypot(backgroundStart.x-backgroundStart.hx,backgroundStart.y-backgroundStart.hy) > viewport.height*.42, "persistent planets need room before their first capture");
     const arrivalFrames=[];
     async function advanceTo(target) {
       let steps = 0;
       while (Number(await field.getAttribute("data-gravity-age")) < target && steps++ < 1100) {
         await page.clock.fastForward(250);
-        const sample=await field.evaluate(el=>({age:+el.dataset.gravityAge,progress:+el.dataset.visitorProgress,cycle:+el.dataset.gravityCycle,points:JSON.parse(el.dataset.visitorProbes)}));
+        const sample=await field.evaluate(el=>({age:+el.dataset.gravityAge,progress:+el.dataset.visitorProgress,cycle:+el.dataset.gravityCycle,points:JSON.parse(el.dataset.visitorProbes),solar:JSON.parse(el.dataset.solarCapture)}));
         arrivalFrames.push(sample);
+        assert.ok(sample.solar.z >= -4.801 && sample.solar.z <= -3.199, "the persistent system must not use the recurring visitor's distant spawn");
+        if (sample.cycle === 0 && sample.progress <= .18) assert.equal(sample.solar.scale, 1, "retain background planet size before the capture arc");
         if(sample.progress>=.1&&sample.progress<=.74) for(const point of sample.points.slice(0,sample.cycle===0?3:5)) {
           const inside=point.x-point.extent>24 && point.x+point.extent<viewport.width-24 && point.y-point.extent>24 && point.y+point.extent<viewport.height-24;
           if(inside) assert.ok(point.opacity>=.999,"a traveling planet must stay solid even behind text, not become a ghost");
@@ -139,6 +144,9 @@ try {
     assert.ok(await page.locator("footer").evaluate((node) => Number(getComputedStyle(node).zIndex) > 0), "footer words must paint above the fixed backdrop");
     const pull = Number(await field.getAttribute("data-pull"));
     assert.ok(pull >= .49 && pull <= .55, `mid-intake must be slow and continuous: ${pull}`);
+    const originalCapture = JSON.parse(await field.getAttribute("data-solar-capture"));
+    assert.ok(originalCapture.turn > .43 && originalCapture.turn < .52, "the original system must sweep around the horizon");
+    assert.ok(originalCapture.scale > .6, "the original planets must not disappear by shrinking halfway through");
     await expect(field).toHaveAttribute("data-visitor-count", "3");
     await expect(field).toHaveAttribute("data-visitor-direction", "left");
     assert.ok(Number(await field.getAttribute("data-visible-visitors")) > 0, "the arriving orbit must actually enter the viewport");
@@ -168,9 +176,10 @@ try {
     await expect(field).toHaveAttribute("data-gravity-cycle", "1");
     await expect(field).toHaveAttribute("data-visitor-count", "5");
     await expect(field).toHaveAttribute("data-visitor-direction", "top");
-    assert.ok(Number(await field.getAttribute("data-visitor-opacity")) > .1, "a different cached planet must approach faintly after the quiet interval");
+    assert.ok(Number(await field.getAttribute("data-visitor-opacity")) > .1, "a different cached group must approach from a distance after the quiet interval");
     assert.ok((await arrivalProbe(page)).points.every(p=>p.opacity>.99 && p.radius<(viewport.width<700?2:4)),"the repeat wave also starts as solid distant specks");
     await expect(field).toHaveAttribute("data-pull", "1.000");
+    assert.ok(JSON.parse(await field.getAttribute("data-solar-capture")).scale < .041, "a new visitor wave must not respawn the absorbed background system");
     await expect(field).toHaveAttribute("data-distant-star-pull", "0.000");
     await page.screenshot({ path: `test-results/${viewport.width}-second-gravity-visitor.png` });
     await advanceTo(78);
@@ -242,6 +251,9 @@ try {
     await expect(field).toHaveAttribute("data-pull", "0.000");
     await expect(field).toHaveAttribute("data-distant-star-pull", "0.000");
     assert.ok(Number(await field.getAttribute("data-solar-scale")) > .7, "the original background system must recover its full scale");
+    const restoredBackground = JSON.parse(await field.getAttribute("data-solar-capture"));
+    assert.equal(restoredBackground.scale, 1);
+    assert.equal(restoredBackground.turn, 0);
     await page.screenshot({ path: `test-results/${viewport.width}-black-hole-receding.png` });
     await retreatTo(0);
     await expect(field).toHaveAttribute("data-hole-opacity", "0.000");

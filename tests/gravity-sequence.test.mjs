@@ -5,7 +5,32 @@ import ts from "typescript";
 
 const source = readFileSync(new URL("../components/gravity-sequence.ts", import.meta.url), "utf8");
 const compiled = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.ESNext, target: ts.ScriptTarget.ES2020 } }).outputText;
-const { gravitySequence, gravityBirth, gravityVisitors, gravityVisitorEntry, gravityVisitorPose, gravityVisitorMember, gravityReadingVisibility, gravityApproachAngle, advanceGravityAge, updateClosingScroll, closingReturn, GRAVITY_INTAKE_SECONDS, GRAVITY_REST_SECONDS } = await import(`data:text/javascript;base64,${Buffer.from(compiled).toString("base64")}`);
+const { gravitySequence, gravityBirth, gravityVisitors, gravityVisitorEntry, gravityVisitorPose, gravityVisitorMember, gravityBackgroundPose, gravityReadingVisibility, gravityApproachAngle, advanceGravityAge, updateClosingScroll, closingReturn, GRAVITY_INTAKE_SECONDS, GRAVITY_REST_SECONDS } = await import(`data:text/javascript;base64,${Buffer.from(compiled).toString("base64")}`);
+
+test("persistent planets spiral from their retained position without a distant respawn", () => {
+  const origin = { x: 3.05, y: 1.9, z: -3.2 }, target = { x: 5.1, y: -3.3, z: -4.8 };
+  const pose = { x: 0, y: 0, z: 0, scale: 0, turn: 0 };
+  const frames = [];
+  let previousRadius = Infinity;
+  for (let step = 0; step <= 100; step++) {
+    assert.equal(gravityBackgroundPose(step / 100, origin, target, pose), pose);
+    const radius = Math.hypot(pose.x - target.x, pose.y - target.y);
+    assert.ok(radius <= previousRadius + 1e-12);
+    assert.ok(pose.z >= -4.8 && pose.z <= -3.2, "the original system never takes the visitor's deep-space entrance");
+    if (step <= 18) assert.equal(pose.scale, 1, "do not shrink while still far from the horizon");
+    if (step) assert.ok(Math.hypot(pose.x - frames[step-1].x, pose.y - frames[step-1].y) < .1);
+    frames.push({ ...pose }); previousRadius = radius;
+  }
+  assert.ok(Math.abs(frames[0].x-origin.x)<1e-12 && Math.abs(frames[0].y-origin.y)<1e-12);
+  assert.equal(frames[50].turn, .45);
+  assert.ok(frames[50].x < (origin.x + target.x) / 2 - .6, "the capture must bow left instead of following a straight chord");
+  assert.ok(frames[50].scale > .65);
+  assert.equal(frames[100].x, target.x);
+  assert.equal(frames[100].y, target.y);
+  for (let step = 100; step >= 0; step--) assert.deepEqual(gravityBackgroundPose(step / 100, origin, target, pose), frames[step]);
+  assert.deepEqual(gravityBackgroundPose(NaN, origin, target, pose), frames[0]);
+  assert.deepEqual(gravityBackgroundPose(2, origin, target, pose), frames[100]);
+});
 
 test("arrivals originate in distant upper-middle space, not beside the cropped horizon", () => {
   for (let index = 0; index < 5; index++) {

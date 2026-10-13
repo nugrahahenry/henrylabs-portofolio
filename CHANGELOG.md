@@ -1,5 +1,11 @@
 # Changelog
 
+## StarGod Portfolio v0.114.5 - 2026-10-13
+
+- Keep the persistent background system in its upper reading lane when Contact begins, leaving visible room before black-hole capture.
+- Bend that same system around the horizon and preserve its size through the first part of the approach. Reverse scrolling retraces the curve without respawning planets.
+- Preserve the separate distant visitor cohorts and their 30-second rest. Add regression coverage for both populations, capture scale, clearance and restoration.
+
 ## StarGod Portfolio v0.114.4 - 2026-10-13
 
 - Bring black-hole visitor systems from much deeper space as tiny, solid bodies that grow through perspective, rather than a long translucent fade.

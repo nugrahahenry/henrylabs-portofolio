@@ -77,6 +77,21 @@ export function gravityVisitorMember(progress: number, index: number) {
   };
 }
 
+type GravityPoint = { x: number; y: number; z: number };
+
+export function gravityBackgroundPose(progress: number, origin: GravityPoint, target: GravityPoint, out = { x: 0, y: 0, z: 0, scale: 1, turn: 0 }) {
+  const p = Math.max(0, Math.min(1, Number.isFinite(progress) ? progress : 0));
+  const turn = .9 * smooth(p, 0, 1);
+  const dx = origin.x - target.x, dy = origin.y - target.y;
+  // Bend the retained system around the horizon; no spawn or separate arrival clock.
+  out.x = target.x + (dx * Math.cos(turn) - dy * Math.sin(turn)) * (1 - p);
+  out.y = target.y + (dx * Math.sin(turn) + dy * Math.cos(turn)) * (1 - p);
+  out.z = origin.z + (target.z - origin.z) * p;
+  out.scale = 1 - .96 * smooth(p, .18, 1);
+  out.turn = turn;
+  return out;
+}
+
 export type ReadingRect = { left: number; top: number; right: number; bottom: number };
 
 export function gravityReadingVisibility(x: number, y: number, radius: number, width: number, height: number, reading: ReadingRect[], readingFloor = 0) {
