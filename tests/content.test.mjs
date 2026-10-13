@@ -193,7 +193,6 @@ test("portfolio surface keeps its core experience contracts", () => {
   assert.match(styles, /@media \(min-width: 641px\) and \(max-width: 900px\)/);
   assert.match(styles, /@media \(max-width: 420px\)/);
   assert.match(styles, /orientation: landscape/);
-  assert.equal(existsSync(new URL("public/assets/background/cosmic-nebula.png", root)), true);
   assert.equal(existsSync(new URL("public/assets/certificates/previews/gemini-certified-educator.png", root)), true);
   assert.equal(existsSync(new URL("public/assets/certificates/previews/google-student-ambassador.png", root)), true);
   assert.equal(existsSync(new URL("public/assets/certificates/source/gemini-certified-educator.pdf", root)), true);
@@ -204,4 +203,19 @@ test("portfolio surface keeps its core experience contracts", () => {
   assert.equal(existsSync(new URL("public/assets/projects/nalira-ambient.svg", root)), true);
   assert.equal(existsSync(new URL("public/assets/projects/polara-og.png", root)), true);
   assert.equal(existsSync(new URL("app/icon.svg", root)), true);
+});
+
+test("asset layout keeps private masters separate from published derivatives", () => {
+  assert.match(read(".gitignore"), /^assets\/henry\/$/m);
+  const portraitExport = read("scripts/portrait-exports.mjs");
+  assert.match(portraitExport, /assets\/henry\/portraits\//);
+  assert.doesNotMatch(portraitExport, /docs\/assets\/portrait\/candidates/);
+  for (const retired of ["henrylabs-useful-worlds.html", "assets/brand", "assets/background", "public/assets/background/cosmic-nebula.png"]) {
+    assert.equal(existsSync(new URL(retired, root)), false, `Retired prototype asset: ${retired}`);
+  }
+  for (const state of ["cosmic", "sunglasses", "glasses", "human"]) {
+    for (const width of [560, 960]) {
+      assert.equal(existsSync(new URL(`public/assets/portrait/henry-${state}-${width}.webp`, root)), true);
+    }
+  }
 });

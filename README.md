@@ -153,6 +153,8 @@ Content lives in `content/`; catalog pages and orbital reading actions share tho
 
 Certificate lists and viewers use permanently watermarked derivatives. `scripts/credential-watermarks.py` exports images, thumbnails, flattened PDF previews and README copies from private local masters, using Pillow, pypdf, ReportLab and Poppler. Regeneration requires those private masters; they are intentionally absent from a public clone. `node scripts/credential-thumbnails.mjs` can resize verified public copies, refusing changed/unreviewed input. The public checksum manifest and unit checks guard against accidentally replacing marked files. These checks ensure consistency, not copy protection.
 
+Published portrait derivatives live in `public/assets/portrait/`. `node scripts/portrait-exports.mjs` recreates them from four selected local masters in the Git-ignored `assets/henry/portraits/` folder. Source photographs and generation drafts are private and are not required to run the public clone.
+
 Route and accessibility checks: `npm run test:libraries`; entrance and exploration window: `npm run test:arrival`; galaxy integration: `npm run test:galaxies`; portrait choreography: `npm run test:maker`.
 
 <details>

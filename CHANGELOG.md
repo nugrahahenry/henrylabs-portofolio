@@ -6,6 +6,7 @@
 - Honor Still mode before starting the intro, including replay URLs. Preserve reduced-motion, direct-entry and session bypasses.
 - Prevent background scrolling and hidden-content keyboard focus during the opening. Keep Skip accessible, support Escape, and hand focus to the homepage afterward.
 - Add opening-to-Explore regression coverage without changing the cinematic route, duration, galaxy brightness or landing position.
+- Consolidate private photo masters, update portrait export paths, and remove the unused standalone prototype and duplicate assets without changing published portrait files.
 
 ## StarGod Portfolio v0.114.5 - 2026-10-13
 

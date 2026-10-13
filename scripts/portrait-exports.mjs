@@ -13,7 +13,7 @@ await mkdir("public/assets/portrait", { recursive: true });
 await mkdir("test-results/portrait", { recursive: true });
 const report = [];
 for (const [state, filename] of Object.entries(selected)) {
-  const input = await readFile(`docs/assets/portrait/candidates/${filename}`);
+  const input = await readFile(`assets/henry/portraits/${filename}`);
   const metadata = await sharp(input).metadata();
   if (metadata.width !== 1122 || metadata.height !== 1402 || !metadata.hasAlpha) throw new Error(`Unexpected portrait: ${filename}`);
   for (const width of [560, 960]) {
