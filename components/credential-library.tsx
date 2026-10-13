@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowLeft, ArrowUpRight, Search, ShieldCheck, X } from "lucide-react";
+import { ArrowLeft, ArrowUpRight, Award, BadgeCheck, BookOpen, Expand, FileText, Search, ShieldCheck, Trophy, UsersRound, X, type LucideIcon } from "lucide-react";
 import { certificates, certificateFilters } from "@/content/credentials";
 import { CredentialViewer } from "./credential-viewer";
 import { LibraryFooter } from "./project-library";
@@ -9,6 +9,7 @@ import { LibraryThumbnail } from "./library-thumbnail";
 import { SiteLink, updateQuery, useQuery, useSitePreferences } from "./site-preferences";
 
 const issuers = [...new Set(certificates.map(record => record.issuer))].sort();
+const kindIcons: Record<string, LucideIcon> = { Certification: Award, Course: BookOpen, Competition: Trophy, Community: UsersRound, Credential: BadgeCheck, "Completion badge": BadgeCheck, "Workshop record": BookOpen };
 export function CredentialLibrary() {
   const { language } = useSitePreferences();
   const query = useQuery();
@@ -25,10 +26,13 @@ export function CredentialLibrary() {
     <p className="credential-public-note"><ShieldCheck size={17} />{isEn ? "Public copies are watermarked. Unmarked masters are kept privately." : "Salinan publik ber-watermark. Master tanpa watermark disimpan privat."}</p>
     <div className="library-controls credential-filters"><label className="library-search"><Search size={18} /><span className="sr-only">{isEn ? "Search credentials" : "Cari kredensial"}</span><input type="search" value={search} placeholder={isEn ? "Title or issuer" : "Judul atau penerbit"} onChange={event => updateQuery({ q: event.target.value || null }, true)} /></label><label>{isEn ? "Type" : "Jenis"}<select value={kind} onChange={event => updateQuery({ kind: event.target.value === "All" ? null : event.target.value })}>{certificateFilters.map(item => <option value={item} key={item}>{item === "All" ? (isEn ? "All types" : "Semua jenis") : item}</option>)}</select></label><label>{isEn ? "Issuer" : "Penerbit"}<select value={issuer} onChange={event => updateQuery({ issuer: event.target.value || null })}><option value="">{isEn ? "All issuers" : "Semua penerbit"}</option>{issuers.map(item => <option key={item}>{item}</option>)}</select></label></div>
     <div className="library-results" aria-live="polite"><span>{String(results.length).padStart(2, "0")} / {certificates.length} {isEn ? "records" : "dokumen"}</span>{(search || kind !== "All" || issuer) ? <button className="library-text-link" type="button" onClick={clear}><X size={14} />{isEn ? "Clear filters" : "Hapus filter"}</button> : <span>{isEn ? "Portfolio previews" : "Preview portofolio"}</span>}</div>
-    <div className="credential-library-grid">{results.map((record, index) => <article key={record.id} className="credential-record">
-      <button className="credential-record-preview" type="button" onClick={() => updateQuery({ record: record.id })} aria-label={`${isEn ? "Open" : "Buka"} ${record.title}`}><LibraryThumbnail src={record.thumbnail} alt={record.alt} eager={index < 3} /><span className="credential-expand"><ArrowUpRight size={18} /></span></button>
-      <div className="credential-record-copy"><span className="record-status">{record.issuer} / {record.kind}</span><h2>{record.title}</h2><div className="credential-record-foot"><span>{record.date === "Date not shown" && !isEn ? "Tanggal tidak tercantum" : record.date}</span>{record.source && <a href={record.source} target="_blank" rel="noreferrer">{isEn ? "PDF preview" : "Preview PDF"}<ArrowUpRight size={14} /></a>}</div></div>
-    </article>)}</div>
+    <div className="credential-library-grid">{results.map((record, index) => {
+      const KindIcon = kindIcons[record.kind] ?? Award;
+      return <article key={record.id} className="credential-record">
+      <button className="credential-record-preview" type="button" onClick={() => updateQuery({ record: record.id })} aria-label={`${isEn ? "Open" : "Buka"} ${record.title}`} title={isEn ? "Open full preview" : "Buka preview penuh"}><LibraryThumbnail src={record.thumbnail} alt={record.alt} eager={index < 3} /><span className="credential-expand" aria-hidden="true"><Expand size={17} /></span></button>
+      <div className="credential-record-copy"><span className="credential-kind"><KindIcon size={15} aria-hidden="true" />{record.kind}</span><span className="credential-issuer">{record.issuer}</span><h2>{record.title}</h2><div className="credential-record-foot"><span>{record.date === "Date not shown" && !isEn ? "Tanggal tidak tercantum" : record.date}</span>{record.source && <a href={record.source} target="_blank" rel="noreferrer"><FileText size={15} aria-hidden="true" />{isEn ? "PDF preview" : "Preview PDF"}<ArrowUpRight size={14} aria-hidden="true" /></a>}</div></div>
+    </article>;
+    })}</div>
     {results.length === 0 && <div className="library-empty"><Search size={28} /><h2>{isEn ? "No matching records." : "Belum ada dokumen yang cocok."}</h2><button className="library-text-link" type="button" onClick={clear}><X size={16} />{isEn ? "Clear filters" : "Hapus filter"}</button></div>}
     <CredentialViewer record={active} collection={results} onSelect={record => updateQuery({ record: record.id }, true)} onClose={() => updateQuery({ record: null }, true)} />
     <LibraryFooter />

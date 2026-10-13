@@ -1,5 +1,12 @@
 # Changelog
 
+## StarGod Portfolio v0.114.3 - 2026-10-13
+
+- Refine Projects and Credentials typography, reading contrast and responsive spacing while retaining their shared volumetric sky.
+- Add project identity marks and search-aware category counts. Move media labels below artwork and give longer project names more room.
+- Separate credential type, issuer, title and aligned date/PDF actions. Keep the full-preview affordance outside the document image and show a stable loading state that respects Still/reduced motion.
+- Preserve all project facts, watermarked files, filters, keyboard navigation and return routes; extend responsive library regression coverage.
+
 ## StarGod Portfolio v0.114.2 - 2026-10-13
 
 - Mark Polara as a live public product in English and Indonesian, with the approved photobooth URL instead of a preview request.

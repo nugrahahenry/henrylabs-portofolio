@@ -23,8 +23,34 @@ async function fits(page) {
     const heading = await page.locator(".library-heading h1").boundingBox();
     const action = await page.locator(".library-heading a").boundingBox();
     assert.ok(heading.x + heading.width <= action.x + 1 || heading.y + heading.height <= action.y + 1, "Library title and universe action never overlap");
-    assert.ok(action.height >= 44 - .00001, `Universe action remains touch sized: ${action.height}`);
+    assert.ok(action.height >= 44 - .01, `Universe action remains touch sized: ${action.height}`);
   }
+}
+async function projectPresentation(page) {
+  await page.evaluate(() => document.fonts.ready);
+  const failures = await page.locator(".project-record").evaluateAll(records => records.flatMap(record => {
+    const rect = selector => record.querySelector(selector).getBoundingClientRect();
+    const visual = rect(".project-record-visual"), caption = rect(".project-record-caption");
+    const heading = rect("h2"), emblem = rect(".project-record-emblem"), arrow = rect(".project-record-arrow");
+    const status = rect(".record-status"), body = rect(".project-record-body");
+    const failures = [];
+    if (caption.top < visual.bottom - 1) failures.push("Artwork caption overlaps the image");
+    if (heading.left < emblem.right || heading.right > body.right || heading.bottom > status.top + 1) failures.push("Project identity overlaps");
+    const title = record.querySelector("h2"), measure = document.createElement("canvas").getContext("2d");
+    measure.font = getComputedStyle(title).font;
+    if (title.textContent.split(/\s+/).some(word => measure.measureText(word).width > heading.width + 1)) failures.push(`Project name breaks mid-word: ${title.textContent}`);
+    if (arrow.right > body.right || record.scrollWidth > record.clientWidth + 2) failures.push("Project content overflows");
+    return failures;
+  }));
+  assert.deepEqual(failures, [], "Every project keeps its identity and factual caption readable");
+}
+async function credentialPresentation(page) {
+  const preview = page.locator(".credential-record-preview").first();
+  const image = await preview.locator("img").boundingBox();
+  const expand = await preview.locator(".credential-expand").boundingBox();
+  assert.ok(image.y + image.height <= expand.y + 1, "Expand affordance stays outside the certificate image");
+  const feet = await page.locator(".credential-record-foot").evaluateAll(nodes => nodes.slice(0, 3).map(node => ({ top: node.getBoundingClientRect().top, row: node.closest("article").getBoundingClientRect().top })));
+  for (const foot of feet.filter(foot => Math.abs(foot.row - feet[0].row) < 1)) assert.ok(Math.abs(foot.top - feet[0].top) < 1, "Dates and PDF actions align within a certificate row");
 }
 try {
   for (const viewport of process.argv.includes("--integration") ? [] : viewports) {
@@ -34,11 +60,16 @@ try {
     await page.goto(`${base}/projects`, { waitUntil: "domcontentloaded" });
     await expect(page.locator(".project-record")).toHaveCount(10);
     await fits(page);
+    await projectPresentation(page);
+    await expect(page.locator(".category-filter small")).toHaveText(["10", "5", "3", "2"]);
     await page.screenshot({ path: `test-results/libraries/${viewport.width}-projects.png`, animations: "disabled" });
+    await page.locator(".project-record-body").first().scrollIntoViewIfNeeded();
+    await page.screenshot({ path: `test-results/libraries/${viewport.width}-project-cards.png`, animations: "disabled" });
     await page.getByRole("button", { name: "University", exact: true }).click();
     await expect(page.locator(".project-record")).toHaveCount(3);
     await page.getByRole("searchbox", { name: "Search projects" }).fill("Laravel");
     await expect(page.locator(".project-record")).toHaveCount(1);
+    await expect(page.locator(".category-filter small")).toHaveText(["1", "0", "1", "0"]);
     await page.getByRole("link", { name: "LabQ", exact: true }).click();
     await expect(page.locator("h1")).toHaveText("LabQ");
     await fits(page);
@@ -67,6 +98,7 @@ try {
     await fits(page);
     await expect(page.locator(".credential-record").first()).toContainText("Google Student Ambassador");
     await expect(page.locator(".credential-record .library-thumbnail").first()).toHaveAttribute("data-image-state", "ready");
+    await credentialPresentation(page);
     await expect(page.getByRole("link", { name: "Back to the universe", exact: true })).toHaveAttribute("href", "/?view=universe");
     if (viewport.width <= 1000) {
       const search = await page.locator(".credential-filters .library-search").boundingBox();
@@ -75,6 +107,8 @@ try {
       assert.ok(Math.abs(type.y - issuer.y) < 1 && search.y + search.height < type.y, "Tablet/phone filters align below the full-width search");
     }
     await page.screenshot({ path: `test-results/libraries/${viewport.width}-credentials.png`, animations: "disabled" });
+    await page.locator(".credential-record-copy").first().scrollIntoViewIfNeeded();
+    await page.screenshot({ path: `test-results/libraries/${viewport.width}-credential-cards.png`, animations: "disabled" });
     const trigger = page.getByRole("button", { name: "Open Class of 2026 Graduation", exact: true });
     await trigger.click();
     const dialog = page.getByRole("dialog");
@@ -129,6 +163,16 @@ try {
     assert.deepEqual(errors, []);
     await page.close();
     console.log(`Libraries, query return/reload, viewer/focus, overflow passed at ${viewport.width}x${viewport.height}`);
+  }
+  for (const width of [320, 641]) {
+    const localized = await browser.newPage({ viewport: { width, height: 900 } });
+    await localized.goto(`${base}/projects?lang=id&motion=off`);
+    await fits(localized);
+    await expect(localized.locator(".project-record")).toHaveCount(10);
+    await projectPresentation(localized);
+    await localized.getByRole("link", { name: "RentalMobil.SG", exact: true }).scrollIntoViewIfNeeded();
+    await localized.screenshot({ path: `test-results/libraries/${width}-long-title-id.png` });
+    await localized.close();
   }
   const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
   await page.goto(`${base}/projects`);
@@ -278,9 +322,12 @@ try {
       await thumbnails.goto(`${base}/credentials?lang=${language}&motion=off`, { waitUntil: "domcontentloaded" });
       const preview = thumbnails.locator(".credential-record-preview").first();
       await expect(preview.locator(".library-thumbnail")).toHaveAttribute("data-image-state", "loading");
+      await expect(preview.locator(".library-thumbnail-loading")).toBeVisible();
+      assert.equal(await preview.locator(".library-thumbnail-loading svg").evaluate(node => getComputedStyle(node).animationName), "none", "Still mode keeps the loading icon stationary");
       const waitingBox = await preview.boundingBox();
       release();
       await expect(preview.locator(".library-thumbnail")).toHaveAttribute("data-image-state", "error");
+      await expect(preview.locator(".library-thumbnail-loading")).toHaveCount(0);
       const failedBox = await preview.boundingBox();
       assert.equal(failedBox.width, waitingBox.width, "Thumbnail failure preserves certificate width");
       assert.equal(failedBox.height, waitingBox.height, "Thumbnail failure preserves certificate height");

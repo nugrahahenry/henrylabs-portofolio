@@ -1,6 +1,6 @@
 <div align="center">
 
-# StarGod Portfolio v0.114.2
+# StarGod Portfolio v0.114.3
 
 **I build things I actually see.**
 
@@ -51,7 +51,7 @@ Prefer a closer read? **Projects** opens a searchable catalog of all ten worlds,
 
 **Credentials** is a separate library of all 26 learning records. Filter by issuer or type, search a title, and open a full-size watermarked preview with zoom and available PDF previews. Browse the current selection without closing the viewer; Home keeps its gallery limited to the five featured records. Arrow keys move between documents at fitted size and pan the image when zoomed. A small preview remains visible while the full-size image loads, with a retry option on failure. English/Indonesian and motion choices travel with the internal links.
 
-The libraries stay inside the same volumetric nebula, with subtle cursor and scroll parallax that leaves the reading surface steady. Both offer a direct return to the universe. Reduced motion freezes the sky; interrupted graphics can recover without reloading the page. A missing thumbnail preserves its space and does not block project details or the full certificate viewer.
+The libraries stay inside the same volumetric nebula, with subtle cursor and scroll parallax behind a quieter reading surface. Project identities sit beside their names, with category counts following the search and artwork clearly labeled. Credentials separate issuer, record type, title and date; the full-preview control stays outside the document image. Both libraries offer a direct return to the universe. Reduced motion freezes the sky and loading indicators; interrupted graphics can recover without reloading the page. A missing thumbnail preserves its space and does not block project details or the full certificate viewer.
 
 English is the default, with Indonesian available throughout the main experience. Keyboard navigation, touch controls, reduced motion, and a WebGL fallback keep the work accessible.
 

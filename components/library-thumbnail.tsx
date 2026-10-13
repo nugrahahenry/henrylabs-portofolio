@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useState } from "react";
-import { ImageOff } from "lucide-react";
+import { ImageOff, LoaderCircle } from "lucide-react";
 import { useSitePreferences } from "./site-preferences";
 
 export function LibraryThumbnail({ src, alt, eager = false, className = "" }: { src: string; alt: string; eager?: boolean; className?: string }) {
@@ -12,6 +12,7 @@ export function LibraryThumbnail({ src, alt, eager = false, className = "" }: { 
   }, []);
   return <span className={`library-thumbnail ${className}`} data-image-state={state}>
     <img ref={attach} src={src} alt={alt} loading={eager ? "eager" : "lazy"} aria-hidden={state === "error" || undefined} onError={() => setState("error")} onLoad={() => setState("ready")} />
+    {state === "loading" && <span className="library-thumbnail-loading" aria-hidden="true"><LoaderCircle size={22} /></span>}
     {state === "error" && <span className="library-thumbnail-unavailable"><ImageOff size={24} aria-hidden="true" /><span>{language === "en" ? "Preview unavailable" : "Preview belum tersedia"}</span></span>}
   </span>;
 }
