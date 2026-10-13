@@ -41,10 +41,13 @@ export function createStellarAura(radius: number, color: THREE.ColorRepresentati
 
 export function createStellarCore(radius: number) {
   const material = new THREE.ShaderMaterial({
-    uniforms: { uTime: { value: 0 }, uOpacity: { value: 1 } }, vertexShader,
+    uniforms: { uTime: { value: 0 }, uOpacity: { value: 1 }, uReadStrength: { value: 0 }, uResolution: { value: new THREE.Vector2(1, 1) }, uReadRects: { value: Array.from({ length: 3 }, () => new THREE.Vector4(-1e6, -1e6, -1e6, -1e6)) } }, vertexShader,
     fragmentShader: `
       uniform float uTime;
       uniform float uOpacity;
+      uniform float uReadStrength;
+      uniform vec2 uResolution;
+      uniform vec4 uReadRects[3];
       varying vec3 vLocal;
       varying vec3 vWorld;
       varying vec3 vNormal;
@@ -63,7 +66,15 @@ export function createStellarCore(radius: number) {
         float facing = max(0.0, dot(normalize(vNormal), normalize(cameraPosition - vWorld)));
         vec3 heat = mix(vec3(.95, .28, .025), vec3(3.8, 2.3, .7), smoothstep(.18, .78, cells));
         heat *= (1.0 - spot * .78) * (.58 + .42 * sqrt(facing));
-        gl_FragColor = vec4(heat * 1.7, uOpacity);
+        // Protect only the stellar pixels behind copy, not the entire luminous disk.
+        vec2 pixel = vec2(gl_FragCoord.x, uResolution.y - gl_FragCoord.y);
+        float clearance = 1.0;
+        for (int i = 0; i < 3; i++) {
+          vec2 delta = max(max(uReadRects[i].xy - pixel, pixel - uReadRects[i].zw), vec2(0.0));
+          clearance = min(clearance, smoothstep(0.0, 24.0, length(delta)));
+        }
+        float exposure = mix(1.0, mix(.035, 1.0, clearance), uReadStrength);
+        gl_FragColor = vec4(heat * 1.7 * exposure, uOpacity);
         #include <tonemapping_fragment>
         #include <colorspace_fragment>
       }

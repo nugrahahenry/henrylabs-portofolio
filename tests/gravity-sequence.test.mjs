@@ -13,7 +13,7 @@ test("arrivals originate in distant upper-middle space, not beside the cropped h
     const x = (entry.x + 1) / 2, y = (1 - entry.y) / 2;
     assert.ok(x >= .3 && x <= .6 && y >= .05 && y <= .12);
     assert.ok(Math.hypot(x - .82, y - .86) > .75);
-    assert.ok(entry.z <= -78 && entry.z >= -86, "arrival starts in the far field, inside the existing camera frustum");
+    assert.ok(entry.z <= -280 && entry.z >= -312, "arrival starts at a genuinely distant depth inside the extended frustum");
   }
 });
 
@@ -42,7 +42,7 @@ test("visitors approach through true depth before the curved intake, then retrac
   }
 });
 
-test("planet birth stays faint in the far field and grows continuously before intake", () => {
+test("planet birth resolves while still tiny, then solid bodies approach through depth", () => {
   for(let cycle=0;cycle<5;cycle++) for(let member=0;member<5;member++) {
     let prior = { opacity:0, projection:0 };
     for(let frame=0;frame<=600;frame++) {
@@ -50,10 +50,10 @@ test("planet birth stays faint in the far field and grows continuously before in
       const pose=gravityVisitorPose(p,cycle,1.6,.86,.86);
       const opacity=gravityVisitorMember(p,member).opacity;
       const projection=1/(6.4-pose.z);
-      assert.ok(opacity >= prior.opacity && opacity-prior.opacity < .008);
+      assert.ok(opacity >= prior.opacity && opacity-prior.opacity < .035);
       assert.ok(projection >= prior.projection);
-      if(frame<=60) {assert.ok(opacity<.025);assert.ok(pose.z < -77);}
-      if(frame===180) {assert.ok(opacity<.25);assert.ok(pose.z < -76);}
+      if(frame<=60) assert.ok(pose.z < -279);
+      if(frame===180) {assert.equal(opacity,1);assert.ok(pose.z < -260);}
       prior={opacity,projection};
     }
     assert.ok(prior.opacity>.99);

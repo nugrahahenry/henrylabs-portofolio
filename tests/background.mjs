@@ -64,6 +64,7 @@ async function readingPlanets(page, chapter) {
   await expect(background).toHaveAttribute("data-solar-chapter", "reading");
   await expect.poll(async () => Number(await background.getAttribute("data-reading-blend"))).toBeGreaterThan(.98);
   await expect.poll(async () => Number(await background.getAttribute("data-solar-visibility"))).toBeGreaterThan(.65);
+  await expect.poll(async () => Number(await background.getAttribute("data-stellar-opacity"))).toBeGreaterThan(.65);
   const signals = await background.locator("canvas").evaluate(canvas => new Promise(resolve => requestAnimationFrame(() => {
     const gl = canvas.getContext("webgl2");
     const bodies = JSON.parse(canvas.parentElement.dataset.solarBodies);

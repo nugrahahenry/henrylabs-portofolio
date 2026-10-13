@@ -41,16 +41,19 @@ async function arrivalProbe(page) {
     const gl = canvas.getContext("webgl2");
     const points = JSON.parse(canvas.parentElement.dataset.visitorProbes);
     const reading = [".contact-content h2", ".contact-copy", "footer"].map(selector => document.querySelector(selector).getBoundingClientRect());
-    const { stellarX, stellarY, stellarOpacity, holeOpacity } = canvas.parentElement.dataset;
+    const { stellarX, stellarY, stellarReadStrength, holeOpacity } = canvas.parentElement.dataset;
     if (Number(holeOpacity) > .99 && reading.some(rect => Number(stellarX) >= rect.left && Number(stellarX) <= rect.right && Number(stellarY) >= rect.top && Number(stellarY) <= rect.bottom)) {
-      if (Number(stellarOpacity) > .17) throw Error("original stellar core washes out Contact text");
+      if (Number(stellarReadStrength) < .99) throw Error("original stellar core must protect Contact text locally");
+      const pixel = new Uint8Array(4);
+      gl.readPixels(Math.round(Number(stellarX)), Math.round(innerHeight - Number(stellarY)), 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, pixel);
+      if (Math.max(...pixel.slice(0, 3)) > 190) throw Error(`stellar reading mask is too bright: ${pixel}`);
     }
     let painted = 0;
     for (const point of points.filter(p => p.opacity > .1)) {
       if (point.x - point.extent <= 0 || point.y - point.extent <= 0 || point.x + point.extent >= innerWidth || point.y + point.extent >= innerHeight) throw Error("incoming planet clipped by viewport");
       for (const rect of reading) {
         const dx = Math.max(rect.left-point.x,0,point.x-rect.right), dy = Math.max(rect.top-point.y,0,point.y-rect.bottom);
-        if (Math.hypot(dx,dy) < point.extent + 8 && point.opacity > .141) throw Error("incoming planet is too bright behind Contact text");
+        if (Math.hypot(dx,dy) < point.extent + 8 && point.exposure > .468) throw Error("incoming planet lighting must soften behind Contact text");
       }
       const size = Math.max(2, Math.ceil(point.radius));
       const pixels = new Uint8Array(size*size*16);
@@ -59,7 +62,10 @@ async function arrivalProbe(page) {
       for(let i=0;i<pixels.length;i+=4) {const value=pixels[i]+pixels[i+1]+pixels[i+2]; min=Math.min(min,value); max=Math.max(max,value);}
       if(max-min>20) painted++;
     }
-    return {points,painted};
+    const star = JSON.parse(canvas.parentElement.dataset.visitorStar);
+    const pixel = new Uint8Array(4);
+    gl.readPixels(Math.round(star.x), Math.round(innerHeight - star.y), 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, pixel);
+    return {points,painted,star:{...star,pixel:[...pixel]}};
   });
 }
 
@@ -103,7 +109,7 @@ try {
         arrivalFrames.push(sample);
         if(sample.progress>=.1&&sample.progress<=.74) for(const point of sample.points.slice(0,sample.cycle===0?3:5)) {
           const inside=point.x-point.extent>24 && point.x+point.extent<viewport.width-24 && point.y-point.extent>24 && point.y+point.extent<viewport.height-24;
-          if(inside) assert.ok(point.opacity>=.139,"a traveling planet must not vanish behind text and respawn below it");
+          if(inside) assert.ok(point.opacity>=.999,"a traveling planet must stay solid even behind text, not become a ghost");
         }
       }
       assert.ok(steps < 1100, "the closing clock must advance with visible frame time");
@@ -113,8 +119,8 @@ try {
     assert.ok(Number(await field.getAttribute("data-visitor-entry-x")) > .3);
     assert.ok(Number(await field.getAttribute("data-visible-visitors")) > 0, "the distant group must already be visible before it approaches the hole");
     const distant = await arrivalProbe(page);
-    assert.ok(distant.points.slice(0,3).every(p=>p.opacity<.35 && p.radius<(viewport.width<700?3.5:8)),"the first approach is faint and tiny, never a full-size mid-screen spawn");
-    assert.ok(Number(await field.getAttribute("data-visitor-depth")) < -75);
+    assert.ok(distant.points.slice(0,3).every(p=>p.opacity>.99 && p.radius<(viewport.width<700?1.5:3)),"the first approach is solid but tiny, never a translucent mid-screen spawn");
+    assert.ok(Number(await field.getAttribute("data-visitor-depth")) < -260);
     await expect(field).toHaveAttribute("data-visitor-capture", "0.000");
     await page.screenshot({ path: `test-results/${viewport.width}-distant-arrival.png` });
     await advanceTo(6);
@@ -124,6 +130,8 @@ try {
     assert.ok(approach.painted > 0, "the closer group must remain visible before capture");
     assert.ok(approach.points.some((point,index)=>point.opacity>.1 && point.radius>distant.points[index].radius*1.7),"perspective approach must visibly enlarge a retained planet");
     assert.ok(new Set(approach.points.map(p=>p.depth.toFixed(1))).size>=3);
+    assert.ok(approach.star.opacity > .99, "the traveling star stays luminous rather than becoming a translucent disk");
+    assert.ok(approach.star.pixel[0] > 200 && approach.star.pixel[0] > approach.star.pixel[2] + 10, `the approaching star must paint a warm luminous core: ${JSON.stringify(approach.star)}`);
     await page.screenshot({path:`test-results/${viewport.width}-planet-approach.png`});
     await advanceTo(16);
     await page.evaluate(() => window.scrollTo({ top: document.documentElement.scrollHeight, behavior: "instant" }));
@@ -161,7 +169,7 @@ try {
     await expect(field).toHaveAttribute("data-visitor-count", "5");
     await expect(field).toHaveAttribute("data-visitor-direction", "top");
     assert.ok(Number(await field.getAttribute("data-visitor-opacity")) > .1, "a different cached planet must approach faintly after the quiet interval");
-    assert.ok((await arrivalProbe(page)).points.every(p=>p.opacity<.35),"the repeat wave also starts faintly in the far field");
+    assert.ok((await arrivalProbe(page)).points.every(p=>p.opacity>.99 && p.radius<(viewport.width<700?2:4)),"the repeat wave also starts as solid distant specks");
     await expect(field).toHaveAttribute("data-pull", "1.000");
     await expect(field).toHaveAttribute("data-distant-star-pull", "0.000");
     await page.screenshot({ path: `test-results/${viewport.width}-second-gravity-visitor.png` });

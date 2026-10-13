@@ -40,7 +40,7 @@ export function gravityVisitorEntry(index: number) {
   // Camera coordinates keep the first distant silhouette above the Contact copy.
   const top = gravityVisitors(index).direction === "top";
   const cycle = Math.max(0, Math.floor(Number.isFinite(index) ? index : 0));
-  return { x: top ? .16 : -.32, y: top ? .87 : .8, z: -78 - cycle % 3 * 4 };
+  return { x: top ? .16 : -.32, y: top ? .87 : .8, z: -280 - cycle % 3 * 16 };
 }
 
 export function gravityVisitorPose(progress: number, index: number, aspect: number, holeX: number, holeY: number) {
@@ -59,7 +59,8 @@ export function gravityVisitorPose(progress: number, index: number, aspect: numb
   return {
     x: targetX + Math.cos(angle) * radius / aspect,
     y: targetY + Math.sin(angle) * radius,
-    z: entry.z + (-8.8 - entry.z) * approach + capture * 4,
+    // Logarithmic depth distributes perspective growth over the approach.
+    z: -Math.exp(Math.log(-entry.z) * (1 - approach) + Math.log(8.8) * approach) + capture * 4,
     approach, capture,
     scale: 1 - smooth(capture, .65, 1) * .65,
   };
@@ -72,7 +73,7 @@ export function gravityVisitorMember(progress: number, index: number) {
     scale: [.95, .74, 1.1, .66, .88][slot],
     depth: [-.45, .7, -1.05, .34, -.7][slot],
     phase: slot * 2.399,
-    opacity: smooth(p, slot * .002, .08 + slot * .005) * (1 - smooth(p, .76 + slot * .026, .87 + slot * .026)),
+    opacity: smooth(p, 0, .008) * (1 - smooth(p, .76 + slot * .026, .87 + slot * .026)),
   };
 }
 

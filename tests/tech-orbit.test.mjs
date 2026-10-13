@@ -237,6 +237,9 @@ test("the stellar core has a textured physical surface and a separate limb-only 
   assert.equal(star.group.children.length, 2);
   assert.match(star.material.fragmentShader, /noise\(flow/);
   assert.match(star.material.fragmentShader, /sqrt\(facing\)/);
+  assert.equal(star.material.uniforms.uReadStrength.value, 0);
+  assert.equal(star.material.uniforms.uReadRects.value.length, 3);
+  assert.match(star.material.fragmentShader, /heat \* 1\.7 \* exposure, uOpacity/, "reading protection changes local radiance, never the whole star's alpha");
   assert.equal(star.aura.material.depthWrite, false);
   assert.match(star.aura.material.fragmentShader, /pow\(1\.0 - facing, 3\.2\)/);
   star.group.traverse((object) => { object.geometry?.dispose(); object.material?.dispose(); });

@@ -1,5 +1,12 @@
 # Changelog
 
+## StarGod Portfolio v0.114.4 - 2026-10-13
+
+- Bring black-hole visitor systems from much deeper space as tiny, solid bodies that grow through perspective, rather than a long translucent fade.
+- Soften planet lighting near Contact text without making surfaces transparent. Retain gradual intake, recurrence, offscreen fade and reverse-scroll restoration.
+- Keep the main and traveling stars luminous. Protect only the stellar pixels behind Contact copy, while retaining the softer reading halo.
+- Extend arrival-depth, opacity, stellar-pixel and responsive background regressions. No new assets or renderers.
+
 ## StarGod Portfolio v0.114.3 - 2026-10-13
 
 - Refine Projects and Credentials typography, reading contrast and responsive spacing while retaining their shared volumetric sky.
