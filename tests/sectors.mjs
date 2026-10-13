@@ -44,6 +44,26 @@ async function paintedScene(page) {
   assert.equal(painted, true, "satellite scene must render visible 3D pixels");
 }
 
+async function movingTools(page) {
+  const scene = page.locator(".cosmic-canvas");
+  const selected = await scene.getAttribute("data-active-world");
+  await expect(scene).toHaveAttribute("data-orbit-center", selected);
+  await expect(scene).toHaveAttribute("data-tech-transfers", "0");
+  await expect(scene).toHaveAttribute("data-tech-orbit-error", "0.000000");
+  const before = JSON.parse(await scene.getAttribute("data-tech-bodies"));
+  assert.ok(before.some(body => body.owner === selected), `${selected} retains its own technology planets`);
+  await page.waitForTimeout(350);
+  const after = JSON.parse(await scene.getAttribute("data-tech-bodies"));
+  for (const body of after.filter(body => body.owner)) {
+    const previous = before.find(item => item.label === body.label);
+    assert.equal(body.owner, previous.owner);
+    assert.ok(body.period >= 44 && body.period < 86);
+    assert.ok(Math.abs(Math.hypot(body.x, body.y, body.z) - body.radius) < .00001);
+    assert.ok(Math.hypot(body.x - previous.x, body.y - previous.y, body.z - previous.z) > .001, "every owned tool keeps orbiting");
+  }
+  await page.screenshot({ path: `test-results/${page.viewportSize().width}-${selected}-companion-orbit.png` });
+}
+
 async function waitForAnchorArrival(page, selector) {
   await expect(page.locator(selector)).toBeInViewport();
   // Let the authored anchor animation finish before testing a return to the orbit.
@@ -67,6 +87,8 @@ try {
     const page = await browser.newPage({ viewport });
     const errors = [];
     page.on("pageerror", (error) => errors.push(error.message));
+    page.on("console", message => { if (/Shader Error|THREE.WebGLProgram/.test(message.text())) errors.push(message.text()); });
+    await page.addInitScript(() => sessionStorage.setItem("henrylabs-intro-seen", "1"));
     await page.goto(url, { waitUntil: "domcontentloaded" });
     await page.locator(".intro-loader").waitFor({ state: "hidden" });
     await page.getByRole("button", { name: "Explore the universe", exact: true }).click();
@@ -78,9 +100,11 @@ try {
     await expect(page.locator(".planet-label")).toHaveCount(3);
     await expect(page.locator(".project-showcase")).toHaveCount(0);
     await paintedScene(page);
+    await movingTools(page);
     await scene.focus();
     await page.keyboard.press("ArrowRight");
     await expect(scene).toHaveAttribute("data-active-world", "pos");
+    await movingTools(page);
     await expect(page.locator(".project-showcase")).toHaveCount(0);
     await page.getByRole("button", { name: "Open active world" }).click();
     await expect(page.getByRole("button", { name: "Close active world" })).toBeFocused();
@@ -92,6 +116,7 @@ try {
     await expect(page.getByRole("button", { name: "Focus LabQ", exact: true })).toHaveAttribute("aria-pressed", "true");
     await expect(page.locator(".satellite-readout")).toContainText("LabQ");
     await expect(page.locator(".home-project-preview")).toHaveAttribute("data-project", "labq");
+    await movingTools(page);
     await expect.poll(() => page.locator(".satellite-readout").evaluate((panel) => Number(getComputedStyle(panel).opacity))).toBe(1);
     if (viewport.height < 620) {
       const panel = page.locator(".satellite-readout");
@@ -114,12 +139,14 @@ try {
     await expect(scene).toHaveAttribute("data-world-count", "2");
     await expect(scene).toHaveAttribute("data-tech-count", "5");
     await paintedScene(page);
+    await movingTools(page);
     // A real pointer click on the projected label must select without reopening the panel.
     const soreva = page.locator(".planet-label").filter({ hasText: "Soreva" });
     await expect(soreva).toBeInViewport();
     const bounds = await soreva.boundingBox();
     await page.mouse.click(bounds.x + bounds.width / 2, bounds.y + bounds.height / 2);
     await expect(scene).toHaveAttribute("data-active-world", "soreva");
+    await movingTools(page);
     await expect(page.locator(".home-project-preview")).toHaveAttribute("data-project", "soreva");
     await expect(page.locator(".home-project-preview")).toContainText("Vieri");
     await expect(page.locator(".project-showcase")).toHaveCount(0);
@@ -143,6 +170,7 @@ try {
       await select.click();
       await expect(select).toBeFocused();
       await expect(page.locator("#active-world-title")).toHaveText(name);
+      await movingTools(page);
       const box = await select.boundingBox();
       assert.ok(box.width >= 44 && box.height >= 44, "world selectors retain touch targets");
     }

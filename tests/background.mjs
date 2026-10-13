@@ -11,6 +11,26 @@ async function scrollToEnd(page) {
   await expect.poll(async () => Number(await page.locator(".worldline-backdrop").getAttribute("data-hole-opacity"))).toBeGreaterThan(.95);
 }
 
+async function companions(page) {
+  return page.locator(".worldline-backdrop canvas").evaluate(canvas => new Promise(resolve => requestAnimationFrame(() => {
+    const gl = canvas.getContext("webgl2");
+    const bodies = JSON.parse(canvas.parentElement.dataset.companionBodies);
+    const owners = JSON.parse(canvas.parentElement.dataset.solarBodies);
+    let painted = 0;
+    for (const body of bodies) {
+      const radius = Math.max(2, Math.ceil(body.radius));
+      if (body.x < radius || body.y < radius || body.x > canvas.width - radius || body.y > canvas.height - radius) continue;
+      if (owners.some(owner => Math.hypot(owner.x - body.x, owner.y - body.y) < owner.radius + body.radius)) continue;
+      const pixels = new Uint8Array(radius * radius * 16);
+      gl.readPixels(Math.round(body.x) - radius, Math.round(canvas.height - body.y) - radius, radius * 2, radius * 2, gl.RGBA, gl.UNSIGNED_BYTE, pixels);
+      let min = 765, max = 0;
+      for (let i = 0; i < pixels.length; i += 4) { const light = pixels[i] + pixels[i + 1] + pixels[i + 2]; min = Math.min(min, light); max = Math.max(max, light); }
+      if (max - min > 20 && max > 60) painted++;
+    }
+    resolve({ bodies, painted });
+  })));
+}
+
 async function holePixels(page) {
   return page.locator(".worldline-backdrop canvas").evaluate((canvas) => new Promise((resolve) => requestAnimationFrame(() => {
     const gl = canvas.getContext("webgl2") || canvas.getContext("webgl");
@@ -80,6 +100,19 @@ try {
     const background = page.locator(".worldline-backdrop");
     await expect(background).toHaveAttribute("data-ready", "true");
     await expect(background).toHaveAttribute("data-planet-surface", "opaque-terrain");
+    await expect(background).toHaveAttribute("data-companion-surface", "textured-relief");
+    await expect(background).toHaveAttribute("data-moon-counts", "2,2,2,3,2");
+    const initialCompanions = await companions(page);
+    assert.equal(initialCompanions.bodies.length, 11);
+    assert.ok(initialCompanions.painted > 0, "textured companions must paint real pixels outside their owner silhouettes");
+    await page.waitForTimeout(500);
+    const movingCompanions = await companions(page);
+    movingCompanions.bodies.forEach((body, index) => {
+      const previous = initialCompanions.bodies[index];
+      assert.equal(body.owner, previous.owner);
+      assert.ok(body.period >= 48 && body.period <= 105);
+      assert.ok(Math.hypot(body.localX - previous.localX, body.localY - previous.localY, body.localZ - previous.localZ) > .002, "no companion remains stuck during Motion");
+    });
     await expect(background).toHaveAttribute("data-hole-opacity", "0.000");
     await expect(background).toHaveAttribute("data-constellation-links", "0");
     await expect(background).toHaveAttribute("data-solar-orbits", "5");
@@ -181,8 +214,10 @@ try {
   await expect(reduced.locator(".worldline-backdrop")).toHaveAttribute("data-gravity-age", "0.00");
   await expect(reduced.locator(".worldline-backdrop")).toHaveAttribute("data-star-twinkle", "off");
   const stillTime = await reduced.locator(".worldline-backdrop").getAttribute("data-time");
+  const stillCompanions = (await companions(reduced)).bodies.map(({ localX, localY, localZ }) => [localX, localY, localZ]);
   await reduced.waitForTimeout(200);
   assert.equal(await reduced.locator(".worldline-backdrop").getAttribute("data-time"), stillTime);
+  assert.deepEqual((await companions(reduced)).bodies.map(({ localX, localY, localZ }) => [localX, localY, localZ]), stillCompanions);
   await reduced.close();
 
   const fallback = await browser.newPage({ viewport: viewports[3] });

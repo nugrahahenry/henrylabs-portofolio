@@ -15,7 +15,8 @@ async function loadModule(name) {
     .replace('from "three/addons/utils/BufferGeometryUtils.js"', `from ${JSON.stringify(pathToFileURL(require.resolve("three/addons/utils/BufferGeometryUtils.js")).href)}`);
   return import(`data:text/javascript;base64,${Buffer.from(compiled).toString("base64")}`);
 }
-const { techOrbitRadius, sampleTechOrbit, resolveTechOwner } = await loadModule("tech-orbit");
+const { techOrbitRadius, sampleTechOrbit, resolveTechOwner, techOrbitMotion } = await loadModule("tech-orbit");
+const { companionCounts, createCompanionOrbit, sampleCompanionOrbit } = await loadModule("companion-orbit");
 const { createProjectSculpture } = await loadModule("project-sculptures");
 const { sampleOrbit, orbitalSpeed } = await loadModule("orbital-path");
 const { createStellarCore } = await loadModule("stellar-core");
@@ -83,6 +84,39 @@ test("every tech lane is a true 3D circle outside its moving owner", () => {
     }
     assert.ok(sampleTechOrbit(radius, lane, 0).distanceTo(sampleTechOrbit(radius, lane, Math.PI * 2)) < 1e-12);
     assert.ok(Math.abs(sampleTechOrbit(radius, lane, Math.PI / 2).z) > .1, "the lane must have actual depth");
+  }
+});
+
+test("every companion clears its owner and rings on a bounded independent orbit", () => {
+  const radii = [.2, .24, .19, .32, .22];
+  const records = radii.flatMap((radius, owner) => Array.from({ length: companionCounts[owner] }, (_, slot) => createCompanionOrbit(owner, slot, radius, owner === 3)));
+  assert.equal(records.length, 11);
+  assert.equal(new Set(records.map(record => record.speed)).size, 11);
+  for (const orbit of records) {
+    const radius = radii[orbit.ownerIndex];
+    assert.ok(Math.PI * 2 / orbit.speed >= 48 && Math.PI * 2 / orbit.speed <= 105);
+    assert.ok(orbit.spin > 0 && orbit.size < radius * .25);
+    const a = sampleCompanionOrbit(orbit, orbit.phase);
+    const b = sampleCompanionOrbit(orbit, orbit.phase + orbit.speed * 4);
+    assert.ok(a.distanceTo(b) > .04, "each companion moves at visible-time speed");
+    assert.ok(a.distanceTo(sampleCompanionOrbit(orbit, orbit.phase + Math.PI * 2)) < 1e-12);
+    for (let i = 0; i < 128; i++) {
+      const point = sampleCompanionOrbit(orbit, i / 128 * Math.PI * 2);
+      assert.ok(point.length() - orbit.size > radius * (orbit.ownerIndex === 3 ? 1.93 : 1.035));
+      assert.ok(point.length() + orbit.size < radius * 4.2);
+    }
+    assert.notEqual(sampleCompanionOrbit(orbit, Math.PI / 2).z, 0);
+    assert.deepEqual(sampleCompanionOrbit(orbit, orbit.phase), a, "Still pose is deterministic");
+  }
+});
+
+test("technology planets have distinct readable periods and axial spin", () => {
+  const motion = Array.from({ length: 25 }, (_, index) => techOrbitMotion(index));
+  assert.equal(new Set(motion.map(item => item.speed)).size, 25);
+  assert.equal(new Set(motion.map(item => item.phase)).size, 25);
+  for (const item of motion) {
+    assert.ok(Math.PI * 2 / item.speed >= 44 && Math.PI * 2 / item.speed < 86);
+    assert.ok(item.spin > 0 && item.spin < .22);
   }
 });
 

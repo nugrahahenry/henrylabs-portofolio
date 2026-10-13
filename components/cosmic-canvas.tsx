@@ -8,7 +8,7 @@ import { createGalaxySystem, galaxies, type GalaxyId } from "./galaxy-system";
 import { advanceGalaxyFlight, sampleGalaxyFlight } from "./galaxy-flight";
 import { createPlanetMaps, removeEdgeMatte } from "./planet-materials";
 import { createProjectSculpture } from "./project-sculptures";
-import { resolveTechOwner, sampleTechOrbit, techOrbitRadius } from "./tech-orbit";
+import { resolveTechOwner, sampleTechOrbit, techOrbitRadius, techOrbitMotion } from "./tech-orbit";
 import { orbitGeometry, orbitalSpeed, sampleOrbit } from "./orbital-path";
 import { createStellarAura } from "./stellar-core";
 import { UNIVERSE_CHAPTER as chapter } from "./universe-chapter";
@@ -361,7 +361,7 @@ export function CosmicCanvas({ activeId, onSelect, onPrevious, onNext, motionOn,
       group.add(surface, atmosphere, ring, focusHalo);
       techSystem.add(group);
       const linkedProjectIndexes = item.projectIds.map((projectId) => allWorlds.findIndex((world) => world.id === projectId)).filter((projectIndex) => projectIndex >= 0);
-      return { group, surface, atmosphere, ring, focusHalo, radius, index, lane, linkedProjectIndexes, owner: linkedProjectIndexes[0] ?? -1, handoff: 1, handoffFrom: new THREE.Vector3() };
+      return { group, surface, atmosphere, ring, focusHalo, radius, index, lane, motion: techOrbitMotion(index), linkedProjectIndexes, owner: linkedProjectIndexes[0] ?? -1, handoff: 1, handoffFrom: new THREE.Vector3() };
     });
     const techOrbitFrames = allWorlds.map((world) => {
       const group = new THREE.Group();
@@ -379,6 +379,7 @@ export function CosmicCanvas({ activeId, onSelect, onPrevious, onNext, motionOn,
     sharedTechOrbit.position.set(0, -.25, -1.05);
     techSystem.add(sharedTechOrbit);
     techPlanets.forEach((moon) => (moon.owner >= 0 ? techOrbitFrames[moon.owner].group : sharedTechOrbit).add(moon.group));
+    const techProbes = techPlanets.map((moon, index) => ({ label: techNodes[index].label, owner: "", visible: false, x: 0, y: 0, z: 0, radius: 0, period: Math.PI * 2 / moon.motion.speed }));
     const techSignalMaterial = new THREE.MeshBasicMaterial({ color: 0x78cdbb, transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending });
     const techSignal = new THREE.Mesh(new THREE.SphereGeometry(.045, 12, 8), techSignalMaterial);
     techSignal.renderOrder = 2;
@@ -585,7 +586,7 @@ export function CosmicCanvas({ activeId, onSelect, onPrevious, onNext, motionOn,
         }
         const anchorRadius = belongsToProject ? allPlanets[anchorIndex].radius * allPlanets[anchorIndex].group.scale.x : 0;
         const radiusPath = belongsToProject ? techOrbitRadius(anchorRadius, lane) : 2.55 + lane * .16;
-        const phase = index * 2.37 + elapsed * (belongsToProject ? .24 + lane * .035 : .065);
+        const phase = moon.motion.phase + elapsed * (belongsToProject ? moon.motion.speed : .065);
         sampleTechOrbit(radiusPath, lane, phase, orbitTarget);
         moon.handoff = Math.min(1, moon.handoff + dt / .8);
         if (moon.handoff < 1 && state.current.motionOn) {
@@ -593,11 +594,12 @@ export function CosmicCanvas({ activeId, onSelect, onPrevious, onNext, motionOn,
           if (group.visible) transfers++;
         } else group.position.copy(orbitTarget);
         if (belongsToProject && moon.handoff >= 1) orbitError = Math.max(orbitError, Math.abs(group.position.length() - radiusPath));
-        group.rotation.y = elapsed * (.16 + lane * .04) + index;
+        Object.assign(techProbes[index], { owner: allWorlds[anchorIndex]?.id ?? "", visible: group.visible, x: group.position.x, y: group.position.y, z: group.position.z, radius: radiusPath });
+        group.rotation.y = elapsed * moon.motion.spin + index;
         const pulse = state.current.motionOn ? 1 + Math.sin(elapsed * 1.7 + index) * .05 : 1;
         group.scale.setScalar(pulse * (isActiveProjectTool ? 1.2 : belongsToProject ? .96 : .72));
         const surfaceMaterial = surface.material as THREE.MeshStandardMaterial;
-        surfaceMaterial.emissiveIntensity = isActiveProjectTool ? .045 : belongsToProject ? .015 : 0;
+        surfaceMaterial.emissiveIntensity = isActiveProjectTool ? .07 : belongsToProject ? .035 : .012;
         surface.scale.setScalar(1);
         atmosphere.material.opacity = (isActiveProjectTool ? .24 : belongsToProject ? .13 : .045) + (state.current.motionOn ? Math.sin(elapsed * .8 + index) * .025 : 0);
         (ring.material as THREE.MeshBasicMaterial).opacity = isActiveProjectTool ? .64 : belongsToProject ? .26 : .07;
@@ -658,6 +660,7 @@ export function CosmicCanvas({ activeId, onSelect, onPrevious, onNext, motionOn,
       host.dataset.planetSurface = "transparent-identity";
       host.dataset.sculptureWorlds = String(allPlanets.length);
       host.dataset.techOrbitError = orbitError.toFixed(6);
+      host.dataset.techBodies = JSON.stringify(techProbes.filter(body => body.visible));
       host.dataset.techTransfers = String(transfers);
       host.dataset.orbitCenter = worlds[activeIndex].id;
       host.dataset.projectOrbits = String(planets.length - 1);

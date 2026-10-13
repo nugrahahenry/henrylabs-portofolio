@@ -147,8 +147,14 @@ export function createAtmosphere(radius: number, color: string) {
       varying vec3 vNormal;
       varying vec3 vView;
       void main() {
-        vec4 world = modelMatrix * vec4(position, 1.0);
-        vNormal = normalize((modelMatrix * vec4(normal, 0.0)).xyz);
+        vec4 local = vec4(position, 1.0);
+        vec3 localNormal = normal;
+        #ifdef USE_INSTANCING
+          local = instanceMatrix * local;
+          localNormal = mat3(instanceMatrix) * localNormal;
+        #endif
+        vec4 world = modelMatrix * local;
+        vNormal = normalize((modelMatrix * vec4(localNormal, 0.0)).xyz);
         vView = cameraPosition - world.xyz;
         gl_Position = projectionMatrix * viewMatrix * world;
       }
@@ -171,6 +177,15 @@ export function createAtmosphere(radius: number, color: string) {
     transparent: true, side: THREE.BackSide, depthWrite: false, blending: THREE.AdditiveBlending,
   });
   return new THREE.Mesh(new THREE.SphereGeometry(radius * 1.035, 32, 20), material);
+}
+
+export function createCompanionMaterial(map: THREE.Texture, bump: THREE.Texture) {
+  return new THREE.MeshStandardMaterial({
+    map, bumpMap: bump, bumpScale: .016, color: 0xffffff,
+    roughness: .92, metalness: 0,
+    emissive: 0x6e829c, emissiveMap: map, emissiveIntensity: .24,
+    transparent: true,
+  });
 }
 
 export function createPlanetRing(radius: number) {

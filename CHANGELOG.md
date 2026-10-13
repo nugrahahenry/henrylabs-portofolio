@@ -1,5 +1,13 @@
 # Changelog
 
+## StarGod Portfolio v0.110.0 - 2026-10-13
+
+- Replace plain dark companion dots with cached textured surfaces, subtle relief, varied mineral tints, and a restrained lit atmospheric edge.
+- Keep every companion outside its owner's surface and rings; give the eleven bodies independent tilted elliptical lanes and slower 48-101 second periods.
+- Separate companion orbits from the main planet's axial spin, add gentle local rotation, and reuse precomputed orbit paths instead of rebuilding their geometry mathematically every frame.
+- Give project technology planets distinct, calmer periods across HenryLabs, University and Client Work while preserving verified ownership and transparent project identities.
+- Include the wider companion silhouettes in spacecraft and tracer clearance, and retain deterministic Still poses, black-hole return behavior and existing renderer limits.
+
 ## StarGod Portfolio v0.109.0 - 2026-10-13
 
 - Bring the Contact visitor systems in from deeper space, with a perspective approach before their curved descent into the black hole.

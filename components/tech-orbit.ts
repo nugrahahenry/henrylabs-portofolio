@@ -10,6 +10,10 @@ export function techOrbitRadius(bodyRadius: number, lane: number) {
   return bodyRadius + .36 + lane * .22;
 }
 
+export function techOrbitMotion(index: number) {
+  return { phase: index * 2.399, speed: Math.PI * 2 / (44 + index * 1.7), spin: .12 + index % 7 * .014 };
+}
+
 export function resolveTechOwner(owners: readonly number[], selected: number, available?: readonly number[]) {
   const candidates = available ? owners.filter((owner) => available.includes(owner)) : owners;
   return candidates.includes(selected) ? selected : candidates[0] ?? -1;

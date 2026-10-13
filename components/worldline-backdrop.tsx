@@ -4,7 +4,8 @@ import { useEffect, useRef } from "react";
 import type { MotionValue } from "motion/react";
 import * as THREE from "three";
 import { projectWorlds, type ProjectId } from "./cosmic-canvas";
-import { createAtmosphere, createPlanetMaps, createPlanetRing, projectPlanetKinds } from "./planet-materials";
+import { createAtmosphere, createCompanionMaterial, createPlanetMaps, createPlanetRing, projectPlanetKinds } from "./planet-materials";
+import { companionCounts, createCompanionOrbit, sampleCompanionOrbit, type CompanionOrbit } from "./companion-orbit";
 import { gravityMaterial, infallPoint } from "./gravity-field";
 import { advanceGravityAge, closingReturn, updateClosingScroll, gravityBirth, gravitySequence, gravityVisitors, gravityVisitorEntry, gravityVisitorPose, gravityVisitorMember, gravityReadingVisibility, type ReadingRect, GRAVITY_REST_SECONDS } from "./gravity-sequence";
 import { orbitGeometry, orbitalSpeed, sampleOrbit } from "./orbital-path";
@@ -191,8 +192,9 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, contactProgres
     const shotEnd = { x: 0, y: 0 }, shotTarget = { x: 0, y: 0, radius: 0 };
     let portalOpacity = 0, portalCycle = -1;
     const boltPose = new THREE.Object3D(), boltStart = new THREE.Vector3(), boltTarget = new THREE.Vector3(), boltDirection = new THREE.Vector3();
-    const flightObstacles = Array.from({ length: 12 }, () => ({ x: 0, y: 0, radius: 0 }));
-    const celestialObstacles = flightObstacles.slice(0, 11);
+    const craftObstacle = 11 + companionCounts.reduce((sum, count) => sum + count, 0);
+    const flightObstacles = Array.from({ length: craftObstacle + 1 }, () => ({ x: 0, y: 0, radius: 0 }));
+    const celestialObstacles = flightObstacles.slice(0, craftObstacle);
     const flightWorld = new THREE.Vector3(), flightView = new THREE.Vector3();
     const heroCopy = document.querySelector<HTMLElement>(".hero-copy");
     const heroKicker = document.querySelector<HTMLElement>(".hero-kicker");
@@ -398,9 +400,7 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, contactProgres
 
     // Every project world gets a readable local system; the active world is
     // larger, but it is no longer the only planet with visible companions.
-    const moonCounts = [2, 2, 2, 3, 2];
-    const moonRecords: Array<{ ownerIndex: number; orbitRadius: number; phase: number; eccentricity: number; lineOffset: number; size: number; speed: number }> = [];
-    let moonLineCursor = 0;
+    const moonRecords: Array<CompanionOrbit & { anchor: THREE.Object3D; path: THREE.Vector3[] }> = [];
     const orbitPlanets = projectWorlds.map((world, index) => {
       const pivot = new THREE.Group();
       const body = new THREE.Group();
@@ -422,40 +422,48 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, contactProgres
       planetSystem.add(pivot);
       const cloud = maps.cloud ? new THREE.Mesh(new THREE.SphereGeometry(radius * 1.012, 24, 16), new THREE.MeshStandardMaterial({ map: maps.cloud, transparent: true, opacity: .65, depthWrite: false, roughness: 1 })) : null;
       if (cloud) body.add(cloud);
-      for (let moonIndex = 0; moonIndex < moonCounts[index]; moonIndex++) {
-        moonRecords.push({
-          ownerIndex: index,
-          orbitRadius: radius * (.72 + moonIndex * .28),
-          phase: phase + moonIndex * 2.12 + index * .47,
-          eccentricity: .04 + moonIndex * .045,
-          lineOffset: moonLineCursor++,
-          size: radius * (.14 + ((index + moonIndex) % 3) * .026),
-          speed: 1.35 + ((index * 3 + moonIndex) % 5) * .28,
-        });
+      for (let moonIndex = 0; moonIndex < companionCounts[index]; moonIndex++) {
+        const orbit = createCompanionOrbit(index, moonIndex, radius, ring.visible);
+        const anchor = new THREE.Object3D();
+        planetSystem.add(anchor);
+        const path = Array.from({ length: 65 }, (_, segment) => sampleCompanionOrbit(orbit, segment / 64 * Math.PI * 2));
+        moonRecords.push({ ...orbit, anchor, path });
       }
       return { pivot, body, surface, atmosphere, ring, cloud, radius, phase, orbitRadius: 1.45 + index * .64, index };
     });
 
-    const moonGeometry = new THREE.SphereGeometry(1, 10, 8);
-    const moonMaterial = new THREE.MeshStandardMaterial({ color: 0xb8c9d4, roughness: .78, metalness: .02, emissive: 0x142b3a, emissiveIntensity: .28, vertexColors: true });
+    const moonGeometry = new THREE.SphereGeometry(1, 20, 14);
+    const moonMaps = createPlanetMaps("#c6cbd0", "rocky", 128, 43);
+    planetTextures.push(...moonMaps.textures);
+    const moonMaterial = createCompanionMaterial(moonMaps.map, moonMaps.bump);
     const moonMesh = new THREE.InstancedMesh(moonGeometry, moonMaterial, moonRecords.length);
     moonMesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
     const moonDummy = new THREE.Object3D();
-    const moonPalette = [0xb8c9d4, 0xd4b892, 0x9ea9d9, 0xc6d2bd, 0xb79ebf];
-    moonRecords.forEach((moon, index) => { moonDummy.scale.setScalar(moon.size); moonDummy.updateMatrix(); moonMesh.setMatrixAt(index, moonDummy.matrix); moonMesh.setColorAt(index, new THREE.Color(moonPalette[index % moonPalette.length])); });
+    moonRecords.forEach((moon, index) => { moonDummy.scale.setScalar(moon.size); moonDummy.updateMatrix(); moonMesh.setMatrixAt(index, moonDummy.matrix); moonMesh.setColorAt(index, new THREE.Color(moon.color)); });
     moonMesh.instanceMatrix.needsUpdate = true;
     if (moonMesh.instanceColor) moonMesh.instanceColor.needsUpdate = true;
     moonMesh.renderOrder = 3;
     planetSystem.add(moonMesh);
-    const moonLinePositions = new Float32Array(moonRecords.length * 160 * 2 * 3);
+    const companionAtmosphere = createAtmosphere(1, "#bdd6e0");
+    const moonAtmospheres = new THREE.InstancedMesh(companionAtmosphere.geometry, companionAtmosphere.material, moonRecords.length);
+    moonAtmospheres.instanceMatrix = moonMesh.instanceMatrix;
+    moonAtmospheres.renderOrder = 3;
+    // Their moving matrices invalidate the initial bounds; the parent scene already gates visibility.
+    moonMesh.frustumCulled = false;
+    moonAtmospheres.frustumCulled = false;
+    planetSystem.add(moonAtmospheres);
+    const moonLinePositions = new Float32Array(moonRecords.length * 64 * 2 * 3);
     const moonOrbitLines = new THREE.LineSegments(
       new THREE.BufferGeometry().setAttribute("position", new THREE.BufferAttribute(moonLinePositions, 3)),
       new THREE.LineBasicMaterial({ color: 0xabc5ce, transparent: true, opacity: .16, depthWrite: false }),
     );
     moonOrbitLines.renderOrder = 2;
+    moonOrbitLines.frustumCulled = false;
     planetSystem.add(moonOrbitLines);
     host.dataset.moonOrbits = String(moonRecords.length);
-    host.dataset.moonCounts = moonCounts.join(",");
+    host.dataset.moonCounts = companionCounts.join(",");
+    host.dataset.companionSurface = "textured-relief";
+    const companionProbes = moonRecords.map(moon => ({ owner: moon.ownerIndex, x: 0, y: 0, radius: 0, localX: 0, localY: 0, localZ: 0, period: Math.PI * 2 / moon.speed }));
 
     const solarOrbits = orbitPlanets.map(({ orbitRadius }, index) => {
       const line = new THREE.LineLoop(orbitGeometry(.08 + index * .015), new THREE.LineBasicMaterial({ color: 0xa7b7bd, transparent: true, opacity: .065, depthWrite: false }));
@@ -571,26 +579,30 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, contactProgres
       });
       moonRecords.forEach((moon, moonIndex) => {
         const owner = orbitPlanets[moon.ownerIndex];
-        const moonPhase = moon.phase + drift * orbitalSpeed(moon.orbitRadius) * moon.speed + scroll * .2;
-        sampleOrbit(moon.orbitRadius, moonPhase, moon.eccentricity, moonPoint);
-        moonWorldPoint.copy(moonPoint).applyMatrix4(owner.body.matrix).add(owner.pivot.position);
+        const moonPhase = moon.phase + drift * moon.speed;
+        sampleCompanionOrbit(moon, moonPhase, moonPoint);
+        moonWorldPoint.copy(moonPoint).multiplyScalar(owner.body.scale.x).add(owner.pivot.position);
+        moon.anchor.position.copy(moonWorldPoint);
         moonDummy.position.copy(moonWorldPoint);
         moonDummy.scale.setScalar(moon.size * owner.body.scale.x);
+        moonDummy.rotation.set(moon.tilt, moon.phase + drift * moon.spin, 0);
         moonDummy.updateMatrix();
         moonMesh.setMatrixAt(moonIndex, moonDummy.matrix);
-        const lineStart = moon.lineOffset * 160 * 2 * 3;
-        for (let segment = 0; segment < 160; segment++) {
-          const a = moon.phase + drift * orbitalSpeed(moon.orbitRadius) * moon.speed + scroll * .2 + segment / 160 * Math.PI * 2;
-          sampleOrbit(moon.orbitRadius, a, moon.eccentricity, moonPoint).applyMatrix4(owner.body.matrix).add(owner.pivot.position);
-          sampleOrbit(moon.orbitRadius, a + Math.PI * 2 / 160, moon.eccentricity, moonNextPoint).applyMatrix4(owner.body.matrix).add(owner.pivot.position);
+        Object.assign(companionProbes[moonIndex], { localX: moonPoint.x, localY: moonPoint.y, localZ: moonPoint.z });
+        const lineStart = moonIndex * 64 * 2 * 3;
+        for (let segment = 0; segment < 64; segment++) {
+          moonPoint.copy(moon.path[segment]).multiplyScalar(owner.body.scale.x).add(owner.pivot.position);
+          moonNextPoint.copy(moon.path[segment + 1]).multiplyScalar(owner.body.scale.x).add(owner.pivot.position);
           const offset = lineStart + segment * 6;
           moonLinePositions[offset] = moonPoint.x; moonLinePositions[offset + 1] = moonPoint.y; moonLinePositions[offset + 2] = moonPoint.z;
           moonLinePositions[offset + 3] = moonNextPoint.x; moonLinePositions[offset + 4] = moonNextPoint.y; moonLinePositions[offset + 5] = moonNextPoint.z;
         }
       });
       moonMesh.instanceMatrix.needsUpdate = true;
+      moonMaterial.opacity = solarVisibility;
+      moonAtmospheres.material.uniforms.uOpacity.value = .34 * solarVisibility;
       moonOrbitLines.geometry.attributes.position.needsUpdate = true;
-      moonOrbitLines.material.opacity = .22 * solarVisibility;
+      moonOrbitLines.material.opacity = .095 * solarVisibility;
       solarOrbits.forEach((line) => { line.material.opacity = .065 * solarVisibility; });
       sectorSystem.visible = solarVisibility > .6;
       const sectorAngle = drift * .026 + scroll * Math.PI * .72;
@@ -739,6 +751,7 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, contactProgres
           if (sectorSystem.visible) obstacle(body, size * body.scale.x * planetSystem.scale.x * 1.26, index + 6);
           else { flightObstacles[index + 6].x = 100; flightObstacles[index + 6].radius = 0; }
         });
+        moonRecords.forEach((moon, index) => obstacle(moon.anchor, moon.size * orbitPlanets[moon.ownerIndex].body.scale.x * planetSystem.scale.x * 1.1, index + 11));
       } else if (introMode) {
         // The planets are intentionally hidden during the search. Keep the
         // arrival chase clean instead of routing a ship around stale silhouettes.
@@ -746,8 +759,8 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, contactProgres
       } else if (solarVisibility <= .05) {
         celestialObstacles.forEach(body => { body.x = 100; body.radius = 0; });
       }
-      flightObstacles[11].radius = 0;
-      flightObstacles[11].x = 100;
+      flightObstacles[craftObstacle].radius = 0;
+      flightObstacles[craftObstacle].x = 100;
       // During the arrival film the overlay owns the copy, so the craft may use
       // the full sky instead of being squeezed into the compact hero-text lane.
       const readingEdge = flightActive || portalOpacity > 0 ? openingEdge : null;
@@ -835,7 +848,7 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, contactProgres
         model.hull.opacity = flight.presence; model.trim.opacity = flight.presence;
         model.glass.opacity = flight.presence * .84; model.light.opacity = flight.presence;
         model.flame.opacity = flight.presence * (state.current.motionOn ? .44 + Math.sin(drift * 7) * .04 : .2);
-        if (index === 0 && model.group.visible) { flightObstacles[11].x = safe.x; flightObstacles[11].y = safe.y; flightObstacles[11].radius = flight.radius; }
+        if (index === 0 && model.group.visible) { flightObstacles[craftObstacle].x = safe.x; flightObstacles[craftObstacle].y = safe.y; flightObstacles[craftObstacle].radius = flight.radius; }
         host.dataset[`${model.kind}Opacity`] = flight.presence.toFixed(4);
         host.dataset[`${model.kind}Entry`] = pose.entry.toFixed(4);
         host.dataset[`${model.kind}Retired`] = String(flight.retired);
@@ -956,6 +969,17 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, contactProgres
         solarBodies[index].radius = Number((radius * body.scale.x * planetSystem.scale.x / (tangent * Math.max(.1, -flightView.z)) * height / 2).toFixed(1));
       });
       host.dataset.solarBodies = JSON.stringify(solarBodies);
+      moonRecords.forEach((moon, index) => {
+        moon.anchor.getWorldPosition(projectedStar);
+        flightView.copy(projectedStar).applyMatrix4(camera.matrixWorldInverse);
+        projectedStar.project(camera);
+        Object.assign(companionProbes[index], {
+          x: (projectedStar.x * .5 + .5) * width,
+          y: (-projectedStar.y * .5 + .5) * height,
+          radius: moon.size * orbitPlanets[moon.ownerIndex].body.scale.x * planetSystem.scale.x / (tangent * Math.max(.1, -flightView.z)) * height / 2,
+        });
+      });
+      host.dataset.companionBodies = JSON.stringify(companionProbes);
       stellarCore.group.getWorldPosition(projectedStar);
       flightView.copy(projectedStar).applyMatrix4(camera.matrixWorldInverse);
       projectedStar.project(camera);

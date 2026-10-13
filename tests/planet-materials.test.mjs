@@ -4,6 +4,7 @@ import { createRequire } from "node:module";
 import { pathToFileURL } from "node:url";
 import test from "node:test";
 import ts from "typescript";
+import * as THREE from "three";
 
 const require = createRequire(import.meta.url);
 const source = readFileSync(new URL("../components/planet-materials.ts", import.meta.url), "utf8");
@@ -11,7 +12,7 @@ let compiled = ts.transpileModule(source, { compilerOptions: { module: ts.Module
 for (const dependency of ["three", "three/addons/math/ImprovedNoise.js"]) {
   compiled = compiled.replace(`from "${dependency}"`, `from ${JSON.stringify(pathToFileURL(require.resolve(dependency)).href)}`);
 }
-const { buildPlanetPixels, createAtmosphere, createPlanetRing, removeEdgeMatte } = await import(`data:text/javascript;base64,${Buffer.from(compiled).toString("base64")}`);
+const { buildPlanetPixels, createAtmosphere, createCompanionMaterial, createPlanetRing, removeEdgeMatte } = await import(`data:text/javascript;base64,${Buffer.from(compiled).toString("base64")}`);
 
 test("procedural surfaces stay opaque, varied, deterministic and seamless", () => {
   for (const kind of ["rocky", "ocean", "ice", "gas"]) {
@@ -69,4 +70,21 @@ test("brand matte removal preserves enclosed light details and existing transpar
   const original = transparent.slice();
   removeEdgeMatte(transparent, 2, 2);
   assert.deepEqual(transparent, original);
+});
+
+test("companion surfaces retain relief and a restrained textured night-side floor", () => {
+  const map = new THREE.Texture(), bump = new THREE.Texture();
+  const material = createCompanionMaterial(map, bump);
+  assert.equal(material.map, map);
+  assert.equal(material.bumpMap, bump);
+  assert.equal(material.emissiveMap, map);
+  assert.ok(material.emissiveIntensity >= .2 && material.emissiveIntensity <= .3);
+  assert.ok(material.roughness > .8 && material.bumpScale > 0);
+  assert.equal(material.vertexColors, false, "instance colors do not require a missing geometry color attribute");
+  const limb = createAtmosphere(1, "#bdd6e0");
+  assert.match(limb.material.vertexShader, /USE_INSTANCING/);
+  assert.match(limb.material.vertexShader, /local = instanceMatrix \* local/);
+  const pixels = buildPlanetPixels("#c6cbd0", "rocky", 128, 43).albedo;
+  assert.ok(pixels.every((value, i) => i % 4 === 3 || value > 40));
+  material.dispose(); map.dispose(); bump.dispose(); limb.geometry.dispose(); limb.material.dispose();
 });
