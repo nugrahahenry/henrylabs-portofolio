@@ -110,9 +110,12 @@
 .arrival-intro[data-intro-phase="locking"] .arrival-result, .arrival-intro[data-intro-phase="ready"] .arrival-result { opacity: 1; transform: translateY(0); }
 .arrival-intro[data-intro-phase="locking"] .arrival-universe, .arrival-intro[data-intro-phase="ready"] .arrival-universe { opacity: .9; }
 .intro-loader.arrival-intro { background: rgba(4, 7, 18, calc(.04 * (1 - var(--intro-handoff, 0)))); }
-.intro-loader.arrival-intro::before { opacity: calc(1 - var(--intro-handoff, 0)); }
-.intro-loader.arrival-intro::after { opacity: calc(.22 * (1 - var(--intro-handoff, 0))); }
-.arrival-intro .arrival-field-canvas, .arrival-intro .arrival-labels, .arrival-intro .arrival-content, .arrival-intro .arrival-skip { opacity: calc(1 - var(--intro-handoff, 0)); }
+.intro-loader.arrival-intro::before { opacity: calc(1 - var(--intro-nebula, 0)); }
+.intro-loader.arrival-intro::after { opacity: calc(.22 * (1 - var(--intro-nebula, 0))); }
+.arrival-intro .arrival-field-canvas { opacity: var(--intro-field, 1); }
+.arrival-intro .arrival-labels { opacity: var(--intro-labels, 1); }
+.arrival-intro .arrival-content { opacity: var(--intro-readout, 1); transform: perspective(900px) translateZ(calc(-90px * (1 - var(--intro-readout, 1)))); transform-origin: left bottom; }
+.arrival-intro .arrival-skip { opacity: 1; }
 .arrival-intro .arrival-field-canvas, .arrival-intro .arrival-labels { transition: opacity .3s var(--ease); }
 .arrival-intro .arrival-content { transition: opacity .3s var(--ease), transform .5s var(--ease); }
 .arrival-intro .arrival-skip { transition: opacity .3s var(--ease), border-color .25s ease, color .25s ease, background .25s ease; }

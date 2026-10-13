@@ -23,6 +23,21 @@ const ease = (value: number) => { const t = THREE.MathUtils.clamp(value, 0, 1); 
 const blend = (progress: number, from: number, to: number) => ease((progress - from) / (to - from));
 const seed = (n: number) => { const v = Math.sin(n * 127.1 + 311.7) * 43758.5453; return v - Math.floor(v); };
 
+// Separate the sky reveal from the atlas retirement: the destination remains visible
+// inside the incoming nebula before the hero becomes the reading surface.
+export function arrivalBridge(progress: number) {
+  const settle = blend(progress, .78, 1);
+  return {
+    nebula: blend(progress, .78, .90),
+    field: 1 - blend(progress, .86, .965),
+    labels: 1 - blend(progress, .88, .95),
+    readout: 1 - blend(progress, .84, .925),
+    hero: blend(progress, .915, .99),
+    cameraDepth: (1 - settle) * 2.4,
+    cameraLift: (1 - settle) * .14,
+  };
+}
+
 // The near-camera lane is intentionally denser than the distant field. It starts at the
 // first search frame so the viewer feels motion before the first universe is selected.
 export const ARRIVAL_FLYBYS = 192;
@@ -60,7 +75,8 @@ export function createArrivalField() {
   const openingSky = new THREE.Color("#080b24");
   const deepSky = new THREE.Color("#21154a");
   const skyBackground = openingSky.clone();
-  scene.background = skyBackground;
+  // Clear alpha opens the existing worldline volume behind this atlas, not a second nebula.
+  scene.background = null;
   const camera = new THREE.PerspectiveCamera(48, 1, .002, 180);
   const sampleCamera = createArrivalCameraPath();
   const positions = Array.from({ length: 128 }, (_, i) => {
@@ -398,7 +414,7 @@ export function createArrivalField() {
     scene.visible = true;
     return focus;
   };
-  return { scene, camera, update, labels, dispose() {
+  return { scene, camera, background: skyBackground, update, labels, dispose() {
     scene.traverse(object => {
       const mesh = object as THREE.Mesh;
       if (object instanceof THREE.InstancedMesh) object.dispose();

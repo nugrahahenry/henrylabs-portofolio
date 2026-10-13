@@ -126,3 +126,29 @@ test("near-camera passage geometry is bounded and distributed across the approac
   }
   field.dispose();
 });
+
+test("nebula bridge preserves the lock before retiring the atlas and revealing the hero", () => {
+  const initial = arrival.arrivalBridge(.77);
+  assert.equal(initial.nebula, 0);
+  assert.equal(initial.field, 1);
+  assert.equal(initial.hero, 0);
+  const overlap = arrival.arrivalBridge(.86);
+  assert.ok(overlap.nebula > .7, "nebula must arrive while the destination is still intact");
+  assert.equal(overlap.field, 1);
+  assert.equal(overlap.hero, 0);
+  const reading = arrival.arrivalBridge(.925);
+  assert.equal(reading.readout, 0);
+  assert.ok(reading.hero > 0 && reading.hero < .1, "hero follows, rather than competes with, the search text");
+  const final = arrival.arrivalBridge(1);
+  assert.deepEqual(final, { nebula: 1, field: 0, labels: 0, readout: 0, hero: 1, cameraDepth: 0, cameraLift: 0 });
+  assert.deepEqual(arrival.arrivalBridge(2), final);
+  let last = initial;
+  for (let i = 780; i <= 1000; i++) {
+    const next = arrival.arrivalBridge(i / 1000);
+    assert.ok(next.cameraDepth <= last.cameraDepth && next.nebula >= last.nebula);
+    assert.ok(Math.abs(next.cameraDepth - last.cameraDepth) < .017, "no one-frame camera jump");
+    assert.ok(next.field + next.nebula >= 1, "never retire the atlas into an empty frame");
+    last = next;
+  }
+  assert.ok(arrival.arrivalBridge(.999).cameraDepth < .0002, "camera settles before the intro renderer retires");
+});

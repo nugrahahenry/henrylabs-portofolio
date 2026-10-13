@@ -10,6 +10,7 @@ import { advanceGravityAge, closingReturn, updateClosingScroll, gravityApproachA
 import { orbitGeometry, orbitalSpeed, sampleOrbit } from "./orbital-path";
 import { createStellarCore } from "./stellar-core";
 import { createDeepSpace } from "./deep-space";
+import { arrivalBridge } from "./arrival-field";
 import { createSpacecraft, spacecraftPose, routeSpacecraft, flightPresence, createPursuitBolts, pursuitPulse, pursuitMiss, clearShot, createWormhole, wormholePresence, advancePursuit, pursuitEnd, WORMHOLE_X, PURSUIT_DELAY, COMPACT_PURSUIT_DELAY, PURSUIT_REST } from "./spacecraft";
 import { COMPACT_STAR_COUNT, DISTANT_STAR_COUNT, FEEDING_DUST_COUNT, createDistantStarMaterial, distantStarPoint, dustStreamSource } from "./ambient-field";
 
@@ -480,6 +481,7 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, contactProgres
     const retreatPose = { infall: 0, growth: 0, opacity: 0 };
     let solarVisibility = 1;
     let readingBlend = 0;
+    let displayedIntroProgress = state.current.introProgress;
     const solarBodies = orbitPlanets.map(() => ({ x: 0, y: 0, radius: 0 }));
     const moonPoint = new THREE.Vector3();
     const moonNextPoint = new THREE.Vector3();
@@ -499,7 +501,9 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, contactProgres
       if (state.current.motionOn) elapsed += dt;
       const drift = state.current.motionOn ? elapsed : 0;
       const introMode = state.current.introActive && state.current.motionOn;
-      const introReveal = introMode ? THREE.MathUtils.smoothstep(state.current.introProgress, 48, 82) : 1;
+      displayedIntroProgress = introMode ? THREE.MathUtils.damp(displayedIntroProgress, state.current.introProgress, 14, dt) : 100;
+      const bridge = arrivalBridge(displayedIntroProgress / 100);
+      const introReveal = introMode ? bridge.nebula : 1;
       starField.rotation.y = drift * .004 + scroll * .08;
       stars.rotation.z = Math.sin(drift * .02) * .018;
       galaxyDust.rotation.y = drift * .006 + scroll * .035;
@@ -578,8 +582,10 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, contactProgres
       });
       camera.position.x = Math.sin(scroll * Math.PI * 1.15) * .36;
       camera.position.y = Math.cos(scroll * Math.PI * .9) * .18;
-      camera.position.z = 6.8 - scroll * .42;
+      camera.position.z = 6.8 - scroll * .42 + bridge.cameraDepth;
       camera.lookAt(0, 0, -3.8);
+      if (introMode) camera.setViewOffset(host.clientWidth, host.clientHeight, 0, host.clientHeight * bridge.cameraLift, host.clientWidth, host.clientHeight);
+      else if (camera.view?.enabled) camera.clearViewOffset();
       camera.updateMatrixWorld();
 
       // Screen-space anchoring keeps the terminal landmark out of the hero and reading center.
@@ -619,7 +625,7 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, contactProgres
       const streamVisible = birth.ready && state.current.motionOn && holeOpacity > .001 && (gravityActive || returning || closing.presence < 1);
       deepSpace.material.uniforms.uTime.value = drift;
       const targetSkyPresence = state.current.mapActive ? .48 : introReveal;
-      deepSpace.material.uniforms.uPresence.value = THREE.MathUtils.damp(deepSpace.material.uniforms.uPresence.value, targetSkyPresence, 4, dt);
+      deepSpace.material.uniforms.uPresence.value = introMode || !state.current.motionOn ? targetSkyPresence : THREE.MathUtils.damp(deepSpace.material.uniforms.uPresence.value, targetSkyPresence, 4, dt);
       deepSpace.material.uniforms.uPull.value = pull;
       deepSpace.material.uniforms.uTarget.value.copy(gravityTarget);
       [starMaterial, galaxyMaterial, streakMaterial, brightMaterial].forEach((material) => {
@@ -880,6 +886,8 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, contactProgres
       host.dataset.pull = pull.toFixed(3);
       host.dataset.backgroundGalaxies = "3";
       host.dataset.nebulaModel = "volumetric-filaments";
+      host.dataset.arrivalDepth = bridge.cameraDepth.toFixed(3);
+      host.dataset.arrivalNebula = introReveal.toFixed(3);
       host.dataset.planetSurface = "opaque-terrain";
       host.dataset.solarVisibility = solarVisibility.toFixed(3);
       host.dataset.readingBlend = readingBlend.toFixed(3);

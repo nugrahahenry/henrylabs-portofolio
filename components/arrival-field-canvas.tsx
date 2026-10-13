@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import * as THREE from "three";
-import { arrivalCandidate, arrivalChapter, createArrivalField } from "./arrival-field";
+import { arrivalBridge, arrivalCandidate, arrivalChapter, createArrivalField } from "./arrival-field";
 
 export function ArrivalField({ progress, motionOn, active, projects }: { progress: number; motionOn: boolean; active: boolean; projects: readonly { id: string; name: string; logo: string }[] }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -39,12 +39,15 @@ export function ArrivalField({ progress, motionOn, active, projects }: { progres
       const width = canvas.clientWidth || window.innerWidth;
       const height = canvas.clientHeight || window.innerHeight;
       field.update(displayedProgress, width / Math.max(1, height), height);
+      const bridge = arrivalBridge(displayedProgress / 100);
+      renderer.setClearColor(field.background, 1 - bridge.nebula);
       field.scene.visible = current.active;
       renderer.render(field.scene, field.camera);
       canvas.dataset.ready = "true";
       canvas.dataset.camera = field.camera.position.toArray().map(value => value.toFixed(3)).join(",");
       canvas.dataset.chapter = String(arrivalChapter(displayedProgress / 100));
       canvas.dataset.drawCalls = String(renderer.info.render.calls);
+      canvas.dataset.skyOpacity = (1 - bridge.nebula).toFixed(3);
       labels.forEach((element, i) => {
         const anchor = field.labels[i];
         element.style.transform = `translate3d(${anchor.x}px,${anchor.y}px,0)`;

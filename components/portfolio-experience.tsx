@@ -18,7 +18,7 @@ import { AnimatePresence, MotionConfig, motion, useInView, useMotionValue, useMo
 import { CosmicCanvas, type OrbitId, type ProjectId, type SatelliteId, type SatelliteWorld } from "./cosmic-canvas";
 import { requestSmoothScroll, SmoothScroll } from "./smooth-scroll";
 import { WorldlineBackdrop } from "./worldline-backdrop";
-import { ARRIVAL_DURATION, ARRIVAL_CHAPTERS, arrivalChapter, arrivalCandidate, arrivalHandoff, arrivalPhase } from "./arrival-field";
+import { ARRIVAL_DURATION, ARRIVAL_CHAPTERS, arrivalBridge, arrivalChapter, arrivalCandidate, arrivalHandoff, arrivalPhase } from "./arrival-field";
 import { ArrivalField } from "./arrival-field-canvas";
 import type { GalaxyId } from "./galaxy-system";
 
@@ -151,6 +151,7 @@ export function PortfolioExperience() {
   const introUniverseIndex = arrivalCandidate(introProgress / 100);
   const introChapter = arrivalChapter(introProgress / 100);
   const introHandoff = arrivalHandoff(introProgress / 100);
+  const introBridge = arrivalBridge(introProgress / 100);
   const introStopRef = useRef(false);
   const [worldlineStage, setWorldlineStage] = useState<WorldlineStage>("world");
   const [heroPhase, setHeroPhase] = useState("intro");
@@ -387,7 +388,7 @@ export function PortfolioExperience() {
 
   return (
     <MotionConfig reducedMotion={motionOn ? "never" : "always"} transition={{ duration: motionOn ? 0.55 : 0, ease: [0.16, 1, 0.3, 1] }}>
-    <main className="site-shell" id="main-content" tabIndex={-1} data-motion={motionOn ? "on" : "off"} data-intro={introDone ? "done" : "active"} data-intro-handoff={introHandoff.toFixed(3)} style={{ "--intro-handoff": introHandoff, "--intro-hero-reveal": introHandoff } as CSSProperties}>
+    <main className="site-shell" id="main-content" tabIndex={-1} data-motion={motionOn ? "on" : "off"} data-intro={introDone ? "done" : "active"} data-intro-handoff={introHandoff.toFixed(3)} style={{ "--intro-handoff": introHandoff, "--intro-nebula": introBridge.nebula, "--intro-field": introBridge.field, "--intro-labels": introBridge.labels, "--intro-readout": introBridge.readout, "--intro-hero-reveal": introBridge.hero } as CSSProperties}>
       <SmoothScroll enabled={motionOn} />
       <WorldlineBackdrop activeId={activeProject.id} motionOn={motionOn} progress={worldlineProgress} contactProgress={contactProgress} contactVisible={contactVisible} mapActive={heroPhase === "worlds"} introActive={!introDone} introProgress={introProgress} />
       <div className={cx("intro-loader", "arrival-intro", introDone && "intro-loader--done")} data-intro-phase={introPhase} data-intro-progress={introProgress} data-intro-universe={introUniverseIndex} aria-hidden={introDone} inert={introDone}>
@@ -420,7 +421,7 @@ export function PortfolioExperience() {
           event.stopPropagation();
           closeWorldInspector();
         }}>
-          <motion.div className="hero-copy" inert={motionOn && heroPhase !== "intro"} style={{ y: motionOn ? heroCopyY : 0 }}>
+          <motion.div className="hero-copy" inert={!introDone || (motionOn && heroPhase !== "intro")} style={{ y: motionOn ? heroCopyY : 0 }}>
             <p className="hero-kicker"><span className="live-pulse" /> product-minded developer / Indonesia</p>
             <h1 id="hero-title">{t.hero.title}</h1>
             <p className="hero-body">{t.hero.body}</p>

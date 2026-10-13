@@ -1,5 +1,12 @@
 # Changelog
 
+## StarGod Portfolio v0.107.0 - 2026-10-13
+
+- Open the existing 3D nebula behind the final HenryLabs lock before retiring the intro galaxy, without creating another nebula renderer or image plate.
+- Match the arrival framing with a damped forward camera move that settles into the normal homepage camera.
+- Sequence search readout retirement, project-label fading, and hero reveal separately; keep Skip Intro visible throughout and hero controls inert until arrival finishes.
+- Add dedicated handoff regression for responsive transitions, nonblank scene pixels, session return, reverse scroll, reduced motion, and the no-WebGL skip path.
+
 ## StarGod Portfolio v0.106.0 - 2026-10-13
 
 - Increase near-camera flyby density from the first universe-search frame, with a bounded compact lane for small screens.
