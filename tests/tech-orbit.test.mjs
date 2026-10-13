@@ -27,6 +27,63 @@ const { infallPoint, gravityMaterial, dustWarmth } = await loadModule("gravity-f
 const { blackHoleFrame } = await loadModule("black-hole-frame");
 const { createSpacecraft, spacecraftPose, routeSpacecraft, flightPresence, pursuitPulse, pursuitShotTime, pursuitShotSide, pursuitMiss, createPursuitBolts, wormholePresence, createWormhole, clearShot, advancePursuit, pursuitEnd, pursuitPeriod, PURSUIT_DELAY, PURSUIT_REST, PURSUIT_SHOTS, PURSUIT_SHOT_SECONDS } = await loadModule("spacecraft");
 const { distantStarPoint, dustStreamSource, stellarTwinkle, createDistantStarMaterial, DISTANT_STAR_COUNT, COMPACT_STAR_COUNT, FEEDING_DUST_COUNT } = await loadModule("ambient-field");
+const { PASSAGE_COUNT, COMPACT_PASSAGE_COUNT, advancePassage, passagePoint, passageReadingGuard, createCameraPassage } = await loadModule("camera-passage");
+
+test("near-camera passages accelerate gently, settle, and ignore suspended frames", () => {
+  const clock = { distance: 0, speed: .48, opacity: 0 };
+  for (let i = 0; i < 120; i++) advancePassage(clock, 1 / 60, 0, 900, true, false);
+  assert.ok(clock.opacity > .7 && clock.distance > .9);
+  const idle = clock.speed;
+  for (let i = 0; i < 60; i++) advancePassage(clock, 1 / 60, i % 2 ? -100 : 100, 900, true, false);
+  assert.ok(clock.speed > idle * 4 && clock.speed < 2.88);
+  const snapshot = { ...clock };
+  advancePassage(clock, 30, 5000, 900, true, false);
+  assert.deepEqual(clock, snapshot);
+  for (let i = 0; i < 180; i++) advancePassage(clock, 1 / 60, 0, 900, true, false);
+  assert.ok(Math.abs(clock.speed - idle) < .002);
+  for (let i = 0; i < 120; i++) advancePassage(clock, 1 / 60, 100, 900, true, true);
+  assert.ok(clock.opacity < .001);
+  const stopped = clock.distance;
+  advancePassage(clock, 1 / 60, 200, 900, false, false);
+  assert.equal(clock.distance, stopped);
+  assert.equal(clock.opacity, 0);
+  assert.equal(clock.speed, 0);
+});
+
+test("passages move in depth, expand in perspective and fade before recycling", () => {
+  const a = new THREE.Vector3(), b = new THREE.Vector3();
+  for (let index = 0; index < PASSAGE_COUNT; index++) {
+    let wrapped = false;
+    for (let distance = 0; distance < 36; distance += .05) {
+      const opacity = passagePoint(index, distance, 1.6, a);
+      const next = passagePoint(index, distance + .05, 1.6, b);
+      assert.ok(opacity >= 0 && opacity <= 1 && a.z <= -1 && a.z >= -27);
+      assert.equal(a.x, b.x);
+      assert.equal(a.y, b.y);
+      if (b.z < a.z) {
+        wrapped = true;
+        assert.ok(opacity < .001 && next < .001, "recycle happens with no visible pop");
+      } else assert.ok(Math.abs(b.x / b.z) > Math.abs(a.x / a.z), "nearer stars expand away from the vanishing point");
+    }
+    assert.ok(wrapped);
+  }
+});
+
+test("passages protect copy and share one bounded point batch", () => {
+  const rect = { left: 100, top: 200, right: 800, bottom: 600 };
+  assert.equal(passageReadingGuard(450, 300, rect), 0);
+  assert.equal(passageReadingGuard(92, 300, rect), 0);
+  assert.equal(passageReadingGuard(20, 300, rect), 1);
+  assert.ok(passageReadingGuard(70, 300, rect) > 0 && passageReadingGuard(70, 300, rect) < 1);
+  assert.equal(passageReadingGuard(450, 300, null), 1);
+  const batch = createCameraPassage();
+  assert.equal(batch.geometry.getAttribute("position").count, PASSAGE_COUNT);
+  assert.ok(COMPACT_PASSAGE_COUNT <= PASSAGE_COUNT / 2);
+  assert.equal(batch.points.isPoints, true);
+  assert.equal(batch.material.depthWrite, false);
+  assert.equal(batch.material.uniforms.uOpacity.value, 0);
+  batch.geometry.dispose(); batch.material.dispose();
+});
 
 test("galaxy approach centers first and reveals the local system without a visibility jump", () => {
   const pose = { pan: 0, approach: 0, orbitScale: 0, selectedVisibility: 1, otherVisibility: 1, arc: 0 };

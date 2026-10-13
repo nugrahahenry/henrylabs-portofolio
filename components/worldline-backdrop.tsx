@@ -15,6 +15,7 @@ import { blackHoleFrame } from "./black-hole-frame";
 import { arrivalBridge } from "./arrival-field";
 import { createSpacecraft, spacecraftPose, routeSpacecraft, flightPresence, createPursuitBolts, pursuitPulse, pursuitShotSide, pursuitMiss, clearShot, createWormhole, wormholePresence, advancePursuit, pursuitEnd, WORMHOLE_X, FLIGHT_START_X, PURSUIT_DELAY, COMPACT_PURSUIT_DELAY, PURSUIT_REST, PURSUIT_SHOTS, PURSUIT_SHOT_SECONDS } from "./spacecraft";
 import { COMPACT_STAR_COUNT, DISTANT_STAR_COUNT, FEEDING_DUST_COUNT, createDistantStarMaterial, distantStarPoint, dustStreamSource } from "./ambient-field";
+import { PASSAGE_COUNT, COMPACT_PASSAGE_COUNT, createCameraPassage, advancePassage, passagePoint, passageReadingGuard } from "./camera-passage";
 
 function createBlackHole() {
   const group = new THREE.Group();
@@ -175,6 +176,12 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, contactProgres
     const scene = new THREE.Scene();
     const deepSpace = createDeepSpace();
     scene.add(deepSpace.volume);
+    const passage = createCameraPassage();
+    const passageClock = { distance: 0, speed: .48, opacity: 0 };
+    const passagePosition = new THREE.Vector3();
+    const passageProbes = Array.from({ length: PASSAGE_COUNT }, (_, index) => ({ index, x: 0, y: 0, z: 0, opacity: 0, size: 0 }));
+    let passageScroll = window.scrollY;
+    scene.add(passage.points);
     const flights = [createSpacecraft(), createSpacecraft("scout")].map((model) => ({ model, pose: spacecraftPose(0, false, model.kind), safe: { x: 0, y: .65, visible: false, clearance: 0 }, candidate: { x: 0, y: .65, visible: false, clearance: 0 }, velocity: new THREE.Vector2(), heading: 0, radius: 0, presence: 0, retired: false, portalEntry: null as boolean | null, cycle: -1 }));
     flights.forEach(({ model }) => { model.group.traverse(object => object.layers.set(1)); scene.add(model.group); });
     // Ship-only studio lighting reveals the hull without bleaching the surrounding universe.
@@ -200,6 +207,8 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, contactProgres
     const celestialObstacles = flightObstacles.slice(0, craftObstacle);
     const flightWorld = new THREE.Vector3(), flightView = new THREE.Vector3();
     const heroCopy = document.querySelector<HTMLElement>(".hero-copy");
+    const passageCopy = heroCopy ? Array.from(heroCopy.children) : [];
+    const passageReading = { left: 0, top: 0, right: 0, bottom: 0 };
     const heroKicker = document.querySelector<HTMLElement>(".hero-kicker");
     const heroNote = document.querySelector<HTMLElement>(".hero-note");
     const contactCopy = document.querySelector<HTMLElement>(".contact-copy");
@@ -632,6 +641,37 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, contactProgres
       // Screen-space anchoring keeps the terminal landmark out of the hero and reading center.
       const width = host.clientWidth;
       const height = host.clientHeight;
+      const passageProtected = state.current.introActive || state.current.mapActive || readingChapter || state.current.contactVisible || holeOpacity > .001;
+      advancePassage(passageClock, delta, window.scrollY - passageScroll, height, state.current.motionOn, passageProtected);
+      passageScroll = window.scrollY;
+      passage.points.position.copy(camera.position);
+      passage.points.quaternion.copy(camera.quaternion);
+      passage.points.visible = passageClock.opacity > .002;
+      passage.material.uniforms.uOpacity.value = passageClock.opacity;
+      passage.material.uniforms.uScale.value = height * renderer.getPixelRatio();
+      // The hero wrapper fills the viewport; protect its content, not its empty space.
+      passageReading.left = width; passageReading.top = height;
+      passageReading.right = 0; passageReading.bottom = 0;
+      for (const element of passageCopy) {
+        const rect = element.getBoundingClientRect();
+        passageReading.left = Math.min(passageReading.left, rect.left);
+        passageReading.top = Math.min(passageReading.top, rect.top);
+        passageReading.right = Math.max(passageReading.right, rect.right);
+        passageReading.bottom = Math.max(passageReading.bottom, rect.bottom);
+      }
+      const passageRect = passageCopy.length ? passageReading : null;
+      const passageTangent = Math.tan(THREE.MathUtils.degToRad(camera.fov / 2));
+      const passageCount = passage.geometry.drawRange.count;
+      for (let index = 0; index < passageCount; index++) {
+        const presence = passagePoint(index, passageClock.distance, camera.aspect, passagePosition);
+        passagePosition.toArray(passage.positions, index * 3);
+        const x = (.5 + passagePosition.x / (-passagePosition.z * passageTangent * camera.aspect) * .5) * width;
+        const y = (.5 - passagePosition.y / (-passagePosition.z * passageTangent) * .5) * height;
+        passage.opacity[index] = presence * passageReadingGuard(x, y, passageRect);
+        Object.assign(passageProbes[index], { x, y, z: passagePosition.z, opacity: passage.opacity[index] * passageClock.opacity, size: THREE.MathUtils.clamp(passage.sizes[index] * height / -passagePosition.z, 1.5, 6) });
+      }
+      passage.geometry.attributes.position.needsUpdate = true;
+      passage.geometry.attributes.aOpacity.needsUpdate = true;
       const contactActive = state.current.motionOn && state.current.contactVisible && holeStrength > .05 && !closing.returning && closing.presence === 1;
       birthAge = advanceGravityAge(birthAge, delta, contactActive);
       const birth = state.current.motionOn ? gravityBirth(birthAge) : { growth: 1, ready: true };
@@ -1089,6 +1129,12 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, contactProgres
       host.dataset.feedingDustCount = String(flowGeometry.getAttribute("position").count);
       host.dataset.distantStars = String(distantGeometry.drawRange.count);
       host.dataset.distantStarPull = "0.000";
+      host.dataset.passageCount = String(passageCount);
+      host.dataset.passageOpacity = passageClock.opacity.toFixed(3);
+      host.dataset.passageSpeed = passageClock.speed.toFixed(3);
+      host.dataset.passageDistance = passageClock.distance.toFixed(4);
+      host.dataset.passageProtected = String(passageProtected);
+      host.dataset.passageProbes = JSON.stringify(passageProbes.slice(0, passageCount));
       host.dataset.starTwinkle = distantMaterial.uniforms.uMotion.value ? "on" : "off";
       host.dataset.dustStreaks = String(upperStreakCount);
       const upperPhase = (gravityAge * .05 + flowSeeds[upperProbeIndex]) % 1;
@@ -1131,6 +1177,8 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, contactProgres
       camera.updateProjectionMatrix();
       renderer.setSize(host.clientWidth, host.clientHeight, false);
       distantGeometry.setDrawRange(0, host.clientWidth < 700 ? COMPACT_STAR_COUNT : DISTANT_STAR_COUNT);
+      passage.geometry.setDrawRange(0, host.clientWidth < 700 ? COMPACT_PASSAGE_COUNT : PASSAGE_COUNT);
+      passageScroll = window.scrollY;
       deepSpace.material.uniforms.uResolution.value.set(host.clientWidth * renderer.getPixelRatio(), host.clientHeight * renderer.getPixelRatio());
       wake();
     };

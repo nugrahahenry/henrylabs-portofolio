@@ -1,5 +1,12 @@
 # Changelog
 
+## StarGod Portfolio v0.112.0 - 2026-10-13
+
+- Add sparse near-camera star passages after arrival, with real depth and perspective growth, a slow idle pace, and a bounded scroll/Explore acceleration.
+- Feather stars away from the actual hero text and controls; fade the near layer in the interactive map, reading chapters and Contact so project orbits and the closing singularity remain clear.
+- Reuse one cached point batch in the existing renderer, capped at 72 stars or 36 on compact screens, with no additional assets or dependencies.
+- Fade before recycling, discard suspended-frame catch-up, and disable the passages under Still or reduced motion. Preserve distant stars, intro choreography, companion orbits, pursuit and black-hole behavior.
+
 ## StarGod Portfolio v0.111.0 - 2026-10-13
 
 - Enrich the intro atlas with 61 Local Group galaxies, including clustered companions, spiral and barred disks, thicker cores, and elliptical volumes at varied inclinations.
