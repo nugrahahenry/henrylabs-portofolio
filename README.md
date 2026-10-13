@@ -1,6 +1,6 @@
 <div align="center">
 
-# StarGod Portfolio v0.107.0
+# StarGod Portfolio v0.107.1
 
 **I build things I actually see.**
 
@@ -128,7 +128,7 @@ npm ci
 npm run dev
 ```
 
-Open the local address printed by Next.js. For verification: `npm test`, `npm run typecheck`, and `npm run build`. Browser checks live in `tests/`.
+Open the local address printed by Next.js. For verification: `npm test`, `npm run typecheck`, and `npm run build`. Browser checks live in `tests/`; `npm run test:spacecraft-entry` checks the first UFO/scout encounter after arrival, Skip Intro, session return, and re-enabling motion.
 
 This portfolio is **actively being developed**. Hosting is deferred. The project and credential libraries, four-state personal portrait, and technology-to-credentials scroll chapter are available. Home uses selected previews instead of repeated project lists or a full credential archive. The portrait choreography and StarGod identity remain open to refinement. The original `henrylabs-useful-worlds.html` remains a legacy prototype.
 

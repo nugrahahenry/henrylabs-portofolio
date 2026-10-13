@@ -1,5 +1,13 @@
 # Changelog
 
+## StarGod Portfolio v0.107.1 - 2026-10-13
+
+- Fix the first UFO/scout encounter being marked complete by a stale Still-mode pose when entering the homepage or re-enabling animation.
+- Keep spacecraft hidden throughout the intro and reset craft and portal state together before the first animated pass.
+- Bring the entrance closer to the viewport edge so the pursuit becomes visible sooner, preserving planet clearance, UFO-first order, wormhole exit, and thirty-second rest.
+- Route compact openings beneath the availability text when there is room, including short laptop screens whose header-to-title gap cannot fit the craft.
+- Add real-clock opening regression for responsive views, full intro, Skip Intro, session return, and Still-to-Motion recovery without scrolling to another chapter.
+
 ## StarGod Portfolio v0.107.0 - 2026-10-13
 
 - Open the existing 3D nebula behind the final HenryLabs lock before retiring the intro galaxy, without creating another nebula renderer or image plate.

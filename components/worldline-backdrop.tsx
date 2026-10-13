@@ -11,7 +11,7 @@ import { orbitGeometry, orbitalSpeed, sampleOrbit } from "./orbital-path";
 import { createStellarCore } from "./stellar-core";
 import { createDeepSpace } from "./deep-space";
 import { arrivalBridge } from "./arrival-field";
-import { createSpacecraft, spacecraftPose, routeSpacecraft, flightPresence, createPursuitBolts, pursuitPulse, pursuitMiss, clearShot, createWormhole, wormholePresence, advancePursuit, pursuitEnd, WORMHOLE_X, PURSUIT_DELAY, COMPACT_PURSUIT_DELAY, PURSUIT_REST } from "./spacecraft";
+import { createSpacecraft, spacecraftPose, routeSpacecraft, flightPresence, createPursuitBolts, pursuitPulse, pursuitMiss, clearShot, createWormhole, wormholePresence, advancePursuit, pursuitEnd, WORMHOLE_X, FLIGHT_START_X, PURSUIT_DELAY, COMPACT_PURSUIT_DELAY, PURSUIT_REST } from "./spacecraft";
 import { COMPACT_STAR_COUNT, DISTANT_STAR_COUNT, FEEDING_DUST_COUNT, createDistantStarMaterial, distantStarPoint, dustStreamSource } from "./ambient-field";
 
 function createBlackHole() {
@@ -178,6 +178,7 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, contactProgres
     const flightWorld = new THREE.Vector3(), flightView = new THREE.Vector3();
     const heroCopy = document.querySelector<HTMLElement>(".hero-copy");
     const heroKicker = document.querySelector<HTMLElement>(".hero-kicker");
+    const heroNote = document.querySelector<HTMLElement>(".hero-note");
     const methodSteps = document.querySelector<HTMLElement>("#work");
     const stackKicker = document.querySelector<HTMLElement>(".maker-heading");
     let bandDirty = true, bandTop = 0, bandBottom = 0;
@@ -655,7 +656,8 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, contactProgres
       planetSystem.rotation.z += pull * pull * 4;
       stellarLight.intensity = 34 * (1 - pull);
       // Project real bodies into one height-normalized clearance space, including visible rings.
-      const compactFlight = width < 1100 || camera.aspect < .9 || height < 620;
+      const openingEdge = !state.current.introActive && heroCopy && !heroCopy.inert && heroKicker ? heroKicker.getBoundingClientRect().top : null;
+      const compactFlight = width < 1100 || camera.aspect < .9 || height < 620 || openingEdge !== null && openingEdge - headerHeight < 112;
       const portalX = compactFlight ? .48 : WORMHOLE_X;
       const requestedDelay = compactFlight ? COMPACT_PURSUIT_DELAY : PURSUIT_DELAY;
       if (bandDirty) {
@@ -664,15 +666,25 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, contactProgres
         bandDirty = false;
       }
       const readingLane = readingChapter && bandBottom - bandTop >= 120;
-      const laneCenter = 1 - (bandTop + bandBottom) / height;
-      const chapterAllowsFlight = !introMode && holeOpacity < .05 && !state.current.mapActive && (!readingChapter || readingLane);
-      if (introMode) introExitHandled = false;
+      const noteBottom = compactFlight && openingEdge !== null && heroNote ? heroNote.getBoundingClientRect().bottom : height;
+      const openingLane = compactFlight && openingEdge !== null && height - noteBottom >= 90;
+      const boundedLane = readingLane || openingLane;
+      const flightTop = openingLane ? noteBottom + 12 : bandTop;
+      const flightBottom = openingLane ? height - 24 : bandBottom;
+      const laneCenter = 1 - (flightTop + flightBottom) / height;
+      const chapterAllowsFlight = !state.current.introActive && holeOpacity < .05 && !state.current.mapActive && (!readingChapter || readingLane);
+      if (state.current.introActive || !state.current.motionOn) introExitHandled = false;
       else if (state.current.introProgress >= 100 && !introExitHandled) {
         // The chase belongs to the Henry galaxy opening, immediately after the search handoff.
         // Starting at zero keeps the first UFO entrance readable instead of parking it in the intro.
         pursuit.age = 0;
         pursuit.delay = requestedDelay;
         pursuit.interrupted = false;
+        // A pre-hydration/Still pose is not a completed animated encounter.
+        // Retire all of its state before starting the first moving pass.
+        portalOpacity = 0;
+        portalCycle = -1;
+        flights.forEach(flight => { flight.presence = 0; flight.cycle = -1; });
         introExitHandled = true;
       }
       if (!introMode) advancePursuit(pursuit, dt, Boolean(chapterAllowsFlight), state.current.motionOn, requestedDelay, portalOpacity < .001 && flights.every(flight => flight.presence < .001));
@@ -709,14 +721,14 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, contactProgres
       flightObstacles[11].x = 100;
       // During the arrival film the overlay owns the copy, so the craft may use
       // the full sky instead of being squeezed into the compact hero-text lane.
-      const readingEdge = !introMode && (flightActive || portalOpacity > 0) && heroCopy && !heroCopy.inert && heroKicker ? heroKicker.getBoundingClientRect().top : null;
-      const portalPixels = Math.min(38, width * .105, compactFlight || readingEdge === null ? 38 : Math.max(0, readingEdge - headerHeight - 28) / 3);
+      const readingEdge = flightActive || portalOpacity > 0 ? openingEdge : null;
+      const portalPixels = Math.min(38, width * .105, boundedLane ? (flightBottom - flightTop) / 2 - 2 : compactFlight || readingEdge === null ? 38 : Math.max(0, readingEdge - headerHeight - 28) / 3);
       const portalRadius = portalPixels / height * 2;
-      const portalFloor = readingLane ? 1 - (bandBottom - portalPixels) / height * 2 : compactFlight ? -1 + portalRadius + 32 / height : readingEdge === null ? .18 : 1 - (readingEdge - portalRadius * height / 2 - 12) / height * 2;
-      const portalCeiling = readingLane ? 1 - (bandTop + portalPixels) / height * 2 : compactFlight ? -.6 : 1 - (headerHeight + portalPixels + 10) / height * 2;
+      const portalFloor = boundedLane ? 1 - (flightBottom - portalPixels) / height * 2 : compactFlight ? -1 + portalRadius + 32 / height : readingEdge === null ? .18 : 1 - (readingEdge - portalRadius * height / 2 - 12) / height * 2;
+      const portalCeiling = boundedLane ? 1 - (flightTop + portalPixels) / height * 2 : compactFlight ? -.6 : 1 - (headerHeight + portalPixels + 10) / height * 2;
       const cycle = introMode ? 9001 : pursuit.cycle;
       if (portalCycle !== cycle) { portalCycle = cycle; portalSafe.visible = false; }
-      routeSpacecraft(portalX * camera.aspect, readingLane ? laneCenter : portalOpacity > .01 ? portalSafe.y : compactFlight ? -.78 : .64, portalRadius, celestialObstacles, portalFloor, portalCeiling, portalCandidate);
+      routeSpacecraft(portalX * camera.aspect, boundedLane ? laneCenter : portalOpacity > .01 ? portalSafe.y : compactFlight ? -.78 : .64, portalRadius, celestialObstacles, portalFloor, portalCeiling, portalCandidate);
       if (portalOpacity < .01 || portalCandidate.visible && Math.abs(portalCandidate.y - portalSafe.y) < .1) Object.assign(portalSafe, portalCandidate);
       const portalClear = portalPixels >= 24 && portalSafe.visible && celestialObstacles.every(body => Math.hypot(portalSafe.x - body.x, portalSafe.y - body.y) >= portalRadius + body.radius + .02);
       const portalTarget = flightAllowed && portalClear ? wormholePresence(flightAge, state.current.motionOn, flightDelay) : 0;
@@ -742,7 +754,7 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, contactProgres
         const cycle = introMode ? 9001 : pursuit.cycle;
         if (cycle !== flight.cycle) { flight.cycle = cycle; flight.retired = false; flight.portalEntry = null; }
         if (!state.current.motionOn) flight.retired = false;
-        pose.x = -1.15 + (pose.x + 1.15) / (WORMHOLE_X + 1.15) * (portalX + 1.15);
+        pose.x = FLIGHT_START_X + (pose.x - FLIGHT_START_X) / (WORMHOLE_X - FLIGHT_START_X) * (portalX - FLIGHT_START_X);
         if (pose.entry > 0 && flight.portalEntry === null) flight.portalEntry = portalOpacity > .35;
         // If the portal cannot fit, finish offscreen instead of shrinking into empty space.
         if (flight.portalEntry === false) {
@@ -754,23 +766,24 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, contactProgres
         const widthRatio = compactIntro ? model.kind === "ufo" ? .11 : .13 : model.kind === "ufo" ? .14 : .17;
         const baseSize = Math.min(model.kind === "ufo" ? 76 : 90, Math.min(width, height) * widthRatio);
         const peakPerspective = (camera.position.z + 2.8) / (camera.position.z + .7);
-        const availableHeight = readingLane ? bandBottom - bandTop - 8 : compactFlight ? Math.max(84, height * .28 - 16) : readingEdge === null ? Infinity : Math.max(0, readingEdge - headerHeight - 30);
+        const availableHeight = boundedLane ? flightBottom - flightTop - 8 : compactFlight ? Math.max(84, height * .28 - 16) : readingEdge === null ? Infinity : Math.max(0, readingEdge - headerHeight - 30);
         // Reserve separation for both silhouettes even at their closest depth and in a narrow heading gap.
-        const pairSpacing = flightDelay / 18 * (portalX + 1.15) * width * .5;
+        const pairSpacing = flightDelay / 18 * (portalX - FLIGHT_START_X) * width * .5;
         const pairRadius = Math.max(0, (pairSpacing - .045 * height * .5) * .5);
         const size = Math.min(baseSize, Math.min(availableHeight * .5, pairRadius) * model.span / (model.radius * 1.12 * peakPerspective));
         const perspective = (camera.position.z + 2.8) / (camera.position.z - pose.depth);
         const projectedSize = size * perspective;
         const radius = projectedSize * model.radius / model.span / height * 2 * 1.12 * pose.scale;
         const previousX = safe.x, previousY = safe.y;
-        const cruisingY = readingLane ? laneCenter + (model.kind === "ufo" ? -.025 : .025) : compactFlight ? (model.kind === "ufo" ? -.84 : -.62) + Math.sin(drift * .5) * .015 : pose.y;
+        const cruisingY = boundedLane ? laneCenter + (model.kind === "ufo" ? -.025 : .025) : compactFlight ? (model.kind === "ufo" ? -.84 : -.62) + Math.sin(drift * .5) * .015 : pose.y;
         const routeY = flight.portalEntry ? THREE.MathUtils.lerp(cruisingY, portalSafe.y, THREE.MathUtils.smoothstep(pose.entry, .4, 1)) : cruisingY;
         const desired = state.current.motionOn ? THREE.MathUtils.damp(previousY, routeY, 5, dt) : routeY;
-        const floor = readingLane ? 1 - bandBottom / height * 2 + radius : compactFlight ? -1 + radius + 32 / height : readingEdge === null ? .18 : 1 - (readingEdge - radius * height / 2 - 12) / height * 2;
-        const ceiling = readingLane ? 1 - bandTop / height * 2 - radius : compactFlight ? -.6 : 1 - (headerHeight + radius * height / 2 + 10) / height * 2;
+        const floor = boundedLane ? 1 - flightBottom / height * 2 + radius : compactFlight ? -1 + radius + 32 / height : readingEdge === null ? .18 : 1 - (readingEdge - radius * height / 2 - 12) / height * 2;
+        const ceiling = boundedLane ? 1 - flightTop / height * 2 - radius : compactFlight ? -.6 : 1 - (headerHeight + radius * height / 2 + 10) / height * 2;
         routeSpacecraft(pose.x * camera.aspect, desired, radius, flightObstacles, floor, ceiling, candidate);
         const continuous = flight.presence < .05 || Math.hypot(candidate.x - safe.x, candidate.y - safe.y) < .24;
-        const canFly = flightAllowed && pose.visible && candidate.visible && size >= 28 && continuous;
+        const minimumSize = openingLane ? 24 : 28;
+        const canFly = flightAllowed && pose.visible && candidate.visible && size >= minimumSize && continuous;
         // Finish one graceful exit at the last safe pose; never flicker back within this pass.
         if (!canFly && flight.presence > 0 && state.current.motionOn) {
           if (!flight.retired) host.dataset[`${model.kind}ExitReason`] = !flightAllowed ? "protected" : !pose.visible ? "complete" : !candidate.visible ? "blocked" : !continuous ? "discontinuity" : "compact";

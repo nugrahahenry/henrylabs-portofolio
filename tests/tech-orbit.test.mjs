@@ -262,6 +262,7 @@ test("a bounded metallic UFO and scout share a delayed pursuit and still alterna
     assert.deepEqual(spacecraftPose(3, false, kind), spacecraftPose(40, false, kind));
   }
   assert.equal(spacecraftPose(3, true).visible, true);
+  assert.ok(spacecraftPose(3, true).x > -1, "the first UFO must reach the viewport within three seconds");
   assert.equal(spacecraftPose(3, true, "scout").visible, false);
   assert.equal(spacecraftPose(8, true, "scout").visible, true);
   assert.equal(spacecraftPose(40, true).visible, false);

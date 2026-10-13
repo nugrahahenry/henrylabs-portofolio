@@ -8,6 +8,7 @@ export type SafeFlightPoint = { x: number; y: number; visible: boolean; clearanc
 export const PURSUIT_DELAY = 4.8;
 export const COMPACT_PURSUIT_DELAY = 10;
 export const PURSUIT_REST = 30;
+export const FLIGHT_START_X = -1.04;
 export const pursuitEnd = (delay = PURSUIT_DELAY) => 20.7 + delay;
 // The next UFO appears at +.6, exactly thirty seconds after the portal closes.
 export const pursuitPeriod = (delay = PURSUIT_DELAY) => pursuitEnd(delay) + PURSUIT_REST - .6;
@@ -87,7 +88,7 @@ export function spacecraftPose(age: number, motionOn: boolean, kind: SpacecraftK
   const travel = THREE.MathUtils.clamp(t, 0, 1), arc = Math.sin(travel * Math.PI);
   out.visible = motionOn ? t > 0 && t < 1 : true;
   out.entry = motionOn ? THREE.MathUtils.smoothstep(t, .82, 1) : 0;
-  out.x = motionOn ? -1.15 + THREE.MathUtils.clamp(t, 0, 1) * (1.15 + WORMHOLE_X) : kind === "ufo" ? -.46 : -.75;
+  out.x = motionOn ? FLIGHT_START_X + travel * (WORMHOLE_X - FLIGHT_START_X) : kind === "ufo" ? -.46 : -.75;
   out.y = motionOn ? .61 + Math.sin(t * Math.PI) * .10 + Math.sin(t * Math.PI * 4) * .035 * (1 - out.entry) : kind === "ufo" ? .68 : .43;
   out.depth = -2.8 + (motionOn ? arc * 2.1 - out.entry * 4 : 0);
   out.roll = motionOn ? Math.sin(travel * Math.PI * 2) * .30 * (1 - out.entry) : -.08;
