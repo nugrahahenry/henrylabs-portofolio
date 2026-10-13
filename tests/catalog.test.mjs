@@ -46,11 +46,22 @@ test("ten stable project records share catalog, details, and orbit IDs", () => {
   assert.equal(filterProjects("all", "nonexistenttechnology").length, 0);
 });
 test("public/private and credit boundaries remain factual", () => {
-  for (const id of ["canox", "hengs", "yventures", "soreva", "rental"]) assert.equal(findWorld(id).source, undefined);
+  for (const id of ["canox", "hengs", "polara", "yventures", "soreva", "rental"]) assert.equal(findWorld(id).source, undefined);
   assert.equal(findWorld("nalira").source, undefined);
-  assert.equal(findWorld("polara").status.en, "In progress");
+  assert.equal(findWorld("polara").status.en, "Live");
   assert.match(findWorld("soreva").ownership.en, /Vieri prototype account/);
   assert.equal(projectCatalog.some(p => /neurova/i.test(p.name)), false);
+});
+test("Polara live status, public access, and destination agree in both languages", () => {
+  const polara = findWorld("polara");
+  assert.deepEqual(polara.status, { en: "Live", id: "Live" });
+  assert.deepEqual(polara.access, { en: "Public product", id: "Produk publik" });
+  assert.equal(polara.link, "https://polara.vercel.app/");
+  assert.deepEqual(polara.linkLabel, { en: "Open live product", id: "Buka produk live" });
+  assert.deepEqual(polara.evidence, { en: "Live product and original product artwork", id: "Produk live dan artwork produk asli" });
+  assert.deepEqual(polara.next, { en: "Try the live photobooth in your browser", id: "Coba photobooth live di browser" });
+  assert.equal(polara.media, "/assets/projects/polara-og.png");
+  assert.equal(polara.mediaKind, "artwork");
 });
 test("technology satellites retain factual ownership in all galaxies", () => {
   assert.equal(orbitTechNodes.length, 25);

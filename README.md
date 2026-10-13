@@ -1,6 +1,6 @@
 <div align="center">
 
-# StarGod Portfolio v0.114.1
+# StarGod Portfolio v0.114.2
 
 **I build things I actually see.**
 
@@ -78,7 +78,7 @@ Original project marks become transparent three-dimensional identities. Select a
 | <img src="public/assets/brand/nalira.svg" width="28" alt="" /> **Nalira** | An audio-to-knowledge workflow for lectures, meetings, and ideas worth revisiting. | [Public MVP](https://nalira-hengs.vercel.app/dashboard) |
 | <img src="public/assets/brand/canox.png" width="28" alt="" /> **Canox** | A personal AI cockpit connecting tools, context, and everyday workflows. | Private walkthrough |
 | <img src="public/assets/brand/hengs.png" width="28" alt="" /> **Hengs** | A WhatsApp focus assistant and Discord community bot built around useful handoffs. | Private evidence |
-| <img src="public/assets/brand/polara.png" width="28" alt="" /> **Polara** | A browser photobooth where the interface becomes part of the memory. | In progress; preview on request |
+| <img src="public/assets/brand/polara.png" width="28" alt="" /> **Polara** | A browser photobooth where the interface becomes part of the memory. | [Live product](https://polara.vercel.app/) |
 
 These are solo product and system builds. Public repositories are linked where available; private work is represented through sanitized evidence and focused walkthroughs.
 

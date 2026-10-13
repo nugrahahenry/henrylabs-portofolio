@@ -1,5 +1,10 @@
 # Changelog
 
+## StarGod Portfolio v0.114.2 - 2026-10-13
+
+- Mark Polara as a live public product in English and Indonesian, with the approved photobooth URL instead of a preview request.
+- Align Polara's evidence, next step and README link with its live status. Keep original artwork, project details and the unverified source-repository boundary unchanged; add a bilingual catalog regression test.
+
 ## StarGod Portfolio v0.114.1 - 2026-10-13
 
 - Begin recurring black-hole visitors farther away, with a gradual faint approach before their perspective grows into recognizable planets.
