@@ -6,11 +6,11 @@ import { ArrowRight, ArrowUpRight } from "lucide-react";
 import type { CatalogProject } from "@/content/catalog";
 import { categories } from "@/content/catalog";
 import { ProjectMark } from "./project-library";
-import { SiteLink, updateQuery, useSitePreferences } from "./site-preferences";
+import { SiteLink, useSitePreferences } from "./site-preferences";
 import { ProjectVisual } from "./project-visual";
 import { chapterEase } from "./universe-chapter";
 
-export function HomeProjectPreview({ project }: { project: CatalogProject }) {
+export function HomeProjectPreview({ project, onRead }: { project: CatalogProject; onRead: () => void }) {
   const { language, motionOn } = useSitePreferences();
   const heading = useRef<HTMLDivElement>(null);
   const article = useRef<HTMLElement>(null);
@@ -22,7 +22,6 @@ export function HomeProjectPreview({ project }: { project: CatalogProject }) {
   const copyY = useTransform(scrollYProgress, value => 14 * (1 - chapterEase(value, 0, 1)));
   const isEn = language === "en";
   const href = `/projects/${project.slug}?from=universe`;
-  const remember = () => updateQuery({ world: project.id }, true);
   return <>
     <motion.div ref={heading} className="home-preview-heading" style={motionOn ? { y: headingY } : undefined}>
       <div className="home-preview-heading-copy">
@@ -41,7 +40,7 @@ export function HomeProjectPreview({ project }: { project: CatalogProject }) {
         <p className="home-project-summary">{project.summary[language]}</p>
         <dl className="home-project-facts"><div><dt>{isEn ? "Built by" : "Kontribusi"}</dt><dd>{project.ownership[language]}</dd></div><div><dt>{isEn ? "Build state" : "Status"}</dt><dd>{project.status[language]} / {project.access[language]}</dd></div></dl>
         <ul className="library-stack" aria-label={isEn ? "Technology stack" : "Teknologi proyek"}>{project.stack.map(tech => <li key={tech}>{tech}</li>)}</ul>
-        <SiteLink className="library-text-link" href={href} onClick={remember}>{isEn ? "Read the project" : "Baca proyek"}<ArrowUpRight size={18} /></SiteLink>
+        <SiteLink className="library-text-link" href={href} onNavigate={onRead}>{isEn ? "Read the project" : "Baca proyek"}<ArrowUpRight size={18} /></SiteLink>
       </motion.div>
     </article>
   </>;

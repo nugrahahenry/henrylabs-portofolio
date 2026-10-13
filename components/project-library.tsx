@@ -3,6 +3,7 @@
 import type { CSSProperties } from "react";
 import { ArrowLeft, ArrowRight, ArrowUpRight, CarFront, Code2, FlaskConical, Instagram, LockKeyhole, MessageCircle, Search, ShoppingCart, X } from "lucide-react";
 import { categories, filterProjects, normalizeCategory, type CatalogProject } from "@/content/catalog";
+import { projectWorkflowNotes } from "@/content/project-workflows";
 import { SiteLink, updateQuery, useQuery, useSitePreferences } from "./site-preferences";
 import { ProjectVisual } from "./project-visual";
 import { LibraryMasthead } from "./library-masthead";
@@ -67,11 +68,34 @@ export function ProjectDetail({ project }: { project: CatalogProject }) {
   const detailHref = (item: CatalogProject) => `/projects/${item.slug}${detailQuery.size ? `?${detailQuery}` : ""}`;
   const collectionLabel = categories[fromOrbit ? project.category : category][language];
   const externalLink = project.link ?? (project.source ? undefined : "mailto:henrynugraha1210@gmail.com");
+  const workflowNotes = projectWorkflowNotes[project.id]?.[language];
   return <main className="library-page project-detail" style={{ "--record-color": project.color } as CSSProperties} id="main-content" tabIndex={-1}>
     <div className="detail-route"><SiteLink href={back} className="library-back"><ArrowLeft size={17} />{fromOrbit ? (isEn ? "Back to the universe" : "Kembali ke semesta") : (isEn ? "All projects" : "Semua proyek")}</SiteLink>{index >= 0 && <span>{collectionLabel} / {String(index + 1).padStart(2, "0")} <span>{isEn ? "of" : "dari"} {String(collection.length).padStart(2, "0")}</span></span>}</div>
-    <header className="detail-heading"><span className="library-eyebrow">{categories[project.category][language]} / {project.status[language]}</span><div className="detail-identity"><span className="detail-mark"><ProjectMark project={project} /></span><h1>{project.name}</h1></div><p>{project.summary[language]}</p><div className="detail-actions">{externalLink && <a className="library-action" href={externalLink} target={externalLink.startsWith("https:") ? "_blank" : undefined} rel={externalLink.startsWith("https:") ? "noreferrer" : undefined}>{project.linkLabel?.[language] ?? (isEn ? "Request a walkthrough" : "Minta walkthrough")}<ArrowUpRight size={17} /></a>}{project.source && <a className="library-action" href={project.source} target="_blank" rel="noreferrer"><Code2 size={17} />{isEn ? "Read source" : "Baca source"}<ArrowUpRight size={17} /></a>}<SiteLink href={`/?world=${project.id}`} className="library-text-link">{isEn ? "Find in the universe" : "Lihat di semesta"}<ArrowUpRight size={17} /></SiteLink></div></header>
+    <header className="detail-heading">
+      <div className="detail-identity"><span className="detail-mark"><ProjectMark project={project} /></span><h1>{project.name}</h1></div>
+      <p>{project.summary[language]}</p>
+      <div className="detail-actions">
+        {externalLink && <a className="library-action" href={externalLink} target={externalLink.startsWith("https:") ? "_blank" : undefined} rel={externalLink.startsWith("https:") ? "noreferrer" : undefined}>{project.linkLabel?.[language] ?? (isEn ? "Request a walkthrough" : "Minta walkthrough")}<ArrowUpRight size={17} /></a>}
+        {project.source && <a className="library-action" href={project.source} target="_blank" rel="noreferrer"><Code2 size={17} />{isEn ? "Read source" : "Baca source"}<ArrowUpRight size={17} /></a>}
+        {!fromOrbit && <SiteLink href={`/?world=${project.id}`} className="library-text-link">{isEn ? "Find in the universe" : "Lihat di semesta"}<ArrowUpRight size={17} /></SiteLink>}
+      </div>
+    </header>
+    <dl className="detail-overview" aria-label={isEn ? "Project overview" : "Ringkasan proyek"}>
+      <div><dt>{isEn ? "Build state" : "Status proyek"}</dt><dd>{project.status[language]}</dd></div>
+      <div><dt>{isEn ? "Ownership" : "Kontribusi"}</dt><dd>{project.ownership[language]}</dd></div>
+      <div><dt>{isEn ? "Access" : "Akses"}</dt><dd>{project.access[language]}</dd></div>
+    </dl>
     {project.media && <div className="detail-art"><ProjectVisual key={project.id} project={project} /></div>}
-    <div className="detail-content"><section aria-labelledby="detail-flow"><span className="library-eyebrow">01 / {isEn ? "The system" : "Sistem"}</span><h2 id="detail-flow">{isEn ? "From friction to flow." : "Dari friksi menjadi alur."}</h2><ol className="detail-flow">{project.flow[language].map((step, i) => <li key={step}><span>{String(i + 1).padStart(2, "0")}</span><h3>{step}</h3>{i < project.flow[language].length - 1 && <ArrowRight size={20} aria-hidden="true" />}</li>)}</ol><p>{project.role[language]}</p></section><aside className="detail-facts"><dl><div><dt>{isEn ? "Ownership" : "Kontribusi"}</dt><dd>{project.ownership[language]}</dd></div><div><dt>{isEn ? "Access" : "Akses"}</dt><dd>{project.access[language]}</dd></div><div><dt>{isEn ? "Working stack" : "Stack proyek"}</dt><dd><ul className="library-stack">{project.stack.map(tech => <li key={tech}>{tech}</li>)}</ul></dd></div></dl></aside></div>
+    <div className="detail-content">
+      <section aria-labelledby="detail-flow">
+        <h2 id="detail-flow">{isEn ? "Inside the workflow." : "Di dalam alurnya."}</h2>
+        <ol className="detail-flow">{project.flow[language].map((step, i) => <li key={step}><span aria-hidden="true">{String(i + 1).padStart(2, "0")}</span><h3>{step}</h3>{workflowNotes?.[i] && <p>{workflowNotes[i]}</p>}</li>)}</ol>
+      </section>
+      <aside className="detail-facts"><dl>
+        <div><dt>{isEn ? "Focus" : "Fokus"}</dt><dd>{project.role[language]}</dd></div>
+        <div><dt>{isEn ? "Working stack" : "Stack proyek"}</dt><dd><ul className="library-stack">{project.stack.map(tech => <li key={tech}>{tech}</li>)}</ul></dd></div>
+      </dl></aside>
+    </div>
     <section className="detail-evidence"><h2>{isEn ? "What you can inspect." : "Yang bisa ditinjau."}</h2><div><p className="detail-evidence-summary">{project.evidence[language]}</p><p>{project.next[language]}</p>{!project.source && project.category !== "henrylabs" && <p className="privacy-note"><LockKeyhole size={16} />{isEn ? "No private source, client data, or internal screenshots are published here." : "Source privat, data klien, dan screenshot internal tidak dipublikasikan di sini."}</p>}</div></section>
     {(previous || next) && <nav className="detail-continuation" aria-label={isEn ? "More projects" : "Proyek lainnya"}>
       {[previous, next].map((item, position) => item ? <SiteLink key={item.id} href={detailHref(item)} className={`detail-neighbor${position === 1 ? " detail-neighbor--next" : ""}`} style={{ "--record-color": item.color } as CSSProperties}>

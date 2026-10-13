@@ -1,6 +1,6 @@
 <div align="center">
 
-# StarGod Portfolio v0.113.0
+# StarGod Portfolio v0.114.0
 
 **I build things I actually see.**
 
@@ -32,6 +32,8 @@ The living map is backed by a procedural volumetric nebula: layered filaments, d
 The opening headline recedes with the scroll position as the galaxy map approaches. Scrolling back retraces the same reveal. A softer reading veil keeps the headline clear without covering the surrounding nebula, and the map holds a brighter sky throughout its exploration window. The selected-project preview settles before reaching the viewport center, with text at full opacity from the start.
 
 The opening lettering has a shallow sculpted edge and a restrained response to a nearby mouse. It remains selectable, semantic text rather than a mesh. Galaxy names follow their actual camera depth while the buttons keep steady touch and keyboard targets. Touch, Still, and reduced motion preserve the lettering without the tilt. Paragraphs and controls remain flat and steady.
+
+Each selected project has a bookmarkable place in the universe. Reloading, returning from a project, or using browser Back restores that world with its reading panel closed. Detail pages bring build state, ownership and access forward, followed by a three-step explanation of the existing workflow. Public source, concept artwork and private walkthroughs remain clearly distinguished.
 
 After arrival, sparse nearby stars pass the camera around the opening headline. Their perspective grows as they approach, with a gentle increase in pace during scrolling or Explore. They fade before recycling and settle out of view in the interactive map, reading chapters, and Contact. The distant sky remains independent; this is not a continuous warp tunnel. Still mode removes these passages while preserving the universe.
 

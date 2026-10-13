@@ -145,7 +145,7 @@ try {
   await page.getByRole("link", { name: "Soreva Autonomous Content", exact: true }).click();
   await expect(page).toHaveURL(/lang=id/);
   await expect(page).toHaveURL(/motion=off/);
-  await expect(page.locator(".detail-facts")).toContainText("Vieri");
+  await expect(page.locator(".detail-overview")).toContainText("Vieri");
   await expect(page.locator(".detail-continuation a")).toHaveCount(1);
   await expect(page.locator(".detail-continuation a")).toHaveAttribute("href", /category=client.*lang=id.*motion=off/);
   await page.goBack();

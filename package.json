@@ -1,6 +1,6 @@
 {
   "name": "henrylabs-portfolio",
-  "version": "0.113.0",
+  "version": "0.114.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -24,6 +24,7 @@
     "test:intro-depth": "node tests/intro-depth.mjs",
     "test:header": "node tests/header.mjs",
     "test:journey": "node tests/journey.mjs",
+    "test:project-path": "node tests/project-path.mjs",
     "test:galaxies": "node tests/galaxies.mjs",
     "test:sectors": "node tests/sectors.mjs"
   },

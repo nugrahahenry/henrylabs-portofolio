@@ -27,7 +27,7 @@ import { orbitTechNodes } from "@/content/technologies";
 import { HomeProjectPreview } from "./home-project-preview";
 import { WorldInspector } from "./world-inspector";
 import { findWorld } from "@/content/catalog";
-import { useSitePreferences, useQuery } from "./site-preferences";
+import { useSitePreferences, useQuery, updateQuery } from "./site-preferences";
 import { MakerChapter } from "./maker-chapter";
 import { StarGodMark } from "./stargod-mark";
 import { SpatialTitle } from "./spatial-title";
@@ -138,10 +138,12 @@ function cx(...names: Array<string | false | null | undefined>) {
 }
 
 export function PortfolioExperience() {
-  const { language, motionOn } = useSitePreferences();
+  const { language, motionOn, motionReady } = useSitePreferences();
   const query = useQuery();
   const returnWorld = query.get("world");
   const returnUniverse = query.get("view") === "universe";
+  const appliedMapRoute = useRef<{ route: string; motion: boolean } | null>(null);
+  const restoreMapLanding = useRef(false);
   const [activeId, setActiveId] = useState<ProjectId>("catmoji");
   const [activeSector, setActiveSector] = useState<Sector>("main");
   const [mapView, setMapView] = useState<"universe" | "orbit">("universe");
@@ -211,12 +213,21 @@ export function PortfolioExperience() {
     const opener = document.activeElement;
     let frame = 0;
     const started = performance.now();
-    const cancel = () => setMapLanding(null);
+    const cancel = () => { restoreMapLanding.current = false; setMapLanding(null); };
     const arrive = () => {
       const focusMoved = document.activeElement !== opener && document.activeElement !== document.body;
       if (focusMoved || performance.now() - started > 3000) { cancel(); return; }
       const map = heroRef.current?.querySelector<HTMLElement>(".cosmic-canvas");
-      if (Math.abs(window.scrollY - mapLanding) < 2 && map && !map.closest("[inert]")) {
+      let destination = mapLanding;
+      if (restoreMapLanding.current) {
+        const hero = heroRef.current;
+        const ready = map?.dataset.ready === "true" || map?.classList.contains("canvas-fallback");
+        if (!hero || !ready) { frame = requestAnimationFrame(arrive); return; }
+        // Fallback and font layout can settle after route restoration's first frame.
+        destination = motionOn ? universeLanding(hero.offsetTop, hero.offsetHeight, innerHeight) : window.scrollY + (hero.querySelector<HTMLElement>(".cosmic-frame-wrap")?.getBoundingClientRect().top ?? 84) - 84;
+        if (Math.abs(window.scrollY - destination) >= 2) window.scrollTo({ top: destination, behavior: "instant" });
+      }
+      if (Math.abs(window.scrollY - destination) < 2 && map && !map.closest("[inert]")) {
         map.focus({ preventScroll: true });
         cancel();
       } else frame = requestAnimationFrame(arrive);
@@ -229,7 +240,7 @@ export function PortfolioExperience() {
       cancelAnimationFrame(frame);
       events.forEach(event => window.removeEventListener(event, cancel));
     };
-  }, [mapLanding]);
+  }, [mapLanding, motionOn]);
 
   useEffect(() => {
     const migrateLegacyFragment = () => {
@@ -304,22 +315,34 @@ export function PortfolioExperience() {
 
   useEffect(() => {
     const world = returnWorld ? findWorld(returnWorld) : undefined;
-    if ((!world && !returnUniverse) || !introDone) return;
+    const route = world ? world.id : returnUniverse ? "universe" : null;
+    if (!route || !introDone || !motionReady) return;
+    const applied = appliedMapRoute.current;
+    if (applied?.route === route && applied.motion === motionOn) return;
+    appliedMapRoute.current = { route, motion: motionOn };
+    if (applied?.route === route) {
+      const wrap = heroRef.current?.querySelector<HTMLElement>(".cosmic-frame-wrap");
+      const rect = wrap?.getBoundingClientRect();
+      if (!rect || rect.bottom <= 0 || rect.top >= innerHeight || Number(getComputedStyle(wrap!).opacity) < .1) return;
+    }
     if (world) {
       setActiveSector(world.category === "henrylabs" ? "main" : world.category);
       if (world.category === "henrylabs") setActiveId(world.id as ProjectId);
       else setActiveSatellites(previous => ({ ...previous, [world.category]: world.id }));
     }
     setMapView(world ? "orbit" : "universe");
+    setShowProjectShowcase(false);
     // Wait for the restored route's layout before landing inside the sticky map.
     const frame = requestAnimationFrame(() => {
       const hero = heroRef.current;
       if (!hero) return;
       const top = motionOn ? universeLanding(hero.offsetTop, hero.offsetHeight, innerHeight) : hero.offsetTop + (hero.querySelector<HTMLElement>(".cosmic-frame-wrap")?.offsetTop ?? 0) - 84;
+      restoreMapLanding.current = true;
       window.scrollTo({ top, behavior: "instant" });
+      setMapLanding(top);
     });
     return () => cancelAnimationFrame(frame);
-  }, [returnWorld, returnUniverse, introDone, motionOn]);
+  }, [returnWorld, returnUniverse, introDone, motionOn, motionReady]);
 
   useEffect(() => {
     if (!motionOn) return;
@@ -337,20 +360,27 @@ export function PortfolioExperience() {
     };
   }, [pointerX, pointerY, motionOn]);
 
+  // Local selections update the bookmark without replaying the route-entry scroll.
+  const rememberMap = (world: string | null) => {
+    appliedMapRoute.current = { route: world ?? "universe", motion: motionOn };
+    updateQuery({ world, view: world ? null : "universe", intro: null }, true, true);
+  };
   const focusProject = (id: ProjectId) => {
     setActiveId(id);
     setActiveSector("main");
     setMapView("orbit");
+    rememberMap(id);
   };
 
   const cycleProject = (direction: -1 | 1) => {
     const index = projects.findIndex((project) => project.id === activeId);
-    setActiveId(projects[(index + direction + projects.length) % projects.length].id);
+    focusProject(projects[(index + direction + projects.length) % projects.length].id);
   };
 
   const selectSatellite = (id: SatelliteId) => {
     const sector = universityRecords.some((record) => record.id === id) ? "university" : "client";
     setActiveSatellites((previous) => ({ ...previous, [sector]: id }));
+    rememberMap(id);
   };
   const focusOrbitWorld = (id: OrbitId) => {
     if (projects.some((project) => project.id === id)) focusProject(id as ProjectId);
@@ -366,11 +396,13 @@ export function PortfolioExperience() {
   const enterGalaxy = (sector: GalaxyId) => {
     setActiveSector(sector);
     setMapView("orbit");
+    rememberMap(sector === "main" ? activeId : activeSatellites[sector]);
   };
   const returnToUniverse = () => {
     restoreInspectorFocus.current = false;
     setShowProjectShowcase(false);
     setMapView("universe");
+    rememberMap(null);
     const hero = heroRef.current;
     if (hero && motionOn) requestSmoothScroll(universeLanding(hero.offsetTop, hero.offsetHeight, innerHeight), 0.82);
   };
@@ -379,6 +411,7 @@ export function PortfolioExperience() {
     if (!hero) return;
     setShowProjectShowcase(false);
     setMapView("universe");
+    rememberMap(null);
     const top = motionOn ? universeLanding(hero.offsetTop, hero.offsetHeight, innerHeight) : hero.offsetTop + (hero.querySelector<HTMLElement>(".cosmic-frame-wrap")?.offsetTop ?? 0) - 84;
     setMapLanding(top);
     if (motionOn) requestSmoothScroll(top, 0.96);
@@ -440,7 +473,7 @@ export function PortfolioExperience() {
               <CosmicCanvas activeId={activeSector === "main" ? activeId : activeSatellite.id} onSelect={focusOrbitWorld} onPrevious={() => cycleOrbitWorld(-1)} onNext={() => cycleOrbitWorld(1)} motionOn={motionOn} progress={scrollYProgress} techNodes={orbitTechNodes} satelliteCatalog={satelliteCatalog} sector={activeSector} view={mapView} language={language} readingOpen={showProjectShowcase} onGalaxySelect={enterGalaxy} onUniverse={returnToUniverse} />
               <AnimatePresence mode="wait" initial={false}>
                 {mapView === "orbit" && (showProjectShowcase
-                  ? <WorldInspector key="active-world-inspector" project={findWorld(focusedWorld.id)!} language={language} motionOn={motionOn} onSelect={id => focusOrbitWorld(id as OrbitId)} onClose={closeWorldInspector} />
+                  ? <WorldInspector key="active-world-inspector" project={findWorld(focusedWorld.id)!} language={language} motionOn={motionOn} onSelect={id => focusOrbitWorld(id as OrbitId)} onClose={closeWorldInspector} onRead={() => rememberMap(focusedWorld.id)} />
                   : <motion.button className="project-showcase-reopen" type="button" key="reopen-project-showcase"
                     ref={node => { if (node && restoreInspectorFocus.current) { node.focus({ preventScroll: true }); restoreInspectorFocus.current = false; } }}
                     onClick={() => setShowProjectShowcase(true)} aria-expanded="false" aria-controls="active-world-inspector" aria-label={language === "en" ? "Open active world" : "Buka dunia aktif"}>
@@ -458,7 +491,7 @@ export function PortfolioExperience() {
 
       <div ref={fieldRef} className="field-continuum" data-active-world={activeProject.id} data-worldline-stage={worldlineStage}>
       <motion.section ref={workRef} className="content-section work-section" id="work" aria-labelledby="work-title">
-        <HomeProjectPreview project={findWorld(focusedWorld.id)!} />
+        <HomeProjectPreview project={findWorld(focusedWorld.id)!} onRead={() => rememberMap(focusedWorld.id)} />
       </motion.section>
 
       <div className="maker-approach" aria-hidden="true" />

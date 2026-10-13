@@ -1,5 +1,12 @@
 # Changelog
 
+## StarGod Portfolio v0.114.0 - 2026-10-13
+
+- Keep the selected planet or universe overview in the URL without adding a history entry or replaying the camera landing on every selection. Clear stale replay/fragment state when exploring.
+- Restore the selected world, closed inspector and keyboard entry point after returning from project details or reloading. Preserve language and motion preferences.
+- Bring build state, ownership and access to the start of project details; add bilingual explanations for all ten existing three-step workflows without changing project claims or private evidence boundaries.
+- Remove the duplicate universe action when the detail page already has a universe return link. Keep filtered library returns and neighboring projects intact.
+
 ## StarGod Portfolio v0.113.0 - 2026-10-13
 
 - Add restrained 2.5D treatment to the opening title: layered edges and bounded mouse perspective with stable wrapping, one semantic heading, and no duplicated text.

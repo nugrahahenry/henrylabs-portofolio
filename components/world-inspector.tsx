@@ -6,14 +6,15 @@ import { motion, useIsPresent } from "motion/react";
 import { categories, projectCatalog, type CatalogProject } from "@/content/catalog";
 import type { Language } from "@/content/projects";
 import { ProjectMark } from "./project-library";
-import { SiteLink, updateQuery } from "./site-preferences";
+import { SiteLink } from "./site-preferences";
 
-export function WorldInspector({ project, language, motionOn, onSelect, onClose }: {
+export function WorldInspector({ project, language, motionOn, onSelect, onClose, onRead }: {
   project: CatalogProject;
   language: Language;
   motionOn: boolean;
   onSelect: (id: string) => void;
   onClose: () => void;
+  onRead: () => void;
 }) {
   const closeRef = useRef<HTMLButtonElement>(null);
   const present = useIsPresent();
@@ -44,7 +45,7 @@ export function WorldInspector({ project, language, motionOn, onSelect, onClose 
     <div className="world-inspector-identity"><span className="world-inspector-mark"><ProjectMark project={project} /></span><p>{project.status[language]}<span>{project.access[language]}</span></p></div>
     <h2 id="active-world-title">{project.name}</h2>
     <p className="world-inspector-summary">{project.summary[language]}</p>
-    <SiteLink className="world-inspector-detail" href={`/projects/${project.slug}?from=universe`} onClick={() => updateQuery({ world: project.id }, true)}>
+    <SiteLink className="world-inspector-detail" href={`/projects/${project.slug}?from=universe`} onNavigate={onRead}>
       {isEn ? "Read project" : "Baca proyek"}<ArrowRight size={17} />
     </SiteLink>
     <dl className="world-inspector-facts">

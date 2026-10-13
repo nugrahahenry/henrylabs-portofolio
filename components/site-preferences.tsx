@@ -13,8 +13,9 @@ function subscribe(listener: () => void) {
   window.addEventListener(locationEvent, listener);
   return () => { window.removeEventListener("popstate", listener); window.removeEventListener(locationEvent, listener); };
 }
-export function updateQuery(patch: Record<string, string | null>, replace = false) {
+export function updateQuery(patch: Record<string, string | null>, replace = false, clearHash = false) {
   const url = new URL(window.location.href);
+  if (clearHash) url.hash = "";
   for (const [key, value] of Object.entries(patch)) {
     if (value) url.searchParams.set(key, value); else url.searchParams.delete(key);
   }

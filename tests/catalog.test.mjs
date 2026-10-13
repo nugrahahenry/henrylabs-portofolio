@@ -20,6 +20,16 @@ function loadContent(name) {
 const { projectCatalog, findProject, findWorld, filterProjects, normalizeCategory } = loadContent("catalog");
 const { certificates } = loadContent("credentials");
 const { orbitTechNodes } = loadContent("technologies");
+const { projectWorkflowNotes } = loadContent("project-workflows");
+
+test("each public project has three bilingual workflow explanations matching its ordered steps", () => {
+  assert.deepEqual(Object.keys(projectWorkflowNotes).sort(), projectCatalog.map(p => p.id).sort());
+  for (const project of projectCatalog) for (const language of ["en", "id"]) {
+    const notes = projectWorkflowNotes[project.id][language];
+    assert.equal(notes.length, project.flow[language].length);
+    for (const note of notes) assert.ok(note.length >= 30 && note.length < 160);
+  }
+});
 
 test("ten stable project records share catalog, details, and orbit IDs", () => {
   assert.equal(projectCatalog.length, 10);
