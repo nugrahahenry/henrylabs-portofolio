@@ -6,6 +6,16 @@ body { caret-color: var(--cyan); }
 html :is(h1, h2, h3) { text-wrap: balance; letter-spacing: 0; }
 html :is(.site-header, .site-footer, .hero-copy, .frame-topline, .frame-bottomline, .galaxy-label, .project-showcase, .contact-content) * { letter-spacing: 0; }
 html .hero-copy h1 { max-width: 12ch; font-size: var(--type-hero); line-height: 1; font-weight: 600; }
+.spatial-title-face { display: block; transform-origin: 50% 55%; color: var(--paper); text-shadow: 0 -.5px .5px #ffffff66, 0 1px .5px #a5b8c3, 0 2px 1px #536878, 0 4px 2px #172b3d, 0 10px 18px #04091099; }
+.galaxy-label-plate { display: grid; justify-items: center; gap: 6px; transform: scale(var(--letter-scale, 1)); transform-origin: 50% 0; }
+.galaxy-label .galaxy-label-name { text-shadow: 0 -.5px .5px #ffffff33, 0 1px 1px #203b4d, 0 3px 6px #030815; }
+.galaxy-label small { font-variant-numeric: tabular-nums; }
+.galaxy-label::before { display: none; }
+.galaxy-label[data-selected="true"]::after { inset: auto 38% -2px; height: 2px; border: 0; border-radius: 0; background: var(--galaxy-color); opacity: 1; }
+html[data-motion="off"] .spatial-title-face, html[data-motion="off"] .galaxy-label-plate { transform: none !important; }
+@media (prefers-reduced-motion: reduce) {
+  .spatial-title-face, .galaxy-label-plate { transform: none !important; }
+}
 html .hero-body { font-size: 19px; line-height: 1.65; color: var(--text-reading); max-width: 52ch; margin-top: 28px; }
 html .hero-note { font: 14px/1.6 var(--display); color: #bdccd3; justify-content: center; text-align: center; }
 html :is(.hero-kicker, .section-kicker) { font-size: var(--type-label); line-height: 1.6; }
@@ -33,6 +43,7 @@ html .library-page p { text-wrap: pretty; }
 @media (max-width: 480px) {
   :root { --type-hero: 46px; --type-title: 36px; --type-section: 32px; }
   html .hero-copy h1 { max-width: 11ch; }
+  .spatial-title-face { text-shadow: 0 1px .5px #8a9fac, 0 2px 1px #172b3d, 0 6px 10px #04091080; }
   html .hero-body { font-size: 16px; line-height: 1.6; margin-top: 22px; }
   html .hero-note { font-size: 13px; max-width: 30ch; }
   html .hero-kicker { max-width: 30ch; justify-content: center; text-align: center; font-size: 11px; }

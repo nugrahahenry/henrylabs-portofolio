@@ -12,6 +12,7 @@ import { resolveTechOwner, sampleTechOrbit, techOrbitRadius, techOrbitMotion } f
 import { orbitGeometry, orbitalSpeed, sampleOrbit } from "./orbital-path";
 import { createStellarAura } from "./stellar-core";
 import { UNIVERSE_CHAPTER as chapter } from "./universe-chapter";
+import { galaxyLetterScale } from "./spatial-type";
 
 export type ProjectId = "catmoji" | "nalira" | "canox" | "hengs" | "polara";
 export type SatelliteId = "rental" | "pos" | "labq" | "yventures" | "soreva";
@@ -613,6 +614,7 @@ export function CosmicCanvas({ activeId, onSelect, onPrevious, onNext, motionOn,
       renderer.render(scene, camera);
       universe.clusters.forEach(({ cluster }, index) => {
         cluster.getWorldPosition(projected);
+        const depth = Math.max(.1, projected.distanceTo(camera.position));
         projected.project(camera);
         const label = galaxyLabels.current[index];
         if (label) {
@@ -622,7 +624,11 @@ export function CosmicCanvas({ activeId, onSelect, onPrevious, onNext, motionOn,
           label.dataset.coreX = x.toFixed(1);
           label.dataset.coreY = y.toFixed(1);
           label.dataset.selected = String(sector === galaxies[index].id);
-          label.style.transform = `translate(-50%, 0) translate(${Math.max(62, Math.min(host.clientWidth - 62, x))}px, ${Math.max(4, Math.min(host.clientHeight - 54, y + offset))}px)`;
+          const scale = galaxyLetterScale(overviewDistance, depth, galaxyEmphasis[index], state.current.motionOn);
+          label.style.setProperty("--letter-scale", scale.toFixed(4));
+          const halfLabel = label.clientWidth * 1.06 / 2 + 8;
+          const labelHeight = label.clientHeight * 1.06 + 8;
+          label.style.transform = `translate(-50%, 0) translate(${Math.max(halfLabel, Math.min(host.clientWidth - halfLabel, x))}px, ${Math.max(4, Math.min(host.clientHeight - labelHeight, y + offset))}px)`;
         }
       });
       planets.forEach(({ group }, index) => {
@@ -809,7 +815,7 @@ export function CosmicCanvas({ activeId, onSelect, onPrevious, onNext, motionOn,
       <button type="button" onClick={() => setViewZoom(0)} aria-label="Reset planet zoom" title="Reset zoom"><RotateCcw size={13} /></button>
     </div>}
     {view === "universe" && galaxies.map((galaxy, index) => <button key={galaxy.id} ref={(element) => { galaxyLabels.current[index] = element; }} type="button" className="galaxy-label" style={{ "--galaxy-color": galaxy.color } as React.CSSProperties} data-selected={sector === galaxy.id} onFocus={() => wakeRef.current()} onBlur={() => wakeRef.current()} onPointerEnter={() => { galaxyHover.current = index; wakeRef.current(); }} onPointerLeave={() => { galaxyHover.current = -1; wakeRef.current(); }} onClick={() => { galaxyHover.current = -1; setViewZoom(0); onGalaxySelect(galaxy.id); }} aria-label={`${language === "en" ? "Explore" : "Jelajahi"} ${galaxy.name[language]} ${language === "en" ? "galaxy" : "galaksi"}`}>
-      <span className="galaxy-label-name">{galaxy.name[language]}<ArrowUpRight size={13} aria-hidden="true" /></span><small>{String(galaxy.count).padStart(2, "0")} {language === "en" ? "worlds" : "dunia"}</small>
+      <span className="galaxy-label-plate"><span className="galaxy-label-name">{galaxy.name[language]}<ArrowUpRight size={13} aria-hidden="true" /></span><small>{String(galaxy.count).padStart(2, "0")} {language === "en" ? "worlds" : "dunia"}</small></span>
     </button>)}
     {view === "orbit" && worlds.map((world, index) => <button
       ref={(element) => { labels.current[index] = element; }}

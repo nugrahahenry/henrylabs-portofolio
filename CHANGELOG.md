@@ -1,5 +1,12 @@
 # Changelog
 
+## StarGod Portfolio v0.113.0 - 2026-10-13
+
+- Add restrained 2.5D treatment to the opening title: layered edges and bounded mouse perspective with stable wrapping, one semantic heading, and no duplicated text.
+- Project galaxy lettering scale from the existing Three.js camera depth while keeping touch targets unchanged; fit labels using their measured bounds at every viewport size.
+- Replace the selected galaxy's enclosing pill with a quiet accent marker, preserving hover, keyboard focus, names and project counts.
+- Keep touch, Still, reduced motion, hidden tabs and the departing hero free of title movement. No extra canvas, geometry, particles, assets or dependencies.
+
 ## StarGod Portfolio v0.112.1 - 2026-10-13
 
 - Synchronize the opening headline, galaxy approach/departure, ambient brightness and near-star retreat with reversible eased scroll progress instead of competing phase-triggered fades.

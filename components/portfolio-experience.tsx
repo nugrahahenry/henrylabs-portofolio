@@ -30,6 +30,7 @@ import { findWorld } from "@/content/catalog";
 import { useSitePreferences, useQuery } from "./site-preferences";
 import { MakerChapter } from "./maker-chapter";
 import { StarGodMark } from "./stargod-mark";
+import { SpatialTitle } from "./spatial-title";
 import { UNIVERSE_CHAPTER as chapter, universeLanding, chapterEase, universeHeroOpacity, universePresence } from "./universe-chapter";
 
 type WorldlineStage = "world" | "method" | "stack";
@@ -425,7 +426,7 @@ export function PortfolioExperience() {
         }}>
           <motion.div className="hero-copy" inert={!introDone || (motionOn && heroPhase !== "intro")} style={{ y: motionOn ? heroCopyY : 0, opacity: motionOn ? heroOpacity : 1 }}>
             <p className="hero-kicker"><span className="live-pulse" /> product-minded developer / Indonesia</p>
-            <h1 id="hero-title">{t.hero.title}</h1>
+            <SpatialTitle active={motionOn && introDone && heroPhase === "intro"}>{t.hero.title}</SpatialTitle>
             <p className="hero-body">{t.hero.body}</p>
             <div className="hero-actions"><button type="button" className="button button-bright" onClick={openGalaxyMap}>{t.hero.work}<ArrowDown size={17} /></button><a className="button button-quiet" href="https://wa.me/6289513559554" target="_blank" rel="noreferrer">{t.hero.contact}<ArrowUpRight size={17} /></a></div>
             <p className="hero-note"><span className="status-light" />{t.hero.note}</p>

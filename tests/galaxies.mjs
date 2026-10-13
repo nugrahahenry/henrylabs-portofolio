@@ -191,9 +191,14 @@ try {
     await enter(page, "HenryLabs", 5);
     await page.evaluate(() => window.scrollTo({ top: 0, behavior: "instant" }));
     await expect(page.locator(".hero-stage")).toHaveAttribute("data-phase", "intro");
-    await expect(page.locator(".cosmic-frame-wrap")).toBeHidden();
+    await expect(page.locator(".cosmic-frame-wrap")).toHaveAttribute("inert", "");
     await expect.poll(() => page.locator(".cosmic-frame-wrap").evaluate(node => Number(getComputedStyle(node).opacity))).toBe(0);
-    await expect(page.getByRole("button", { name: "Open active world" })).toBeHidden();
+    assert.ok(await page.locator(".cosmic-frame-wrap button").evaluateAll(nodes => nodes.every(node => {
+      node.focus();
+      const rect = node.getBoundingClientRect();
+      const hit = document.elementFromPoint(rect.left + rect.width / 2, rect.top + rect.height / 2);
+      return document.activeElement !== node && !node.contains(hit);
+    })), "fully transparent map controls reject native focus and pointer hits");
     await expect(page.getByRole("button", { name: "Back to universe" })).toBeHidden();
     await page.screenshot({ path: `test-results/${viewport.width}-clean-return-hero.png` });
     await page.getByRole("button", { name: "Explore the universe", exact: true }).click();
@@ -201,6 +206,8 @@ try {
     await expect(scene).toHaveAttribute("data-view", "universe");
     await expect(scene).toHaveAttribute("data-flight", "0.000");
     await expect(page.locator(".galaxy-label")).toHaveCount(3);
+    await page.getByRole("button", { name: "Toggle language" }).focus();
+    await expect(page.locator(".site-header")).toHaveAttribute("data-hidden", "false");
     await page.getByRole("button", { name: "Toggle language" }).click();
     await expect(page.getByRole("button", { name: "Jelajahi Kuliah galaksi" })).toBeVisible();
     const cameraDistance = Number(await scene.getAttribute("data-camera-distance"));

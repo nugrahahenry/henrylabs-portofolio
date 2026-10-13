@@ -1,6 +1,6 @@
 <div align="center">
 
-# StarGod Portfolio v0.112.1
+# StarGod Portfolio v0.113.0
 
 **I build things I actually see.**
 
@@ -30,6 +30,8 @@ The opening behaves like a real Three.js camera searching a spherical multiverse
 The living map is backed by a procedural volumetric nebula: layered filaments, distant stellar depth, and a slow parallax drift keep the sky feeling like space rather than a flat backdrop while the project systems remain readable.
 
 The opening headline recedes with the scroll position as the galaxy map approaches. Scrolling back retraces the same reveal. A softer reading veil keeps the headline clear without covering the surrounding nebula, and the map holds a brighter sky throughout its exploration window. The selected-project preview settles before reaching the viewport center, with text at full opacity from the start.
+
+The opening lettering has a shallow sculpted edge and a restrained response to a nearby mouse. It remains selectable, semantic text rather than a mesh. Galaxy names follow their actual camera depth while the buttons keep steady touch and keyboard targets. Touch, Still, and reduced motion preserve the lettering without the tilt. Paragraphs and controls remain flat and steady.
 
 After arrival, sparse nearby stars pass the camera around the opening headline. Their perspective grows as they approach, with a gentle increase in pace during scrolling or Explore. They fade before recycling and settle out of view in the interactive map, reading chapters, and Contact. The distant sky remains independent; this is not a continuous warp tunnel. Still mode removes these passages while preserving the universe.
 
