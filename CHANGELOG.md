@@ -1,5 +1,11 @@
 # Changelog
 
+## StarGod Portfolio v0.110.2 - 2026-10-13
+
+- Alternate the preferred near-miss side above and below the UFO per paired salvo, reversing the opening preference on the next encounter.
+- Retain safe-side fallback when the preferred path crosses a planet or leaves its flight corridor; both barrels keep the same side and a fixed straight trajectory.
+- Preserve the four paired salvos, narrow miss distance, portal timing, companion motion and thirty-second pursuit rest.
+
 ## StarGod Portfolio v0.110.1 - 2026-10-13
 
 - Make background companion motion readable within a short glance with distinct 24-42 second orbits; maintain their real pace at lower frame rates without catching up after a hidden tab or long stall.

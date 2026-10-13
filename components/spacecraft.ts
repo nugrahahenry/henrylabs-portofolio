@@ -64,6 +64,10 @@ export function pursuitShotTime(index: number, delay = PURSUIT_DELAY) {
   return THREE.MathUtils.lerp(first, Math.max(first, 14.95), Math.floor(index / 2) / 3) + index % 2 * .045;
 }
 
+export function pursuitShotSide(index: number, cycle: number) {
+  return (Math.floor(index / 2) + cycle) % 2 === 0 ? 1 : -1;
+}
+
 export function pursuitPulse(age: number, index: number, delay = PURSUIT_DELAY) {
   if (index < 0 || index >= PURSUIT_SHOTS) return -1;
   const encounter = Math.max(0, age) % pursuitPeriod(delay);

@@ -25,7 +25,7 @@ const { createDeepSpace } = await loadModule("deep-space");
 const { makerGroupAt, makerEvidenceAt, advanceMakerRotation, portraitCoversSatellite, MAKER_RETREAT_START, MAKER_PROOF_START } = await loadModule("maker-motion");
 const { infallPoint, gravityMaterial, dustWarmth } = await loadModule("gravity-field");
 const { blackHoleFrame } = await loadModule("black-hole-frame");
-const { createSpacecraft, spacecraftPose, routeSpacecraft, flightPresence, pursuitPulse, pursuitShotTime, pursuitMiss, createPursuitBolts, wormholePresence, createWormhole, clearShot, advancePursuit, pursuitEnd, pursuitPeriod, PURSUIT_DELAY, PURSUIT_REST, PURSUIT_SHOTS, PURSUIT_SHOT_SECONDS } = await loadModule("spacecraft");
+const { createSpacecraft, spacecraftPose, routeSpacecraft, flightPresence, pursuitPulse, pursuitShotTime, pursuitShotSide, pursuitMiss, createPursuitBolts, wormholePresence, createWormhole, clearShot, advancePursuit, pursuitEnd, pursuitPeriod, PURSUIT_DELAY, PURSUIT_REST, PURSUIT_SHOTS, PURSUIT_SHOT_SECONDS } = await loadModule("spacecraft");
 const { distantStarPoint, dustStreamSource, stellarTwinkle, createDistantStarMaterial, DISTANT_STAR_COUNT, COMPACT_STAR_COUNT, FEEDING_DUST_COUNT } = await loadModule("ambient-field");
 
 test("galaxy approach centers first and reveals the local system without a visibility jump", () => {
@@ -351,6 +351,18 @@ test("flight opacity retreats over multiple frames even after a long tab suspens
   assert.equal(opacity, 0);
   assert.ok(frames > 15 && frames < 30);
   assert.equal(flightPresence(.5, 0, 0), .5);
+});
+
+test("paired salvos alternate above and below, reversing their preference on the next encounter", () => {
+  for (let cycle = 0; cycle < 4; cycle++) {
+    const sides = Array.from({ length: 8 }, (_, id) => pursuitShotSide(id, cycle));
+    assert.equal(sides.filter(side => side === 1).length, 4);
+    for (let id = 0; id < 8; id += 2) {
+      assert.equal(sides[id], sides[id + 1], "twin barrels keep the same near-miss side");
+      assert.equal(sides[id], -pursuitShotSide(id, cycle + 1));
+      if (id > 0) assert.equal(sides[id], -sides[id - 2]);
+    }
+  }
 });
 
 test("pursuit shots travel in bounded bursts and respect intervening planet silhouettes", () => {

@@ -13,7 +13,7 @@ import { createStellarCore } from "./stellar-core";
 import { createDeepSpace } from "./deep-space";
 import { blackHoleFrame } from "./black-hole-frame";
 import { arrivalBridge } from "./arrival-field";
-import { createSpacecraft, spacecraftPose, routeSpacecraft, flightPresence, createPursuitBolts, pursuitPulse, pursuitMiss, clearShot, createWormhole, wormholePresence, advancePursuit, pursuitEnd, WORMHOLE_X, FLIGHT_START_X, PURSUIT_DELAY, COMPACT_PURSUIT_DELAY, PURSUIT_REST, PURSUIT_SHOTS, PURSUIT_SHOT_SECONDS } from "./spacecraft";
+import { createSpacecraft, spacecraftPose, routeSpacecraft, flightPresence, createPursuitBolts, pursuitPulse, pursuitShotSide, pursuitMiss, clearShot, createWormhole, wormholePresence, advancePursuit, pursuitEnd, WORMHOLE_X, FLIGHT_START_X, PURSUIT_DELAY, COMPACT_PURSUIT_DELAY, PURSUIT_REST, PURSUIT_SHOTS, PURSUIT_SHOT_SECONDS } from "./spacecraft";
 import { COMPACT_STAR_COUNT, DISTANT_STAR_COUNT, FEEDING_DUST_COUNT, createDistantStarMaterial, distantStarPoint, dustStreamSource } from "./ambient-field";
 
 function createBlackHole() {
@@ -194,7 +194,7 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, contactProgres
     let portalOpacity = 0, portalCycle = -1;
     const boltPose = new THREE.Object3D();
     const shots = Array.from({ length: PURSUIT_SHOTS }, (_, id) => ({ id, cycle: -1, launched: false, live: false, side: 1, length: 0, start: new THREE.Vector3(), end: new THREE.Vector3(), direction: new THREE.Vector3() }));
-    const shotProbes = shots.map(shot => ({ id: shot.id, cycle: -1, launched: false, active: false, pulse: 0, x: 0, y: 0, sx: 0, sy: 0, ex: 0, ey: 0, angle: 0, reason: "waiting" }));
+    const shotProbes = shots.map(shot => ({ id: shot.id, cycle: -1, launched: false, active: false, side: 1, pulse: 0, x: 0, y: 0, sx: 0, sy: 0, ex: 0, ey: 0, angle: 0, reason: "waiting" }));
     const craftObstacle = 11 + companionCounts.reduce((sum, count) => sum + count, 0);
     const flightObstacles = Array.from({ length: craftObstacle + 1 }, () => ({ x: 0, y: 0, radius: 0 }));
     const celestialObstacles = flightObstacles.slice(0, craftObstacle);
@@ -903,7 +903,8 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, contactProgres
             shotTarget.radiusX = ufoSilhouette.radiusX;
             shotTarget.radiusY = ufoSilhouette.radiusY;
             const gap = 6 / height;
-            for (const side of index % 2 ? [shots[index - 1].side] : [1, -1]) {
+            const preferredSide = pursuitShotSide(index, pursuit.cycle);
+            for (const side of index % 2 ? [shots[index - 1].side] : [preferredSide, -preferredSide]) {
               pursuitMiss(shotFrom, shotTarget, index, shotEnd, side, gap);
               const dx = shotEnd.x - shotFrom.x, dy = shotEnd.y - shotFrom.y;
               const aimX = shotTarget.x - shotFrom.x, aimY = shotTarget.y - shotFrom.y;
@@ -916,7 +917,7 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, contactProgres
               shot.direction.copy(shot.end).sub(shot.start).normalize();
               shot.length = 2 * tangent * (camera.position.z - shot.start.z) / height * THREE.MathUtils.clamp(width * .012, 10, 14) / 1.45;
               shot.side = side; shot.launched = true; shot.live = true;
-              probe.reason = "launched";
+              probe.reason = "launched"; probe.side = side;
               Object.assign(probe, { sx: (shotFrom.x / camera.aspect * .5 + .5) * width, sy: (-shotFrom.y * .5 + .5) * height, ex: (shotEnd.x / camera.aspect * .5 + .5) * width, ey: (-shotEnd.y * .5 + .5) * height, angle });
               break;
             }

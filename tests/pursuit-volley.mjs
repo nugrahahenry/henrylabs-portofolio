@@ -66,6 +66,8 @@ try {
       assert.equal(second.size, 8, "all four pairs return after the quiet interval without reloading");
     }
     assert.ok(result.frames.some(frame => frame.age > 14.6 && frame.shots.length === 2), "last pair reaches the portal approach");
+    const sides = new Set(result.frames.flatMap(frame => frame.shots.map(shot => shot.side)));
+    assert.deepEqual([...sides].sort(), [-1, 1], "visible salvos use both sides of the UFO");
     assert.ok(result.pairPixels > 35, "paired missiles paint bright, bounded pixels");
     assert.ok(result.calls < 65);
     const starts = new Map();
