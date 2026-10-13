@@ -10,15 +10,23 @@ import { advanceGravityAge, closingReturn, updateClosingScroll, gravityApproachA
 import { orbitGeometry, orbitalSpeed, sampleOrbit } from "./orbital-path";
 import { createStellarCore } from "./stellar-core";
 import { createDeepSpace } from "./deep-space";
+import { blackHoleFrame } from "./black-hole-frame";
 import { arrivalBridge } from "./arrival-field";
 import { createSpacecraft, spacecraftPose, routeSpacecraft, flightPresence, createPursuitBolts, pursuitPulse, pursuitMiss, clearShot, createWormhole, wormholePresence, advancePursuit, pursuitEnd, WORMHOLE_X, FLIGHT_START_X, PURSUIT_DELAY, COMPACT_PURSUIT_DELAY, PURSUIT_REST } from "./spacecraft";
 import { COMPACT_STAR_COUNT, DISTANT_STAR_COUNT, FEEDING_DUST_COUNT, createDistantStarMaterial, distantStarPoint, dustStreamSource } from "./ambient-field";
 
 function createBlackHole() {
   const group = new THREE.Group();
-  const horizon = new THREE.Mesh(new THREE.SphereGeometry(.5, 48, 32), new THREE.MeshBasicMaterial({ color: 0x000001, transparent: true }));
+  const readingUniforms = { uResolution: { value: new THREE.Vector2(1, 1) }, uReadRect: { value: new THREE.Vector4(-1000, -1000, -1000, -1000) } };
+  const readingGuard = `
+    vec2 screen = vec2(gl_FragCoord.x, uResolution.y - gl_FragCoord.y);
+    vec2 outsideCopy = max(max(uReadRect.xy - screen, screen - uReadRect.zw), vec2(0.0));
+    float readingGuard = mix(.24, 1.0, smoothstep(0.0, 56.0, length(outsideCopy)));
+  `;
+  // The observed shadow and photon image share a screen-facing silhouette.
+  const horizon = new THREE.Mesh(new THREE.CircleGeometry(.505, 128), new THREE.MeshBasicMaterial({ color: 0x000001, transparent: true, depthTest: false, depthWrite: false }));
   const diskMaterial = new THREE.ShaderMaterial({
-    uniforms: { uTime: { value: 0 }, uStrength: { value: 0 }, uResolution: { value: new THREE.Vector2(1, 1) }, uVoid: { value: new THREE.Vector3() } },
+    uniforms: { uTime: { value: 0 }, uStrength: { value: 0 }, ...readingUniforms, uVoid: { value: new THREE.Vector3() } },
     vertexShader: `
       varying vec2 vDisk;
       void main() {
@@ -30,6 +38,7 @@ function createBlackHole() {
       uniform float uTime;
       uniform float uStrength;
       uniform vec2 uResolution;
+      uniform vec4 uReadRect;
       uniform vec3 uVoid;
       varying vec2 vDisk;
       void main() {
@@ -42,8 +51,9 @@ function createBlackHole() {
         float flow = angle * 3.0 + logRadius * 20.0 - uTime * .75;
         float shear = sin(angle * 2.0 + radius * 11.0 - uTime * .2) * .18;
         float laneA = pow(max(0.0, .5 + .5 * sin(flow + shear)), 7.0);
-        float laneB = pow(max(0.0, .5 + .5 * sin(flow * 1.72 - angle * .8 + radius * 4.0 + uTime * .16)), 9.0);
-        float laneC = pow(max(0.0, .5 + .5 * sin(flow * .58 + angle * 5.0 - radius * 17.0 - uTime * .3)), 11.0);
+        // Integer angular frequencies close at atan's -PI/PI boundary.
+        float laneB = pow(max(0.0, .5 + .5 * sin(angle * 5.0 + logRadius * 34.4 + shear * 1.72 + radius * 4.0 - uTime * 1.13)), 9.0);
+        float laneC = pow(max(0.0, .5 + .5 * sin(angle * 7.0 + logRadius * 11.6 + shear * .58 - radius * 17.0 - uTime * .735)), 11.0);
         float detail = sin(radius * 145.0 + angle * 13.0 - uTime * 1.4) * .5 + .5;
         float turbulent = .55 + .45 * sin(angle * 5.0 + radius * 23.0 - uTime * .4);
         float heat = pow(clamp(1.38 - radius, 0.0, 1.0), 1.55);
@@ -53,10 +63,9 @@ function createBlackHole() {
         vec3 color = mix(vec3(.035, .18, .72), vec3(1.0, .20, .045), smoothstep(.08, .62, heat));
         color = mix(color, vec3(1.0, .84, .40), smoothstep(.52, .86, heat));
         color = mix(color, vec3(.22, .42, 1.0), clamp(depth * .5 + laneB * .18, 0.0, 1.0));
-        vec2 screen = vec2(gl_FragCoord.x / uResolution.x, 1.0 - gl_FragCoord.y / uResolution.y);
-        float readingMask = clamp(smoothstep(.77, .94, screen.y) + smoothstep(.85, .99, screen.x), 0.0, 1.0);
-        float brokenEdge = .72 + .28 * sin(angle * 2.7 + radius * 9.0 - uTime * .18);
-        gl_FragColor = vec4(color * (brightness + heat * .52) * 1.32, edge * brokenEdge * uStrength * mix(.15, 1.0, readingMask));
+        ${readingGuard}
+        float brokenEdge = .72 + .28 * sin(angle * 3.0 + radius * 9.0 - uTime * .18);
+        gl_FragColor = vec4(color * (brightness + heat * .52), edge * brokenEdge * uStrength * readingGuard);
         #include <tonemapping_fragment>
         #include <colorspace_fragment>
       }
@@ -64,29 +73,31 @@ function createBlackHole() {
     transparent: true, side: THREE.DoubleSide, depthWrite: false, blending: THREE.AdditiveBlending,
   });
   const disk = new THREE.Mesh(new THREE.RingGeometry(.51, 1.7, 128, 5), diskMaterial);
-  disk.rotation.set(1.16, 0, -.16);
+  disk.rotation.set(1.16, 0, -.3);
   // A graded image of the far disk bends over the silhouette; no solid torus edge.
   const lensMaterial = new THREE.ShaderMaterial({
-    uniforms: { uTime: { value: 0 }, uStrength: { value: 0 } },
+    uniforms: { uTime: { value: 0 }, uStrength: { value: 0 }, ...readingUniforms },
     vertexShader: `varying vec2 vLens; void main() { vLens = position.xy; gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }`,
     fragmentShader: `
-      uniform float uTime; uniform float uStrength; varying vec2 vLens;
+      uniform float uTime; uniform float uStrength;
+      uniform vec2 uResolution; uniform vec4 uReadRect; varying vec2 vLens;
       void main() {
         float r = length(vLens), a = atan(vLens.y, vLens.x);
         float outside = smoothstep(.498, .514, r);
-        float photon = exp(-pow((r - .518) / .013, 2.0));
+        float photon = exp(-pow((r - .518) / .008, 2.0));
         float arcRadius = length(vec2(vLens.x, vLens.y * .9));
-        float farArc = exp(-pow((arcRadius - .60) / .075, 2.0)) * smoothstep(-.18,.25,vLens.y);
+        float farArc = exp(-pow((arcRadius - .60) / .045, 2.0)) * smoothstep(-.18,.25,vLens.y);
         float nearArc = exp(-pow((arcRadius - .548) / .023, 2.0)) * smoothstep(.04,.46,vLens.y);
         float bands = .55 + .25 * sin(arcRadius * 215.0 + a * 5.0 - uTime * .9) + .20 * sin(a * 17.0 + r * 87.0 - uTime * .35);
         float broken = .55 + .45 * (.5 + .5 * sin(a * 3.0 + arcRadius * 31.0 - uTime * .18));
         float glow = exp(-max(0.0, r - .52) * 27.0) * (.08 + .05 * sin(a * 8.0 - uTime));
         float beaming = .72 + .38 * cos(a - .62);
         vec3 warm = mix(vec3(1.0,.20,.035), vec3(1.0,.85,.46), .5 + .5 * bands);
-        vec3 light = vec3(1.0,.72,.28) * photon * 1.35 + warm * (farArc * bands * 1.15 + nearArc * broken * 1.35);
+        vec3 light = vec3(1.0,.72,.28) * photon * .85 + warm * (farArc * bands * .6 + nearArc * broken * .65);
         light += vec3(.10,.28,.72) * glow;
         float alpha = clamp(photon * 1.05 + farArc * broken + nearArc + glow, 0.0, 1.0) * outside * uStrength;
-        gl_FragColor = vec4(light * beaming, alpha);
+        ${readingGuard}
+        gl_FragColor = vec4(light * beaming, alpha * readingGuard);
         #include <tonemapping_fragment>
         #include <colorspace_fragment>
       }
@@ -95,7 +106,8 @@ function createBlackHole() {
   });
   const lens = new THREE.Mesh(new THREE.PlaneGeometry(2.1, 2.1), lensMaterial);
   lens.position.z = 0;
-  horizon.renderOrder = 1;
+  // Composite the shadow last so swallowed foreground companions cannot leak through it.
+  horizon.renderOrder = 4;
   disk.renderOrder = 2;
   lens.renderOrder = 3;
   group.add(horizon, disk, lens);
@@ -131,6 +143,10 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, contactProgres
     const updateChapter = () => {
       holeStrength = THREE.MathUtils.smoothstep(contactProgress.get(), 0, .15);
       if (!enhanced) {
+        const frame = blackHoleFrame(host.clientWidth, host.clientHeight, THREE.MathUtils.smoothstep(contactProgress.get(), 0, .65));
+        host.style.setProperty("--hole-x", `${frame.x * 100}%`);
+        host.style.setProperty("--hole-y", `${frame.y * 100}%`);
+        host.style.setProperty("--hole-diameter", `${frame.diameter}px`);
         host.style.setProperty("--black-hole-strength", holeStrength.toFixed(3));
         host.style.setProperty("--hole-growth", THREE.MathUtils.smoothstep(contactProgress.get(), 0, .65).toFixed(3));
         host.dataset.holeOpacity = holeStrength.toFixed(3);
@@ -145,7 +161,9 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, contactProgres
       renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true, preserveDrawingBuffer: true, powerPreference: "low-power" });
     } catch {
       host.dataset.fallback = "true";
-      return unsubscribeChapter;
+      const fallbackResize = new ResizeObserver(updateChapter);
+      fallbackResize.observe(host);
+      return () => { fallbackResize.disconnect(); unsubscribeChapter(); };
     }
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1));
     enhanced = true;
@@ -179,6 +197,7 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, contactProgres
     const heroCopy = document.querySelector<HTMLElement>(".hero-copy");
     const heroKicker = document.querySelector<HTMLElement>(".hero-kicker");
     const heroNote = document.querySelector<HTMLElement>(".hero-note");
+    const contactCopy = document.querySelector<HTMLElement>(".contact-copy");
     const methodSteps = document.querySelector<HTMLElement>("#work");
     const stackKicker = document.querySelector<HTMLElement>(".maker-heading");
     let bandDirty = true, bandTop = 0, bandBottom = 0;
@@ -592,28 +611,31 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, contactProgres
       // Screen-space anchoring keeps the terminal landmark out of the hero and reading center.
       const width = host.clientWidth;
       const height = host.clientHeight;
-      const portrait = width < height;
-      const holeY = height < 620 ? .88 : portrait ? .9 : .87;
       const contactActive = state.current.motionOn && state.current.contactVisible && holeStrength > .05 && !closing.returning && closing.presence === 1;
       birthAge = advanceGravityAge(birthAge, delta, contactActive);
       const birth = state.current.motionOn ? gravityBirth(birthAge) : { growth: 1, ready: true };
       const holeGrowth = birth.growth * retreat.growth;
-      const holeX = THREE.MathUtils.lerp(.92, 1.01, holeGrowth);
+      const { x: holeX, y: holeY, diameter, scale: holeScale } = blackHoleFrame(width, height, holeGrowth);
       holeRay.set(holeX * 2 - 1, 1 - holeY * 2, .5).unproject(camera).sub(camera.position).normalize();
       blackHole.group.position.copy(camera.position).addScaledVector(holeRay, (-4.8 - camera.position.z) / holeRay.z);
       blackHole.group.quaternion.copy(camera.quaternion);
       const viewHeight = 2 * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) * (camera.position.z + 4.8);
-      const diameter = Math.min(width * .95, height * .8);
-      blackHole.group.scale.setScalar(viewHeight * diameter / height * (.08 + holeGrowth * .92));
+      blackHole.group.scale.setScalar(viewHeight * diameter / height * holeScale);
       blackHole.group.visible = holeOpacity > .001;
       blackHole.diskMaterial.uniforms.uTime.value = drift * .35;
       blackHole.diskMaterial.uniforms.uStrength.value = holeOpacity;
       blackHole.diskMaterial.uniforms.uResolution.value.set(width * renderer.getPixelRatio(), height * renderer.getPixelRatio());
-      blackHole.diskMaterial.uniforms.uVoid.value.set(holeX * width * renderer.getPixelRatio(), (1 - holeY) * height * renderer.getPixelRatio(), diameter * (.08 + holeGrowth * .92) * .5 * renderer.getPixelRatio());
+      blackHole.diskMaterial.uniforms.uVoid.value.set(holeX * width * renderer.getPixelRatio(), (1 - holeY) * height * renderer.getPixelRatio(), diameter * holeScale * .5 * renderer.getPixelRatio());
+      if (holeOpacity > .001 && contactCopy) {
+        const rect = contactCopy.getBoundingClientRect();
+        blackHole.diskMaterial.uniforms.uReadRect.value.set(rect.left - 12, rect.top - 12, rect.right + 12, rect.bottom + 12).multiplyScalar(renderer.getPixelRatio());
+      }
       blackHole.horizon.material.opacity = holeOpacity;
       blackHole.lensMaterial.uniforms.uTime.value = drift * .35;
       blackHole.lensMaterial.uniforms.uStrength.value = holeOpacity;
       gravityTarget.copy(blackHole.group.position);
+      deepSpace.material.uniforms.uHorizon.value = blackHole.group.scale.x * .5;
+      deepSpace.material.uniforms.uLensStrength.value = holeOpacity * holeGrowth;
       const gravityActive = contactActive && birth.ready;
       gravityAge = advanceGravityAge(gravityAge, delta, gravityActive);
       const sequence = gravitySequence(gravityAge);

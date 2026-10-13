@@ -17,7 +17,7 @@ async function holePixels(page) {
     if (!gl) return resolve(null);
     const width = gl.drawingBufferWidth;
     const height = gl.drawingBufferHeight;
-    const x = Math.round(Math.min(.95, Number(canvas.parentElement.dataset.holeX)) * width);
+    const x = Math.round(Number(canvas.parentElement.dataset.holeX) * width);
     const y = Math.round((1 - Number(canvas.parentElement.dataset.holeY)) * height);
     const center = new Uint8Array(4);
     gl.readPixels(x, y, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, center);
@@ -29,9 +29,13 @@ async function holePixels(page) {
     const patchHeight = Math.min(height - bottom, radius * 2);
     const pixels = new Uint8Array(patchWidth * patchHeight * 4);
     gl.readPixels(left, bottom, patchWidth, patchHeight, gl.RGBA, gl.UNSIGNED_BYTE, pixels);
-    let lit = 0;
-    for (let i = 0; i < pixels.length; i += 4) if (pixels[i] > 45 && pixels[i + 3] > 40) lit++;
-    resolve({ center: [...center], lit });
+    let lit = 0, shadowLeaks = 0;
+    for (let i = 0; i < pixels.length; i += 4) {
+      if (pixels[i] > 45 && pixels[i + 3] > 40) lit++;
+      const px = left + i / 4 % patchWidth, py = bottom + Math.floor(i / 4 / patchWidth);
+      if (Math.hypot(px - x, py - y) < radius * .3 && Math.max(pixels[i], pixels[i + 1], pixels[i + 2]) > 25) shadowLeaks++;
+    }
+    resolve({ center: [...center], lit, shadowLeaks });
   })));
 }
 
@@ -69,7 +73,9 @@ try {
     page.on("request", (request) => { if (request.url().includes("cosmic-nebula.png")) bitmapBackdrops.push(request.url()); });
     page.on("pageerror", (error) => errors.push(error.message));
     page.on("console", (message) => { if (/THREE.WebGLProgram|Shader Error|VALIDATE_STATUS/.test(message.text())) errors.push(message.text()); });
+    await page.addInitScript(() => sessionStorage.setItem("henrylabs-intro-seen", "1"));
     await page.goto(url, { waitUntil: "domcontentloaded" });
+    await expect(page.locator("html")).toHaveAttribute("data-preferences-ready", "true", { timeout: 20000 });
     await page.locator(".intro-loader").waitFor({ state: "hidden" });
     const background = page.locator(".worldline-backdrop");
     await expect(background).toHaveAttribute("data-ready", "true");
@@ -125,9 +131,11 @@ try {
     assert.ok(pixels && pixels.center[3] > 160, "event horizon must be painted in the lower-right corner");
     assert.ok(pixels.center.slice(0, 3).every((value) => value < 25), `horizon must be dark, not an additive star: ${pixels.center}`);
     assert.ok(pixels.lit > 10, "the disk must have luminous pixels around the dark center");
+    assert.equal(pixels.shadowLeaks, 0, "absorbed foreground bodies must not remain visible inside the shadow");
     assert.ok(Number(await background.getAttribute("data-hole-y")) >= .68);
-    assert.ok(Number(await background.getAttribute("data-hole-x")) > 1, "the enlarged horizon must be cropped by the right boundary");
-    assert.ok(Number(await background.getAttribute("data-hole-diameter")) > Math.min(viewport.width, viewport.height) * .7);
+    const holeX = Number(await background.getAttribute("data-hole-x"));
+    assert.ok(holeX > .7 && holeX < .9, "the dark center must be inside the frame, not only a cropped rim");
+    assert.ok(Number(await background.getAttribute("data-hole-diameter")) >= Math.min(viewport.width, viewport.height) * .7);
     await expect(background).toHaveAttribute("data-background-galaxies", "3");
     await expect(background).toHaveAttribute("data-gravity-active", "true");
     await expect(background).toHaveAttribute("data-distant-star-pull", "0.000");
@@ -190,6 +198,8 @@ try {
   await expect(fallback.locator(".black-hole-fallback")).toBeVisible();
   await expect(fallback.locator('#contact a[href*="wa.me"]')).toBeVisible();
   await fallback.screenshot({ path: "test-results/390-black-hole-fallback.png" });
+  await fallback.setViewportSize({ width: 844, height: 390 });
+  await expect.poll(() => fallback.locator(".black-hole-fallback").evaluate(node => node.offsetWidth)).toBe(273);
   await fallback.close();
   console.log("background reduced-motion and WebGL-fallback QA passed");
 } finally {

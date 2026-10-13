@@ -1,5 +1,13 @@
 # Changelog
 
+## StarGod Portfolio v0.108.0 - 2026-10-13
+
+- Reframe the Contact black hole so its dark center stays inside desktop and mobile viewports while the outer accretion disk retains its large-scale crop.
+- Align the observed shadow with the photon image and occlude swallowed companions, eliminating small bright remnants inside the void.
+- Refine the tilted accretion flow, remove its angular shader seam, and soften its light behind the measured Contact reading area.
+- Bend the existing nebula locally around the horizon without another WebGL renderer, texture plate, or dependency.
+- Match the no-WebGL landmark to the responsive frame, including viewport rotation; preserve inward spirals, distant stars, reversible scroll, and the thirty-second visitor rest.
+
 ## StarGod Portfolio v0.107.1 - 2026-10-13
 
 - Fix the first UFO/scout encounter being marked complete by a stale Still-mode pose when entering the homepage or re-enabling animation.

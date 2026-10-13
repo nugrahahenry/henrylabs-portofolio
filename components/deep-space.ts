@@ -20,7 +20,7 @@ export function createDeepSpace(size = 64) {
   texture.unpackAlignment = 1;
   texture.needsUpdate = true;
   const material = new THREE.ShaderMaterial({
-    uniforms: { uVolume: { value: texture }, uTime: { value: 0 }, uPull: { value: 0 }, uPresence: { value: 1 }, uTarget: { value: new THREE.Vector3() }, uResolution: { value: new THREE.Vector2(1, 1) } },
+    uniforms: { uVolume: { value: texture }, uTime: { value: 0 }, uPull: { value: 0 }, uPresence: { value: 1 }, uTarget: { value: new THREE.Vector3() }, uResolution: { value: new THREE.Vector2(1, 1) }, uHorizon: { value: 0 }, uLensStrength: { value: 0 } },
     vertexShader: `
       varying vec3 vWorld;
       void main() {
@@ -34,11 +34,19 @@ export function createDeepSpace(size = 64) {
       uniform float uTime;
       uniform float uPull;
       uniform float uPresence;
+      uniform float uHorizon;
+      uniform float uLensStrength;
       uniform vec3 uTarget;
       uniform vec2 uResolution;
       varying vec3 vWorld;
       void main() {
         vec3 ray = normalize(vWorld - cameraPosition);
+        // Local refraction near the silhouette, without a second scene render.
+        vec3 lensOffset = uTarget - cameraPosition;
+        vec3 radial = lensOffset - ray * dot(lensOffset, ray);
+        float impact = length(radial) / max(.001, uHorizon);
+        float bend = exp(-pow((impact - 1.08) * 2.8, 2.0)) * uLensStrength;
+        ray = normalize(ray - radial / max(.001, length(radial)) * bend * .045);
         vec3 inv = 1.0 / ray;
         vec3 a = (vec3(-16.0,-11.0,-32.0) - cameraPosition) * inv;
         vec3 b = (vec3(16.0,11.0,-4.0) - cameraPosition) * inv;

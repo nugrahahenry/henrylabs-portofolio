@@ -23,6 +23,7 @@ const { advanceGalaxyFlight, sampleGalaxyFlight } = await loadModule("galaxy-fli
 const { createDeepSpace } = await loadModule("deep-space");
 const { makerGroupAt, makerEvidenceAt, advanceMakerRotation, portraitCoversSatellite, MAKER_RETREAT_START, MAKER_PROOF_START } = await loadModule("maker-motion");
 const { infallPoint, gravityMaterial, dustWarmth } = await loadModule("gravity-field");
+const { blackHoleFrame } = await loadModule("black-hole-frame");
 const { createSpacecraft, spacecraftPose, routeSpacecraft, flightPresence, pursuitPulse, pursuitMiss, wormholePresence, createWormhole, clearShot, advancePursuit, pursuitEnd, pursuitPeriod, PURSUIT_DELAY, PURSUIT_REST } = await loadModule("spacecraft");
 const { distantStarPoint, dustStreamSource, stellarTwinkle, createDistantStarMaterial, DISTANT_STAR_COUNT, COMPACT_STAR_COUNT, FEEDING_DUST_COUNT } = await loadModule("ambient-field");
 
@@ -190,6 +191,28 @@ test("portrait hit occlusion follows alpha, including visible crescents beside t
   assert.equal(portraitCoversSatellite(mask,bounds,50,50,20),false);
 });
 
+test("the closing frame keeps the dark center onscreen while allowing the outer disk to crop", () => {
+  for (const [width, height] of [[1440, 900], [1024, 768], [768, 1024], [390, 844], [360, 800], [844, 390]]) {
+    const frame = blackHoleFrame(width, height);
+    assert.ok(frame.x > .7 && frame.x < .9 && frame.y < .9);
+    assert.ok(frame.diameter >= Math.min(width, height) * .7);
+    assert.ok(width * (1 - frame.x) >= frame.diameter * .19, "a substantial part of the far side must remain visible");
+    assert.ok(height * (1 - frame.y) >= frame.diameter * .19);
+    const frames = Array.from({ length: 101 }, (_, i) => blackHoleFrame(width, height, i / 100));
+    for (let i = 100; i >= 0; i--) assert.deepEqual(blackHoleFrame(width, height, i / 100), frames[i]);
+    assert.equal(blackHoleFrame(width, height, -1).scale, .08);
+    assert.equal(blackHoleFrame(width, height, 2).scale, 1);
+  }
+});
+
+test("nebula refraction is local to the horizon and disabled outside Contact", () => {
+  const space = createDeepSpace(16);
+  assert.equal(space.material.uniforms.uLensStrength.value, 0);
+  assert.match(space.material.fragmentShader, /exp\(-pow\(\(impact - 1\.08\)/);
+  assert.match(space.material.fragmentShader, /bend \* \.045/);
+  space.texture.dispose(); space.material.dispose(); space.volume.geometry.dispose();
+});
+
 test("dust spirals only inward and terminates at the actual horizon center", () => {
   const target = new THREE.Vector3(3, -2, -4.8);
   for (const source of [new THREE.Vector3(-5, 3, -7), new THREE.Vector3(1, 6, -9)]) for (const seed of [0, .4, .9]) {
@@ -213,10 +236,11 @@ test("all dust lanes circle through multiple horizon quadrants while contracting
     const camera = new THREE.PerspectiveCamera(44, width / height, .1, 100);
     camera.position.z = 6.8;
     camera.updateMatrixWorld();
-    const target = new THREE.Vector3(1.02, -.8, .5).unproject(camera).sub(camera.position);
+    const frame = blackHoleFrame(width, height);
+    const target = new THREE.Vector3(frame.x * 2 - 1, 1 - frame.y * 2, .5).unproject(camera).sub(camera.position);
     target.multiplyScalar((-4.8 - camera.position.z) / target.z).add(camera.position);
     const viewHeight = 2 * Math.tan(THREE.MathUtils.degToRad(22)) * 11.6;
-    const horizon = viewHeight * Math.min(width * .95, height * .8) / height * .5;
+    const horizon = viewHeight * frame.diameter / height * .5;
     let paintedCandidates = 0;
     const quadrants = new Set();
     for (let i = 0; i < FEEDING_DUST_COUNT; i++) {
