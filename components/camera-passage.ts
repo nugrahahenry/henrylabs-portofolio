@@ -6,14 +6,14 @@ const spread = (index: number, step: number) => ((index + .5) * step) % 1;
 
 export type PassageClock = { distance: number; speed: number; opacity: number };
 
-export function advancePassage(clock: PassageClock, delta: number, scrollDelta: number, height: number, motion: boolean, protectedChapter: boolean) {
+export function advancePassage(clock: PassageClock, delta: number, scrollDelta: number, height: number, motion: boolean, protectedChapter: boolean, visibility = 1) {
   if (!motion) { clock.speed = 0; clock.opacity = 0; return; }
   // Ignore a suspended frame or a layout jump instead of catching up in one burst.
   if (!Number.isFinite(delta) || delta <= 0 || delta > .25) return;
   const scrollSpeed = Math.min(1, Math.abs(scrollDelta) / Math.max(1, height) / delta / 2);
   const targetSpeed = protectedChapter ? .48 : .48 + scrollSpeed * 2.4;
   clock.speed = THREE.MathUtils.damp(clock.speed, targetSpeed, 2.6, delta);
-  clock.opacity = THREE.MathUtils.damp(clock.opacity, protectedChapter ? 0 : .76, protectedChapter ? 6 : 2, delta);
+  clock.opacity = THREE.MathUtils.damp(clock.opacity, protectedChapter ? 0 : .76 * THREE.MathUtils.clamp(visibility, 0, 1), protectedChapter ? 6 : 2, delta);
   if (clock.opacity > .002) clock.distance += clock.speed * delta;
 }
 

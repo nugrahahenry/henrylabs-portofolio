@@ -69,6 +69,14 @@ test("passages move in depth, expand in perspective and fade before recycling", 
   }
 });
 
+test("near stars retire progressively with the map approach before the interaction gate", () => {
+  const clock = { distance: 0, speed: .48, opacity: .76 };
+  for (let i = 0; i < 180; i++) advancePassage(clock, 1 / 60, 0, 900, true, false, .2);
+  assert.ok(clock.opacity > .15 && clock.opacity < .16);
+  for (let i = 0; i < 180; i++) advancePassage(clock, 1 / 60, 0, 900, true, false, 0);
+  assert.ok(clock.opacity < .001);
+});
+
 test("passages protect copy and share one bounded point batch", () => {
   const rect = { left: 100, top: 200, right: 800, bottom: 600 };
   assert.equal(passageReadingGuard(450, 300, rect), 0);

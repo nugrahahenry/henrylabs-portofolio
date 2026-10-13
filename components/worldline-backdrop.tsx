@@ -116,10 +116,11 @@ function createBlackHole() {
   return { group, horizon, diskMaterial, lensMaterial };
 }
 
-export function WorldlineBackdrop({ activeId, motionOn, progress, contactProgress, contactVisible, mapActive, introActive, introProgress }: {
+export function WorldlineBackdrop({ activeId, motionOn, progress, mapPresence, contactProgress, contactVisible, mapActive, introActive, introProgress }: {
   activeId: ProjectId;
   motionOn: boolean;
   progress: MotionValue<number>;
+  mapPresence: MotionValue<number>;
   contactProgress: MotionValue<number>;
   contactVisible: boolean;
   mapActive: boolean;
@@ -537,6 +538,7 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, contactProgres
       const dt = Math.min(delta, .04);
       lastTime = time;
       const scroll = THREE.MathUtils.clamp(progress.get(), 0, 1);
+      const mapBlend = state.current.motionOn ? THREE.MathUtils.clamp(mapPresence.get(), 0, 1) : 0;
       updateClosingScroll(closing, contactProgress.get(), dt, state.current.motionOn);
       const retreat = closingReturn(closing.presence, retreatPose);
       if (closing.peak === 0) { birthAge = 0; gravityAge = 0; }
@@ -566,7 +568,7 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, contactProgres
         THREE.MathUtils.lerp((solarPortrait ? 2.5 : 2.7) - scroll * 2.2, 2.15 - scroll * .25, readingBlend),
         -3.2,
       );
-      const solarStrength = state.current.mapActive ? .38 : THREE.MathUtils.lerp(1, .76, readingBlend);
+      const solarStrength = THREE.MathUtils.lerp(THREE.MathUtils.lerp(1, .76, readingBlend), .38, mapBlend);
       solarVisibility = state.current.motionOn ? THREE.MathUtils.damp(solarVisibility, solarStrength, 5, dt) : solarStrength;
       planetSystem.visible = solarVisibility > .005 && (!introMode || state.current.introProgress > 58);
       planetSystem.rotation.y = Math.sin(drift * .016) * .08 + scroll * .22;
@@ -642,7 +644,7 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, contactProgres
       const width = host.clientWidth;
       const height = host.clientHeight;
       const passageProtected = state.current.introActive || state.current.mapActive || readingChapter || state.current.contactVisible || holeOpacity > .001;
-      advancePassage(passageClock, delta, window.scrollY - passageScroll, height, state.current.motionOn, passageProtected);
+      advancePassage(passageClock, delta, window.scrollY - passageScroll, height, state.current.motionOn, passageProtected, 1 - mapBlend);
       passageScroll = window.scrollY;
       passage.points.position.copy(camera.position);
       passage.points.quaternion.copy(camera.quaternion);
@@ -712,7 +714,7 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, contactProgres
       const restoring = state.current.motionOn && closing.presence < 1 && birth.ready && holeOpacity > .001;
       const streamVisible = birth.ready && state.current.motionOn && holeOpacity > .001 && (gravityActive || returning || closing.presence < 1);
       deepSpace.material.uniforms.uTime.value = drift;
-      const targetSkyPresence = state.current.mapActive ? .48 : introReveal;
+      const targetSkyPresence = introMode ? introReveal : THREE.MathUtils.lerp(1, .62, mapBlend);
       deepSpace.material.uniforms.uPresence.value = introMode || !state.current.motionOn ? targetSkyPresence : THREE.MathUtils.damp(deepSpace.material.uniforms.uPresence.value, targetSkyPresence, 4, dt);
       deepSpace.material.uniforms.uPull.value = pull;
       deepSpace.material.uniforms.uTarget.value.copy(gravityTarget);
@@ -1054,6 +1056,8 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, contactProgres
       host.dataset.nebulaModel = "volumetric-filaments";
       host.dataset.arrivalDepth = bridge.cameraDepth.toFixed(3);
       host.dataset.arrivalNebula = introReveal.toFixed(3);
+      host.dataset.mapPresence = mapBlend.toFixed(3);
+      host.dataset.skyPresence = deepSpace.material.uniforms.uPresence.value.toFixed(3);
       host.dataset.planetSurface = "opaque-terrain";
       host.dataset.solarVisibility = solarVisibility.toFixed(3);
       host.dataset.readingBlend = readingBlend.toFixed(3);
@@ -1192,6 +1196,7 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, contactProgres
     const intersection = new IntersectionObserver(([entry]) => { visible = entry.isIntersecting; if (visible) wake(); }, { rootMargin: "100% 0px" });
     intersection.observe(visibilityTarget);
     const unsubscribe = progress.on("change", wake);
+    const unsubscribeMap = mapPresence.on("change", wake);
     const contextLost = (event: Event) => { event.preventDefault(); enhanced = false; host.dataset.fallback = "true"; cancelAnimationFrame(frame); updateChapter(); };
     canvas.addEventListener("webglcontextlost", contextLost);
     document.addEventListener("visibilitychange", wake);
@@ -1202,6 +1207,7 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, contactProgres
       observer.disconnect();
       intersection.disconnect();
       unsubscribe();
+      unsubscribeMap();
       unsubscribeChapter();
       canvas.removeEventListener("webglcontextlost", contextLost);
       document.removeEventListener("visibilitychange", wake);
@@ -1217,7 +1223,7 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, contactProgres
       renderer.dispose();
       wakeRef.current = () => {};
     };
-  }, [progress, contactProgress]);
+  }, [progress, mapPresence, contactProgress]);
 
   return <div ref={hostRef} className="worldline-backdrop" aria-hidden="true"><canvas /><span className="black-hole-fallback" /></div>;
 }

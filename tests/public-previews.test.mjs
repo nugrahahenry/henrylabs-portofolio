@@ -36,3 +36,39 @@ test("Universe navigation lands centrally in a fully visible, settled exploratio
   }
   assert.equal(universeLanding(0, 400, 900), 0);
 });
+
+test("hero and sky share reversible eased chapter boundaries without a competing opacity clock", () => {
+  const module = { exports: {} };
+  const compiled = ts.transpileModule(readFileSync("components/universe-chapter.ts", "utf8"), { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText;
+  new Function("module", "exports", compiled)(module, module.exports);
+  const { UNIVERSE_CHAPTER: c, chapterEase, universeHeroOpacity, universePresence } = module.exports;
+  assert.equal(universeHeroOpacity(0), 1);
+  assert.equal(universeHeroOpacity(c.entry), 0);
+  assert.equal(universePresence(0), 0);
+  assert.equal(universePresence(c.landing), 1);
+  assert.equal(universePresence(1), 0);
+  for (let p = -.1; p <= 1.1; p += .001) {
+    for (const sample of [universePresence, universeHeroOpacity]) {
+      assert.ok(sample(p) >= 0 && sample(p) <= 1);
+      assert.ok(Math.abs(sample(p + .001) - sample(p)) < .02, "no chapter boundary pop");
+    }
+    assert.ok(universeHeroOpacity(p) >= universeHeroOpacity(p + .001));
+  }
+  assert.ok(chapterEase(.001, 0, 1) < .00001, "approach starts without linear velocity");
+  const experience = readFileSync("components/portfolio-experience.tsx", "utf8");
+  assert.match(experience, /opacity: motionOn \? heroOpacity : 1/);
+  assert.match(experience, /mapPresence=\{mapPresence\}/);
+  assert.doesNotMatch(readFileSync("app/globals.css", "utf8"), /\.hero-copy \{ transition: opacity/);
+});
+
+test("project reading retains full text opacity and settles its media before the viewport center", () => {
+  const preview = readFileSync("components/home-project-preview.tsx", "utf8");
+  assert.match(preview, /offset: \["start end", "start 48%"\]/);
+  assert.doesNotMatch(preview, /headingOpacity|copyOpacity|headingScale/);
+  assert.match(preview, /chapterEase/);
+  const scrim = readFileSync("app/library.css", "utf8").match(/\.work-section::after\s*\{([^}]+)\}/)?.[1];
+  assert.ok(scrim);
+  assert.match(scrim, /animation: none/);
+  assert.match(scrim, /transform: none/);
+  assert.match(scrim, /inset: 0 0 -64px/);
+});

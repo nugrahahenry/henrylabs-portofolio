@@ -30,7 +30,7 @@ import { findWorld } from "@/content/catalog";
 import { useSitePreferences, useQuery } from "./site-preferences";
 import { MakerChapter } from "./maker-chapter";
 import { StarGodMark } from "./stargod-mark";
-import { UNIVERSE_CHAPTER as chapter, universeLanding, chapterBlend } from "./universe-chapter";
+import { UNIVERSE_CHAPTER as chapter, universeLanding, chapterEase, universeHeroOpacity, universePresence } from "./universe-chapter";
 
 type WorldlineStage = "world" | "method" | "stack";
 type Sector = GalaxyId;
@@ -172,14 +172,16 @@ export function PortfolioExperience() {
   const { scrollYProgress } = useScroll({ target: heroRef, offset: ["start start", "end end"] });
   // Function transforms keep sticky DOM and Three.js on the same JS scroll clock.
   // Native ViewTimeline acceleration otherwise interpolates outside this window.
-  const heroCopyY = useTransform(scrollYProgress, p => -58 * chapterBlend(p, 0, .28));
-  const fieldScale = useTransform(scrollYProgress, p => .88 + .12 * chapterBlend(p, chapter.entry, chapter.settled));
-  const fieldY = useTransform(scrollYProgress, p => 40 * (1 - chapterBlend(p, chapter.entry, chapter.settled)));
-  const mapEntryOpacity = useTransform(scrollYProgress, p => chapterBlend(p, chapter.entry, chapter.visible));
-  const mapExitOpacity = useTransform(scrollYProgress, p => 1 - chapterBlend(p, chapter.departure, chapter.hidden));
-  const mapExitY = useTransform(scrollYProgress, p => -44 * chapterBlend(p, chapter.departure, 1));
+  const heroCopyY = useTransform(scrollYProgress, p => -42 * chapterEase(p, 0, chapter.entry));
+  const heroOpacity = useTransform(scrollYProgress, universeHeroOpacity);
+  const mapPresence = useTransform(scrollYProgress, universePresence);
+  const fieldScale = useTransform(scrollYProgress, p => .88 + .12 * chapterEase(p, chapter.entry, chapter.settled));
+  const fieldY = useTransform(scrollYProgress, p => 40 * (1 - chapterEase(p, chapter.entry, chapter.settled)));
+  const mapEntryOpacity = useTransform(scrollYProgress, p => chapterEase(p, chapter.entry, chapter.visible));
+  const mapExitOpacity = useTransform(scrollYProgress, p => 1 - chapterEase(p, chapter.departure, chapter.hidden));
+  const mapExitY = useTransform(scrollYProgress, p => -44 * chapterEase(p, chapter.departure, 1));
   useMotionValueEvent(scrollYProgress, "change", (value) => {
-    const phase = value < chapter.entry ? "intro" : value < chapter.visible ? "transition" : value < chapter.departure ? "worlds" : "departing";
+    const phase = universeHeroOpacity(value) > .1 ? "intro" : value < chapter.visible ? "transition" : value < chapter.departure ? "worlds" : "departing";
     setHeroPhase((previous) => previous === phase ? previous : phase);
   });
   useMotionValueEvent(worldlineProgress, "change", (value) => {
@@ -390,7 +392,7 @@ export function PortfolioExperience() {
     <MotionConfig reducedMotion={motionOn ? "never" : "always"} transition={{ duration: motionOn ? 0.55 : 0, ease: [0.16, 1, 0.3, 1] }}>
     <main className="site-shell" id="main-content" tabIndex={-1} data-motion={motionOn ? "on" : "off"} data-intro={introDone ? "done" : "active"} data-intro-handoff={introHandoff.toFixed(3)} style={{ "--intro-handoff": introHandoff, "--intro-nebula": introBridge.nebula, "--intro-field": introBridge.field, "--intro-labels": introBridge.labels, "--intro-readout": introBridge.readout, "--intro-hero-reveal": introBridge.hero } as CSSProperties}>
       <SmoothScroll enabled={motionOn} />
-      <WorldlineBackdrop activeId={activeProject.id} motionOn={motionOn} progress={worldlineProgress} contactProgress={contactProgress} contactVisible={contactVisible} mapActive={heroPhase === "worlds"} introActive={!introDone} introProgress={introProgress} />
+      <WorldlineBackdrop activeId={activeProject.id} motionOn={motionOn} progress={worldlineProgress} mapPresence={mapPresence} contactProgress={contactProgress} contactVisible={contactVisible} mapActive={heroPhase === "worlds"} introActive={!introDone} introProgress={introProgress} />
       <div className={cx("intro-loader", "arrival-intro", introDone && "intro-loader--done")} data-intro-phase={introPhase} data-intro-progress={introProgress} data-intro-universe={introUniverseIndex} aria-hidden={introDone} inert={introDone}>
         <ArrivalField progress={introProgress} motionOn={motionOn} active={!introDone} projects={projects} />
         <div className="arrival-content">
@@ -421,7 +423,7 @@ export function PortfolioExperience() {
           event.stopPropagation();
           closeWorldInspector();
         }}>
-          <motion.div className="hero-copy" inert={!introDone || (motionOn && heroPhase !== "intro")} style={{ y: motionOn ? heroCopyY : 0 }}>
+          <motion.div className="hero-copy" inert={!introDone || (motionOn && heroPhase !== "intro")} style={{ y: motionOn ? heroCopyY : 0, opacity: motionOn ? heroOpacity : 1 }}>
             <p className="hero-kicker"><span className="live-pulse" /> product-minded developer / Indonesia</p>
             <h1 id="hero-title">{t.hero.title}</h1>
             <p className="hero-body">{t.hero.body}</p>

@@ -1,5 +1,12 @@
 # Changelog
 
+## StarGod Portfolio v0.112.1 - 2026-10-13
+
+- Synchronize the opening headline, galaxy approach/departure, ambient brightness and near-star retreat with reversible eased scroll progress instead of competing phase-triggered fades.
+- Keep a brighter settled exploration backdrop and preserve the existing browsing hold, camera journey, Skip and intro duration.
+- Improve reading contrast behind the opening copy and selected-project section with unframed feathered scrims; remove the hard background boundary at the start of the reading chapter.
+- Keep preview text at full opacity and stable scale, settling media depth before the viewport center. Remove faded opening controls from keyboard interaction before the map takes over.
+
 ## StarGod Portfolio v0.112.0 - 2026-10-13
 
 - Add sparse near-camera star passages after arrival, with real depth and perspective growth, a slow idle pace, and a bounded scroll/Explore acceleration.

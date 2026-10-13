@@ -264,7 +264,8 @@ html[data-cursor="quiet"] .cursor-guide { opacity: 0; }
 .arc-one { inset: 13% 6% 19% 4%; }
 .arc-two { inset: 27% 18% 25% 26%; border-color: rgba(255,130,200,.1); transform: rotate(31deg); animation-direction: reverse; animation-duration: 38s; }
 .hero-copy { position: absolute; inset: 0; display: flex; align-items: center; flex-direction: column; justify-content: center; padding: 95px 25px 40px; text-align: center; }
-.hero-copy { transition: opacity .55s var(--ease); }
+.hero-copy { isolation: isolate; }
+.hero-copy::before { content: ""; position: absolute; z-index: -1; inset: -6% -12%; pointer-events: none; background: radial-gradient(ellipse 52% 48% at 50% 54%, #070c18d9 0%, #070c18b8 42%, #070c1866 68%, transparent 100%); }
 .hero-stage[data-phase="intro"] .cosmic-frame-wrap, .hero-stage[data-phase="transition"] .hero-copy, .hero-stage[data-phase="worlds"] .hero-copy { opacity: 0; pointer-events: none; }
 .hero-stage[data-phase="intro"] .hero-copy, .hero-stage[data-phase="worlds"] .cosmic-frame-wrap { opacity: 1; }
 .hero-stage[data-phase="transition"] .cosmic-frame-wrap { opacity: .82; }
@@ -793,7 +794,7 @@ html[data-motion="off"] *, html[data-motion="off"] *::before, html[data-motion="
 
 /* Worldline: one project constellation carries the reading path from world to method to stack. */
 .field-continuum { position: relative; isolation: isolate; overflow: clip; background: transparent; }
-.field-continuum::before { content: ""; position: absolute; z-index: 0; inset: 0; background: linear-gradient(180deg, rgba(8,12,35,.1) 0%, rgba(11,18,48,.18) 48%, rgba(8,11,33,.16) 100%); pointer-events: none; }
+.field-continuum::before { content: ""; position: absolute; z-index: 0; inset: 0; background: linear-gradient(180deg, transparent 0%, rgba(8,12,35,.1) 120px, rgba(11,18,48,.18) 48%, rgba(8,11,33,.16) 100%); pointer-events: none; }
 .field-continuum > section { position: relative; z-index: 1; background: transparent; }
 .field-continuum .work-section::before, .field-continuum .signal-chapter::before, .field-continuum .stack-section::before { opacity: .02; }
 .field-continuum .signal-chapter { background: transparent; }

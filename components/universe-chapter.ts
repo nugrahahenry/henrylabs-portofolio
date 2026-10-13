@@ -15,3 +15,17 @@ export function universeLanding(top: number, height: number, viewport: number) {
 export function chapterBlend(progress: number, start: number, end: number) {
   return Math.max(0, Math.min(1, (progress - start) / (end - start)));
 }
+
+export function chapterEase(progress: number, start: number, end: number) {
+  const t = chapterBlend(progress, start, end);
+  return t * t * (3 - 2 * t);
+}
+
+export function universeHeroOpacity(progress: number) {
+  return 1 - chapterEase(progress, .04, UNIVERSE_CHAPTER.entry);
+}
+
+export function universePresence(progress: number) {
+  return chapterEase(progress, .12, UNIVERSE_CHAPTER.settled)
+    * (1 - chapterEase(progress, UNIVERSE_CHAPTER.departure, UNIVERSE_CHAPTER.hidden));
+}

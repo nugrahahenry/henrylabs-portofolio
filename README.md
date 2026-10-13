@@ -1,6 +1,6 @@
 <div align="center">
 
-# StarGod Portfolio v0.112.0
+# StarGod Portfolio v0.112.1
 
 **I build things I actually see.**
 
@@ -28,6 +28,8 @@ Three galaxies. Ten project worlds. One maker.
 The opening behaves like a real Three.js camera searching a spherical multiverse: 128 universe signatures sit at different depths, a layered star field opens from deep indigo into a denser cosmic scale, and bounded near-camera stars cross the lens during the approach. The chosen StarGod signal then travels through four readable authored scales: **Universe**, **Laniakea** with 17 superclusters, **Local Group** with 61 galaxies, and the **HenryLabs galaxy** with five project worlds. The centered progress line shows the search percentage and the route stays visible while the camera locks to the destination. The UFO and scout begin only after that handoff to the “I build things I actually see.” galaxy opening, so the arrival story has a clear before and after. This hierarchy is a visual portfolio atlas, not a scientific reconstruction of the observable universe.
 
 The living map is backed by a procedural volumetric nebula: layered filaments, distant stellar depth, and a slow parallax drift keep the sky feeling like space rather than a flat backdrop while the project systems remain readable.
+
+The opening headline recedes with the scroll position as the galaxy map approaches. Scrolling back retraces the same reveal. A softer reading veil keeps the headline clear without covering the surrounding nebula, and the map holds a brighter sky throughout its exploration window. The selected-project preview settles before reaching the viewport center, with text at full opacity from the start.
 
 After arrival, sparse nearby stars pass the camera around the opening headline. Their perspective grows as they approach, with a gentle increase in pace during scrolling or Explore. They fade before recycling and settle out of view in the interactive map, reading chapters, and Contact. The distant sky remains independent; this is not a continuous warp tunnel. Still mode removes these passages while preserving the universe.
 
