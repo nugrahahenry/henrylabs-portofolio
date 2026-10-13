@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useImperativeHandle, useRef, useState, type Ref } from "react";
 import type { MotionValue } from "motion/react";
 import { ArrowUpRight, Minus, Plus, RotateCcw } from "lucide-react";
 import * as THREE from "three";
@@ -13,6 +13,8 @@ import { orbitGeometry, orbitalSpeed, sampleOrbit } from "./orbital-path";
 import { createStellarAura } from "./stellar-core";
 import { UNIVERSE_CHAPTER as chapter } from "./universe-chapter";
 import { galaxyLetterScale } from "./spatial-type";
+import type { OrbitBookmark, OrbitHandle } from "./orbit-bookmark";
+import { placeOrbitLabel, type OrbitLabelBox } from "./orbit-labels";
 
 export type ProjectId = "catmoji" | "nalira" | "canox" | "hengs" | "polara";
 export type SatelliteId = "rental" | "pos" | "labq" | "yventures" | "soreva";
@@ -170,7 +172,9 @@ function techPlanetSurfaceTexture(item: TechOrbitItem) {
   return { texture, bump: maps.bump, sourceTexture: maps.map, paintLogo };
 }
 
-export function CosmicCanvas({ activeId, onSelect, onPrevious, onNext, motionOn, progress, techNodes, satelliteCatalog, sector, view, language, readingOpen, onGalaxySelect, onUniverse }: {
+export function CosmicCanvas({ activeId, onSelect, onPrevious, onNext, motionOn, progress, techNodes, satelliteCatalog, sector, view, language, readingOpen, onGalaxySelect, onUniverse, ref, restore }: {
+  ref?: Ref<OrbitHandle>;
+  restore?: OrbitBookmark | null;
   activeId: OrbitId;
   onSelect: (id: OrbitId) => void;
   onPrevious: () => void;
@@ -200,6 +204,15 @@ export function CosmicCanvas({ activeId, onSelect, onPrevious, onNext, motionOn,
   const rendererEpoch = useRef(0);
   const galaxyHover = useRef(-1);
   const planetHover = useRef(-1);
+  const captureRef = useRef<OrbitHandle["capture"]>(() => null);
+  const restoreRef = useRef(restore);
+  useImperativeHandle(ref, () => ({ capture: () => captureRef.current() }), []);
+
+  useEffect(() => {
+    restoreRef.current = restore;
+    if (restore) setViewZoom(restore.pose.zoom);
+    wakeRef.current();
+  }, [restore]);
 
   useEffect(() => {
     if (state.current.view !== view) {
@@ -413,6 +426,9 @@ export function CosmicCanvas({ activeId, onSelect, onPrevious, onNext, motionOn,
     let pitch = 0;
     let viewBlend = state.current.view === "universe" ? 0 : 1;
     let universeAngle = 0;
+    let appliedRestore: OrbitBookmark | null | undefined;
+    captureRef.current = () => state.current.view === "orbit" && viewBlend === 1 && host.dataset.ready === "true"
+      ? { world: state.current.activeId, pose: { angle, pitch, zoom: state.current.viewZoom, elapsed, universeAngle } } : null;
     let focusReady = false;
     const galaxyEmphasis = [0, 0, 0];
     const flightPose = { pan: 0, approach: 0, orbitScale: 0, selectedVisibility: 1, otherVisibility: 1, arc: 0 };
@@ -420,6 +436,7 @@ export function CosmicCanvas({ activeId, onSelect, onPrevious, onNext, motionOn,
     const cameraTarget = new THREE.Vector3();
     const focusPosition = new THREE.Vector3();
     const projected = new THREE.Vector3();
+    const placedLabels: OrbitLabelBox[] = [];
     const pointer = new THREE.Vector2();
     const raycaster = new THREE.Raycaster();
     const findPlanetAt = (event: PointerEvent) => {
@@ -441,6 +458,19 @@ export function CosmicCanvas({ activeId, onSelect, onPrevious, onNext, motionOn,
     const render = (time: number) => {
       frame = 0;
       if (disposed || !visible || document.hidden) return;
+      const bookmark = restoreRef.current;
+      const restoring = bookmark && bookmark !== appliedRestore && bookmark.world === state.current.activeId && state.current.view === "orbit";
+      if (restoring) {
+        ({ angle, pitch, elapsed, universeAngle } = bookmark.pose);
+        state.current.viewZoom = bookmark.pose.zoom;
+        viewBlend = 1;
+        focusReady = false;
+        lastFocusedId = state.current.activeId;
+        lastSector = state.current.sector;
+        sectorPlanets[lastSector].forEach(planet => { planet.orbitBlend = 1; });
+        appliedRestore = bookmark;
+        lastTime = time;
+      }
       const dt = Math.min((time - lastTime) / 1000 || 0, .04);
       lastTime = time;
       if (state.current.motionOn) elapsed += dt;
@@ -512,7 +542,7 @@ export function CosmicCanvas({ activeId, onSelect, onPrevious, onNext, motionOn,
         const { group, sphere, atmosphere, aura, logoHalo, focusRing, sculpture } = planet;
         const selected = worlds[index].id === state.current.activeId;
         const scale = selected ? 2.25 : .94;
-        group.scale.setScalar(state.current.motionOn ? THREE.MathUtils.damp(group.scale.x, scale, 7, dt) : scale);
+        group.scale.setScalar(state.current.motionOn && !restoring ? THREE.MathUtils.damp(group.scale.x, scale, 7, dt) : scale);
         const rank = (index - activeIndex + worlds.length) % worlds.length - 1;
         const orbitRadius = ((portrait ? 1.98 : 2.35) + Math.max(0, rank) * (portrait ? .31 : .37)) * orbitLayoutScale;
         const phase = (sector === "main" ? orbitPhases[index] : index * Math.PI * 2 / worlds.length + .8) + angle + elapsed * orbitalSpeed(orbitRadius) * .45;
@@ -631,7 +661,10 @@ export function CosmicCanvas({ activeId, onSelect, onPrevious, onNext, motionOn,
           label.style.transform = `translate(-50%, 0) translate(${Math.max(halfLabel, Math.min(host.clientWidth - halfLabel, x))}px, ${Math.max(4, Math.min(host.clientHeight - labelHeight, y + offset))}px)`;
         }
       });
-      planets.forEach(({ group }, index) => {
+      placedLabels.length = 0;
+      for (let rank = 0; rank < planets.length; rank++) {
+        const index = (activeIndex + rank) % planets.length;
+        const { group } = planets[index];
         group.getWorldPosition(projected);
         const depth = Math.max(.1, projected.distanceTo(camera.position));
         projected.project(camera);
@@ -642,9 +675,18 @@ export function CosmicCanvas({ activeId, onSelect, onPrevious, onNext, motionOn,
           label.dataset.highlighted = String(planetHover.current === index || focused);
           label.dataset.selected = String(worlds[index].id === state.current.activeId);
           label.dataset.depth = (camera.position.z - group.position.z).toFixed(3);
-          label.style.transform = `translate(-50%, 0) translate(${(projected.x * .5 + .5) * host.clientWidth}px, ${(-projected.y * .5 + .5) * host.clientHeight + radiusPixels + 8}px)`;
+          const x = (projected.x * .5 + .5) * host.clientWidth;
+          const y = (-projected.y * .5 + .5) * host.clientHeight + radiusPixels + 8;
+          if (host.clientHeight < 300) {
+            const box = placeOrbitLabel(x - label.clientWidth / 2, y, label.clientWidth, label.clientHeight, host.clientWidth, host.clientHeight, placedLabels);
+            placedLabels.push(box);
+            label.style.transform = `translate(${box.x}px, ${box.y}px)`;
+          } else {
+            const halfWidth = label.clientWidth / 2 + 4;
+            label.style.transform = `translate(-50%, 0) translate(${Math.max(halfWidth, Math.min(host.clientWidth - halfWidth, x))}px, ${Math.max(4, Math.min(host.clientHeight - label.clientHeight - 4, y))}px)`;
+          }
         }
-      });
+      }
       host.dataset.ready = "true";
       host.dataset.time = elapsed.toFixed(2);
       host.dataset.angle = angle.toFixed(3);
@@ -791,6 +833,7 @@ export function CosmicCanvas({ activeId, onSelect, onPrevious, onNext, motionOn,
       if (!canvas.isConnected) renderer.forceContextLoss();
       renderer.dispose();
       wakeRef.current = () => {};
+      captureRef.current = () => null;
     };
   }, [progress, satelliteCatalog, techNodes]);
 

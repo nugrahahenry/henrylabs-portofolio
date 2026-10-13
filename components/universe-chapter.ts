@@ -8,8 +8,8 @@ export const UNIVERSE_CHAPTER = {
   hidden: .995,
 } as const;
 
-export function universeLanding(top: number, height: number, viewport: number) {
-  return top + Math.max(0, height - viewport) * UNIVERSE_CHAPTER.landing;
+export function universeLanding(top: number, height: number, viewport: number, progress: number = UNIVERSE_CHAPTER.landing) {
+  return top + Math.max(0, height - viewport) * progress;
 }
 
 export function chapterBlend(progress: number, start: number, end: number) {

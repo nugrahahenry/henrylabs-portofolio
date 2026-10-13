@@ -32,6 +32,7 @@ import { MakerChapter } from "./maker-chapter";
 import { StarGodMark } from "./stargod-mark";
 import { SpatialTitle } from "./spatial-title";
 import { UNIVERSE_CHAPTER as chapter, universeLanding, chapterEase, universeHeroOpacity, universePresence } from "./universe-chapter";
+import { recallOrbit, rememberOrbit, type OrbitBookmark, type OrbitHandle } from "./orbit-bookmark";
 
 type WorldlineStage = "world" | "method" | "stack";
 type Sector = GalaxyId;
@@ -144,6 +145,9 @@ export function PortfolioExperience() {
   const returnUniverse = query.get("view") === "universe";
   const appliedMapRoute = useRef<{ route: string; motion: boolean } | null>(null);
   const restoreMapLanding = useRef(false);
+  const restoredLanding = useRef<number>(chapter.landing);
+  const orbitRef = useRef<OrbitHandle>(null);
+  const [restoredOrbit, setRestoredOrbit] = useState<OrbitBookmark | null>(null);
   const [activeId, setActiveId] = useState<ProjectId>("catmoji");
   const [activeSector, setActiveSector] = useState<Sector>("main");
   const [mapView, setMapView] = useState<"universe" | "orbit">("universe");
@@ -226,7 +230,7 @@ export function PortfolioExperience() {
         const ready = map?.dataset.ready === "true" || map?.classList.contains("canvas-fallback");
         if (!hero || !ready) { frame = requestAnimationFrame(arrive); return; }
         // Fallback and font layout can settle after route restoration's first frame.
-        destination = motionOn ? universeLanding(hero.offsetTop, hero.offsetHeight, innerHeight) : window.scrollY + (hero.querySelector<HTMLElement>(".cosmic-frame-wrap")?.getBoundingClientRect().top ?? 84) - 84;
+        destination = motionOn ? universeLanding(hero.offsetTop, hero.offsetHeight, innerHeight, restoredLanding.current) : window.scrollY + (hero.querySelector<HTMLElement>(".cosmic-frame-wrap")?.getBoundingClientRect().top ?? 84) - 84;
         if (Math.abs(window.scrollY - destination) >= 2) window.scrollTo({ top: destination, behavior: "instant" });
       }
       if (Math.abs(window.scrollY - destination) < 2 && map && !map.closest("[inert]")) {
@@ -342,6 +346,9 @@ export function PortfolioExperience() {
     if (!route || !introDone || !motionReady) return;
     const applied = appliedMapRoute.current;
     if (applied?.route === route && applied.motion === motionOn) return;
+    const bookmark = !applied && world ? recallOrbit(world.id as OrbitId) : null;
+    if (bookmark) setRestoredOrbit(bookmark);
+    restoredLanding.current = bookmark?.progress ?? chapter.landing;
     appliedMapRoute.current = { route, motion: motionOn };
     if (applied?.route === route) {
       const wrap = heroRef.current?.querySelector<HTMLElement>(".cosmic-frame-wrap");
@@ -359,7 +366,7 @@ export function PortfolioExperience() {
     const frame = requestAnimationFrame(() => {
       const hero = heroRef.current;
       if (!hero) return;
-      const top = motionOn ? universeLanding(hero.offsetTop, hero.offsetHeight, innerHeight) : hero.offsetTop + (hero.querySelector<HTMLElement>(".cosmic-frame-wrap")?.offsetTop ?? 0) - 84;
+      const top = motionOn ? universeLanding(hero.offsetTop, hero.offsetHeight, innerHeight, restoredLanding.current) : hero.offsetTop + (hero.querySelector<HTMLElement>(".cosmic-frame-wrap")?.offsetTop ?? 0) - 84;
       restoreMapLanding.current = true;
       window.scrollTo({ top, behavior: "instant" });
       setMapLanding(top);
@@ -387,6 +394,11 @@ export function PortfolioExperience() {
   const rememberMap = (world: string | null) => {
     appliedMapRoute.current = { route: world ?? "universe", motion: motionOn };
     updateQuery({ world, view: world ? null : "universe", intro: null }, true, true);
+  };
+  const rememberProjectView = () => {
+    const captured = orbitRef.current?.capture();
+    if (captured && captured.world === focusedWorld.id) rememberOrbit(captured.world, captured.pose, motionOn ? scrollYProgress.get() : chapter.landing);
+    rememberMap(focusedWorld.id);
   };
   const focusProject = (id: ProjectId) => {
     setActiveId(id);
@@ -496,10 +508,10 @@ export function PortfolioExperience() {
             <motion.div className="map-departure" style={{ opacity: motionOn ? mapExitOpacity : 1, y: motionOn ? mapExitY : 0 }}>
             <div className="cosmic-frame" data-view={mapView} data-sector={activeSector} style={{ "--active-world-color": mapView === "universe" ? "#78cdbb" : focusedWorld.color } as CSSProperties}>
               <div className="frame-topline"><span>{t.field.label}</span><span>{mapView === "universe" ? "03 GALAXIES / 10 WORLDS" : `${focusedWorld.name} / ${activeSector === "main" ? activeProject.status[language] : activeSatellite.access[language]}`}</span></div>
-              <CosmicCanvas activeId={activeSector === "main" ? activeId : activeSatellite.id} onSelect={focusOrbitWorld} onPrevious={() => cycleOrbitWorld(-1)} onNext={() => cycleOrbitWorld(1)} motionOn={motionOn} progress={scrollYProgress} techNodes={orbitTechNodes} satelliteCatalog={satelliteCatalog} sector={activeSector} view={mapView} language={language} readingOpen={showProjectShowcase} onGalaxySelect={enterGalaxy} onUniverse={returnToUniverse} />
+              <CosmicCanvas ref={orbitRef} restore={restoredOrbit} activeId={activeSector === "main" ? activeId : activeSatellite.id} onSelect={focusOrbitWorld} onPrevious={() => cycleOrbitWorld(-1)} onNext={() => cycleOrbitWorld(1)} motionOn={motionOn} progress={scrollYProgress} techNodes={orbitTechNodes} satelliteCatalog={satelliteCatalog} sector={activeSector} view={mapView} language={language} readingOpen={showProjectShowcase} onGalaxySelect={enterGalaxy} onUniverse={returnToUniverse} />
               <AnimatePresence mode="wait" initial={false}>
                 {mapView === "orbit" && (showProjectShowcase
-                  ? <WorldInspector key="active-world-inspector" project={findWorld(focusedWorld.id)!} language={language} motionOn={motionOn} onSelect={id => focusOrbitWorld(id as OrbitId)} onClose={closeWorldInspector} onRead={() => rememberMap(focusedWorld.id)} />
+                  ? <WorldInspector key="active-world-inspector" project={findWorld(focusedWorld.id)!} language={language} motionOn={motionOn} onSelect={id => focusOrbitWorld(id as OrbitId)} onClose={closeWorldInspector} onRead={rememberProjectView} />
                   : <motion.button className="project-showcase-reopen" type="button" key="reopen-project-showcase"
                     ref={node => { if (node && restoreInspectorFocus.current) { node.focus({ preventScroll: true }); restoreInspectorFocus.current = false; } }}
                     onClick={() => setShowProjectShowcase(true)} aria-expanded="false" aria-controls="active-world-inspector" aria-label={language === "en" ? "Open active world" : "Buka dunia aktif"}>
@@ -517,7 +529,7 @@ export function PortfolioExperience() {
 
       <div ref={fieldRef} className="field-continuum" data-active-world={activeProject.id} data-worldline-stage={worldlineStage} inert={!introDone}>
       <motion.section ref={workRef} className="content-section work-section" id="work" aria-labelledby="work-title">
-        <HomeProjectPreview project={findWorld(focusedWorld.id)!} onRead={() => rememberMap(focusedWorld.id)} />
+        <HomeProjectPreview project={findWorld(focusedWorld.id)!} onRead={rememberProjectView} />
       </motion.section>
 
       <div className="maker-approach" aria-hidden="true" />

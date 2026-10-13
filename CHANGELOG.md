@@ -1,5 +1,13 @@
 # Changelog
 
+## StarGod Portfolio v0.114.7 - 2026-10-14
+
+- Remember orbit tilt, zoom, orbital phase and exploration position when opening a project, restoring them through browser Back or the detail page's universe link.
+- Adapt the return position to the current viewport after a resize; keep Active World closed and return keyboard focus to the map.
+- Restore selected body size without a second growth animation, keep edge labels readable when zoomed, and separate crowded planet labels on short landscape views.
+- Keep camera bookmarks in bounded tab memory only. Fresh tabs and reloads retain safe direct-entry framing, without cookies, persistent storage or URL camera payloads.
+- Add regression coverage for all three project galaxies, viewport rotation and bookmark boundaries; preserve intro, project facts, public asset paths and black-hole motion.
+
 ## StarGod Portfolio v0.114.6 - 2026-10-13
 
 - Keep the opening journey and final hold on a visible-tab clock, so returning to a hidden tab does not skip ahead.
