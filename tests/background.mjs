@@ -105,13 +105,13 @@ try {
     const initialCompanions = await companions(page);
     assert.equal(initialCompanions.bodies.length, 11);
     assert.ok(initialCompanions.painted > 0, "textured companions must paint real pixels outside their owner silhouettes");
-    await page.waitForTimeout(500);
+    await page.waitForTimeout(2000);
     const movingCompanions = await companions(page);
     movingCompanions.bodies.forEach((body, index) => {
       const previous = initialCompanions.bodies[index];
       assert.equal(body.owner, previous.owner);
-      assert.ok(body.period >= 48 && body.period <= 105);
-      assert.ok(Math.hypot(body.localX - previous.localX, body.localY - previous.localY, body.localZ - previous.localZ) > .002, "no companion remains stuck during Motion");
+      assert.ok(body.period >= 24 && body.period <= 43);
+      assert.ok(Math.hypot(body.localX - previous.localX, body.localY - previous.localY, body.localZ - previous.localZ) > .09, "each companion visibly travels within a short glance");
     });
     await expect(background).toHaveAttribute("data-hole-opacity", "0.000");
     await expect(background).toHaveAttribute("data-constellation-links", "0");

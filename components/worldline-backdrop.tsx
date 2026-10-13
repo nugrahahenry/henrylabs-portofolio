@@ -5,7 +5,7 @@ import type { MotionValue } from "motion/react";
 import * as THREE from "three";
 import { projectWorlds, type ProjectId } from "./cosmic-canvas";
 import { createAtmosphere, createCompanionMaterial, createPlanetMaps, createPlanetRing, projectPlanetKinds } from "./planet-materials";
-import { companionCounts, createCompanionOrbit, sampleCompanionOrbit, type CompanionOrbit } from "./companion-orbit";
+import { companionCounts, createCompanionOrbit, sampleCompanionOrbit, advanceCompanionTime, type CompanionOrbit } from "./companion-orbit";
 import { gravityMaterial, infallPoint } from "./gravity-field";
 import { advanceGravityAge, closingReturn, updateClosingScroll, gravityBirth, gravitySequence, gravityVisitors, gravityVisitorEntry, gravityVisitorPose, gravityVisitorMember, gravityReadingVisibility, type ReadingRect, GRAVITY_REST_SECONDS } from "./gravity-sequence";
 import { orbitGeometry, orbitalSpeed, sampleOrbit } from "./orbital-path";
@@ -13,7 +13,7 @@ import { createStellarCore } from "./stellar-core";
 import { createDeepSpace } from "./deep-space";
 import { blackHoleFrame } from "./black-hole-frame";
 import { arrivalBridge } from "./arrival-field";
-import { createSpacecraft, spacecraftPose, routeSpacecraft, flightPresence, createPursuitBolts, pursuitPulse, pursuitMiss, clearShot, createWormhole, wormholePresence, advancePursuit, pursuitEnd, WORMHOLE_X, FLIGHT_START_X, PURSUIT_DELAY, COMPACT_PURSUIT_DELAY, PURSUIT_REST } from "./spacecraft";
+import { createSpacecraft, spacecraftPose, routeSpacecraft, flightPresence, createPursuitBolts, pursuitPulse, pursuitMiss, clearShot, createWormhole, wormholePresence, advancePursuit, pursuitEnd, WORMHOLE_X, FLIGHT_START_X, PURSUIT_DELAY, COMPACT_PURSUIT_DELAY, PURSUIT_REST, PURSUIT_SHOTS, PURSUIT_SHOT_SECONDS } from "./spacecraft";
 import { COMPACT_STAR_COUNT, DISTANT_STAR_COUNT, FEEDING_DUST_COUNT, createDistantStarMaterial, distantStarPoint, dustStreamSource } from "./ambient-field";
 
 function createBlackHole() {
@@ -175,7 +175,7 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, contactProgres
     const scene = new THREE.Scene();
     const deepSpace = createDeepSpace();
     scene.add(deepSpace.volume);
-    const flights = [createSpacecraft(), createSpacecraft("scout")].map((model) => ({ model, pose: spacecraftPose(0, false, model.kind), safe: { x: 0, y: .65, visible: false, clearance: 0 }, candidate: { x: 0, y: .65, visible: false, clearance: 0 }, heading: 0, radius: 0, presence: 0, retired: false, portalEntry: null as boolean | null, cycle: -1 }));
+    const flights = [createSpacecraft(), createSpacecraft("scout")].map((model) => ({ model, pose: spacecraftPose(0, false, model.kind), safe: { x: 0, y: .65, visible: false, clearance: 0 }, candidate: { x: 0, y: .65, visible: false, clearance: 0 }, velocity: new THREE.Vector2(), heading: 0, radius: 0, presence: 0, retired: false, portalEntry: null as boolean | null, cycle: -1 }));
     flights.forEach(({ model }) => { model.group.traverse(object => object.layers.set(1)); scene.add(model.group); });
     // Ship-only studio lighting reveals the hull without bleaching the surrounding universe.
     const craftKey = new THREE.DirectionalLight(0xe3f5ff, 3.2);
@@ -189,9 +189,12 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, contactProgres
     scene.add(wormhole.group);
     const portalSafe = { x: 0, y: .64, visible: false, clearance: 0 };
     const portalCandidate = { ...portalSafe };
-    const shotEnd = { x: 0, y: 0 }, shotTarget = { x: 0, y: 0, radius: 0 };
+    const shotFrom = { x: 0, y: 0 }, shotEnd = { x: 0, y: 0 }, shotTarget = { x: 0, y: 0, radius: 0, radiusX: 0, radiusY: 0 };
+    const ufoSilhouette = { x: 0, y: 0, radiusX: 0, radiusY: 0 };
     let portalOpacity = 0, portalCycle = -1;
-    const boltPose = new THREE.Object3D(), boltStart = new THREE.Vector3(), boltTarget = new THREE.Vector3(), boltDirection = new THREE.Vector3();
+    const boltPose = new THREE.Object3D();
+    const shots = Array.from({ length: PURSUIT_SHOTS }, (_, id) => ({ id, cycle: -1, launched: false, live: false, side: 1, length: 0, start: new THREE.Vector3(), end: new THREE.Vector3(), direction: new THREE.Vector3() }));
+    const shotProbes = shots.map(shot => ({ id: shot.id, cycle: -1, launched: false, active: false, pulse: 0, x: 0, y: 0, sx: 0, sy: 0, ex: 0, ey: 0, angle: 0, reason: "waiting" }));
     const craftObstacle = 11 + companionCounts.reduce((sum, count) => sum + count, 0);
     const flightObstacles = Array.from({ length: craftObstacle + 1 }, () => ({ x: 0, y: 0, radius: 0 }));
     const celestialObstacles = flightObstacles.slice(0, craftObstacle);
@@ -504,6 +507,7 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, contactProgres
     let frame = 0;
     let lastTime = 0;
     let elapsed = 0;
+    let companionAge = 0;
     const pursuit = { age: 0, cycle: 0, delay: PURSUIT_DELAY, interrupted: false };
     let introExitHandled = false;
     let birthAge = 0;
@@ -530,7 +534,9 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, contactProgres
       const holeOpacity = THREE.MathUtils.smoothstep(closing.peak, 0, .15) * retreat.opacity;
       planetSystem.visible = true;
       if (state.current.motionOn) elapsed += dt;
+      companionAge = advanceCompanionTime(companionAge, delta, state.current.motionOn);
       const drift = state.current.motionOn ? elapsed : 0;
+      const companionTime = state.current.motionOn ? companionAge : 0;
       const introMode = state.current.introActive && state.current.motionOn;
       displayedIntroProgress = introMode ? THREE.MathUtils.damp(displayedIntroProgress, state.current.introProgress, 14, dt) : 100;
       const bridge = arrivalBridge(displayedIntroProgress / 100);
@@ -579,13 +585,13 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, contactProgres
       });
       moonRecords.forEach((moon, moonIndex) => {
         const owner = orbitPlanets[moon.ownerIndex];
-        const moonPhase = moon.phase + drift * moon.speed;
+        const moonPhase = moon.phase + companionTime * moon.speed;
         sampleCompanionOrbit(moon, moonPhase, moonPoint);
         moonWorldPoint.copy(moonPoint).multiplyScalar(owner.body.scale.x).add(owner.pivot.position);
         moon.anchor.position.copy(moonWorldPoint);
         moonDummy.position.copy(moonWorldPoint);
         moonDummy.scale.setScalar(moon.size * owner.body.scale.x);
-        moonDummy.rotation.set(moon.tilt, moon.phase + drift * moon.spin, 0);
+        moonDummy.rotation.set(moon.tilt, moon.phase + companionTime * moon.spin, 0);
         moonDummy.updateMatrix();
         moonMesh.setMatrixAt(moonIndex, moonDummy.matrix);
         Object.assign(companionProbes[moonIndex], { localX: moonPoint.x, localY: moonPoint.y, localZ: moonPoint.z });
@@ -708,10 +714,11 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, contactProgres
       }
       const readingLane = readingChapter && bandBottom - bandTop >= 120;
       const noteBottom = compactFlight && openingEdge !== null && heroNote ? heroNote.getBoundingClientRect().bottom : height;
-      const openingLane = compactFlight && openingEdge !== null && height - noteBottom >= 90;
+      const openingLane = compactFlight && openingEdge !== null && height - noteBottom >= (height < 620 ? 42 : 90);
+      const shallowOpening = openingLane && height - noteBottom < 90;
       const boundedLane = readingLane || openingLane;
-      const flightTop = openingLane ? noteBottom + 12 : bandTop;
-      const flightBottom = openingLane ? height - 24 : bandBottom;
+      const flightTop = openingLane ? noteBottom + (shallowOpening ? 4 : 12) : bandTop;
+      const flightBottom = openingLane ? height - (shallowOpening ? 6 : 24) : bandBottom;
       const laneCenter = 1 - (flightTop + flightBottom) / height;
       const chapterAllowsFlight = !state.current.introActive && holeOpacity < .05 && !state.current.mapActive && (!readingChapter || readingLane);
       if (state.current.introActive || !state.current.motionOn) introExitHandled = false;
@@ -726,6 +733,7 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, contactProgres
         portalOpacity = 0;
         portalCycle = -1;
         flights.forEach(flight => { flight.presence = 0; flight.cycle = -1; });
+        shots.forEach(shot => { shot.cycle = -1; shot.live = false; });
         introExitHandled = true;
       }
       if (!introMode) advancePursuit(pursuit, dt, Boolean(chapterAllowsFlight), state.current.motionOn, requestedDelay, portalOpacity < .001 && flights.every(flight => flight.presence < .001));
@@ -772,7 +780,7 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, contactProgres
       if (portalCycle !== cycle) { portalCycle = cycle; portalSafe.visible = false; }
       routeSpacecraft(portalX * camera.aspect, boundedLane ? laneCenter : portalOpacity > .01 ? portalSafe.y : compactFlight ? -.78 : .64, portalRadius, celestialObstacles, portalFloor, portalCeiling, portalCandidate);
       if (portalOpacity < .01 || portalCandidate.visible && Math.abs(portalCandidate.y - portalSafe.y) < .1) Object.assign(portalSafe, portalCandidate);
-      const portalClear = portalPixels >= 24 && portalSafe.visible && celestialObstacles.every(body => Math.hypot(portalSafe.x - body.x, portalSafe.y - body.y) >= portalRadius + body.radius + .02);
+      const portalClear = portalPixels >= (shallowOpening ? 12 : 24) && portalSafe.visible && celestialObstacles.every(body => Math.hypot(portalSafe.x - body.x, portalSafe.y - body.y) >= portalRadius + body.radius + .02);
       const portalTarget = flightAllowed && portalClear ? wormholePresence(flightAge, state.current.motionOn, flightDelay) : 0;
       portalOpacity = state.current.motionOn ? flightPresence(portalOpacity, portalTarget, dt) : 0;
       wormhole.group.visible = portalOpacity > .001;
@@ -824,7 +832,7 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, contactProgres
         const ceiling = boundedLane ? 1 - flightTop / height * 2 - radius : compactFlight ? -.6 : 1 - (headerHeight + radius * height / 2 + 10) / height * 2;
         routeSpacecraft(pose.x * camera.aspect, desired, radius, flightObstacles, floor, ceiling, candidate);
         const continuous = flight.presence < .05 || Math.hypot(candidate.x - safe.x, candidate.y - safe.y) < .24;
-        const minimumSize = openingLane ? 24 : 28;
+        const minimumSize = shallowOpening ? 12 : openingLane ? 24 : 28;
         const canFly = flightAllowed && pose.visible && candidate.visible && size >= minimumSize && continuous;
         // Finish one graceful exit at the last safe pose; never flicker back within this pass.
         if (!canFly && flight.presence > 0 && state.current.motionOn) {
@@ -835,6 +843,9 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, contactProgres
         flight.presence = state.current.motionOn ? flightPresence(flight.presence, targetPresence, dt) : targetPresence;
         model.group.visible = flight.presence > .001;
         if (canFly && !flight.retired) {
+          const smoothing = 1 - Math.exp(-dt * 10);
+          flight.velocity.x = THREE.MathUtils.lerp(flight.velocity.x, THREE.MathUtils.clamp((candidate.x - previousX) / Math.max(.001, dt), -.12, .12), smoothing);
+          flight.velocity.y = THREE.MathUtils.lerp(flight.velocity.y, THREE.MathUtils.clamp((candidate.y - previousY) / Math.max(.001, dt), -.08, .08), smoothing);
           Object.assign(safe, candidate);
           flight.radius = radius;
           holeRay.set(safe.x / camera.aspect, safe.y, .5).unproject(camera).sub(camera.position).normalize();
@@ -861,28 +872,74 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, contactProgres
       });
       let visibleBolts = 0;
       const [lead, scout] = flights;
+      if (lead.model.group.visible) {
+        let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+        lead.model.group.updateWorldMatrix(true, false);
+        for (const point of lead.model.outline) {
+          flightWorld.copy(point).applyMatrix4(lead.model.group.matrixWorld).project(camera);
+          minX = Math.min(minX, flightWorld.x * camera.aspect); maxX = Math.max(maxX, flightWorld.x * camera.aspect);
+          minY = Math.min(minY, flightWorld.y); maxY = Math.max(maxY, flightWorld.y);
+        }
+        Object.assign(ufoSilhouette, { x: (minX + maxX) / 2, y: (minY + maxY) / 2, radiusX: (maxX - minX) * .52, radiusY: (maxY - minY) * .52 });
+      }
+      host.dataset.ufoShotHull = JSON.stringify({ x: (ufoSilhouette.x / camera.aspect * .5 + .5) * width, y: (-ufoSilhouette.y * .5 + .5) * height, rx: ufoSilhouette.radiusX * height / 2, ry: ufoSilhouette.radiusY * height / 2 });
       const canShoot = state.current.motionOn && flightAllowed && !lead.retired && !scout.retired && lead.presence > .6 && scout.presence > .6 && lead.pose.entry === 0;
-      Object.assign(shotTarget, lead.safe, { radius: lead.radius + .02 });
-      for (let index = 0; index < 3; index++) {
-        pursuitMiss(scout.safe, shotTarget, index, shotEnd);
-        const clear = canShoot && clearShot(scout.safe, shotEnd, flightObstacles);
-        const pulse = clear ? pursuitPulse(flightAge, index, flightDelay) : -1;
-        const size = pulse < 0 ? 0 : Math.sin(pulse * Math.PI);
-        // A short, thin tracer keeps the pursuit readable and makes each bolt
-        // feel aimed at the UFO rather than thrown across the whole frame.
-        boltPose.scale.set(size * .34, size * 1.55, size * .34);
-        if (size > 0) {
-          holeRay.set(shotEnd.x / camera.aspect, shotEnd.y, .5).unproject(camera).sub(camera.position).normalize();
-          boltTarget.copy(camera.position).addScaledVector(holeRay, (scout.pose.depth - camera.position.z) / holeRay.z);
-          boltDirection.copy(boltTarget).sub(scout.model.group.position).normalize();
-          boltStart.copy(scout.model.group.position).addScaledVector(boltDirection, scout.model.group.scale.x * .58);
-          boltPose.position.lerpVectors(boltStart, boltTarget, pulse);
-          boltPose.quaternion.setFromUnitVectors(THREE.Object3D.DEFAULT_UP, boltDirection);
-          visibleBolts++;
+      const shotFloor = boundedLane ? 1 - flightBottom / height * 2 : -1 + 16 / height;
+      const shotCeiling = boundedLane ? 1 - flightTop / height * 2 : compactFlight ? -.55 : 1 - (headerHeight + 10) / height * 2;
+      scout.model.group.updateWorldMatrix(true, false);
+      for (let index = 0; index < PURSUIT_SHOTS; index++) {
+        const shot = shots[index], probe = shotProbes[index];
+        const pulse = pursuitPulse(flightAge, index, flightDelay);
+        if (shot.cycle !== pursuit.cycle && pulse >= 0) {
+          shot.cycle = pursuit.cycle; shot.launched = false; shot.live = false;
+          probe.reason = "not-ready";
+          if (canShoot) {
+            // Freeze a muzzle-to-tangent path at launch, never steer an airborne projectile.
+            shot.start.set(.22, .01, index % 2 ? .20 : -.20).applyMatrix4(scout.model.group.matrixWorld);
+            flightWorld.copy(shot.start).project(camera);
+            shotFrom.x = flightWorld.x * camera.aspect; shotFrom.y = flightWorld.y;
+            shotTarget.x = ufoSilhouette.x + lead.velocity.x * PURSUIT_SHOT_SECONDS * .8;
+            shotTarget.y = ufoSilhouette.y + lead.velocity.y * PURSUIT_SHOT_SECONDS * .8;
+            shotTarget.radiusX = ufoSilhouette.radiusX;
+            shotTarget.radiusY = ufoSilhouette.radiusY;
+            const gap = 6 / height;
+            for (const side of index % 2 ? [shots[index - 1].side] : [1, -1]) {
+              pursuitMiss(shotFrom, shotTarget, index, shotEnd, side, gap);
+              const dx = shotEnd.x - shotFrom.x, dy = shotEnd.y - shotFrom.y;
+              const aimX = shotTarget.x - shotFrom.x, aimY = shotTarget.y - shotFrom.y;
+              const angle = Math.acos(THREE.MathUtils.clamp((dx * aimX + dy * aimY) / (Math.hypot(dx, dy) * Math.hypot(aimX, aimY)), -1, 1));
+              if (angle > .44) { probe.reason = "angle"; continue; }
+              if (shotEnd.y < shotFloor || shotEnd.y > shotCeiling) { probe.reason = "lane"; continue; }
+              if (!clearShot(shotFrom, shotEnd, celestialObstacles)) { probe.reason = "obstacle"; continue; }
+              holeRay.set(shotEnd.x / camera.aspect, shotEnd.y, .5).unproject(camera).sub(camera.position).normalize();
+              shot.end.copy(camera.position).addScaledVector(holeRay, (shot.start.z - camera.position.z) / holeRay.z);
+              shot.direction.copy(shot.end).sub(shot.start).normalize();
+              shot.length = 2 * tangent * (camera.position.z - shot.start.z) / height * THREE.MathUtils.clamp(width * .012, 10, 14) / 1.45;
+              shot.side = side; shot.launched = true; shot.live = true;
+              probe.reason = "launched";
+              Object.assign(probe, { sx: (shotFrom.x / camera.aspect * .5 + .5) * width, sy: (-shotFrom.y * .5 + .5) * height, ex: (shotEnd.x / camera.aspect * .5 + .5) * width, ey: (-shotEnd.y * .5 + .5) * height, angle });
+              break;
+            }
+          }
+        }
+        Object.assign(probe, { cycle: shot.cycle, launched: shot.launched, active: false, pulse });
+        boltPose.scale.setScalar(0);
+        if (!state.current.motionOn || !flightAllowed || pulse < 0) shot.live = false;
+        if (shot.live) {
+          boltPose.position.lerpVectors(shot.start, shot.end, pulse);
+          boltPose.quaternion.setFromUnitVectors(THREE.Object3D.DEFAULT_UP, shot.direction);
           flightWorld.copy(boltPose.position).project(camera);
-          host.dataset.boltX = ((flightWorld.x * .5 + .5) * width).toFixed(2);
-          host.dataset.boltY = ((-flightWorld.y * .5 + .5) * height).toFixed(2);
-          host.dataset.boltRadius = "8";
+          const x = flightWorld.x * camera.aspect, y = flightWorld.y;
+          // A moving obstacle can invalidate a shot after launch; retire, do not redirect it.
+          const ufoCollision = ((x - ufoSilhouette.x) / (ufoSilhouette.radiusX + 2 / height)) ** 2 + ((y - ufoSilhouette.y) / (ufoSilhouette.radiusY + 2 / height)) ** 2 < 1;
+          if (ufoCollision || celestialObstacles.some(body => Math.hypot(x - body.x, y - body.y) < body.radius + 2 / height)) { shot.live = false; probe.reason = "occluded"; }
+          else {
+            const envelope = Math.min(1, pulse * 14, (1 - pulse) * 10);
+            boltPose.scale.setScalar(shot.length * Math.max(0, envelope));
+            visibleBolts++;
+            Object.assign(probe, { active: true, x: (flightWorld.x * .5 + .5) * width, y: (-flightWorld.y * .5 + .5) * height });
+            host.dataset.boltX = probe.x.toFixed(2); host.dataset.boltY = probe.y.toFixed(2); host.dataset.boltRadius = "8";
+          }
         }
         boltPose.updateMatrix();
         bolts.setMatrixAt(index, boltPose.matrix);
@@ -890,6 +947,7 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, contactProgres
       bolts.visible = visibleBolts > 0;
       bolts.instanceMatrix.needsUpdate = true;
       host.dataset.pursuitBolts = String(visibleBolts);
+      host.dataset.pursuitShots = JSON.stringify(shotProbes);
       wanderer.visible = gravityActive && sequence.visitorVisible || restoring && visitorProgress > 0;
       const visitorPose = gravityVisitorPose(visitorProgress, sequence.index, camera.aspect, holeX, holeY);
       if (wanderer.visible) {
@@ -980,6 +1038,7 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, contactProgres
         });
       });
       host.dataset.companionBodies = JSON.stringify(companionProbes);
+      host.dataset.companionTime = companionTime.toFixed(3);
       stellarCore.group.getWorldPosition(projectedStar);
       flightView.copy(projectedStar).applyMatrix4(camera.matrixWorldInverse);
       projectedStar.project(camera);
@@ -1064,6 +1123,7 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, contactProgres
     const wake = () => { if (!frame) frame = requestAnimationFrame(render); };
     wakeRef.current = wake;
     const resize = () => {
+      shots.forEach(shot => { shot.live = false; });
       bandDirty = true;
       headerHeight = document.querySelector(".site-header")?.getBoundingClientRect().bottom ?? 76;
       camera.aspect = host.clientWidth / Math.max(1, host.clientHeight);

@@ -8,6 +8,8 @@ export type SafeFlightPoint = { x: number; y: number; visible: boolean; clearanc
 export const PURSUIT_DELAY = 4.8;
 export const COMPACT_PURSUIT_DELAY = 10;
 export const PURSUIT_REST = 30;
+export const PURSUIT_SHOTS = 8;
+export const PURSUIT_SHOT_SECONDS = .48;
 export const FLIGHT_START_X = -1.04;
 export const pursuitEnd = (delay = PURSUIT_DELAY) => 20.7 + delay;
 // The next UFO appears at +.6, exactly thirty seconds after the portal closes.
@@ -39,15 +41,16 @@ export function wormholePresence(age: number, motionOn: boolean, delay = PURSUIT
 
 // Aim just past the target on a tight tangent. The whole segment is clearance-tested,
 // so the shot reads as a deliberate warning burst instead of a stray projectile.
-export function pursuitMiss(from: Pick<FlightObstacle, "x" | "y">, target: FlightObstacle, index: number, out = { x: 0, y: 0 }) {
-  const dx = target.x - from.x, dy = target.y - from.y;
+export function pursuitMiss(from: Pick<FlightObstacle, "x" | "y">, target: FlightObstacle & { radiusX?: number; radiusY?: number }, index: number, out = { x: 0, y: 0 }, side = 1, gap = .008) {
+  const rx = Math.max(.001, target.radiusX ?? target.radius), ry = Math.max(.001, target.radiusY ?? target.radius);
+  const dx = (target.x - from.x) / rx, dy = (target.y - from.y) / ry;
   const distance = Math.max(.001, Math.hypot(dx, dy));
-  const lead = Math.min(distance * .78, target.radius * (.32 + index * .08) + .035);
-  // The endpoint sits beyond the UFO, so compensate for the segment's
-  // diagonal approach and preserve a narrow, visible clearance envelope.
-  const tangent = (target.radius + .04) * (1 + lead / distance) * (1.02 + (index % 3) * .04) * (index % 2 ? -1 : 1);
-  out.x = target.x + dx / distance * lead - dy / distance * tangent;
-  out.y = target.y + dy / distance * lead + dx / distance * tangent;
+  const clearance = gap / Math.min(rx, ry);
+  const sine = Math.min(.95, (1 + clearance * (1 + index % 2 * .25)) / distance);
+  const cosine = Math.sqrt(1 - sine * sine);
+  const travel = distance * cosine + Math.max(.8, distance * .18) + clearance;
+  out.x = from.x + (dx / distance * cosine - dy / distance * sine * side) * travel * rx;
+  out.y = from.y + (dy / distance * cosine + dx / distance * sine * side) * travel * ry;
   return out;
 }
 
@@ -56,27 +59,37 @@ export function flightPresence(current: number, target: number, dt: number) {
   return current + THREE.MathUtils.clamp(target - current, -step, step);
 }
 
+export function pursuitShotTime(index: number, delay = PURSUIT_DELAY) {
+  const first = Math.max(7.4, delay + 1.9);
+  return THREE.MathUtils.lerp(first, Math.max(first, 14.95), Math.floor(index / 2) / 3) + index % 2 * .045;
+}
+
 export function pursuitPulse(age: number, index: number, delay = PURSUIT_DELAY) {
-  const encounter = age % pursuitPeriod(delay);
-  if (encounter < 7.2 || encounter > 17) return -1;
-  const phase = ((encounter - 7.2) % 4.6 - index * .48) / .85;
+  if (index < 0 || index >= PURSUIT_SHOTS) return -1;
+  const encounter = Math.max(0, age) % pursuitPeriod(delay);
+  const phase = (encounter - pursuitShotTime(index, delay)) / PURSUIT_SHOT_SECONDS;
   return phase >= 0 && phase <= 1 ? phase : -1;
 }
 
-export function clearShot(from: Pick<FlightObstacle, "x" | "y">, to: Pick<FlightObstacle, "x" | "y">, obstacles: readonly FlightObstacle[], count = obstacles.length) {
+export function clearShot(from: Pick<FlightObstacle, "x" | "y">, to: Pick<FlightObstacle, "x" | "y">, obstacles: readonly FlightObstacle[], count = obstacles.length, margin = .025) {
   const dx = to.x - from.x, dy = to.y - from.y, length = dx * dx + dy * dy;
   if (length < .001) return false;
   for (let index = 0; index < count; index++) {
     const body = obstacles[index];
     const t = THREE.MathUtils.clamp(((body.x - from.x) * dx + (body.y - from.y) * dy) / length, 0, 1);
-    if (Math.hypot(body.x - from.x - dx * t, body.y - from.y - dy * t) < body.radius + .025) return false;
+    if (Math.hypot(body.x - from.x - dx * t, body.y - from.y - dy * t) < body.radius + margin) return false;
   }
   return true;
 }
 
 export function createPursuitBolts() {
-  const material = new THREE.MeshBasicMaterial({ color: "#a4ecff", transparent: true, opacity: .8, depthWrite: false });
-  const mesh = new THREE.InstancedMesh(new THREE.CylinderGeometry(.009, .009, 1, 6), material, 3);
+  const material = new THREE.MeshBasicMaterial({ color: "#d4f8ff", transparent: true, opacity: .95, depthWrite: false, toneMapped: false });
+  const geometry = packed([
+    new THREE.CylinderGeometry(.07, .07, .6, 8),
+    new THREE.ConeGeometry(.075, .2, 8).translate(0, .4, 0),
+    new THREE.CylinderGeometry(.055, .006, .65, 6).translate(0, -.62, 0),
+  ]);
+  const mesh = new THREE.InstancedMesh(geometry, material, PURSUIT_SHOTS);
   mesh.frustumCulled = false;
   mesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
   mesh.visible = false;
@@ -215,6 +228,7 @@ export function createSpacecraft(kind: SpacecraftKind = "ufo") {
       new THREE.BoxGeometry(.34, .016, .055).translate(-.13, .124, 0),
       ...[-.24, .24].map(z => new THREE.CylinderGeometry(.055, .055, .19, 16).rotateZ(Math.PI / 2).translate(-.42, 0, z)),
       ...[-.24, .24].map((z) => new THREE.TorusGeometry(.082, .012, 8, 24).rotateY(Math.PI / 2).translate(-.51, 0, z)),
+      ...[-.20, .20].map(z => new THREE.CylinderGeometry(.016, .022, .18, 10).rotateZ(-Math.PI / 2).translate(.13, .01, z)),
     ]), trim));
     const cockpit = new THREE.Mesh(new THREE.SphereGeometry(.12, 24, 12), glass);
     cockpit.scale.set(1.65, .55, .7); cockpit.position.set(.12, .105, 0); group.add(cockpit);
@@ -227,5 +241,6 @@ export function createSpacecraft(kind: SpacecraftKind = "ufo") {
   }
   const bounds = new THREE.Box3().setFromObject(group);
   const sphere = bounds.getBoundingSphere(new THREE.Sphere());
-  return { kind, group, hull, trim, glass, light, flame, radius: sphere.radius + sphere.center.length(), span: bounds.max.x - bounds.min.x };
+  const outline = kind === "ufo" ? [[.335, .02], [.26, .075], [.135, .15], [0, .215], [.075, -.18]].flatMap(([r, y]) => Array.from({ length: 24 }, (_, index) => new THREE.Vector3(Math.cos(index / 24 * Math.PI * 2) * r, y, Math.sin(index / 24 * Math.PI * 2) * r))) : [];
+  return { kind, group, hull, trim, glass, light, flame, outline, radius: sphere.radius + sphere.center.length(), span: bounds.max.x - bounds.min.x };
 }

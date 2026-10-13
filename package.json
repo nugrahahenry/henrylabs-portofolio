@@ -1,6 +1,6 @@
 {
   "name": "henrylabs-portfolio",
-  "version": "0.110.0",
+  "version": "0.110.1",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -15,6 +15,7 @@
     "test:closing": "node tests/closing-loop.mjs",
     "test:spacecraft": "node tests/spacecraft.mjs",
     "test:spacecraft-entry": "node tests/spacecraft-entry.mjs",
+    "test:volley": "node tests/pursuit-volley.mjs",
     "test:arrival": "node tests/arrival.mjs",
     "test:handoff": "node tests/arrival-handoff.mjs",
     "test:header": "node tests/header.mjs",

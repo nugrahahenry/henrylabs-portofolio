@@ -12,7 +12,7 @@ export function createCompanionOrbit(ownerIndex: number, slot: number, bodyRadiu
     ownerIndex, slot, orbitRadius, eccentricity, frame,
     size: bodyRadius * (.18 + (ownerIndex + slot) % 3 * .018),
     phase: ownerIndex * 1.73 + slot * 2.399,
-    speed: Math.PI * 2 / (48 + ownerIndex * 5 + slot * 19),
+    speed: Math.PI * 2 / (24 + ownerIndex * 2.3 + slot * 5.6),
     spin: .11 + ownerIndex * .013 + slot * .019,
     tilt,
     color: colors[(ownerIndex + slot * 2) % colors.length],
@@ -20,6 +20,11 @@ export function createCompanionOrbit(ownerIndex: number, slot: number, bodyRadiu
 }
 
 export type CompanionOrbit = ReturnType<typeof createCompanionOrbit>;
+
+export function advanceCompanionTime(age: number, delta: number, motionOn: boolean) {
+  // Preserve real speed at 5-25fps, but never catch up after a hidden tab or a long stall.
+  return age + (motionOn && Number.isFinite(delta) && delta > 0 && delta <= .25 ? delta : 0);
+}
 
 // The lane is independent of the owner's axial spin. Only its center and scale follow the owner.
 export function sampleCompanionOrbit(orbit: CompanionOrbit, phase: number, target = new THREE.Vector3()) {

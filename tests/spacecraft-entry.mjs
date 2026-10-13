@@ -44,8 +44,8 @@ async function encounter(page, label, cycle = 0) {
     note: document.querySelector(".hero-note").getBoundingClientRect().bottom,
     gap: document.querySelector(".hero-kicker").getBoundingClientRect().top - document.querySelector(".site-header").getBoundingClientRect().bottom,
   }));
-  if ((viewport.width < 1100 || viewport.width / viewport.height < .9 || viewport.height < 620 || opening.gap < 112) && viewport.height - opening.note >= 90) {
-    for (const craft of [frame.ufo, frame.scout]) assert.ok(craft.y - craft.radius >= opening.note + 10, `${label}: lower flight must clear availability text`);
+  if ((viewport.width < 1100 || viewport.width / viewport.height < .9 || viewport.height < 620 || opening.gap < 112) && viewport.height - opening.note >= (viewport.height < 620 ? 42 : 90)) {
+    for (const craft of [frame.ufo, frame.scout]) assert.ok(craft.y - craft.radius >= opening.note + (viewport.height < 620 && viewport.height - opening.note < 90 ? 3 : 10), `${label}: lower flight must clear availability text`);
   }
   const screenshot = await page.screenshot({ path: `test-results/spacecraft-entry/${label}.png` });
   for (const kind of ["ufo", "scout"]) {
@@ -76,7 +76,7 @@ async function portalSequence(page, label) {
 }
 
 try {
-  const targets = process.argv.includes("--laptop") ? sizes.slice(-1) : process.argv.includes("--confirm") ? [...sizes.slice(0, 2), sizes.at(-1)] : sizes;
+  const targets = process.argv.includes("--laptop") ? sizes.slice(-1) : process.argv.includes("--confirm") ? [...sizes.slice(0, 2), sizes[5], sizes.at(-1)] : sizes;
   const scenarios = targets.map(size => ({ size, entry: "return" }));
   if (!process.argv.includes("--return-only")) scenarios.push(
     { size: sizes[0], entry: "intro" }, { size: sizes[1], entry: "intro" },

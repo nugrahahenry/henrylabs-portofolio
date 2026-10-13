@@ -1,5 +1,13 @@
 # Changelog
 
+## StarGod Portfolio v0.110.1 - 2026-10-13
+
+- Make background companion motion readable within a short glance with distinct 24-42 second orbits; maintain their real pace at lower frame rates without catching up after a hidden tab or long stall.
+- Replace retargeting oversized tracers with four paired, short 3D projectile volleys from the scout's two launch barrels. Lock each path at launch and aim narrowly past the UFO's projected silhouette.
+- Keep the last salvo near the UFO's portal approach, preserve the thirty-second pursuit rest, and retire a shot if a moving planet crosses its path rather than redirecting it.
+- Keep short-landscape pursuit below the availability text and let each projectile visibly pass the UFO before fading.
+- Preserve independent companion planes, owner/ring clearance, Still mode, project tech ownership, intro and black-hole choreography.
+
 ## StarGod Portfolio v0.110.0 - 2026-10-13
 
 - Replace plain dark companion dots with cached textured surfaces, subtle relief, varied mineral tints, and a restrained lit atmospheric edge.

@@ -16,7 +16,7 @@ async function loadModule(name) {
   return import(`data:text/javascript;base64,${Buffer.from(compiled).toString("base64")}`);
 }
 const { techOrbitRadius, sampleTechOrbit, resolveTechOwner, techOrbitMotion } = await loadModule("tech-orbit");
-const { companionCounts, createCompanionOrbit, sampleCompanionOrbit } = await loadModule("companion-orbit");
+const { companionCounts, createCompanionOrbit, sampleCompanionOrbit, advanceCompanionTime } = await loadModule("companion-orbit");
 const { createProjectSculpture } = await loadModule("project-sculptures");
 const { sampleOrbit, orbitalSpeed } = await loadModule("orbital-path");
 const { createStellarCore } = await loadModule("stellar-core");
@@ -25,7 +25,7 @@ const { createDeepSpace } = await loadModule("deep-space");
 const { makerGroupAt, makerEvidenceAt, advanceMakerRotation, portraitCoversSatellite, MAKER_RETREAT_START, MAKER_PROOF_START } = await loadModule("maker-motion");
 const { infallPoint, gravityMaterial, dustWarmth } = await loadModule("gravity-field");
 const { blackHoleFrame } = await loadModule("black-hole-frame");
-const { createSpacecraft, spacecraftPose, routeSpacecraft, flightPresence, pursuitPulse, pursuitMiss, wormholePresence, createWormhole, clearShot, advancePursuit, pursuitEnd, pursuitPeriod, PURSUIT_DELAY, PURSUIT_REST } = await loadModule("spacecraft");
+const { createSpacecraft, spacecraftPose, routeSpacecraft, flightPresence, pursuitPulse, pursuitShotTime, pursuitMiss, createPursuitBolts, wormholePresence, createWormhole, clearShot, advancePursuit, pursuitEnd, pursuitPeriod, PURSUIT_DELAY, PURSUIT_REST, PURSUIT_SHOTS, PURSUIT_SHOT_SECONDS } = await loadModule("spacecraft");
 const { distantStarPoint, dustStreamSource, stellarTwinkle, createDistantStarMaterial, DISTANT_STAR_COUNT, COMPACT_STAR_COUNT, FEEDING_DUST_COUNT } = await loadModule("ambient-field");
 
 test("galaxy approach centers first and reveals the local system without a visibility jump", () => {
@@ -94,11 +94,11 @@ test("every companion clears its owner and rings on a bounded independent orbit"
   assert.equal(new Set(records.map(record => record.speed)).size, 11);
   for (const orbit of records) {
     const radius = radii[orbit.ownerIndex];
-    assert.ok(Math.PI * 2 / orbit.speed >= 48 && Math.PI * 2 / orbit.speed <= 105);
+    assert.ok(Math.PI * 2 / orbit.speed >= 24 && Math.PI * 2 / orbit.speed <= 43);
     assert.ok(orbit.spin > 0 && orbit.size < radius * .25);
     const a = sampleCompanionOrbit(orbit, orbit.phase);
-    const b = sampleCompanionOrbit(orbit, orbit.phase + orbit.speed * 4);
-    assert.ok(a.distanceTo(b) > .04, "each companion moves at visible-time speed");
+    const b = sampleCompanionOrbit(orbit, orbit.phase + orbit.speed * 2);
+    assert.ok(a.distanceTo(b) > .13, "each companion visibly moves within two seconds");
     assert.ok(a.distanceTo(sampleCompanionOrbit(orbit, orbit.phase + Math.PI * 2)) < 1e-12);
     for (let i = 0; i < 128; i++) {
       const point = sampleCompanionOrbit(orbit, i / 128 * Math.PI * 2);
@@ -108,6 +108,16 @@ test("every companion clears its owner and rings on a bounded independent orbit"
     assert.notEqual(sampleCompanionOrbit(orbit, Math.PI / 2).z, 0);
     assert.deepEqual(sampleCompanionOrbit(orbit, orbit.phase), a, "Still pose is deterministic");
   }
+});
+
+test("companion motion preserves real time on low-FPS devices without hidden-tab catchup", () => {
+  for (const fps of [5, 10, 20, 30, 60]) {
+    let age = 0;
+    for (let i = 0; i < fps * 2; i++) age = advanceCompanionTime(age, 1 / fps, true);
+    assert.ok(Math.abs(age - 2) < 1e-10);
+  }
+  for (const delta of [2, 500, NaN, -1]) assert.equal(advanceCompanionTime(12, delta, true), 12);
+  assert.equal(advanceCompanionTime(12, .1, false), 12);
 });
 
 test("technology planets have distinct readable periods and axial spin", () => {
@@ -346,11 +356,20 @@ test("flight opacity retreats over multiple frames even after a long tab suspens
 test("pursuit shots travel in bounded bursts and respect intervening planet silhouettes", () => {
   assert.equal(pursuitPulse(5, 0), -1);
   assert.equal(pursuitPulse(30, 0), -1);
-  for (let i = 0; i < 3; i++) {
-    const age = 7.2 + i * .48 + .4;
-    assert.ok(pursuitPulse(age, i) > 0 && pursuitPulse(age, i) < 1);
-    assert.ok(Math.abs(pursuitPulse(age, i) - pursuitPulse(age + pursuitPeriod(), i)) < 1e-10);
+  assert.equal(PURSUIT_SHOTS, 8);
+  for (const delay of [4.8, 10]) for (let i = 0; i < PURSUIT_SHOTS; i++) {
+    const launch = pursuitShotTime(i, delay), age = launch + .2;
+    assert.ok(pursuitPulse(age, i, delay) > 0 && pursuitPulse(age, i, delay) < 1);
+    assert.equal(pursuitPulse(launch - .001, i, delay), -1);
+    assert.equal(pursuitPulse(launch + PURSUIT_SHOT_SECONDS + .001, i, delay), -1);
+    assert.ok(Math.abs(pursuitPulse(age, i, delay) - pursuitPulse(age + pursuitPeriod(delay), i, delay)) < 1e-10);
+    if (i % 2) assert.ok(Math.abs(launch - pursuitShotTime(i - 1, delay) - .045) < 1e-10);
+    else if (i > 0) assert.ok(launch - pursuitShotTime(i - 2, delay) > .9);
+    assert.ok(launch >= delay + 1.8 && launch + PURSUIT_SHOT_SECONDS < 15.5);
   }
+  const bolts = createPursuitBolts();
+  assert.equal(bolts.count, 8);
+  bolts.dispose(); bolts.geometry.dispose(); bolts.material.dispose();
   const start = { x: -1, y: .5 }, end = { x: 1, y: .5 };
   assert.equal(clearShot(start, end, [{ x: 0, y: .5, radius: .2 }]), false);
   assert.equal(clearShot(start, end, [{ x: 0, y: -.5, radius: .2 }]), true);
@@ -391,7 +410,7 @@ test("the portal opens before the UFO enters, waits for the scout, then closes",
 });
 
 test("every pursuit tracer misses the entire UFO silhouette, not just its center", () => {
-  for (const aspect of [.46, .7, 1.6, 2.2]) for (let age = 7.3; age < 14; age += .2) for (let shot = 0; shot < 3; shot++) {
+  for (const aspect of [.46, .7, 1.6, 2.2]) for (let age = 7.3; age < 14; age += .2) for (let shot = 0; shot < 8; shot++) {
     const lead = spacecraftPose(age, true), scout = spacecraftPose(age, true, "scout");
     const start = { x: scout.x * aspect, y: scout.y };
     const target = { x: lead.x * aspect, y: lead.y, radius: .13 };
@@ -400,7 +419,23 @@ test("every pursuit tracer misses the entire UFO silhouette, not just its center
     const t = Math.max(0, Math.min(1, ((target.x-start.x)*dx + (target.y-start.y)*dy)/(dx*dx+dy*dy)));
     const distance = Math.hypot(target.x-start.x-dx*t, target.y-start.y-dy*t);
     // Very narrow lanes may suppress the shot rather than grazing the craft.
-    if (clearShot(start, end, [target])) assert.ok(distance > target.radius + .025);
+    if (clearShot(start, end, [target], 1, .006)) {
+      assert.ok(distance >= target.radius + .0079);
+      assert.ok(distance <= target.radius + .0101, "near miss must stay tight, not fan out");
+    }
+  }
+});
+
+test("paired aim follows a tight flattened UFO outline rather than its oversized flight bubble", () => {
+  const from = { x: -.55, y: .65 }, target = { x: -.15, y: .64, radius: .15, radiusX: .08, radiusY: .035 };
+  for (const side of [-1, 1]) for (let id = 0; id < 8; id++) {
+    const end = pursuitMiss(from, target, id, undefined, side, .006);
+    const ax = (from.x - target.x) / target.radiusX, ay = (from.y - target.y) / target.radiusY;
+    const dx = (end.x - from.x) / target.radiusX, dy = (end.y - from.y) / target.radiusY;
+    const t = Math.max(0, Math.min(1, -(ax * dx + ay * dy) / (dx * dx + dy * dy)));
+    const gap = (Math.hypot(ax + dx * t, ay + dy * t) - 1) * target.radiusY;
+    assert.ok(gap >= .0059 && gap <= .0076);
+    assert.ok(Math.abs(Math.atan2(end.y - from.y, end.x - from.x)) < .2);
   }
 });
 
