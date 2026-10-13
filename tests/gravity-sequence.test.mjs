@@ -13,7 +13,7 @@ test("arrivals originate in distant upper-middle space, not beside the cropped h
     const x = (entry.x + 1) / 2, y = (1 - entry.y) / 2;
     assert.ok(x >= .3 && x <= .6 && y >= .05 && y <= .12);
     assert.ok(Math.hypot(x - .82, y - .86) > .75);
-    assert.ok(entry.z <= -30, "arrival must begin well behind the horizon's camera plane");
+    assert.ok(entry.z <= -78 && entry.z >= -86, "arrival starts in the far field, inside the existing camera frustum");
   }
 });
 
@@ -21,7 +21,7 @@ test("visitors approach through true depth before the curved intake, then retrac
   for (const aspect of [1.6, .462, 2.16]) for (let cycle = 0; cycle < 5; cycle++) {
     const hx = aspect < 1 ? .82 : .86, hy = .86;
     const start = gravityVisitorPose(0, cycle, aspect, hx, hy);
-    assert.ok(start.z <= -30);
+    assert.ok(start.z <= -78);
     const near = gravityVisitorPose(.3, cycle, aspect, hx, hy);
     assert.ok(near.z > -9 && near.capture < .05);
     // Fixed physical bodies grow in projection, not through an artificial size pop.
@@ -40,6 +40,37 @@ test("visitors approach through true depth before the curved intake, then retrac
     assert.ok(Math.abs(frames[100].x - (hx * 2 - 1)) < 1e-12);
     assert.ok(Math.abs(frames[100].y - (1 - hy * 2)) < 1e-12);
   }
+});
+
+test("planet birth stays faint in the far field and grows continuously before intake", () => {
+  for(let cycle=0;cycle<5;cycle++) for(let member=0;member<5;member++) {
+    let prior = { opacity:0, projection:0 };
+    for(let frame=0;frame<=600;frame++) {
+      const p=gravitySequence(frame/60).progress;
+      const pose=gravityVisitorPose(p,cycle,1.6,.86,.86);
+      const opacity=gravityVisitorMember(p,member).opacity;
+      const projection=1/(6.4-pose.z);
+      assert.ok(opacity >= prior.opacity && opacity-prior.opacity < .008);
+      assert.ok(projection >= prior.projection);
+      if(frame<=60) {assert.ok(opacity<.025);assert.ok(pose.z < -77);}
+      if(frame===180) {assert.ok(opacity<.25);assert.ok(pose.z < -76);}
+      prior={opacity,projection};
+    }
+    assert.ok(prior.opacity>.99);
+  }
+});
+
+test("reading protection dims visitors without switching them off and back on", () => {
+  const rects=[{left:100,top:200,right:300,bottom:350}];
+  let previous=1;
+  for(let y=80;y<=480;y++) {
+    const visibility=gravityReadingVisibility(180,y,10,390,844,rects,.14);
+    assert.ok(visibility>=.14 && visibility<=1);
+    assert.ok(Math.abs(visibility-previous)<.02);
+    if(y>=190&&y<=360) assert.equal(visibility,.14);
+    previous=visibility;
+  }
+  assert.equal(gravityReadingVisibility(5,80,10,390,844,rects,.14),0,"offscreen bodies still fade before crossing the frame");
 });
 
 test("portrait arrivals retain an upper reading lane before the final descent", () => {

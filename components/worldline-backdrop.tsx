@@ -1009,7 +1009,7 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, mapPresence, c
         wanderer.rotation.set(.18, gravityAge * .025, visitorPose.capture * .7);
         wanderer.updateMatrixWorld(true);
       }
-      const visitorOpacity = wanderer.visible ? holeOpacity * THREE.MathUtils.smoothstep(visitorProgress, 0, .012) * (1 - THREE.MathUtils.smoothstep(visitorProgress, .82, 1)) : 0;
+      const visitorOpacity = wanderer.visible ? holeOpacity * THREE.MathUtils.smoothstep(visitorProgress, 0, .08) * (1 - THREE.MathUtils.smoothstep(visitorProgress, .82, 1)) : 0;
       visitors.forEach((visitor, index) => {
         const member = gravityVisitorMember(visitorProgress, index);
         const radius = .55 + index * .18;
@@ -1024,7 +1024,7 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, mapPresence, c
         const x = (projectedVisitor.x * .5 + .5) * width, y = (-projectedVisitor.y * .5 + .5) * height;
         const projectedRadius = visitor.radius * member.scale * wanderer.scale.x / (tangent * Math.max(.1, -visitorView.z)) * height / 2;
         const extent = projectedRadius * (visitor.ring.visible ? 1.93 : 1.26);
-        const clearance = gravityReadingVisibility(x, y, extent, width, height, contactReading);
+        const clearance = gravityReadingVisibility(x, y, extent, width, height, contactReading, .14);
         const opacity = wanderer.visible && index < visitorGroup.count ? holeOpacity * member.opacity * clearance : 0;
         visitor.group.visible = opacity > .001;
         visitor.material.opacity = opacity;
@@ -1034,7 +1034,7 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, mapPresence, c
       });
       visitorStar.group.getWorldPosition(projectedVisitor).project(camera);
       const starRadius = .24 * 1.6 * wanderer.scale.x / (tangent * (camera.position.z - visitorPose.z)) * height / 2;
-      const starVisibility = gravityReadingVisibility((projectedVisitor.x * .5 + .5) * width, (-projectedVisitor.y * .5 + .5) * height, starRadius, width, height, contactReading);
+      const starVisibility = gravityReadingVisibility((projectedVisitor.x * .5 + .5) * width, (-projectedVisitor.y * .5 + .5) * height, starRadius, width, height, contactReading, .08);
       visitorStar.material.uniforms.uTime.value = gravityAge;
       visitorStar.material.uniforms.uOpacity.value = visitorOpacity * starVisibility * .65;
       visitorStar.aura.material.uniforms.uOpacity.value = visitorOpacity * starVisibility * .2;

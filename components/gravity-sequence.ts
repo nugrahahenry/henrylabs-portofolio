@@ -40,7 +40,7 @@ export function gravityVisitorEntry(index: number) {
   // Camera coordinates keep the first distant silhouette above the Contact copy.
   const top = gravityVisitors(index).direction === "top";
   const cycle = Math.max(0, Math.floor(Number.isFinite(index) ? index : 0));
-  return { x: top ? .16 : -.32, y: top ? .87 : .8, z: -30 - cycle % 3 * 4 };
+  return { x: top ? .16 : -.32, y: top ? .87 : .8, z: -78 - cycle % 3 * 4 };
 }
 
 export function gravityVisitorPose(progress: number, index: number, aspect: number, holeX: number, holeY: number) {
@@ -72,20 +72,23 @@ export function gravityVisitorMember(progress: number, index: number) {
     scale: [.95, .74, 1.1, .66, .88][slot],
     depth: [-.45, .7, -1.05, .34, -.7][slot],
     phase: slot * 2.399,
-    opacity: smooth(p, slot * .002, .014 + slot * .004) * (1 - smooth(p, .76 + slot * .026, .87 + slot * .026)),
+    opacity: smooth(p, slot * .002, .08 + slot * .005) * (1 - smooth(p, .76 + slot * .026, .87 + slot * .026)),
   };
 }
 
 export type ReadingRect = { left: number; top: number; right: number; bottom: number };
 
-export function gravityReadingVisibility(x: number, y: number, radius: number, width: number, height: number, reading: ReadingRect[]) {
-  let clearance = Math.min(x, y, width - x, height - y) - radius;
+export function gravityReadingVisibility(x: number, y: number, radius: number, width: number, height: number, reading: ReadingRect[], readingFloor = 0) {
+  const frame = smooth(Math.min(x, y, width - x, height - y) - radius, 0, 24);
+  let clearance = Infinity;
   for (const rect of reading) {
     const dx = Math.max(rect.left - x, 0, x - rect.right);
     const dy = Math.max(rect.top - y, 0, y - rect.bottom);
     clearance = Math.min(clearance, Math.hypot(dx, dy) - radius - 8);
   }
-  return smooth(clearance, 0, 24);
+  // A moving body should recede behind the copy, not disappear and respawn past it.
+  const floor = Math.max(0, Math.min(1, readingFloor));
+  return Math.min(frame, floor + (1 - floor) * smooth(clearance, 0, floor > 0 ? 80 : 24));
 }
 
 export function gravityApproachAngle(entryAngle: number, progress: number) {

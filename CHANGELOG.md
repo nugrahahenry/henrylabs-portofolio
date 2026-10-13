@@ -1,5 +1,11 @@
 # Changelog
 
+## StarGod Portfolio v0.114.1 - 2026-10-13
+
+- Begin recurring black-hole visitors farther away, with a gradual faint approach before their perspective grows into recognizable planets.
+- Dim the traveling system behind Contact text instead of hiding it completely and making it reappear below the copy. Preserve the dark horizon, reading protection and offscreen fade.
+- Keep the three/five-planet waves, thirty-second quiet interval, reverse-scroll restoration and hidden-tab pause. Add continuous arrival regression samples and far-field birth checks.
+
 ## StarGod Portfolio v0.114.0 - 2026-10-13
 
 - Keep the selected planet or universe overview in the URL without adding a history entry or replaying the camera landing on every selection. Clear stale replay/fragment state when exploring.

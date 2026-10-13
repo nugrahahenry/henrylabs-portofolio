@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { mkdirSync } from "node:fs";
+import { mkdirSync, writeFileSync } from "node:fs";
 import { chromium, expect } from "@playwright/test";
 
 const url = process.env.PORTFOLIO_URL ?? "http://localhost:3002/";
@@ -50,7 +50,7 @@ async function arrivalProbe(page) {
       if (point.x - point.extent <= 0 || point.y - point.extent <= 0 || point.x + point.extent >= innerWidth || point.y + point.extent >= innerHeight) throw Error("incoming planet clipped by viewport");
       for (const rect of reading) {
         const dx = Math.max(rect.left-point.x,0,point.x-rect.right), dy = Math.max(rect.top-point.y,0,point.y-rect.bottom);
-        if (Math.hypot(dx,dy) < point.extent + 8) throw Error("incoming planet overlaps Contact text");
+        if (Math.hypot(dx,dy) < point.extent + 8 && point.opacity > .141) throw Error("incoming planet is too bright behind Contact text");
       }
       const size = Math.max(2, Math.ceil(point.radius));
       const pixels = new Uint8Array(size*size*16);
@@ -94,9 +94,18 @@ try {
     for (let i = 0; i < 18; i++) await page.clock.fastForward(250);
     await expect(field).toHaveAttribute("data-gravity-active", "true");
     await expect(field).toHaveAttribute("data-hole-growth", "1.000");
+    const arrivalFrames=[];
     async function advanceTo(target) {
       let steps = 0;
-      while (Number(await field.getAttribute("data-gravity-age")) < target && steps++ < 1100) await page.clock.fastForward(250);
+      while (Number(await field.getAttribute("data-gravity-age")) < target && steps++ < 1100) {
+        await page.clock.fastForward(250);
+        const sample=await field.evaluate(el=>({age:+el.dataset.gravityAge,progress:+el.dataset.visitorProgress,cycle:+el.dataset.gravityCycle,points:JSON.parse(el.dataset.visitorProbes)}));
+        arrivalFrames.push(sample);
+        if(sample.progress>=.1&&sample.progress<=.74) for(const point of sample.points.slice(0,sample.cycle===0?3:5)) {
+          const inside=point.x-point.extent>24 && point.x+point.extent<viewport.width-24 && point.y-point.extent>24 && point.y+point.extent<viewport.height-24;
+          if(inside) assert.ok(point.opacity>=.139,"a traveling planet must not vanish behind text and respawn below it");
+        }
+      }
       assert.ok(steps < 1100, "the closing clock must advance with visible frame time");
     }
     await advanceTo(3);
@@ -104,10 +113,12 @@ try {
     assert.ok(Number(await field.getAttribute("data-visitor-entry-x")) > .3);
     assert.ok(Number(await field.getAttribute("data-visible-visitors")) > 0, "the distant group must already be visible before it approaches the hole");
     const distant = await arrivalProbe(page);
-    assert.ok(distant.painted > 0, "the distant arrival must paint actual shaded planets");
-    assert.ok(Number(await field.getAttribute("data-visitor-depth")) < -25);
+    assert.ok(distant.points.slice(0,3).every(p=>p.opacity<.35 && p.radius<(viewport.width<700?3.5:8)),"the first approach is faint and tiny, never a full-size mid-screen spawn");
+    assert.ok(Number(await field.getAttribute("data-visitor-depth")) < -75);
     await expect(field).toHaveAttribute("data-visitor-capture", "0.000");
     await page.screenshot({ path: `test-results/${viewport.width}-distant-arrival.png` });
+    await advanceTo(6);
+    assert.ok((await arrivalProbe(page)).painted>0,"the far approach gradually resolves into real shaded planet pixels");
     await advanceTo(10);
     const approach = await arrivalProbe(page);
     assert.ok(approach.painted > 0, "the closer group must remain visible before capture");
@@ -149,8 +160,8 @@ try {
     await expect(field).toHaveAttribute("data-gravity-cycle", "1");
     await expect(field).toHaveAttribute("data-visitor-count", "5");
     await expect(field).toHaveAttribute("data-visitor-direction", "top");
-    assert.ok(Number(await field.getAttribute("data-visitor-opacity")) > .35, "a different cached planet must appear after the quiet interval");
-    assert.ok((await arrivalProbe(page)).painted>0,"the repeated distant group must paint actual planets");
+    assert.ok(Number(await field.getAttribute("data-visitor-opacity")) > .1, "a different cached planet must approach faintly after the quiet interval");
+    assert.ok((await arrivalProbe(page)).points.every(p=>p.opacity<.35),"the repeat wave also starts faintly in the far field");
     await expect(field).toHaveAttribute("data-pull", "1.000");
     await expect(field).toHaveAttribute("data-distant-star-pull", "0.000");
     await page.screenshot({ path: `test-results/${viewport.width}-second-gravity-visitor.png` });
@@ -235,6 +246,7 @@ try {
     await expect(field).toHaveAttribute("data-gravity-phase", "birth");
     assert.ok(Number(await field.getAttribute("data-hole-growth")) < .5, "a complete re-entry must grow from a small horizon, not restore the giant hole instantly");
     assert.deepEqual(errors, []);
+    writeFileSync(`test-results/${viewport.width}-arrival-continuity.json`,JSON.stringify(arrivalFrames));
     await page.close();
     console.log(`birth, dust, recurrence and reversible closing passed at ${viewport.width}x${viewport.height}`);
   }
