@@ -44,7 +44,7 @@ test("arrival camera remains continuous through the cosmic scale waypoints", () 
 test("the nested atlas has many superclusters and galaxies, with a persistent selected destination", () => {
   const field = arrival.createArrivalField();
   assert.equal(field.scene.getObjectByName("other-superclusters").userData.structures, 16);
-  assert.equal(field.scene.getObjectByName("local-galaxies").userData.structures, 30);
+  assert.equal(field.scene.getObjectByName("local-galaxies").userData.structures, arrival.ARRIVAL_GALAXIES - 1);
   assert.equal(field.scene.getObjectByName("universe-candidates").count, 128);
   for (const [progress, name] of [[44, "laniakea"], [68, "local-galaxies"], [94, "henrylabs-galaxy"]]) {
     field.update(progress, 1440 / 900, 900);
@@ -77,6 +77,42 @@ test("the nested atlas has many superclusters and galaxies, with a persistent se
       assert.ok(label.x > 30 && label.x < width - 30 && label.y > 30 && label.y < height * .7);
     }
   }
+  field.dispose();
+});
+
+test("richer atlas keeps bounded varied galaxy volumes and compact star budgets", () => {
+  const field = arrival.createArrivalField();
+  assert.equal(field.atlas.galaxies, 61);
+  assert.equal(field.atlas.superclusters, 17);
+  assert.ok(field.atlas.points > 50000 && field.atlas.points < 65000);
+  assert.equal(field.scene.getObjectByName("cosmic-web-filaments").geometry.getAttribute("position").count, 104, "additional galaxies must not add connector lines");
+  const variances = [];
+  for (const identity of [0, 2, 3]) {
+    let x = 0, y = 0, z = 0;
+    const point = new THREE.Vector3();
+    for (let index = 0; index < 600; index++) {
+      arrival.sampleArrivalGalaxy(index, 600, identity, .1, point);
+      assert.ok(Number.isFinite(point.length()) && point.length() < .112);
+      assert.deepEqual(point.toArray(), arrival.sampleArrivalGalaxy(index, 600, identity, .1).toArray());
+      x += point.x ** 2; y += point.y ** 2; z += point.z ** 2;
+    }
+    assert.ok(y > .0001 && y < x * .2, "galaxies have thickness but retain a disk/ellipsoid silhouette");
+    variances.push(z / x);
+  }
+  assert.ok(variances[1] < variances[0] * .75, "elliptical galaxies differ from spiral volumes");
+  const local = field.scene.getObjectByName("local-galaxies");
+  const sizes = local.geometry.getAttribute("aSize");
+  assert.equal(sizes.count, local.geometry.getAttribute("position").count);
+  assert.ok(new Set(sizes.array).size > 20, "batching preserves relative galaxy star sizes");
+  field.update(64, 390 / 844, 844);
+  assert.equal(field.atlas.compact, true);
+  assert.equal(field.scene.getObjectByName("arrival-distant-stars").geometry.drawRange.count, 1300);
+  assert.equal(field.scene.getObjectByName("arrival-middle-stars").geometry.drawRange.count, 660);
+  assert.equal(local.material.uniforms.uCompact.value, 1);
+  field.update(64, 1440 / 900, 900);
+  assert.equal(field.atlas.compact, false);
+  assert.equal(field.scene.getObjectByName("arrival-distant-stars").geometry.drawRange.count, 2200);
+  assert.equal(local.material.uniforms.uCompact.value, 0);
   field.dispose();
 });
 

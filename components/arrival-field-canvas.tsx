@@ -47,6 +47,7 @@ export function ArrivalField({ progress, motionOn, active, projects }: { progres
       canvas.dataset.camera = field.camera.position.toArray().map(value => value.toFixed(3)).join(",");
       canvas.dataset.chapter = String(arrivalChapter(displayedProgress / 100));
       canvas.dataset.drawCalls = String(renderer.info.render.calls);
+      canvas.dataset.atlas = JSON.stringify(field.atlas);
       canvas.dataset.skyOpacity = (1 - bridge.nebula).toFixed(3);
       labels.forEach((element, i) => {
         const anchor = field.labels[i];

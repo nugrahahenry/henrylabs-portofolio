@@ -42,6 +42,27 @@ export function arrivalBridge(progress: number) {
 // first search frame so the viewer feels motion before the first universe is selected.
 export const ARRIVAL_FLYBYS = 192;
 export const ARRIVAL_COMPACT_FLYBYS = 96;
+export const ARRIVAL_GALAXIES = 61;
+
+// All galaxies share a sampled volume, with a thick core and thinner stellar outskirts.
+// Keep it deterministic so reverse motion and compact layouts visit the same atlas.
+export function sampleArrivalGalaxy(index: number, count: number, identity: number, radius: number, target = new THREE.Vector3()) {
+  const random = (offset: number) => seed(index * 13 + identity * 719 + offset);
+  const core = index % 6 === 0;
+  const elliptical = identity % 5 === 2;
+  const barred = identity % 5 === 3;
+  const radial = core ? Math.pow(random(901), .7) * .23 : Math.pow(random(905), .65);
+  const arms = 2 + identity % 3;
+  let angle = core || elliptical ? random(912) * Math.PI * 2
+    : index % arms * Math.PI * 2 / arms + radial * (5.2 + identity % 4 * .45) + (random(921) - .5) * (.25 + radial * .65);
+  if (barred && !core && radial < .42) angle = index % 2 * Math.PI + (random(930) - .5) * .2;
+  const r = radius * radial;
+  const thickness = core ? .42 : elliptical ? .30 : .065;
+  target.set(Math.cos(angle) * r, (random(940) - .5) * radius * thickness * (1 - radial * .75), Math.sin(angle) * r * (elliptical ? .67 : 1));
+  // Sparse off-arm stars soften the disk without filling the gaps between the arms.
+  if (!core && !elliptical && index % 9 === 0) target.applyAxisAngle(THREE.Object3D.DEFAULT_UP, index / count * .8);
+  return target;
+}
 
 export function createArrivalCameraPath() {
   const times = [0, .10, .19, .30, .38];
@@ -116,16 +137,20 @@ export function createArrivalField() {
 
   const dots = (points: number[], colors: number[], size: number) => {
     const material = new THREE.ShaderMaterial({
-      uniforms: { uSize: { value: size }, uHeight: { value: 900 }, uOpacity: { value: 1 } },
-      vertexShader: `attribute vec3 color; varying vec3 vColor; uniform float uSize; uniform float uHeight;
-        void main(){vColor=color;vec4 p=modelViewMatrix*vec4(position,1.);gl_PointSize=clamp(uSize*uHeight/max(.003,-p.z),1.,9.);gl_Position=projectionMatrix*p;}`,
-      fragmentShader: `varying vec3 vColor;uniform float uOpacity;void main(){float r=length(gl_PointCoord-.5)*2.;if(r>1.)discard;gl_FragColor=vec4(vColor,pow(1.-r,1.6)*uOpacity);
+      uniforms: { uSize: { value: size }, uHeight: { value: 900 }, uOpacity: { value: 1 }, uCompact: { value: 0 } },
+      vertexShader: `attribute vec3 color; attribute float aSize; varying vec3 vColor; varying float vReading; uniform float uSize; uniform float uHeight; uniform float uCompact;
+        void main(){vColor=color;vec4 p=modelViewMatrix*vec4(position,1.);vec4 clip=projectionMatrix*p;vec2 ndc=clip.xy/max(.001,clip.w);
+          float bottom=1.-smoothstep(-.34,-.08,ndc.y);float left=1.-smoothstep(-.28,.05,ndc.x);
+          vReading=1.-bottom*mix(left,1.,uCompact)*.78;
+          gl_PointSize=clamp(uSize*aSize*uHeight/max(.003,-p.z),1.,7.);gl_Position=clip;}`,
+      fragmentShader: `varying vec3 vColor;varying float vReading;uniform float uOpacity;void main(){float r=length(gl_PointCoord-.5)*2.;if(r>1.)discard;gl_FragColor=vec4(vColor,pow(1.-r,1.6)*uOpacity*vReading);
         #include <tonemapping_fragment>
         #include <colorspace_fragment>
       }`,
       transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
     });
-    const geometry = new THREE.BufferGeometry().setAttribute("position", new THREE.Float32BufferAttribute(points, 3)).setAttribute("color", new THREE.Float32BufferAttribute(colors, 3));
+    const geometry = new THREE.BufferGeometry().setAttribute("position", new THREE.Float32BufferAttribute(points, 3)).setAttribute("color", new THREE.Float32BufferAttribute(colors, 3))
+      .setAttribute("aSize", new THREE.Float32BufferAttribute(new Float32Array(points.length / 3).fill(1), 1));
     const cloud = new THREE.Points(geometry, material);
     scene.add(cloud);
     return cloud;
@@ -135,14 +160,14 @@ export function createArrivalField() {
   const farStarPoints: number[] = [], farStarColors: number[] = [];
   const nearStarPoints: number[] = [], nearStarColors: number[] = [];
   const starPalette = ["#e7e7ff", "#9edbff", "#eac5ff", "#f7dca3", "#b9c9ff"];
-  for (let i = 0; i < 1500; i++) {
+  for (let i = 0; i < 2200; i++) {
     const latitude = 1 - seed(i + 1400) * 2, angle = i * 2.399963, radius = 32 + seed(i + 1500) * 48;
     const planar = Math.sqrt(1 - latitude * latitude), x = Math.cos(angle) * planar * radius, y = latitude * radius, z = Math.sin(angle) * planar * radius;
     farStarPoints.push(x, y, z);
     const color = new THREE.Color(starPalette[i % starPalette.length]);
     farStarColors.push(color.r, color.g, color.b);
   }
-  for (let i = 0; i < 720; i++) {
+  for (let i = 0; i < 1100; i++) {
     const latitude = 1 - seed(i + 2400) * 2, angle = i * 2.399963, radius = 9 + seed(i + 2500) * 22;
     const planar = Math.sqrt(1 - latitude * latitude), x = Math.cos(angle) * planar * radius, y = latitude * radius, z = Math.sin(angle) * planar * radius;
     nearStarPoints.push(x, y, z);
@@ -151,6 +176,7 @@ export function createArrivalField() {
   }
   const farStars = dots(farStarPoints, farStarColors, .045);
   const nearStars = dots(nearStarPoints, nearStarColors, .026);
+  farStars.name = "arrival-distant-stars"; nearStars.name = "arrival-middle-stars";
   const flybyPositions: number[] = [], flybyColors: number[] = [], flybyPasses: number[] = [];
   const trailPositions: number[] = [], trailColors: number[] = [], trailPasses: number[] = [], trailAlpha: number[] = [];
   const eye = new THREE.Vector3(), aim = new THREE.Vector3(), before = new THREE.Vector3(), after = new THREE.Vector3();
@@ -213,15 +239,23 @@ export function createArrivalField() {
   flybys.name = "arrival-flybys"; trails.name = "arrival-trails";
   scene.add(flybys, trails);
   const particles: number[] = [], colors: number[] = [];
+  const interiorPoint = new THREE.Vector3(), knotCenter = new THREE.Vector3();
   positions.forEach((p, i) => {
     const c = new THREE.Color(palette[i % palette.length]);
-    for (let j = 0; j < 75; j++) {
-      const r = Math.sqrt(seed(i * 80 + j + 9)) * radii[i] * .83, a = j * 2.4 + r * 4;
-      particles.push(p.x + Math.cos(a) * r, p.y + (seed(j * 13 + i) - .5) * r * .55, p.z + Math.sin(a) * r);
-      colors.push(c.r, c.g, c.b);
+    for (let knot = 0; knot < 5; knot++) {
+      const angle = knot * 2.4 + i, r = radii[i] * (.18 + seed(knot + i * 11) * .47);
+      knotCenter.set(Math.cos(angle) * r, (seed(i * 19 + knot + 75) - .5) * radii[i] * .5, Math.sin(angle) * r).add(p);
+      const tilt = new THREE.Euler(seed(i + knot + 15) * 1.8, knot, seed(i + knot + 52));
+      for (let j = 0; j < 36; j++) {
+        sampleArrivalGalaxy(j, 36, i + knot, radii[i] * .14, interiorPoint).applyEuler(tilt).add(knotCenter);
+        particles.push(...interiorPoint.toArray());
+        const light = j % 6 === 0 ? 1.1 : .55;
+        colors.push(c.r * light, c.g * light, c.b * light);
+      }
     }
   });
-  const interiors = dots(particles, colors, .055);
+  const interiors = dots(particles, colors, .030);
+  interiors.name = "universe-interior-clusters";
 
   // Every scale lives inside the selected parent. The camera visits actual nested geometry,
   // rather than dissolving between unrelated screens. Names describe an authored portfolio atlas.
@@ -236,14 +270,18 @@ export function createArrivalField() {
     const radius = group === 0 ? .9 : .22 + seed(group + 40) * .25;
     const points: number[] = [], shades: number[] = [];
     const tint = new THREE.Color(group === 0 ? "#efc95f" : palette[group % palette.length]);
-    for (let i = 0; i < (group === 0 ? 2600 : 380); i++) {
-      const arm = i % 7, t = seed(i + group * 700 + 59);
+    const tilt = new THREE.Euler(group === 0 ? .12 : (seed(group + 145) - .5) * 1.2, group * .31, (seed(group + 155) - .5) * .7);
+    const local = new THREE.Vector3();
+    for (let i = 0; i < (group === 0 ? 3600 : 520); i++) {
+      const arm = i % 7, random = seed(i + group * 700 + 59);
+      const t = i % 4 === 0 ? random : THREE.MathUtils.clamp((1 + Math.floor(random * 5)) / 6 + (seed(i + 65) - .5) * .11, 0, 1);
       const a = arm / 7 * Math.PI * 2 + Math.sin(t * 3 + arm) * .7;
-      const r = Math.pow(t, .72) * radius, jitter = radius * (.025 + t * .03);
-      points.push(center.x + Math.cos(a) * r + (seed(i + 77) - .5) * jitter,
-        center.y + Math.sin(t * 4 + arm) * r * .35 + (seed(i + 71) - .5) * jitter,
-        center.z + Math.sin(a) * r + (seed(i + 83) - .5) * jitter);
-      const brightness = .55 + seed(i + 27) * .45;
+      const r = Math.pow(t, .72) * radius, jitter = radius * (.028 + t * .05);
+      local.set(Math.cos(a) * r + (seed(i + 77) - .5) * jitter,
+        Math.sin(t * 4 + arm) * r * .35 + (seed(i + 71) - .5) * jitter,
+        Math.sin(a) * r + (seed(i + 83) - .5) * jitter).applyEuler(tilt).add(center);
+      points.push(...local.toArray());
+      const brightness = .38 + seed(i + 27) * .62;
       shades.push(tint.r * brightness, tint.g * brightness, tint.b * brightness);
     }
     const cloud = dots(points, shades, group === 0 ? .006 : .008);
@@ -254,6 +292,11 @@ export function createArrivalField() {
   for (let i = 3; i < 31; i++) {
     const a = i * 2.399963, r = .28 + seed(i + 510) * .48;
     galaxyCenters.push(new THREE.Vector3(Math.cos(a) * r, (seed(i + 470) - .5) * .48, Math.sin(a) * r));
+  }
+  for (let i = 31; i < ARRIVAL_GALAXIES; i++) {
+    const anchor = galaxyCenters[3 + (i % 8) * 3];
+    const angle = i * 2.399963, radius = .055 + seed(i + 511) * .09;
+    galaxyCenters.push(anchor.clone().add(new THREE.Vector3(Math.cos(angle) * radius, (seed(i + 525) - .5) * .12, Math.sin(angle) * radius)));
   }
   // A sparse authored web gives the middle scales a physical relationship. It is only
   // visible while Laniakea and the Local Group overlap, so it cannot read as a connector UI.
@@ -270,7 +313,7 @@ export function createArrivalField() {
   };
   for (let i = 1; i < superclusterCenters.length; i += 2) addFilament(superclusterCenters[0], superclusterCenters[i]);
   for (let i = 1; i < 16; i += 2) addFilament(superclusterCenters[i], superclusterCenters[i + 1]);
-  for (let i = 3; i < galaxyCenters.length; i += 3) addFilament(galaxyCenters[0], galaxyCenters[i]);
+  for (let i = 3; i < 31; i += 3) addFilament(galaxyCenters[0], galaxyCenters[i]);
   const filamentGeometry = new THREE.BufferGeometry().setAttribute("position", new THREE.Float32BufferAttribute(filamentPoints, 3));
   const filamentMaterial = new THREE.LineBasicMaterial({ color: "#8290ca", transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending });
   const filamentField = new THREE.LineSegments(filamentGeometry, filamentMaterial);
@@ -279,36 +322,39 @@ export function createArrivalField() {
   const galaxies = galaxyCenters.map((center, index) => {
     const points: number[] = [], shades: number[] = [];
     const radius = index === 0 ? .072 : index < 3 ? .055 : .015 + seed(index + 110) * .026;
-    const count = index === 0 ? 4600 : index < 3 ? 1200 : 180;
-    const tilt = new THREE.Euler(index === 0 ? .34 : seed(index + 122) * 1.5, seed(index + 128) * .4, index * .77);
+    const count = index === 0 ? 5600 : index < 3 ? 1500 : 180;
+    const tilt = new THREE.Euler(index === 0 ? .34 : seed(index + 122) * 2.7, seed(index + 128) * 1.2, index * .77);
     const warm = new THREE.Color("#fff2c5"), cold = new THREE.Color(palette[index % palette.length]);
     const local = new THREE.Vector3();
     for (let i = 0; i < count; i++) {
-      const r = Math.pow(seed(i + index * 517 + 905), .7) * radius;
-      const arm = i % 3, a = arm * Math.PI * 2 / 3 + r / radius * 5.8 + (seed(i + 243) - .5) * .55;
-      local.set(Math.cos(a) * r, (seed(i + 273) - .5) * radius * .14 * (1 - r / radius), Math.sin(a) * r).applyEuler(tilt).add(center);
+      sampleArrivalGalaxy(i, count, index, radius, local);
+      const r = local.length() / radius;
+      local.applyEuler(tilt).add(center);
       points.push(local.x, local.y, local.z);
-      const c = warm.clone().lerp(cold, Math.min(1, r / radius * 2));
+      const c = warm.clone().lerp(cold, Math.min(1, r * 1.8)).multiplyScalar(i % 6 === 0 ? 1.15 : .42 + seed(i + 372) * .58);
       shades.push(c.r, c.g, c.b);
     }
-    const cloud = dots(points, shades, index === 0 ? .00065 : .0024);
+    const cloud = dots(points, shades, index === 0 ? .001 : .0007 + radius * .005);
     cloud.name = ["henrylabs-galaxy", "university-galaxy", "client-galaxy"][index] ?? `local-galaxy-${index}`;
     return cloud;
   });
   const batch = (clouds: typeof superclusters, name: string, size: number) => {
-    const points: number[] = [], colors: number[] = [];
+    const points: number[] = [], colors: number[] = [], sizes: number[] = [];
     for (const cloud of clouds) {
       points.push(...cloud.geometry.getAttribute("position").array);
       colors.push(...cloud.geometry.getAttribute("color").array);
+      sizes.push(...Array.from(cloud.geometry.getAttribute("aSize").array, value => value * cloud.material.uniforms.uSize.value / size));
       scene.remove(cloud); cloud.geometry.dispose(); cloud.material.dispose();
     }
     const merged = dots(points, colors, size); merged.name = name;
+    merged.geometry.setAttribute("aSize", new THREE.Float32BufferAttribute(sizes, 1));
     merged.userData.structures = clouds.length;
     return merged;
   };
   superclusters.splice(1, 16, batch(superclusters.slice(1), "other-superclusters", .008));
-  galaxies.splice(1, 30, batch(galaxies.slice(1), "local-galaxies", .0024));
+  galaxies.splice(1, galaxies.length - 1, batch(galaxies.slice(1), "local-galaxies", .001));
   const clouds = [interiors, farStars, nearStars, ...superclusters, ...galaxies];
+  const atlas = { galaxies: ARRIVAL_GALAXIES, superclusters: 17, points: clouds.reduce((sum, cloud) => sum + cloud.geometry.getAttribute("position").count, 0), compact: false };
   const projectCenters = Array.from({ length: 5 }, (_, i) => {
     const a = i / 5 * Math.PI * 2 + Math.PI / 2;
     return new THREE.Vector3(Math.cos(a) * .046, Math.sin(a) * .034, Math.sin(a) * .012 + .027);
@@ -337,6 +383,9 @@ export function createArrivalField() {
     camera.setViewOffset(aspect * height, height, 0, height * .14, aspect * height, height);
     camera.updateMatrixWorld();
     const compact = aspect * height < 600 || height < 500;
+    atlas.compact = compact;
+    farStars.geometry.setDrawRange(0, compact ? 1300 : 2200);
+    nearStars.geometry.setDrawRange(0, compact ? 660 : 1100);
     passageUniforms.uProgress.value = p;
     passageUniforms.uHeight.value = height;
     passageUniforms.uCompact.value = Number(compact);
@@ -398,7 +447,10 @@ export function createArrivalField() {
       body.position.set(projectCenters[i].x * projectScale, projectCenters[i].y * projectScale, projectCenters[i].z);
       body.material.opacity = blend(p, .82, .9) * .8;
     });
-    for (const cloud of clouds) cloud.material.uniforms.uHeight.value = height;
+    for (const cloud of clouds) {
+      cloud.material.uniforms.uHeight.value = height;
+      cloud.material.uniforms.uCompact.value = Number(compact);
+    }
     labelAnchors[0].copy(chapter === 0 ? positions[focus] : target);
     labels.forEach((label, i) => {
       if (i >= 4) {
@@ -414,7 +466,7 @@ export function createArrivalField() {
     scene.visible = true;
     return focus;
   };
-  return { scene, camera, background: skyBackground, update, labels, dispose() {
+  return { scene, camera, background: skyBackground, update, labels, atlas, dispose() {
     scene.traverse(object => {
       const mesh = object as THREE.Mesh;
       if (object instanceof THREE.InstancedMesh) object.dispose();

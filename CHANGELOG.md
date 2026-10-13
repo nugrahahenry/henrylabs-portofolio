@@ -1,5 +1,13 @@
 # Changelog
 
+## StarGod Portfolio v0.111.0 - 2026-10-13
+
+- Enrich the intro atlas with 61 Local Group galaxies, including clustered companions, spiral and barred disks, thicker cores, and elliptical volumes at varied inclinations.
+- Resolve small stellar clusters inside the 128 universe candidates and denser knots along the 17 supercluster structures.
+- Increase distant and middle-depth star detail with reduced compact draw ranges; preserve relative galaxy point sizes when batching instead of making every background galaxy equally bright.
+- Quiet stellar detail behind the intro readout, preserving the chosen destination, 24-second camera journey, Skip, reduced-motion fallback and continuous nebula handoff.
+- Keep homepage star motion, pursuit, project identity assets, companion orbits and the black-hole sequence unchanged.
+
 ## StarGod Portfolio v0.110.2 - 2026-10-13
 
 - Alternate the preferred near-miss side above and below the UFO per paired salvo, reversing the opening preference on the next encounter.
