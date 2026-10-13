@@ -1,6 +1,6 @@
 <div align="center">
 
-# StarGod Portfolio v0.114.7
+# StarGod Portfolio v0.114.8
 
 **I build things I actually see.**
 
@@ -43,7 +43,7 @@ Enter a living map of **HenryLabs**, **University**, and **Client Work**. Choose
 
 Beyond the map: one preview following the selected project, then Henry himself. The selected world hands off through a small worldline marker before its clearly labeled artwork preview opens large, zooms, pans, and returns to the reading flow without pretending artwork is an app screenshot. The preview media and facts arrive with a restrained depth offset, then a quiet orbit signal carries the eye toward the maker chapter. A crowned StarGod portrait opens locally under the cursor to reveal Henry in a dark suit: sunglasses, clear glasses, then his unobscured face. The approved portraits share one composition; this is a layered photographic reveal, not a rotatable head model. Four appearance controls also work with touch, keyboard, or reduced motion.
 
-Twenty-five technologies surround the portrait as lit 3D satellites. Scroll through **Build, Interface, Systems, then All**, or choose a group directly. Two restrained orbital traces make the shared system legible without turning it into a web of connections. Drag left or right to turn the orbit with momentum; arrow controls offer the same motion without dragging. Tools pass in front of and behind Henry with depth-aware contrast and larger touch targets; select one to see the projects that use it. Scroll further and the orbit recedes earlier, while the five featured credentials arrive together with a longer reading hold around the same anchored figure. A thin horizon signal leads that exchange before the credential cards settle. Each credential can open in the shared watermarked viewer. This exchange also works in tablet and phone windows. Short landscape screens and reduced motion retain a readable sequence. Home no longer repeats a separate technology chapter and certificate shelf; the full collections live in their own libraries.
+Twenty-five technologies surround the portrait as lit 3D satellites. Scroll through **Build, Interface, Systems, then All**, or choose a group directly. Two restrained orbital traces make the shared system legible without turning it into a web of connections. Drag left or right to turn the orbit with momentum; arrow controls offer the same motion without dragging. Tools pass in front of and behind Henry with depth-aware contrast and larger touch targets; select one to see the projects that use it. Scroll further and the orbit recedes earlier, while the five featured credentials arrive together with a longer reading hold around the same anchored figure. A thin horizon signal leads that exchange before the credential cards settle. Each credential can open in the shared watermarked viewer. This exchange also works in tablet and phone windows. Short landscape screens and reduced motion retain a readable sequence. Rotating the screen or switching Motion/Still keeps the current technology group or credential reading position in view. Home no longer repeats a separate technology chapter and certificate shelf; the full collections live in their own libraries.
 
 A continuous Three.js universe connects the journey, from distant stars and nebulae to a reversible black-hole encounter at Contact. Natural background planets remain in orbit throughout the reading sections, moving into a smaller peripheral composition rather than disappearing; all five selected worlds now carry readable local moonlets with varied orbital speeds and live orbit traces. A metallic UFO and its pursuing scout add a small story along the way: banking through real depth, tight near-miss tracer shots, a luminous wormhole, the UFO entering first, and the scout following. After the portal closes, thirty quiet seconds pass before the next encounter. The scene pauses outside its clear flight areas and respects reduced motion.
 
@@ -155,7 +155,7 @@ Certificate lists and viewers use permanently watermarked derivatives. `scripts/
 
 Published portrait derivatives live in `public/assets/portrait/`. `node scripts/portrait-exports.mjs` recreates them from four selected local masters in the Git-ignored `assets/henry/portraits/` folder. Source photographs and generation drafts are private and are not required to run the public clone.
 
-Route and accessibility checks: `npm run test:libraries`; entrance and exploration window: `npm run test:arrival`; galaxy integration: `npm run test:galaxies`; portrait choreography: `npm run test:maker`.
+Route and accessibility checks: `npm run test:libraries`; entrance and exploration window: `npm run test:arrival`; galaxy integration: `npm run test:galaxies`; portrait choreography: `npm run test:maker`; rotation and reading continuity: `npm run test:maker-continuity`.
 
 <details>
 <summary>About the README visuals</summary>

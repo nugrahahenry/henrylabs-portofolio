@@ -10,6 +10,7 @@ import { PortraitReveal } from "./portrait-reveal";
 import { SiteLink, useSitePreferences } from "./site-preferences";
 import { CredentialViewer } from "./credential-viewer";
 import { MakerOrbitField } from "./maker-orbit-field";
+import { useMakerReading } from "./use-maker-reading";
 import { makerGroupAt, makerEvidenceAt, MAKER_RETREAT_START, MAKER_PROOF_START, type OrbitRotation } from "./maker-motion";
 
 const featured = certificates.filter(record => record.featuredOrder !== null);
@@ -35,31 +36,35 @@ export function MakerChapter() {
   const [selected, setSelected] = useState(orbitTechNodes[0]);
   const [record, setRecord] = useState<Credential | null>(null);
   const [proof, setProof] = useState(false);
-  const [room, setRoom] = useState(false);
-  const spatial = motionOn && room;
+  const [viewport, setViewport] = useState({ width: 0, height: 0 });
+  const spatial = motionOn && viewport.height >= 560;
   const visible = useInView(section, { margin: "120px" });
   const { scrollYProgress } = useScroll({ target: section, offset: ["start start", "end end"] });
   const items = groups[group].items;
+  const restoring = useMakerReading(section, scrollYProgress, viewport, spatial, group, (next, evidence) => {
+    scrollGroup.current = next;
+    setGroup(next); setProof(evidence);
+  });
   useMotionValueEvent(scrollYProgress, "change", value => {
+    section.current?.style.setProperty("--maker-progress", String(value));
+    section.current?.style.setProperty("--tool-retreat", String(Math.min(1, Math.max(0, (value - MAKER_RETREAT_START) / (MAKER_PROOF_START - MAKER_RETREAT_START)))));
+    if (restoring.current) return;
     setProof(value > MAKER_PROOF_START);
     const next = makerGroupAt(value);
     if (spatial && next !== scrollGroup.current) {
       setGroup(next); setSelected(groups[next].items[0]);
     }
     scrollGroup.current = next;
-    section.current?.style.setProperty("--maker-progress", String(value));
-    section.current?.style.setProperty("--tool-retreat", String(Math.min(1, Math.max(0, (value - MAKER_RETREAT_START) / (MAKER_PROOF_START - MAKER_RETREAT_START)))));
   });
 
   useEffect(() => {
-    const media = matchMedia("(min-height: 560px)");
-    const sync = () => setRoom(media.matches);
-    sync(); media.addEventListener("change", sync);
-    return () => media.removeEventListener("change", sync);
+    const sync = () => setViewport({ width: innerWidth, height: innerHeight });
+    sync(); window.addEventListener("resize", sync);
+    return () => window.removeEventListener("resize", sync);
   }, []);
 
   useEffect(() => {
-    if (!spatial) return;
+    if (!spatial || restoring.current) return;
     const value = scrollYProgress.get(), next = makerGroupAt(value);
     scrollGroup.current = next; setGroup(next); setSelected(groups[next].items[0]);
     setProof(value > MAKER_PROOF_START);

@@ -1,5 +1,12 @@
 # Changelog
 
+## StarGod Portfolio v0.114.8 - 2026-10-14
+
+- Keep the current maker chapter in view when rotating a device or switching Motion/Still, instead of jumping from credentials to Contact or back to unrelated tools.
+- Restore the same technology group, reading hold and available keyboard focus across spatial and linear layouts. Manual group choices take precedence over the old scroll position.
+- Preserve the credential viewer during rotation and avoid repositioning the page when the maker chapter is no longer being read.
+- Add focused reading-continuity regressions without changing portrait assets, watermarks, orbit choreography or black-hole timing.
+
 ## StarGod Portfolio v0.114.7 - 2026-10-14
 
 - Remember orbit tilt, zoom, orbital phase and exploration position when opening a project, restoring them through browser Back or the detail page's universe link.

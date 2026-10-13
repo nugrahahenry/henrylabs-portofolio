@@ -22,12 +22,25 @@ const { sampleOrbit, orbitalSpeed } = await loadModule("orbital-path");
 const { createStellarCore } = await loadModule("stellar-core");
 const { advanceGalaxyFlight, sampleGalaxyFlight } = await loadModule("galaxy-flight");
 const { createDeepSpace } = await loadModule("deep-space");
-const { makerGroupAt, makerEvidenceAt, advanceMakerRotation, portraitCoversSatellite, MAKER_RETREAT_START, MAKER_PROOF_START } = await loadModule("maker-motion");
+const { makerGroupAt, makerEvidenceAt, makerReadingProgress, advanceMakerRotation, portraitCoversSatellite, MAKER_RETREAT_START, MAKER_PROOF_START } = await loadModule("maker-motion");
 const { infallPoint, gravityMaterial, dustWarmth } = await loadModule("gravity-field");
 const { blackHoleFrame } = await loadModule("black-hole-frame");
 const { createSpacecraft, spacecraftPose, routeSpacecraft, flightPresence, pursuitPulse, pursuitShotTime, pursuitShotSide, pursuitMiss, createPursuitBolts, wormholePresence, createWormhole, clearShot, advancePursuit, pursuitEnd, pursuitPeriod, PURSUIT_DELAY, PURSUIT_REST, PURSUIT_SHOTS, PURSUIT_SHOT_SECONDS } = await loadModule("spacecraft");
 const { distantStarPoint, dustStreamSource, stellarTwinkle, createDistantStarMaterial, DISTANT_STAR_COUNT, COMPACT_STAR_COUNT, FEEDING_DUST_COUNT } = await loadModule("ambient-field");
 const { PASSAGE_COUNT, COMPACT_PASSAGE_COUNT, advancePassage, passagePoint, passageReadingGuard, createCameraPassage } = await loadModule("camera-passage");
+
+test("maker reading positions preserve the chapter across spatial and linear layouts", () => {
+  for (const [progress, group] of [[.06, 0], [.2, 1], [.35, 2], [.52, 3]]) {
+    assert.equal(makerReadingProgress(progress, group, false), progress);
+    assert.equal(makerReadingProgress(1, group, false), progress);
+  }
+  assert.equal(makerReadingProgress(.35, 1, false), .2, "manual group selection wins over old scroll phase");
+  assert.equal(makerReadingProgress(.9, 3, true), .9);
+  assert.equal(makerReadingProgress(.4, 0, true), .87, "proof returns after all five cards have arrived");
+  assert.equal(makerReadingProgress(1, 3, true), .97);
+  assert.equal(makerReadingProgress(NaN, 3, true), .87);
+  assert.equal(makerReadingProgress(NaN, 0, false), .06);
+});
 
 test("near-camera passages accelerate gently, settle, and ignore suspended frames", () => {
   const clock = { distance: 0, speed: .48, opacity: 0 };

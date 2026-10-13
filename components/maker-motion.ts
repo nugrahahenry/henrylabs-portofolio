@@ -10,6 +10,14 @@ export function makerGroupAt(progress: number) {
   return progress < .14 ? 0 : progress < .28 ? 1 : progress < .43 ? 2 : 3;
 }
 
+// A linear reading layout has no orbit timeline; return to the same semantic chapter.
+export function makerReadingProgress(progress: number, group: number, proof: boolean) {
+  if (proof) return Math.min(.97, Math.max(.87, Number.isFinite(progress) ? progress : .87));
+  const chapter = Math.min(3, Math.max(0, Math.trunc(group) || 0));
+  return Number.isFinite(progress) && progress >= 0 && progress < MAKER_RETREAT_START && makerGroupAt(progress) === chapter
+    ? progress : [.06, .2, .35, .52][chapter];
+}
+
 export type OrbitRotation = { angle: number; velocity: number; dragging: boolean };
 
 export function advanceMakerRotation(rotation: OrbitRotation, delta: number, paused: boolean) {

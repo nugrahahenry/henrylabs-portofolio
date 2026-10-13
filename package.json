@@ -1,6 +1,6 @@
 {
   "name": "henrylabs-portfolio",
-  "version": "0.114.7",
+  "version": "0.114.8",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -11,6 +11,7 @@
     "test:libraries": "node tests/libraries.mjs",
     "test:browser": "node tests/browser.mjs",
     "test:maker": "node tests/maker.mjs",
+    "test:maker-continuity": "node tests/maker-continuity.mjs",
     "test:background": "node tests/background.mjs",
     "test:passage": "node tests/camera-passage.mjs",
     "test:rhythm": "node tests/chapter-rhythm.mjs",
