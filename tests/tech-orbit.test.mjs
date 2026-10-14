@@ -42,6 +42,16 @@ test("maker reading positions preserve the chapter across spatial and linear lay
   assert.equal(makerReadingProgress(NaN, 0, false), .06);
 });
 
+test("same spatial layout preserves in-flight exchanges and manual groups during resize", () => {
+  for (const progress of [.06, .2, .35, .52, .65, .7, .74, .79, .9, 1]) {
+    assert.equal(makerReadingProgress(progress, makerGroupAt(progress), progress > MAKER_PROOF_START, true), progress);
+  }
+  assert.equal(makerReadingProgress(.2, 3, false, true), .2, "manually choosing All must not move the timeline on resize");
+  assert.equal(makerReadingProgress(-1, 0, false, true), 0);
+  assert.equal(makerReadingProgress(2, 3, true, true), 1);
+  assert.equal(makerReadingProgress(NaN, 3, true, true), .87);
+});
+
 test("near-camera passages accelerate gently, settle, and ignore suspended frames", () => {
   const clock = { distance: 0, speed: .48, opacity: 0 };
   for (let i = 0; i < 120; i++) advancePassage(clock, 1 / 60, 0, 900, true, false);

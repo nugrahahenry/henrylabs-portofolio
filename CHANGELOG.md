@@ -1,5 +1,11 @@
 # Changelog
 
+## StarGod Portfolio v0.114.9 - 2026-10-14
+
+- Preserve the exact tools-to-credentials transition phase when the viewport changes size within the same spatial layout, instead of rewinding tools or skipping certificate arrivals.
+- Keep a manually selected technology group through resize until scrolling crosses the next chapter boundary.
+- Extend desktop and phone regressions for intermediate animation phases, height-only resizing and manual selections. Rotation into the reading layout and Motion/Still retain their existing reading holds.
+
 ## StarGod Portfolio v0.114.8 - 2026-10-14
 
 - Keep the current maker chapter in view when rotating a device or switching Motion/Still, instead of jumping from credentials to Contact or back to unrelated tools.

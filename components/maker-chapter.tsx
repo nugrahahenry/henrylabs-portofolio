@@ -41,8 +41,8 @@ export function MakerChapter() {
   const visible = useInView(section, { margin: "120px" });
   const { scrollYProgress } = useScroll({ target: section, offset: ["start start", "end end"] });
   const items = groups[group].items;
-  const restoring = useMakerReading(section, scrollYProgress, viewport, spatial, group, (next, evidence) => {
-    scrollGroup.current = next;
+  const restoring = useMakerReading(section, scrollYProgress, viewport, spatial, group, (next, evidence, progress) => {
+    scrollGroup.current = makerGroupAt(progress);
     setGroup(next); setProof(evidence);
   });
   useMotionValueEvent(scrollYProgress, "change", value => {

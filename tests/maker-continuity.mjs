@@ -19,6 +19,26 @@ try {
     await page.addInitScript(() => sessionStorage.setItem("henrylabs-intro-seen", "1"));
     await page.goto(url, { waitUntil: "load" });
     await page.locator(".intro-loader").waitFor({ state: "hidden" });
+    for (const progress of [.65, .74, .79, .9]) {
+      await move(page, progress);
+      for (const height of [viewport.height - 44, viewport.height + 36, viewport.height]) {
+        await page.setViewportSize({ ...viewport, height });
+        await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+        await expect.poll(() => page.locator(".maker-chapter").evaluate(node => Number(node.style.getPropertyValue("--maker-progress")))).toBeCloseTo(progress, 2);
+      }
+      if (progress === .65 || progress === .79) await page.screenshot({ path: `test-results/maker-continuity/${viewport.width}-mid-${progress}.png` });
+    }
+    await move(page, .2);
+    await page.locator(".maker-groups button").filter({ hasText: "All" }).click();
+    await page.setViewportSize({ ...viewport, height: viewport.height - 44 });
+    await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+    await expect(page.locator(".maker-groups [aria-pressed='true']")).toContainText("All");
+    await move(page, .21);
+    await expect(page.locator(".maker-groups [aria-pressed='true']")).toContainText("All");
+    await move(page, .35);
+    await expect(page.locator(".maker-groups [aria-pressed='true']")).toContainText("Systems");
+    await page.setViewportSize(viewport);
+    await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
     await move(page, .87);
     const card = page.locator(".maker-evidence-card").first();
     await expect(page.locator(".maker-evidence-card[data-arrived='true']")).toHaveCount(5);

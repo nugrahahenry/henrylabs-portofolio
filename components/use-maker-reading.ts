@@ -6,7 +6,7 @@ import { makerReadingProgress, MAKER_PROOF_START } from "./maker-motion";
 
 type Reading = { active: boolean; proof: boolean; progress: number; group: number; card: number; focus: HTMLElement | null };
 
-export function useMakerReading(section: RefObject<HTMLElement | null>, progress: MotionValue<number>, viewport: { width: number; height: number }, spatial: boolean, group: number, restore: (group: number, proof: boolean) => void) {
+export function useMakerReading(section: RefObject<HTMLElement | null>, progress: MotionValue<number>, viewport: { width: number; height: number }, spatial: boolean, group: number, restore: (group: number, proof: boolean, progress: number) => void) {
   const layout = useRef({ width: 0, height: 0, spatial });
   const reading = useRef<Reading | null>(null);
   const restoring = useRef(false);
@@ -48,8 +48,9 @@ export function useMakerReading(section: RefObject<HTMLElement | null>, progress
     layout.current = { ...viewport, spatial };
     if (!changed || !saved?.active) { captureRef.current(); return; }
     restoring.current = true;
-    const target = makerReadingProgress(saved.progress, saved.group, saved.proof);
-    current.current.restore(saved.group, saved.proof);
+    // Keep an in-flight exchange in flight; reading holds are only for layout-mode changes.
+    const target = makerReadingProgress(saved.progress, saved.group, saved.proof, previous.spatial && spatial);
+    current.current.restore(saved.group, saved.proof, target);
     const align = () => {
       if (spatial) {
         window.scrollTo({ top: scrollY + node.getBoundingClientRect().top + Math.max(0, node.offsetHeight - innerHeight) * target, behavior: "instant" });
