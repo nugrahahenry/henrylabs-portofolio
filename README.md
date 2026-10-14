@@ -1,6 +1,6 @@
 <div align="center">
 
-# StarGod Portfolio v0.114.9
+# StarGod Portfolio v0.114.10
 
 **I build things I actually see.**
 
@@ -28,6 +28,8 @@ Three galaxies. Ten project worlds. One maker.
 The opening behaves like a real Three.js camera searching a spherical multiverse: 128 universe signatures sit at different depths, a layered star field opens from deep indigo into a denser cosmic scale, and bounded near-camera stars cross the lens during the approach. The chosen StarGod signal then travels through four readable authored scales: **Universe**, **Laniakea** with 17 superclusters, **Local Group** with 61 galaxies, and the **HenryLabs galaxy** with five project worlds. The centered progress line shows the search percentage and the route stays visible while the camera locks to the destination. The UFO and scout begin only after that handoff to the “I build things I actually see.” galaxy opening, so the arrival story has a clear before and after. This hierarchy is a visual portfolio atlas, not a scientific reconstruction of the observable universe.
 
 The living map is backed by a procedural volumetric nebula: layered filaments, distant stellar depth, and a slow parallax drift keep the sky feeling like space rather than a flat backdrop while the project systems remain readable.
+
+The opening sky has smoother volumetric sampling, clearer cool emission lanes and depth-weighted starlight. Its sun uses warmer, broader surface detail and a soft corona, with local light protection behind the headline and galaxy names. This lighting settles back into the established reading sky when the map departs; the intro and black-hole sequence keep their existing appearance.
 
 The opening headline recedes with the scroll position as the galaxy map approaches. Scrolling back retraces the same reveal. A softer reading veil keeps the headline clear without covering the surrounding nebula, and the map holds a brighter sky throughout its exploration window. The selected-project preview settles before reaching the viewport center, with text at full opacity from the start.
 

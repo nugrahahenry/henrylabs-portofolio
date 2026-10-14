@@ -72,3 +72,18 @@ test("project reading retains full text opacity and settles its media before the
   assert.match(scrim, /transform: none/);
   assert.match(scrim, /inset: 0 0 -64px/);
 });
+
+test("opening lighting is bounded, reversible and absent from intro and reading chapters", () => {
+  const module = { exports: {} };
+  const compiled = ts.transpileModule(readFileSync("components/universe-chapter.ts", "utf8"), { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText;
+  new Function("module", "exports", compiled)(module, module.exports);
+  const { universeLighting, UNIVERSE_CHAPTER: c } = module.exports;
+  for (const progress of [0, .2, c.landing, c.departure]) assert.equal(universeLighting(progress), 1);
+  for (const progress of [0, .57, .94, 1]) assert.equal(universeLighting(progress, true), 0);
+  for (const progress of [1, 2, NaN, Infinity]) assert.equal(universeLighting(progress), 0);
+  assert.ok(Math.abs(universeLighting(.94) - .5) < .00001);
+  for (let p = 0; p <= 1; p += .001) {
+    assert.ok(universeLighting(p) >= 0 && universeLighting(p) <= 1);
+    assert.ok(Math.abs(universeLighting(p + .001) - universeLighting(p)) < .013);
+  }
+});

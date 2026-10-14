@@ -13,6 +13,7 @@ import { createStellarCore } from "./stellar-core";
 import { createDeepSpace } from "./deep-space";
 import { blackHoleFrame } from "./black-hole-frame";
 import { arrivalBridge } from "./arrival-field";
+import { universeLighting, universeHeroOpacity } from "./universe-chapter";
 import { createSpacecraft, spacecraftPose, routeSpacecraft, flightPresence, createPursuitBolts, pursuitPulse, pursuitShotSide, pursuitMiss, clearShot, createWormhole, wormholePresence, advancePursuit, pursuitEnd, WORMHOLE_X, FLIGHT_START_X, PURSUIT_DELAY, COMPACT_PURSUIT_DELAY, PURSUIT_REST, PURSUIT_SHOTS, PURSUIT_SHOT_SECONDS } from "./spacecraft";
 import { COMPACT_STAR_COUNT, DISTANT_STAR_COUNT, FEEDING_DUST_COUNT, createDistantStarMaterial, distantStarPoint, dustStreamSource } from "./ambient-field";
 import { PASSAGE_COUNT, COMPACT_PASSAGE_COUNT, createCameraPassage, advancePassage, passagePoint, passageReadingGuard } from "./camera-passage";
@@ -116,10 +117,11 @@ function createBlackHole() {
   return { group, horizon, diskMaterial, lensMaterial };
 }
 
-export function WorldlineBackdrop({ activeId, motionOn, progress, mapPresence, contactProgress, contactVisible, mapActive, introActive, introProgress }: {
+export function WorldlineBackdrop({ activeId, motionOn, progress, heroProgress, mapPresence, contactProgress, contactVisible, mapActive, introActive, introProgress }: {
   activeId: ProjectId;
   motionOn: boolean;
   progress: MotionValue<number>;
+  heroProgress: MotionValue<number>;
   mapPresence: MotionValue<number>;
   contactProgress: MotionValue<number>;
   contactVisible: boolean;
@@ -209,6 +211,8 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, mapPresence, c
     const flightWorld = new THREE.Vector3(), flightView = new THREE.Vector3();
     const heroCopy = document.querySelector<HTMLElement>(".hero-copy");
     const passageCopy = heroCopy ? Array.from(heroCopy.children) : [];
+    const openingCopy = heroCopy ? Array.from(heroCopy.querySelectorAll<HTMLElement>("h1, .hero-body, .hero-actions")) : [];
+    const openingReading: ReadingRect[] = [];
     const passageReading = { left: 0, top: 0, right: 0, bottom: 0 };
     const heroKicker = document.querySelector<HTMLElement>(".hero-kicker");
     const heroNote = document.querySelector<HTMLElement>(".hero-note");
@@ -551,6 +555,14 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, mapPresence, c
       const drift = state.current.motionOn ? elapsed : 0;
       const companionTime = state.current.motionOn ? companionAge : 0;
       const introMode = state.current.introActive && state.current.motionOn;
+      const lightingTarget = universeLighting(heroProgress.get(), state.current.introActive);
+      const previousLight = deepSpace.material.uniforms.uOpening.value;
+      const light = introMode || !state.current.motionOn ? lightingTarget : THREE.MathUtils.damp(previousLight, lightingTarget, 8, dt);
+      const openingLight = Math.abs(light - lightingTarget) < .001 ? lightingTarget : light;
+      deepSpace.material.uniforms.uOpening.value = openingLight;
+      distantMaterial.uniforms.uOpening.value = openingLight;
+      stellarCore.material.uniforms.uOpening.value = openingLight;
+      stellarCore.aura.material.uniforms.uOpening.value = openingLight;
       displayedIntroProgress = introMode ? THREE.MathUtils.damp(displayedIntroProgress, state.current.introProgress, 14, dt) : 100;
       const bridge = arrivalBridge(displayedIntroProgress / 100);
       const introReveal = introMode ? bridge.nebula : 1;
@@ -705,6 +717,23 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, mapPresence, c
         material.uniforms.uReadRects.value.forEach((target: THREE.Vector4, index: number) => {
           const rect = contactReading[index];
           if (rect) target.set(rect.left, rect.top, rect.right, rect.bottom).multiplyScalar(renderer.getPixelRatio());
+          else target.set(-1e6, -1e6, -1e6, -1e6);
+        });
+      }
+      // Protect the actual hero copy or moving galaxy labels, not a rectangular sky overlay.
+      openingReading.length = 0;
+      if (openingLight > .001 && holeOpacity < .001) {
+        const heroVisible = !state.current.motionOn || universeHeroOpacity(heroProgress.get()) > .1;
+        const copy = heroVisible ? openingCopy : host.parentElement?.querySelectorAll<HTMLElement>(".galaxy-label-plate, #active-world-title, .world-inspector-summary") ?? [];
+        for (const element of copy) {
+          const rect = element.getBoundingClientRect();
+          if (rect.width > 0 && rect.height > 0 && rect.bottom > 0 && rect.top < height) openingReading.push(rect);
+          if (openingReading.length === 3) break;
+        }
+        stellarCore.material.uniforms.uReadStrength.value = openingLight;
+        stellarCore.material.uniforms.uReadRects.value.forEach((target: THREE.Vector4, index: number) => {
+          const rect = openingReading[index];
+          if (rect) target.set(rect.left - 8, rect.top - 6, rect.right + 8, rect.bottom + 6).multiplyScalar(renderer.getPixelRatio());
           else target.set(-1e6, -1e6, -1e6, -1e6);
         });
       }
@@ -1076,6 +1105,7 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, mapPresence, c
       host.dataset.arrivalNebula = introReveal.toFixed(3);
       host.dataset.mapPresence = mapBlend.toFixed(3);
       host.dataset.skyPresence = deepSpace.material.uniforms.uPresence.value.toFixed(3);
+      host.dataset.openingLight = openingLight.toFixed(3);
       host.dataset.planetSurface = "opaque-terrain";
       host.dataset.solarVisibility = solarVisibility.toFixed(3);
       host.dataset.readingBlend = readingBlend.toFixed(3);
@@ -1107,7 +1137,8 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, mapPresence, c
       projectedStar.project(camera);
       const coreRadius = .63 * stellarCore.group.scale.x * planetSystem.scale.x / (tangent * Math.max(.1, -flightView.z)) * height / 2;
       const coreClearance = gravityReadingVisibility((projectedStar.x * .5 + .5) * width, (-projectedStar.y * .5 + .5) * height, coreRadius, width, height, contactReading);
-      const coreReading = 1 - holeOpacity * (1 - coreClearance) * .84;
+      const openingClearance = openingReading.length ? gravityReadingVisibility((projectedStar.x * .5 + .5) * width, (-projectedStar.y * .5 + .5) * height, coreRadius, width, height, openingReading) : 1;
+      const coreReading = (1 - holeOpacity * (1 - coreClearance) * .84) * (1 - openingLight * (1 - openingClearance) * .84);
       stellarCore.material.uniforms.uOpacity.value = coreStrength;
       stellarCore.aura.material.uniforms.uOpacity.value = coreAuraStrength * coreReading;
       host.dataset.stellarX = ((projectedStar.x * .5 + .5) * width).toFixed(1);
@@ -1217,6 +1248,7 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, mapPresence, c
     intersection.observe(visibilityTarget);
     const unsubscribe = progress.on("change", wake);
     const unsubscribeMap = mapPresence.on("change", wake);
+    const unsubscribeHero = heroProgress.on("change", wake);
     const contextLost = (event: Event) => { event.preventDefault(); enhanced = false; host.dataset.fallback = "true"; cancelAnimationFrame(frame); updateChapter(); };
     canvas.addEventListener("webglcontextlost", contextLost);
     document.addEventListener("visibilitychange", wake);
@@ -1228,6 +1260,7 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, mapPresence, c
       intersection.disconnect();
       unsubscribe();
       unsubscribeMap();
+      unsubscribeHero();
       unsubscribeChapter();
       canvas.removeEventListener("webglcontextlost", contextLost);
       document.removeEventListener("visibilitychange", wake);
@@ -1243,7 +1276,7 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, mapPresence, c
       renderer.dispose();
       wakeRef.current = () => {};
     };
-  }, [progress, mapPresence, contactProgress]);
+  }, [progress, heroProgress, mapPresence, contactProgress]);
 
   return <div ref={hostRef} className="worldline-backdrop" aria-hidden="true"><canvas /><span className="black-hole-fallback" /></div>;
 }

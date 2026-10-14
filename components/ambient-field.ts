@@ -12,19 +12,21 @@ export function stellarTwinkle(seed: number, time: number, motionOn = true) {
 
 export function createDistantStarMaterial() {
   return new THREE.ShaderMaterial({
-    uniforms: { uTime: { value: 0 }, uMotion: { value: 1 }, uScale: { value: 1 } },
+    uniforms: { uTime: { value: 0 }, uMotion: { value: 1 }, uScale: { value: 1 }, uOpening: { value: 0 } },
     vertexShader: `
       attribute vec3 color;
       uniform float uTime;
       uniform float uMotion;
       uniform float uScale;
+      uniform float uOpening;
       varying vec3 vColor;
       varying float vGiant;
       void main() {
         vec4 view = modelViewMatrix * vec4(position, 1.0);
         float seed = fract(sin(dot(position.xyz, vec3(12.9898, 78.233, 39.425))) * 43758.5453);
         float light = .92 + uMotion * .08 * sin(uTime * (.18 + seed * .08) + seed * 6.2831853);
-        vColor = color * light;
+        float depth = smoothstep(18.0, 46.0, -view.z);
+        vColor = color * light * mix(1.0, mix(1.16, .62, depth), uOpening);
         vGiant = smoothstep(.974, .998, seed);
         gl_Position = projectionMatrix * view;
         gl_PointSize = clamp((.08 + seed * .10) * uScale / max(1.0, -view.z), 1.0, 3.0) + vGiant * 7.0;

@@ -20,7 +20,7 @@ export function createDeepSpace(size = 64) {
   texture.unpackAlignment = 1;
   texture.needsUpdate = true;
   const material = new THREE.ShaderMaterial({
-    uniforms: { uVolume: { value: texture }, uTime: { value: 0 }, uPull: { value: 0 }, uPresence: { value: 1 }, uTarget: { value: new THREE.Vector3() }, uResolution: { value: new THREE.Vector2(1, 1) }, uHorizon: { value: 0 }, uLensStrength: { value: 0 } },
+    uniforms: { uVolume: { value: texture }, uTime: { value: 0 }, uPull: { value: 0 }, uPresence: { value: 1 }, uOpening: { value: 0 }, uTarget: { value: new THREE.Vector3() }, uResolution: { value: new THREE.Vector2(1, 1) }, uHorizon: { value: 0 }, uLensStrength: { value: 0 } },
     vertexShader: `
       varying vec3 vWorld;
       void main() {
@@ -34,6 +34,7 @@ export function createDeepSpace(size = 64) {
       uniform float uTime;
       uniform float uPull;
       uniform float uPresence;
+      uniform float uOpening;
       uniform float uHorizon;
       uniform float uLensStrength;
       uniform vec3 uTarget;
@@ -57,7 +58,7 @@ export function createDeepSpace(size = 64) {
         vec3 light = vec3(0.0);
         float alpha = 0.0;
         // Low-amplitude, static sampling softens slice bands without animated grain.
-        float jitter = .5 + .18 * (fract(sin(dot(gl_FragCoord.xy,vec2(12.9898,78.233))) * 43758.5453) - .5);
+        float jitter = .5 + mix(.18, .012, uOpening) * (fract(sin(dot(gl_FragCoord.xy,vec2(12.9898,78.233))) * 43758.5453) - .5);
         // Bounded ray march; both scales come from cached voxels, not per-pixel fBm.
         for (int i = 0; i < 16; i++) {
           vec3 p = cameraPosition + ray * (max(0.0,start) + (float(i) + jitter) * stepSize);
@@ -65,7 +66,7 @@ export function createDeepSpace(size = 64) {
           vec3 uv = (p - vec3(-16.0,-11.0,-32.0)) / vec3(32.0,22.0,28.0) + vec3(0.0, sin(uTime * .02) * .02, 0.0);
           float macro = texture(uVolume, uv).r;
           float cloudDetail = texture(uVolume, fract(uv * 1.34 + vec3(.11,.07,.17))).r;
-          float detail = texture(uVolume, fract(uv.zxy * 3.7 + vec3(.13))).r;
+          float detail = texture(uVolume, fract(uv.zxy * mix(3.7, 2.4, uOpening) + vec3(.13))).r;
           float cloud = smoothstep(.34, .72, macro * .74 + cloudDetail * .26);
           float laneA = p.y - p.x * .47 + 1.8 + sin(p.x * .29 + p.z * .07) * 1.5 + p.z * .09;
           float laneB = p.y + p.x * .28 - 2.6 + sin(p.x * .19 - p.z * .06) * 1.2 - p.z * .07;
@@ -78,13 +79,14 @@ export function createDeepSpace(size = 64) {
           float filaments = smoothstep(.45, .68, detail) * smoothstep(.40, .68, cloud) * (.32 + sheet * .68);
           float darkLane = (1.0 - smoothstep(.28, 1.7, abs(rift))) * smoothstep(.38, .58, cloud);
           float dust = smoothstep(.40, .66, cloud) * (.22 + sheet * .92);
-          float extinction = dust * .36 * stepSize;
+          float opticalDepth = dust * .36 * stepSize;
+          float extinction = mix(opticalDepth, 1.0 - exp(-opticalDepth), uOpening);
           float depthTint = smoothstep(-29.0, -7.0, p.z);
           vec3 emission = mix(vec3(.004,.038,.14), vec3(.12,.01,.10), smoothstep(-6.0, 8.0, p.x));
           vec3 ionized = mix(vec3(.018,.30,.60), vec3(.62,.045,.22), smoothstep(-5.0, 7.0, p.x + p.y * .8));
           vec3 warm = mix(vec3(.86,.17,.045), vec3(1.0,.72,.32), depthTint);
-          emission += ionized * filaments * 1.46;
-          emission += warm * pow(sheet, 2.4) * .58;
+          emission += ionized * filaments * mix(1.46, 2.05, uOpening);
+          emission += warm * pow(sheet, 2.4) * mix(.58, .24, uOpening);
           emission *= 1.0 - darkLane * .92;
           light += emission * extinction * (1.0 - alpha);
           alpha += extinction * (1.0 - alpha);

@@ -1,5 +1,12 @@
 # Changelog
 
+## StarGod Portfolio v0.114.10 - 2026-10-15
+
+- Refine hero-to-map lighting with less sampling grain, clearer nebula emission and depth-weighted distant stars, using the existing 3D volume and particle counts.
+- Soften the opening sun's corona, broaden its surface detail and protect the actual headline, actions and galaxy labels from stellar glare.
+- Blend back to the established reading sky as the map departs. Keep intro, library defaults, planet paths and black-hole choreography unchanged.
+- Add before/after sky captures and regression coverage for reversible lighting boundaries, real canvas pixels and rendering budgets.
+
 ## StarGod Portfolio v0.114.9 - 2026-10-14
 
 - Preserve the exact tools-to-credentials transition phase when the viewport changes size within the same spatial layout, instead of rewinding tools or skipping certificate arrivals.

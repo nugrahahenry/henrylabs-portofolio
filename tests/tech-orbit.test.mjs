@@ -261,6 +261,8 @@ test("the stellar core has a textured physical surface and a separate limb-only 
   assert.match(star.material.fragmentShader, /noise\(flow/);
   assert.match(star.material.fragmentShader, /sqrt\(facing\)/);
   assert.equal(star.material.uniforms.uReadStrength.value, 0);
+  assert.equal(star.material.uniforms.uOpening.value, 0, "shared stars retain their established material by default");
+  assert.equal(star.aura.material.uniforms.uOpening.value, 0);
   assert.equal(star.material.uniforms.uReadRects.value.length, 3);
   assert.match(star.material.fragmentShader, /heat \* 1\.7 \* exposure, uOpacity/, "reading protection changes local radiance, never the whole star's alpha");
   assert.equal(star.aura.material.depthWrite, false);
@@ -276,6 +278,7 @@ test("deep space is a bounded real density volume with deterministic cached voxe
   assert.ok(new Set(a.texture.image.data).size > 50);
   assert.match(a.material.fragmentShader, /uniform sampler3D uVolume/);
   assert.match(a.material.fragmentShader, /i < 16/);
+  assert.equal(a.material.uniforms.uOpening.value, 0, "reading libraries and Contact do not opt into opening art direction");
   assert.equal(a.material.depthWrite, false);
   for (const item of [a, b]) { item.texture.dispose(); item.material.dispose(); item.volume.geometry.dispose(); }
 });

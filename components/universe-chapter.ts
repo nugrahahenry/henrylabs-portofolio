@@ -29,3 +29,8 @@ export function universePresence(progress: number) {
   return chapterEase(progress, .12, UNIVERSE_CHAPTER.settled)
     * (1 - chapterEase(progress, UNIVERSE_CHAPTER.departure, UNIVERSE_CHAPTER.hidden));
 }
+
+// Opening-only lighting returns to the established reading sky on departure.
+export function universeLighting(progress: number, introActive = false) {
+  return introActive || !Number.isFinite(progress) ? 0 : 1 - chapterEase(progress, UNIVERSE_CHAPTER.departure, 1);
+}
