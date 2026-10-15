@@ -1,6 +1,6 @@
 <div align="center">
 
-# StarGod Portfolio v0.114.11
+# StarGod Portfolio v0.114.12
 
 **I build things I actually see.**
 
@@ -151,13 +151,13 @@ This portfolio is **actively being developed**. Hosting is deferred. The project
 | `/projects/[slug]` | A shared detail page for each project |
 | `/credentials` | Watermarked previews of all 26 learning records |
 
-Content lives in `content/`; catalog pages and orbital reading actions share those records. Reading pages share one quiet volumetric nebula and distant-star field, without the project-map or cinematic scenes. Motion pauses when hidden and stays still with reduced motion; a dark fallback keeps content readable without WebGL. The maker's small 3D scene exists only during its visible technology phase, with the upper galaxy animation paused; it releases its renderer before credentials and Contact. Shared typography roles keep reading sizes and spacing consistent.
+Content lives in `content/`; catalog pages and orbital reading actions share those records. Reading pages share one quiet volumetric nebula and distant-star field, without the project-map or cinematic scenes. Home and library backgrounds use a bounded pixel budget, with two conservative resolution adjustments after sustained frame pressure. Project planets, the maker orbit, text and controls keep their own resolution. Motion pauses when hidden and stays still with reduced motion; a dark fallback keeps content readable without WebGL. The maker's small 3D scene exists only during its visible technology phase, with the upper galaxy animation paused; it releases its renderer before credentials and Contact. Shared typography roles keep reading sizes and spacing consistent.
 
 Certificate lists and viewers use permanently watermarked derivatives. `scripts/credential-watermarks.py` exports images, thumbnails, flattened PDF previews and README copies from private local masters, using Pillow, pypdf, ReportLab and Poppler. Regeneration requires those private masters; they are intentionally absent from a public clone. `node scripts/credential-thumbnails.mjs` can resize verified public copies, refusing changed/unreviewed input. The public checksum manifest and unit checks guard against accidentally replacing marked files. These checks ensure consistency, not copy protection.
 
 Published portrait derivatives live in `public/assets/portrait/`. `node scripts/portrait-exports.mjs` recreates them from four selected local masters in the Git-ignored `assets/henry/portraits/` folder. Source photographs and generation drafts are private and are not required to run the public clone.
 
-Route and accessibility checks: `npm run test:libraries`; entrance and exploration window: `npm run test:arrival`; galaxy integration: `npm run test:galaxies`; portrait choreography: `npm run test:maker`; rotation and reading continuity: `npm run test:maker-continuity`.
+Route and accessibility checks: `npm run test:libraries`; entrance and exploration window: `npm run test:arrival`; galaxy integration: `npm run test:galaxies`; portrait choreography: `npm run test:maker`; rotation and reading continuity: `npm run test:maker-continuity`; background pixel budgets and controlled-load checks: `npm run test:sky-quality`.
 
 <details>
 <summary>About the README visuals</summary>

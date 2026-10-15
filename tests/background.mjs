@@ -14,15 +14,17 @@ async function scrollToEnd(page) {
 async function companions(page) {
   return page.locator(".worldline-backdrop canvas").evaluate(canvas => new Promise(resolve => requestAnimationFrame(() => {
     const gl = canvas.getContext("webgl2");
+    const scaleX = gl.drawingBufferWidth / canvas.clientWidth, scaleY = gl.drawingBufferHeight / canvas.clientHeight;
     const bodies = JSON.parse(canvas.parentElement.dataset.companionBodies);
     const owners = JSON.parse(canvas.parentElement.dataset.solarBodies);
     let painted = 0;
     for (const body of bodies) {
-      const radius = Math.max(2, Math.ceil(body.radius));
-      if (body.x < radius || body.y < radius || body.x > canvas.width - radius || body.y > canvas.height - radius) continue;
+      const radius = Math.max(2, Math.ceil(body.radius * scaleX));
+      const x = Math.round(body.x * scaleX), y = Math.round((canvas.clientHeight - body.y) * scaleY);
+      if (x < radius || y < radius || x > canvas.width - radius || y > canvas.height - radius) continue;
       if (owners.some(owner => Math.hypot(owner.x - body.x, owner.y - body.y) < owner.radius + body.radius)) continue;
       const pixels = new Uint8Array(radius * radius * 16);
-      gl.readPixels(Math.round(body.x) - radius, Math.round(canvas.height - body.y) - radius, radius * 2, radius * 2, gl.RGBA, gl.UNSIGNED_BYTE, pixels);
+      gl.readPixels(x - radius, y - radius, radius * 2, radius * 2, gl.RGBA, gl.UNSIGNED_BYTE, pixels);
       let min = 765, max = 0;
       for (let i = 0; i < pixels.length; i += 4) { const light = pixels[i] + pixels[i + 1] + pixels[i + 2]; min = Math.min(min, light); max = Math.max(max, light); }
       if (max - min > 20 && max > 60) painted++;
@@ -42,7 +44,7 @@ async function holePixels(page) {
     const center = new Uint8Array(4);
     gl.readPixels(x, y, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, center);
     // Inspect the accretion outside the whole void, not a patch entirely inside it.
-    const radius = Math.floor(Number(canvas.parentElement.dataset.holeDiameter) * .65);
+    const radius = Math.floor(Number(canvas.parentElement.dataset.holeDiameter) * .65 * width / canvas.clientWidth);
     const left = Math.max(0, x - radius);
     const bottom = Math.max(0, y - radius);
     const patchWidth = Math.min(width - left, radius * 2);
@@ -67,10 +69,11 @@ async function readingPlanets(page, chapter) {
   await expect.poll(async () => Number(await background.getAttribute("data-stellar-opacity"))).toBeGreaterThan(.65);
   const signals = await background.locator("canvas").evaluate(canvas => new Promise(resolve => requestAnimationFrame(() => {
     const gl = canvas.getContext("webgl2");
+    const scaleX = gl.drawingBufferWidth / canvas.clientWidth, scaleY = gl.drawingBufferHeight / canvas.clientHeight;
     const bodies = JSON.parse(canvas.parentElement.dataset.solarBodies);
     resolve(bodies.filter(body => body.x > body.radius && body.x < canvas.clientWidth - body.radius && body.y > body.radius && body.y < canvas.clientHeight - body.radius).map(body => {
-      const radius = Math.max(2, Math.floor(body.radius * .7));
-      const x = Math.round(body.x), y = Math.round(gl.drawingBufferHeight - body.y);
+      const radius = Math.max(2, Math.floor(body.radius * .7 * scaleX));
+      const x = Math.round(body.x * scaleX), y = Math.round((canvas.clientHeight - body.y) * scaleY);
       const pixels = new Uint8Array(radius * radius * 16);
       gl.readPixels(x - radius, y - radius, radius * 2, radius * 2, gl.RGBA, gl.UNSIGNED_BYTE, pixels);
       let min = 765, max = 0;

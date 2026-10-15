@@ -1,5 +1,12 @@
 # Changelog
 
+## StarGod Portfolio v0.114.12 - 2026-10-15
+
+- Cap Home and reading-library background buffers at 1.5 million pixels, retaining the existing detail on ordinary desktop and phone viewports.
+- Reduce only background resolution in two bounded steps after sustained frame pressure, without restarting a scene, removing stars or reducing interactive planet resolution.
+- Keep apparent star and dust sizes consistent across resolution changes. Exclude intro, Still, hidden intervals and isolated loading hitches from quality sampling; retain a stable tier across resize.
+- Add real-pixel, controlled-load, resize and hidden-pause checks alongside deterministic quality-policy regression tests.
+
 ## StarGod Portfolio v0.114.11 - 2026-10-15
 
 - Replace the maker's flat decorative ellipses with depth-tested tracks sharing the same curves as the technology planets, including portrait occlusion and the reversible retreat.

@@ -12,12 +12,14 @@ async function snapshot(page) {
   return page.locator(".worldline-backdrop canvas").evaluate(canvas => new Promise(resolve => requestAnimationFrame(() => {
     const d = canvas.parentElement.dataset, probes = JSON.parse(d.passageProbes);
     const gl = canvas.getContext("webgl2");
+    const scaleX = gl.drawingBufferWidth / canvas.clientWidth, scaleY = gl.drawingBufferHeight / canvas.clientHeight;
     let painted = 0;
     const samples = [];
     for (const p of probes) {
-      if (p.opacity < .3 || p.x < 5 || p.y < 5 || p.x > canvas.width - 5 || p.y > canvas.height - 5) continue;
+      const x = Math.round(p.x * scaleX), y = Math.round((canvas.clientHeight - p.y) * scaleY);
+      if (p.opacity < .3 || x < 5 || y < 5 || x > canvas.width - 5 || y > canvas.height - 5) continue;
       const pixel = new Uint8Array(9 * 9 * 4);
-      gl.readPixels(Math.round(p.x) - 4, Math.round(canvas.height - p.y) - 4, 9, 9, gl.RGBA, gl.UNSIGNED_BYTE, pixel);
+      gl.readPixels(x - 4, y - 4, 9, 9, gl.RGBA, gl.UNSIGNED_BYTE, pixel);
       let sum = 0, peak = 0;
       for (let i = 0; i < pixel.length; i += 4) { const light = pixel[i] + pixel[i + 1] + pixel[i + 2]; sum += light; peak = Math.max(peak, light); }
       if (peak - sum / 81 > 24) painted++;

@@ -31,8 +31,9 @@ try {
         });
         if (shots.length === 2 && qa.pairPixels < 40) {
           const canvas = host.querySelector("canvas"), gl = canvas.getContext("webgl2");
+          const scaleX = gl.drawingBufferWidth / canvas.clientWidth, scaleY = gl.drawingBufferHeight / canvas.clientHeight;
           for (const shot of shots) {
-            const x = Math.round(shot.x), y = Math.round(canvas.height - shot.y);
+            const x = Math.round(shot.x * scaleX), y = Math.round((canvas.clientHeight - shot.y) * scaleY);
             if (x < 9 || y < 9 || x > canvas.width - 9 || y > canvas.height - 9) continue;
             const pixels = new Uint8Array(16 * 16 * 4);
             gl.readPixels(x - 8, y - 8, 16, 16, gl.RGBA, gl.UNSIGNED_BYTE, pixels);

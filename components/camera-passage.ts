@@ -49,18 +49,19 @@ export function createCameraPassage() {
   geometry.setAttribute("color", new THREE.BufferAttribute(colors, 3));
   geometry.setAttribute("aSize", new THREE.BufferAttribute(sizes, 1));
   const material = new THREE.ShaderMaterial({
-    uniforms: { uScale: { value: 1 }, uOpacity: { value: 0 } },
+    uniforms: { uScale: { value: 1 }, uOpacity: { value: 0 }, uPixelRatio: { value: 1 } },
     vertexShader: `
       attribute vec3 color;
       attribute float aOpacity;
       attribute float aSize;
       uniform float uScale;
+      uniform float uPixelRatio;
       varying vec3 vColor;
       varying float vOpacity;
       void main() {
         vec4 view = modelViewMatrix * vec4(position, 1.0);
         gl_Position = projectionMatrix * view;
-        gl_PointSize = clamp(aSize * uScale / max(1.0, -view.z), 1.5, 6.0);
+        gl_PointSize = clamp(aSize * uScale / max(1.0, -view.z), 1.5 * uPixelRatio, 6.0 * uPixelRatio);
         vColor = color;
         vOpacity = aOpacity;
       }

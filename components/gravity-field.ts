@@ -18,7 +18,7 @@ export function infallPoint(source: THREE.Vector3, target: THREE.Vector3, travel
 export function gravityMaterial(target: THREE.Vector3, size: number, streak = false, stream = false, sparkle = false) {
   return new THREE.ShaderMaterial({
     uniforms: {
-      uTarget: { value: target }, uPull: { value: 0 }, uTime: { value: 0 }, uScale: { value: 1 }, uSize: { value: size }, uHorizon: { value: 0 },
+      uTarget: { value: target }, uPull: { value: 0 }, uTime: { value: 0 }, uScale: { value: 1 }, uSize: { value: size }, uHorizon: { value: 0 }, uPixelRatio: { value: 1 },
       ...(stream ? { uCameraWorld: { value: new THREE.Matrix4() }, uInverseProjection: { value: new THREE.Matrix4() }, uResolution: { value: new THREE.Vector2(1, 1) }, uTravelScale: { value: 1 } } : {}),
     },
     vertexShader: `
@@ -31,6 +31,7 @@ export function gravityMaterial(target: THREE.Vector3, size: number, streak = fa
       uniform float uScale;
       uniform float uSize;
       uniform float uHorizon;
+      uniform float uPixelRatio;
       varying vec3 vColor;
       varying float vFade;
       void main() {
@@ -51,7 +52,7 @@ export function gravityMaterial(target: THREE.Vector3, size: number, streak = fa
         spiral.z = delta.z * contraction;
         vec4 view = viewMatrix * vec4(uTarget + spiral, 1.0);
         gl_Position = projectionMatrix * view;
-        gl_PointSize = clamp(uSize * uScale / max(1.0, -view.z) * (1.0 + uPull * .6) ${stream ? "* 1.45" : ""}, 1.0, ${sparkle ? "14.0" : "7.0"});
+        gl_PointSize = clamp(uSize * uScale / max(1.0, -view.z) * (1.0 + uPull * .6) ${stream ? "* 1.45" : ""}, uPixelRatio, ${sparkle ? "14.0" : "7.0"} * uPixelRatio);
         vColor = color;
         ${stream ? "float warmth = 1.0 - smoothstep(uHorizon * 1.25, max(.001, uHorizon * 3.25), length(spiral)); vColor = mix(color, vec3(1.0, .76, .44), warmth * uPull * .55);" : ""}
         vFade = (1.0 - smoothstep(.78, .96, ${stream && streak ? "phase * uTravelScale" : "travel"})) ${stream ? "* smoothstep(0.0, .10, phase) * uPull" : ""} ${streak ? `* mix(.8, .08, aTail) ${stream ? "" : "* uPull"}` : ""};

@@ -17,6 +17,7 @@ import { universeLighting, universeHeroOpacity } from "./universe-chapter";
 import { createSpacecraft, spacecraftPose, routeSpacecraft, flightPresence, createPursuitBolts, pursuitPulse, pursuitShotSide, pursuitMiss, clearShot, createWormhole, wormholePresence, advancePursuit, pursuitEnd, WORMHOLE_X, FLIGHT_START_X, PURSUIT_DELAY, COMPACT_PURSUIT_DELAY, PURSUIT_REST, PURSUIT_SHOTS, PURSUIT_SHOT_SECONDS } from "./spacecraft";
 import { COMPACT_STAR_COUNT, DISTANT_STAR_COUNT, FEEDING_DUST_COUNT, createDistantStarMaterial, distantStarPoint, dustStreamSource } from "./ambient-field";
 import { PASSAGE_COUNT, COMPACT_PASSAGE_COUNT, createCameraPassage, advancePassage, passagePoint, passageReadingGuard } from "./camera-passage";
+import { createSkyQuality, resetSkySample, sampleSkyQuality, skyPixelRatio, skyQualityNames } from "./sky-quality";
 
 function createBlackHole() {
   const group = new THREE.Group();
@@ -170,7 +171,7 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, heroProgress, 
       fallbackResize.observe(host);
       return () => { fallbackResize.disconnect(); unsubscribeChapter(); };
     }
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1));
+    const quality = createSkyQuality();
     enhanced = true;
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
@@ -537,10 +538,24 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, heroProgress, 
     const moonPoint = new THREE.Vector3();
     const moonNextPoint = new THREE.Vector3();
     const moonWorldPoint = new THREE.Vector3();
+    const updateResolution = () => {
+      const width = host.clientWidth, height = Math.max(1, host.clientHeight);
+      const ratio = skyPixelRatio(width, height, window.devicePixelRatio, 1, quality.tier);
+      if (renderer.getPixelRatio() !== ratio) renderer.setPixelRatio(ratio);
+      renderer.setSize(width, height, false);
+      deepSpace.material.uniforms.uResolution.value.set(canvas.width, canvas.height);
+      const relativeRatio = ratio / Math.min(window.devicePixelRatio, 1);
+      [distantMaterial, passage.material, starMaterial, galaxyMaterial, streakMaterial, brightMaterial, ...feedingMaterials].forEach(material => {
+        material.uniforms.uPixelRatio.value = relativeRatio;
+      });
+      host.dataset.skyQuality = skyQualityNames[quality.tier];
+      host.dataset.skyPixelRatio = ratio.toFixed(4);
+    };
     const render = (time: number) => {
       frame = 0;
-      if (!visible || document.hidden || !enhanced) return;
-      const delta = Math.max(0, (time - lastTime) / 1000 || 0);
+      if (!visible || document.hidden || !enhanced) { resetSkySample(quality); lastTime = 0; return; }
+      if (sampleSkyQuality(quality, time, state.current.motionOn && !state.current.introActive)) updateResolution();
+      const delta = lastTime ? Math.max(0, (time - lastTime) / 1000) : 0;
       const dt = Math.min(delta, .04);
       lastTime = time;
       const scroll = THREE.MathUtils.clamp(progress.get(), 0, 1);
@@ -1230,11 +1245,11 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, heroProgress, 
       headerHeight = document.querySelector(".site-header")?.getBoundingClientRect().bottom ?? 76;
       camera.aspect = host.clientWidth / Math.max(1, host.clientHeight);
       camera.updateProjectionMatrix();
-      renderer.setSize(host.clientWidth, host.clientHeight, false);
+      resetSkySample(quality);
+      updateResolution();
       distantGeometry.setDrawRange(0, host.clientWidth < 700 ? COMPACT_STAR_COUNT : DISTANT_STAR_COUNT);
       passage.geometry.setDrawRange(0, host.clientWidth < 700 ? COMPACT_PASSAGE_COUNT : PASSAGE_COUNT);
       passageScroll = window.scrollY;
-      deepSpace.material.uniforms.uResolution.value.set(host.clientWidth * renderer.getPixelRatio(), host.clientHeight * renderer.getPixelRatio());
       wake();
     };
     const observer = new ResizeObserver(resize);
@@ -1251,7 +1266,11 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, heroProgress, 
     const unsubscribeHero = heroProgress.on("change", wake);
     const contextLost = (event: Event) => { event.preventDefault(); enhanced = false; host.dataset.fallback = "true"; cancelAnimationFrame(frame); updateChapter(); };
     canvas.addEventListener("webglcontextlost", contextLost);
-    document.addEventListener("visibilitychange", wake);
+    const visibility = () => {
+      resetSkySample(quality); lastTime = 0;
+      if (document.hidden) { cancelAnimationFrame(frame); frame = 0; } else wake();
+    };
+    document.addEventListener("visibilitychange", visibility);
     resize();
 
     return () => {
@@ -1263,7 +1282,7 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, heroProgress, 
       unsubscribeHero();
       unsubscribeChapter();
       canvas.removeEventListener("webglcontextlost", contextLost);
-      document.removeEventListener("visibilitychange", wake);
+      document.removeEventListener("visibilitychange", visibility);
       window.removeEventListener("scroll", updateFlightBand);
       scene.traverse((object) => {
         const mesh = object as THREE.Mesh;

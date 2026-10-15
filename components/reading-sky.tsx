@@ -3,6 +3,7 @@
 import { useEffect, useRef } from "react";
 import { usePathname } from "next/navigation";
 import { useSitePreferences } from "./site-preferences";
+import { createSkyQuality, resetSkySample, sampleSkyQuality, skyPixelRatio, skyQualityNames } from "./sky-quality";
 
 export function ReadingSky() {
   const pathname = usePathname();
@@ -49,10 +50,25 @@ function ReadingField() {
       const finePointer = matchMedia("(hover: hover) and (pointer: fine)");
       let depth = 0;
       let frame = 0, last = 0, lastPaint = 0, time = 0, lost = false;
+      const quality = createSkyQuality();
+      const updateResolution = () => {
+        const width = host.clientWidth, height = Math.max(1, host.clientHeight);
+        const cap = width < 640 ? .75 : 1;
+        const ratio = skyPixelRatio(width, height, devicePixelRatio, cap, quality.tier);
+        if (renderer.getPixelRatio() !== ratio) renderer.setPixelRatio(ratio);
+        renderer.setSize(width, height, false);
+        sky.material.uniforms.uResolution.value.set(canvas.width, canvas.height);
+        material.uniforms.uScale.value = canvas.height * .5;
+        material.uniforms.uPixelRatio.value = ratio / Math.min(devicePixelRatio, cap);
+        host.dataset.skyQuality = skyQualityNames[quality.tier];
+        host.dataset.skyPixelRatio = ratio.toFixed(4);
+      };
       const render = (now: number) => {
         frame = 0;
-        if (disposed || lost || document.hidden) { last = 0; return; }
-        if (!moving.current || now - lastPaint >= 1000 / 24) {
+        if (disposed || lost || document.hidden) { last = 0; resetSkySample(quality); return; }
+        const resized = sampleSkyQuality(quality, now, moving.current);
+        if (resized) updateResolution();
+        if (resized || !moving.current || now - lastPaint >= 1000 / 24) {
           const delta = last ? Math.min(.06, (now - last) / 1000) : 0;
           if (moving.current) {
             time += delta;
@@ -83,16 +99,15 @@ function ReadingField() {
       const resume = () => { if (!frame && !lost && !disposed && !document.hidden) frame = requestAnimationFrame(render); };
       const resize = () => {
         const width = host.clientWidth, height = Math.max(1, host.clientHeight);
-        renderer.setPixelRatio(Math.min(devicePixelRatio, width < 640 ? .75 : 1));
-        renderer.setSize(width, height, false);
+        resetSkySample(quality);
+        updateResolution();
         camera.aspect = width / height; camera.updateProjectionMatrix();
-        sky.material.uniforms.uResolution.value.set(canvas.width, canvas.height);
-        material.uniforms.uScale.value = canvas.height * .5;
+        lastPaint = 0;
         geometry.setDrawRange(0, width < 640 ? 420 : 800);
         scroll();
         resume();
       };
-      const visibility = () => { if (document.hidden) { cancelAnimationFrame(frame); frame = 0; last = 0; } else resume(); };
+      const visibility = () => { resetSkySample(quality); if (document.hidden) { cancelAnimationFrame(frame); frame = 0; last = 0; } else resume(); };
       const contextLost = (event: Event) => { event.preventDefault(); lost = true; host.dataset.fallback = "true"; cancelAnimationFrame(frame); frame = 0; };
       const contextRestored = () => { lost = false; last = 0; resize(); };
       wake.current = () => { last = 0; resume(); };

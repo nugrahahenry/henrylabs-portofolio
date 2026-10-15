@@ -39,13 +39,14 @@ async function paintedDust(page) {
 async function arrivalProbe(page) {
   return page.locator(".worldline-backdrop canvas").evaluate(canvas => {
     const gl = canvas.getContext("webgl2");
+    const scaleX = gl.drawingBufferWidth / canvas.clientWidth, scaleY = gl.drawingBufferHeight / canvas.clientHeight;
     const points = JSON.parse(canvas.parentElement.dataset.visitorProbes);
     const reading = [".contact-content h2", ".contact-copy", "footer"].map(selector => document.querySelector(selector).getBoundingClientRect());
     const { stellarX, stellarY, stellarReadStrength, holeOpacity } = canvas.parentElement.dataset;
     if (Number(holeOpacity) > .99 && reading.some(rect => Number(stellarX) >= rect.left && Number(stellarX) <= rect.right && Number(stellarY) >= rect.top && Number(stellarY) <= rect.bottom)) {
       if (Number(stellarReadStrength) < .99) throw Error("original stellar core must protect Contact text locally");
       const pixel = new Uint8Array(4);
-      gl.readPixels(Math.round(Number(stellarX)), Math.round(innerHeight - Number(stellarY)), 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, pixel);
+      gl.readPixels(Math.round(Number(stellarX) * scaleX), Math.round((innerHeight - Number(stellarY)) * scaleY), 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, pixel);
       if (Math.max(...pixel.slice(0, 3)) > 190) throw Error(`stellar reading mask is too bright: ${pixel}`);
     }
     let painted = 0;
@@ -55,16 +56,16 @@ async function arrivalProbe(page) {
         const dx = Math.max(rect.left-point.x,0,point.x-rect.right), dy = Math.max(rect.top-point.y,0,point.y-rect.bottom);
         if (Math.hypot(dx,dy) < point.extent + 8 && point.exposure > .468) throw Error("incoming planet lighting must soften behind Contact text");
       }
-      const size = Math.max(2, Math.ceil(point.radius));
+      const size = Math.max(2, Math.ceil(point.radius * scaleX));
       const pixels = new Uint8Array(size*size*16);
-      gl.readPixels(Math.round(point.x)-size,Math.round(innerHeight-point.y)-size,size*2,size*2,gl.RGBA,gl.UNSIGNED_BYTE,pixels);
+      gl.readPixels(Math.round(point.x*scaleX)-size,Math.round((innerHeight-point.y)*scaleY)-size,size*2,size*2,gl.RGBA,gl.UNSIGNED_BYTE,pixels);
       let min=765,max=0;
       for(let i=0;i<pixels.length;i+=4) {const value=pixels[i]+pixels[i+1]+pixels[i+2]; min=Math.min(min,value); max=Math.max(max,value);}
       if(max-min>20) painted++;
     }
     const star = JSON.parse(canvas.parentElement.dataset.visitorStar);
     const pixel = new Uint8Array(4);
-    gl.readPixels(Math.round(star.x), Math.round(innerHeight - star.y), 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, pixel);
+    gl.readPixels(Math.round(star.x * scaleX), Math.round((innerHeight - star.y) * scaleY), 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, pixel);
     return {points,painted,star:{...star,pixel:[...pixel]}};
   });
 }

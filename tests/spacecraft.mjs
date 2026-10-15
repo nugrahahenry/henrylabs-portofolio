@@ -10,8 +10,9 @@ const targets = process.argv.includes("--phone") ? sizes.slice(3, 5) : process.a
 async function signalPixels(page, kind) {
   return page.locator(".worldline-backdrop canvas").evaluate((canvas, kind) => {
     const host = canvas.parentElement, gl = canvas.getContext("webgl2");
-    const radius = Math.ceil(Number(host.dataset[`${kind}Radius`]));
-    const x = Math.round(Number(host.dataset[`${kind}X`])), y = Math.round(gl.drawingBufferHeight - Number(host.dataset[`${kind}Y`]));
+    const scaleX = gl.drawingBufferWidth / canvas.clientWidth, scaleY = gl.drawingBufferHeight / canvas.clientHeight;
+    const radius = Math.ceil(Number(host.dataset[`${kind}Radius`]) * scaleX);
+    const x = Math.round(Number(host.dataset[`${kind}X`]) * scaleX), y = Math.round((canvas.clientHeight - Number(host.dataset[`${kind}Y`])) * scaleY);
     const left = Math.max(0, x - radius), bottom = Math.max(0, y - radius);
     const width = Math.min(radius * 2, gl.drawingBufferWidth - left), height = Math.min(radius * 2, gl.drawingBufferHeight - bottom);
     if (width <= 0 || height <= 0) return 0;
