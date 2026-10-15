@@ -1,5 +1,11 @@
 # Changelog
 
+## StarGod Portfolio v0.117.0 - 2026-10-16
+
+- Drag enlarged project artwork and certificate previews directly with a mouse or pen, with grab/grabbing feedback and bounded native scroll positions.
+- Preserve native touch scrolling and pinch zoom, keyboard panning, Fit and the viewer's focus return without moving the page underneath.
+- Release drag ownership on pointer cancellation, focus loss, visibility changes, image replacement and closing the viewer. Public watermarks and image sources are unchanged.
+
 ## StarGod Portfolio v0.116.1 - 2026-10-15
 
 - Return from project details to the selected technology and group, including All, without restarting the introduction or landing in the galaxy map.

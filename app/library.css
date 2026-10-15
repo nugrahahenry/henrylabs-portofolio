@@ -173,6 +173,8 @@ html[data-motion="off"] .site-header { transition: none; }
 .project-art-stage[data-image-state="error"] img { visibility: hidden; }
 .project-art-stage[data-zoomed="true"] img { width: 200%; max-width: none; height: auto; min-height: 100%; object-fit: contain; }
 .project-art-stage:focus-visible { outline: 2px solid var(--cyan); outline-offset: -3px; }
+.project-art-stage[data-zoomed="true"], .credential-dialog-image.is-zoomed { cursor: grab; user-select: none; scroll-behavior: auto; }
+.project-art-stage[data-panning="true"], .credential-dialog-image[data-panning="true"] { cursor: grabbing; }
 .project-art-inner > footer { border-top: 1px solid #384d5c; font-size: 13px; color: #bdcfda; }
 .project-art-dialog button:hover { color: var(--cyan); border-color: var(--cyan); }
 .project-art-dialog button:disabled { opacity: .4; cursor: default; }

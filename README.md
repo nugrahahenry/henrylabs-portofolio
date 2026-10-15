@@ -1,6 +1,6 @@
 <div align="center">
 
-# StarGod Portfolio v0.116.1
+# StarGod Portfolio v0.117.0
 
 **I build things I actually see.**
 
@@ -58,6 +58,8 @@ The selected world continues into an unframed project preview, with original-pro
 Near-camera stars continue through project reading, technologies and credentials. Scrolling carries them through depth around protected text and portrait areas, before they yield to the black hole's flow at Contact. Still mode keeps the reading experience quiet.
 
 **Credentials** is a separate library of all 37 learning records. Filter by issuer or type, search a title, and open a full-size watermarked preview with zoom and available PDF previews. Browse the current selection without closing the viewer; Home keeps its gallery limited to the five featured records. Arrow keys move between documents at fitted size and pan the image when zoomed. A small preview remains visible while the full-size image loads, with a retry option on failure. English/Indonesian and motion choices travel with the internal links.
+
+Zoomed artwork and certificates can be dragged directly with a mouse or pen. Touch retains native scrolling and pinch zoom; keyboard panning, Fit, Escape, and focus return remain available. Inspection never moves the universe behind the viewer, and certificate watermarks stay embedded in the public images.
 
 The libraries stay inside the same volumetric nebula, with subtle cursor and scroll parallax behind a quieter reading surface. Project identities sit beside their names, with category counts following the search and artwork clearly labeled. Credentials separate issuer, record type, title and date; the full-preview control stays outside the document image. Reading links remember their origin: a project opened from a technology returns to that selected tool and group, the credential library returns to Home's featured credentials, and catalog details return to their filtered project card. Browser Back follows the same reading context. Direct library visits still offer the universe. Reduced motion freezes the sky and loading indicators; interrupted graphics can recover without reloading the page. A missing thumbnail preserves its space and does not block project details or the full certificate viewer.
 

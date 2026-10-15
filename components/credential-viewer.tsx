@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { ArrowUpRight, ChevronLeft, ChevronRight, LoaderCircle, RotateCcw, X, ZoomIn, ZoomOut } from "lucide-react";
 import type { Credential } from "@/content/credentials";
 import { useSitePreferences } from "./site-preferences";
+import { useImagePan } from "./use-image-pan";
 
 type ViewerProps = {
   record: Credential | null;
@@ -76,6 +77,7 @@ function CertificateDocument({ record }: { record: Credential }) {
   const [status, setStatus] = useState<"loading" | "ready" | "error">("loading");
   const [attempt, setAttempt] = useState(0);
   const [previewAvailable, setPreviewAvailable] = useState(true);
+  const pan = useImagePan(zoomed && status === "ready");
   const { language } = useSitePreferences();
   const isEn = language === "en";
   const zoomLabel = zoomed ? (isEn ? "Fit certificate" : "Sesuaikan sertifikat") : (isEn ? "Zoom certificate" : "Perbesar sertifikat");
@@ -90,10 +92,10 @@ function CertificateDocument({ record }: { record: Credential }) {
   };
   return <>
       <div className="credential-dialog-stage" data-image-state={status}>
-        <div ref={imageArea} className={`credential-dialog-image${zoomed ? " is-zoomed" : ""}`} role="region" aria-label={isEn ? "Certificate image" : "Gambar sertifikat"} aria-busy={status === "loading"} tabIndex={zoomed ? 0 : -1}>
+        <div ref={imageArea} {...pan} className={`credential-dialog-image${zoomed ? " is-zoomed" : ""}`} role="region" aria-label={isEn ? "Certificate image" : "Gambar sertifikat"} aria-busy={status === "loading"} tabIndex={zoomed ? 0 : -1}>
           <div className="credential-dialog-sheet">
             {status !== "ready" && previewAvailable && <img className="credential-dialog-preview" src={record.thumbnail} alt="" aria-hidden="true" onError={() => setPreviewAvailable(false)} />}
-            <img key={attempt} data-credential-original className="credential-dialog-original" src={attempt ? `${record.image}?retry=${attempt}` : record.image} alt={record.alt} onLoad={() => setStatus("ready")} onError={() => setStatus("error")} />
+            <img key={attempt} draggable={false} data-credential-original className="credential-dialog-original" src={attempt ? `${record.image}?retry=${attempt}` : record.image} alt={record.alt} onLoad={() => setStatus("ready")} onError={() => setStatus("error")} />
           </div>
         </div>
         {status !== "ready" && <div className="credential-image-notice">
