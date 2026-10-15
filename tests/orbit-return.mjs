@@ -25,13 +25,16 @@ async function sample(page) {
 }
 try {
   const cases = [[1440, 900], [390, 844]].flatMap(size => [["nalira", "Nalira"], ["pos", "POS Z Shoes"], ["soreva", "Soreva Autonomous Content"]].map(([id, title]) => ({ size, id, title })));
-  for (const { size: [width, height], id, title } of process.argv.includes("--visual") ? cases.filter(item => item.id === "pos" && item.size[0] === 390) : cases) {
+  for (const { size: [width, height], id, title } of process.argv.includes("--visual") ? cases.filter(item => item.id === "pos" && item.size[0] === 390) : process.argv.includes("--phone") ? cases.filter(item => item.size[0] === 390) : cases) {
     const page = await browser.newPage({ viewport: { width, height }, hasTouch: width < 500 });
     const errors = [];
     page.on("pageerror", e => errors.push(e.message));
     await page.goto(`${base}/?world=${id}&lang=id`);
     const scene = await ready(page, id);
-    await page.locator(".hero-stage").evaluate(h => window.scrollTo({ top: h.offsetTop + (h.offsetHeight - innerHeight) * .73, behavior: "instant" }));
+    await page.locator(".hero-stage").evaluate(h => {
+      window.dispatchEvent(new Event("stargod:scroll-cancel"));
+      window.scrollTo({ top: h.offsetTop + (h.offsetHeight - innerHeight) * .73, behavior: "instant" });
+    });
     await page.waitForTimeout(300);
     const point = await scene.locator("canvas").evaluate(canvas => {
       const r = canvas.getBoundingClientRect();
@@ -51,7 +54,15 @@ try {
     check(Math.abs(before.pitch) > .2, `${width}/${id}: drag must actually tilt the orbit`);
     for (const kind of ["browser", "link"]) {
       await page.getByRole("button", { name: "Buka dunia aktif", exact: true }).click();
-      await page.locator(".world-inspector").getByRole("link", { name: "Baca proyek", exact: true }).click();
+      await expect(page.locator(".world-inspector")).toHaveCSS("opacity", "1");
+      await page.locator(".world-inspector").getByRole("link", { name: "Baca proyek", exact: true }).click().catch(async error => {
+        await page.screenshot({ path: `test-results/orbit-return/${width}-${id}-${kind}-failure.png` });
+        console.log(await page.locator(".world-inspector-detail").evaluate(node => {
+          const r = node.getBoundingClientRect(), hero = document.querySelector(".hero-stage");
+          return { bounds: r.toJSON(), phase: hero.dataset.phase, progress: (scrollY - hero.offsetTop) / (hero.offsetHeight - innerHeight), hit: document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2)?.className };
+        }));
+        throw error;
+      });
       await expect(page.locator("h1")).toHaveText(title);
       if (width === 390 && kind === "link") await page.setViewportSize({ width: 844, height: 390 });
       if (kind === "browser") await page.goBack();

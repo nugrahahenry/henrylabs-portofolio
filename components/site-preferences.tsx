@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { createContext, useContext, useEffect, useState, useSyncExternalStore } from "react";
+import { usePathname, useSearchParams } from "next/navigation";
+import { createContext, Suspense, useContext, useEffect, useState, useSyncExternalStore } from "react";
 import type { ComponentProps, ReactNode } from "react";
 import { useReducedMotion } from "motion/react";
 import type { Language } from "@/content/projects";
@@ -34,6 +34,12 @@ type Preferences = {
   toggleLanguage: () => void; toggleMotion: () => void; href: (path: string) => string;
 };
 const Context = createContext<Preferences | null>(null);
+function RouteQuerySync() {
+  const query = useSearchParams();
+  // Next navigation can change only the query, leaving the mounted page/path unchanged.
+  useEffect(() => { window.dispatchEvent(new Event(locationEvent)); }, [query]);
+  return null;
+}
 export function SitePreferences({ children }: { children: ReactNode }) {
   const query = useQuery();
   const [motionReady, setReady] = useState(false);
@@ -54,7 +60,7 @@ export function SitePreferences({ children }: { children: ReactNode }) {
   return <Context.Provider value={{ language, motionOn, motionReady, reducedMotionActive, href,
     toggleLanguage: () => updateQuery({ lang: language === "en" ? "id" : null }, true),
     toggleMotion: () => updateQuery({ motion: enabled ? "off" : null }, true),
-  }}>{children}</Context.Provider>;
+  }}><Suspense fallback={null}><RouteQuerySync /></Suspense>{children}</Context.Provider>;
 }
 export function useSitePreferences() {
   const value = useContext(Context);

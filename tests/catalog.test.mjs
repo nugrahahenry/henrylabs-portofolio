@@ -13,7 +13,7 @@ function loadContent(name) {
   const module = { exports: {} };
   cache.set(file, module.exports);
   const compiled = ts.transpileModule(readFileSync(file, "utf8"), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2020 } }).outputText;
-  const localRequire = specifier => specifier.startsWith("./") ? loadContent(specifier.slice(2)) : require(specifier);
+  const localRequire = specifier => specifier.startsWith("./") ? loadContent(specifier.slice(2)) : specifier.startsWith("../content/") ? loadContent(specifier.slice(11)) : require(specifier);
   new Function("require", "module", "exports", compiled)(localRequire, module, module.exports);
   return module.exports;
 }
@@ -21,6 +21,26 @@ const { projectCatalog, findProject, findWorld, filterProjects, normalizeCategor
 const { certificates } = loadContent("credentials");
 const { orbitTechNodes } = loadContent("technologies");
 const { projectWorkflowNotes } = loadContent("project-workflows");
+const { makerGroups, readMakerRoute, makerRouteHref, makerRouteQuery } = loadContent("../components/maker-route");
+
+test("maker return routes preserve every technology, owner group, All, and selected world", () => {
+  assert.deepEqual(makerGroups.map(group => group.items.length), [6, 6, 13, 25]);
+  for (const [group, entry] of makerGroups.entries()) for (const tool of entry.items) {
+    const route = { chapter: "tools", group, tool, world: "nalira" };
+    assert.deepEqual(readMakerRoute(makerRouteQuery(route)), route);
+    assert.equal(makerRouteHref(route), `/?${makerRouteQuery(route)}`);
+    assert.equal(makerRouteHref(route, "/projects/nalira"), `/projects/nalira?${makerRouteQuery(route)}`);
+  }
+});
+
+test("maker return routes reject unknown chapters and tools and normalize untrusted values", () => {
+  for (const value of ["", "chapter=unknown", "chapter=tools", "chapter=tools&tool=missing", "chapter=https://example.org"]) assert.equal(readMakerRoute(new URLSearchParams(value)), null);
+  const normalized = readMakerRoute(new URLSearchParams("chapter=tools&tool=react&group=build&world=https://example.org&returnTo=https://example.org"));
+  assert.equal(normalized.group, 1);
+  assert.equal(normalized.world, null);
+  assert.equal(makerRouteHref(normalized), "/?chapter=tools&tool=react&group=interface");
+  assert.equal(makerRouteQuery(readMakerRoute(new URLSearchParams("chapter=proof&tool=missing&group=unknown&world=catmoji"))).toString(), "chapter=proof&world=catmoji");
+});
 
 test("public project artwork dimensions reserve the actual source ratio", async () => {
   const { default: sharp } = await import("sharp");

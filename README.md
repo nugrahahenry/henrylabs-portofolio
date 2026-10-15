@@ -1,6 +1,6 @@
 <div align="center">
 
-# StarGod Portfolio v0.116.0
+# StarGod Portfolio v0.116.1
 
 **I build things I actually see.**
 
@@ -37,7 +37,7 @@ The opening lettering has a shallow sculpted edge and a restrained response to a
 
 Each selected project has a bookmarkable place in the universe. Reloading, returning from a project, or using browser Back restores that world with its reading panel closed. Detail pages bring build state, ownership and access forward, followed by a three-step explanation of the existing workflow. Public source, concept artwork and private walkthroughs remain clearly distinguished.
 
-After arrival, sparse nearby stars pass the camera around the opening headline. Their perspective grows as they approach, with a gentle increase in pace during scrolling or Explore. They fade before recycling and settle out of view in the interactive map, reading chapters, and Contact. The distant sky remains independent; this is not a continuous warp tunnel. Still mode removes these passages while preserving the universe.
+After arrival, sparse nearby stars pass the camera around the opening headline. Their perspective grows as they approach, with a gentle increase in pace during scrolling or Explore. They fade before recycling, yield to the interactive map, and continue around protected reading areas before handing over to Contact's gravity flow. The distant sky remains independent; this is not a continuous warp tunnel. Still mode removes these passages while preserving the universe.
 
 StarGod is the working name of the universe, drawn from Henry's longtime alias. **HenryLabs** remains its personal-project galaxy. An authored stellar-orbit mark connects the header, quiet entrance, maker signature, and footer.
 
@@ -59,7 +59,7 @@ Near-camera stars continue through project reading, technologies and credentials
 
 **Credentials** is a separate library of all 37 learning records. Filter by issuer or type, search a title, and open a full-size watermarked preview with zoom and available PDF previews. Browse the current selection without closing the viewer; Home keeps its gallery limited to the five featured records. Arrow keys move between documents at fitted size and pan the image when zoomed. A small preview remains visible while the full-size image loads, with a retry option on failure. English/Indonesian and motion choices travel with the internal links.
 
-The libraries stay inside the same volumetric nebula, with subtle cursor and scroll parallax behind a quieter reading surface. Project identities sit beside their names, with category counts following the search and artwork clearly labeled. Credentials separate issuer, record type, title and date; the full-preview control stays outside the document image. Both libraries offer a direct return to the universe. Reduced motion freezes the sky and loading indicators; interrupted graphics can recover without reloading the page. A missing thumbnail preserves its space and does not block project details or the full certificate viewer.
+The libraries stay inside the same volumetric nebula, with subtle cursor and scroll parallax behind a quieter reading surface. Project identities sit beside their names, with category counts following the search and artwork clearly labeled. Credentials separate issuer, record type, title and date; the full-preview control stays outside the document image. Reading links remember their origin: a project opened from a technology returns to that selected tool and group, the credential library returns to Home's featured credentials, and catalog details return to their filtered project card. Browser Back follows the same reading context. Direct library visits still offer the universe. Reduced motion freezes the sky and loading indicators; interrupted graphics can recover without reloading the page. A missing thumbnail preserves its space and does not block project details or the full certificate viewer.
 
 English is the default, with Indonesian available throughout the main experience. Keyboard navigation, touch controls, reduced motion, and a WebGL fallback keep the work accessible.
 

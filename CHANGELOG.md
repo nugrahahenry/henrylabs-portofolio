@@ -1,5 +1,13 @@
 # Changelog
 
+## StarGod Portfolio v0.116.1 - 2026-10-15
+
+- Return from project details to the selected technology and group, including All, without restarting the introduction or landing in the galaxy map.
+- Connect the credential library back to the featured Home credentials when entered from the maker, while retaining the universe link for direct library visits.
+- Restore the originating project card and keyboard focus with catalog filters, language and motion choices intact; new filter input clears the old card anchor.
+- Keep return context in validated public URLs, including browser Back and reload, without storage requirements or new visual effects.
+- Preserve the focused tool when enabling motion from a linear return, even when featured credentials are also visible below it.
+
 ## StarGod Portfolio v0.116.0 - 2026-10-15
 
 - Extend the existing near-camera star field through project, technology and credential chapters, with local reading and portrait protection instead of whole-chapter suppression.

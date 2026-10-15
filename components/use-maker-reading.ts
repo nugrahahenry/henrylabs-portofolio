@@ -21,7 +21,13 @@ export function useMakerReading(section: RefObject<HTMLElement | null>, progress
     if (!active) { if (reading.current) reading.current.active = false; return; }
     const cards = [...node.querySelectorAll<HTMLElement>(".maker-evidence-card")];
     const focused = document.activeElement instanceof HTMLElement && node.contains(document.activeElement) && !document.activeElement.closest("dialog") ? document.activeElement : null;
-    const proof = current.current.spatial ? progress.get() > MAKER_PROOF_START : (node.querySelector(".maker-evidence")?.getBoundingClientRect().top ?? Infinity) < innerHeight * .65;
+    const focusBounds = focused?.getBoundingClientRect();
+    const visibleFocus = focusBounds && focusBounds.bottom > 0 && focusBounds.top < innerHeight ? focused : null;
+    // In a linear layout both chapters can be visible; the focused reading action wins.
+    const proof = current.current.spatial ? progress.get() > MAKER_PROOF_START
+      : visibleFocus?.closest(".maker-tools-controls, .maker-tool-detail, .maker-tools") ? false
+      : visibleFocus?.closest(".maker-proof-heading, .maker-evidence") ? true
+      : (node.querySelector(".maker-evidence")?.getBoundingClientRect().top ?? Infinity) < innerHeight * .65;
     const focusedCard = cards.indexOf(focused!);
     const nearest = !current.current.spatial && proof ? cards.reduce((best, card, index) => Math.abs(card.getBoundingClientRect().top - innerHeight * .2) < Math.abs(cards[best].getBoundingClientRect().top - innerHeight * .2) ? index : best, 0) : 0;
     reading.current = {

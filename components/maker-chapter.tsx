@@ -4,10 +4,11 @@ import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { ArrowLeft, ArrowRight, ArrowUpRight, Maximize2 } from "lucide-react";
 import { motion, useInView, useMotionValueEvent, useScroll } from "motion/react";
 import { certificates, type Credential } from "@/content/credentials";
-import { orbitTechNodes, stackGroups } from "@/content/technologies";
+import { orbitTechNodes } from "@/content/technologies";
 import { findWorld } from "@/content/catalog";
 import { PortraitReveal } from "./portrait-reveal";
-import { SiteLink, useSitePreferences } from "./site-preferences";
+import { SiteLink, updateQuery, useQuery, useSitePreferences } from "./site-preferences";
+import { makerGroups as groups, readMakerRoute, makerRouteQuery, makerRouteHref, type MakerRoute } from "./maker-route";
 import { CredentialViewer } from "./credential-viewer";
 import { MakerOrbitField } from "./maker-orbit-field";
 import { useMakerReading } from "./use-maker-reading";
@@ -15,7 +16,6 @@ import { requestSmoothScroll, cancelSmoothScroll } from "./smooth-scroll";
 import { makerGroupAt, makerReadingProgress, makerEvidenceAt, MAKER_RETREAT_START, MAKER_PROOF_START, type OrbitRotation } from "./maker-motion";
 
 const featured = certificates.filter(record => record.featuredOrder !== null);
-const groups = [...stackGroups.map((group, i) => ({ label: group.label, items: orbitTechNodes.filter(tech => group.items.some(item => item[0] === tech.label) || i === 2 && !stackGroups.some(entry => entry.items.some(item => item[0] === tech.label))) })), { label: "All", items: orbitTechNodes }];
 
 function ToolIcon({ slug, label, color }: { slug: string; label: string; color: string }) {
   const [failed, setFailed] = useState(false);
@@ -24,8 +24,14 @@ function ToolIcon({ slug, label, color }: { slug: string; label: string; color: 
   return <span className="maker-tool-icon" aria-hidden="true">{failed ? <small>{label.slice(0, 2)}</small> : <img ref={image} src={`https://cdn.simpleicons.org/${slug}/${color}`} width="28" height="28" alt="" loading="lazy" onError={() => setFailed(true)} />}</span>;
 }
 
-export function MakerChapter() {
+export function MakerChapter({ ready = true }: { ready?: boolean }) {
   const { language, motionOn } = useSitePreferences();
+  const query = useQuery();
+  const returnRoute = readMakerRoute(query);
+  const returnKey = returnRoute ? makerRouteQuery(returnRoute).toString() : "";
+  const appliedReturn = useRef("");
+  const restoringRoute = useRef(false);
+  const [historyReturn, setHistoryReturn] = useState(0);
   const en = language === "en";
   const section = useRef<HTMLElement>(null);
   const stage = useRef<HTMLDivElement>(null);
@@ -72,7 +78,7 @@ export function MakerChapter() {
   useMotionValueEvent(scrollYProgress, "change", value => {
     section.current?.style.setProperty("--maker-progress", String(value));
     section.current?.style.setProperty("--tool-retreat", String(Math.min(1, Math.max(0, (value - MAKER_RETREAT_START) / (MAKER_PROOF_START - MAKER_RETREAT_START)))));
-    if (restoring.current) return;
+    if (restoring.current || restoringRoute.current) return;
     setProof(value > MAKER_PROOF_START);
     if (seeking.current) {
       if (Math.abs(scrollY - seeking.current.top) > 1) return;
@@ -108,11 +114,59 @@ export function MakerChapter() {
   }, []);
 
   useEffect(() => {
-    if (!spatial || restoring.current) return;
+    const restoreHistory = () => {
+      // A fast same-page Back can return before the intervening query rendered.
+      appliedReturn.current = "";
+      setHistoryReturn(value => value + 1);
+    };
+    window.addEventListener("popstate", restoreHistory);
+    return () => window.removeEventListener("popstate", restoreHistory);
+  }, []);
+
+  useEffect(() => {
+    if (!spatial || restoring.current || restoringRoute.current) return;
     const value = scrollYProgress.get(), next = makerGroupAt(value);
     scrollGroup.current = next; setGroup(next); setSelected(groups[next].items[0]);
     setProof(value > MAKER_PROOF_START);
   }, [spatial, scrollYProgress]);
+
+  useEffect(() => {
+    if (!returnRoute) { appliedReturn.current = ""; return; }
+    if (!ready || !viewport.width || appliedReturn.current === returnKey) return;
+    cancelSmoothScroll();
+    restoringRoute.current = true;
+    const evidence = returnRoute.chapter === "proof";
+    const target = makerReadingProgress(NaN, returnRoute.group, evidence);
+    scrollGroup.current = returnRoute.group;
+    setGroup(returnRoute.group); setSelected(returnRoute.tool); setProof(evidence);
+    const align = () => {
+      const node = section.current;
+      if (!node) return;
+      const anchor = node.querySelector<HTMLElement>(evidence ? ".maker-proof-heading" : ".maker-tool-detail");
+      const top = spatial ? scrollY + node.getBoundingClientRect().top + Math.max(0, node.offsetHeight - innerHeight) * target : scrollY + (anchor?.getBoundingClientRect().top ?? node.getBoundingClientRect().top) - Math.min(96, innerHeight * .2);
+      window.scrollTo({ top, behavior: "instant" });
+      scrollYProgress.set(target);
+    };
+    // Wait for the selected group and the sticky/linear layout before returning focus.
+    let second = 0;
+    const first = requestAnimationFrame(() => {
+      align();
+      second = requestAnimationFrame(() => {
+        align();
+        const focus = section.current?.querySelector<HTMLElement>(evidence ? ".maker-proof-heading a" : ".maker-tool-detail a") ?? section.current?.querySelector<HTMLElement>(".maker-groups button[aria-pressed='true']");
+        focus?.focus({ preventScroll: true });
+        appliedReturn.current = returnKey;
+        restoringRoute.current = false;
+      });
+    });
+    return () => { cancelAnimationFrame(first); cancelAnimationFrame(second); restoringRoute.current = false; };
+  }, [ready, returnKey, historyReturn, viewport.width, spatial, scrollYProgress]);
+
+  const route = (chapter: MakerRoute["chapter"]): MakerRoute => ({ chapter, group, tool: selected, world: findWorld(query.get("world") ?? "")?.id ?? null });
+  const rememberRoute = (destination: MakerRoute) => {
+    appliedReturn.current = makerRouteQuery(destination).toString();
+    updateQuery({ chapter: destination.chapter, tool: destination.chapter === "tools" ? destination.tool.slug : null, group: destination.chapter === "tools" ? groups[destination.group].label.toLowerCase() : null, intro: null, view: null }, true, true);
+  };
 
   return <section ref={section} className="maker-chapter" id="stack" data-proof={proof} data-motion={motionOn} data-spatial={spatial} aria-labelledby="maker-title">
     <span className="maker-proof-anchor" id="proof" />
@@ -143,9 +197,9 @@ export function MakerChapter() {
       </div>
       <div className="maker-tool-detail" aria-live="polite">
         <strong>{selected.label}</strong>
-        {selected.projectIds.length ? <div>{selected.projectIds.map(id => { const project = findWorld(id)!; return <SiteLink key={id} href={`/projects/${project.slug}`}>{project.name}<ArrowUpRight size={13} /></SiteLink>; })}</div> : <p>{en ? "Part of my working toolkit." : "Bagian dari perangkat kerjaku."}</p>}
+        {selected.projectIds.length ? <div>{selected.projectIds.map(id => { const project = findWorld(id)!; return <SiteLink key={id} href={makerRouteHref(route("tools"), `/projects/${project.slug}`)} onNavigate={() => rememberRoute(route("tools"))}>{project.name}<ArrowUpRight size={13} /></SiteLink>; })}</div> : <p>{en ? "Part of my working toolkit." : "Bagian dari perangkat kerjaku."}</p>}
       </div>
-      <div className="maker-proof-heading"><h3>{en ? "Always learning." : "Terus belajar."}</h3><SiteLink href="/credentials">{en ? "Credential library" : "Library kredensial"}<ArrowUpRight size={17} /></SiteLink></div>
+      <div className="maker-proof-heading"><h3>{en ? "Always learning." : "Terus belajar."}</h3><SiteLink href={makerRouteHref(route("proof"), "/credentials")} onNavigate={() => rememberRoute(route("proof"))}>{en ? "Credential library" : "Library kredensial"}<ArrowUpRight size={17} /></SiteLink></div>
       <div className="maker-evidence" aria-label={en ? "Selected credentials" : "Kredensial pilihan"}>
         {featured.map((certificate, index) => <Evidence key={certificate.id} record={certificate} index={index} spatial={spatial} language={language} progress={scrollYProgress} onOpen={() => setRecord(certificate)} />)}
       </div>

@@ -194,6 +194,7 @@ try {
   await expect(page.locator(".detail-continuation a")).toHaveAttribute("href", /category=client.*lang=id.*motion=off/);
   await page.goBack();
   await expect(page.locator(".project-record")).toHaveCount(2);
+  await page.locator(".desktop-nav").getByRole("link", { name: "Credentials" }).focus();
   await page.locator(".desktop-nav").getByRole("link", { name: "Credentials" }).click();
   await expect(page.locator("h1")).toHaveText("Jejak belajar.");
   await expect(page.locator("html")).toHaveAttribute("data-motion", "off");

@@ -33,6 +33,7 @@ import { StarGodMark } from "./stargod-mark";
 import { SpatialTitle } from "./spatial-title";
 import { UNIVERSE_CHAPTER as chapter, universeLanding, chapterEase, universeHeroOpacity, universePresence } from "./universe-chapter";
 import { recallOrbit, rememberOrbit, type OrbitBookmark, type OrbitHandle } from "./orbit-bookmark";
+import { readMakerRoute } from "./maker-route";
 
 type WorldlineStage = "world" | "method" | "stack";
 type Sector = GalaxyId;
@@ -143,6 +144,7 @@ export function PortfolioExperience() {
   const query = useQuery();
   const returnWorld = query.get("world");
   const returnUniverse = query.get("view") === "universe";
+  const returnMaker = Boolean(readMakerRoute(query));
   const appliedMapRoute = useRef<{ route: string; motion: boolean } | null>(null);
   const restoreMapLanding = useRef(false);
   const restoredLanding = useRef<number>(chapter.landing);
@@ -286,7 +288,7 @@ export function PortfolioExperience() {
     try { introSeen = window.sessionStorage.getItem("henrylabs-intro-seen") === "1"; } catch { /* The introduction also works without storage. */ }
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const replay = new URLSearchParams(window.location.search).get("intro") === "1";
-    const directEntry = Boolean(window.location.hash || new URLSearchParams(window.location.search).get("world") || new URLSearchParams(window.location.search).get("view") === "universe");
+    const directEntry = Boolean(window.location.hash || new URLSearchParams(window.location.search).get("world") || new URLSearchParams(window.location.search).get("view") === "universe" || readMakerRoute(new URLSearchParams(window.location.search)));
     if ((introSeen || directEntry) && !replay || reduced || !motionOn) {
       setIntroProgress(100);
       setIntroDone(true);
@@ -362,6 +364,7 @@ export function PortfolioExperience() {
     }
     setMapView(world ? "orbit" : "universe");
     setShowProjectShowcase(false);
+    if (returnMaker) return;
     // Wait for the restored route's layout before landing inside the sticky map.
     const frame = requestAnimationFrame(() => {
       const hero = heroRef.current;
@@ -372,7 +375,7 @@ export function PortfolioExperience() {
       setMapLanding(top);
     });
     return () => cancelAnimationFrame(frame);
-  }, [returnWorld, returnUniverse, introDone, motionOn, motionReady]);
+  }, [returnWorld, returnUniverse, returnMaker, introDone, motionOn, motionReady]);
 
   useEffect(() => {
     if (!motionOn) return;
@@ -393,7 +396,7 @@ export function PortfolioExperience() {
   // Local selections update the bookmark without replaying the route-entry scroll.
   const rememberMap = (world: string | null) => {
     appliedMapRoute.current = { route: world ?? "universe", motion: motionOn };
-    updateQuery({ world, view: world ? null : "universe", intro: null }, true, true);
+    updateQuery({ world, view: world ? null : "universe", intro: null, chapter: null, tool: null, group: null }, true, true);
   };
   const rememberProjectView = () => {
     const captured = orbitRef.current?.capture();
@@ -533,7 +536,7 @@ export function PortfolioExperience() {
       </motion.section>
 
       <div className="maker-approach" aria-hidden="true" />
-      <MakerChapter />
+      <MakerChapter ready={introDone && motionReady} />
       </div>
 
       <section ref={contactRef} className="contact-section" id="contact" aria-labelledby="contact-title" inert={!introDone}><div className="content-section contact-content"><div><p className="section-kicker section-kicker-dark">Make the next useful thing</p><h2 id="contact-title">{t.contact.title}</h2></div><div className="contact-copy"><p>{t.contact.body}</p><div className="contact-actions"><a className="button button-bright" href="https://wa.me/6289513559554" target="_blank" rel="noreferrer"><MessageCircle size={18} /> WhatsApp <ArrowUpRight size={16} /></a><a className="button button-outline" href="mailto:henrynugraha1210@gmail.com"><Mail size={18} /> Email <ArrowUpRight size={16} /></a></div><div className="social-links"><a href="https://github.com/nugrahahenry" target="_blank" rel="noreferrer"><Github size={19} /> GitHub</a><a href="https://www.linkedin.com/in/nugrahahenry/" target="_blank" rel="noreferrer"><Linkedin size={19} /> LinkedIn</a><a href="https://instagram.com/hnry.dev" target="_blank" rel="noreferrer"><Instagram size={19} /> @hnry.dev</a></div></div></div></section>

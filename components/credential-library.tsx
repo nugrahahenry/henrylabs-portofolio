@@ -7,6 +7,7 @@ import { LibraryFooter } from "./project-library";
 import { LibraryMasthead } from "./library-masthead";
 import { LibraryThumbnail } from "./library-thumbnail";
 import { SiteLink, updateQuery, useQuery, useSitePreferences } from "./site-preferences";
+import { makerRouteHref, readMakerRoute } from "./maker-route";
 
 const issuers = [...new Set(certificates.map(record => record.issuer))].sort();
 const kindIcons: Record<string, LucideIcon> = { Certification: Award, Course: BookOpen, Competition: Trophy, Community: UsersRound, Credential: BadgeCheck, "Completion badge": BadgeCheck, "Workshop record": BookOpen };
@@ -14,6 +15,8 @@ export function CredentialLibrary() {
   const { language } = useSitePreferences();
   const query = useQuery();
   const isEn = language === "en";
+  const maker = readMakerRoute(query);
+  const fromMaker = maker?.chapter === "proof" ? maker : null;
   const search = query.get("q") ?? "";
   const kind = certificateFilters.find(item => item === query.get("kind")) ?? "All";
   const issuer = issuers.includes(query.get("issuer") ?? "") ? query.get("issuer")! : "";
@@ -22,7 +25,7 @@ export function CredentialLibrary() {
   const active = certificates.find(record => record.id === query.get("record")) ?? null;
   const clear = () => updateQuery({ q: null, kind: null, issuer: null, record: null });
   return <main className="library-page credential-library" id="main-content" tabIndex={-1}>
-    <LibraryMasthead title={isEn ? "Credentials." : "Jejak belajar."} description={isEn ? `${certificates.length} learning records. Certifications, coursework, community, and the steps in between.` : `${certificates.length} jejak belajar. Sertifikasi, kelas, komunitas, dan perjalanan di antaranya.`} action={<SiteLink className="library-text-link" href="/?view=universe"><ArrowLeft size={18} />{isEn ? "Back to the universe" : "Kembali ke semesta"}</SiteLink>} />
+    <LibraryMasthead title={isEn ? "Credentials." : "Jejak belajar."} description={isEn ? `${certificates.length} learning records. Certifications, coursework, community, and the steps in between.` : `${certificates.length} jejak belajar. Sertifikasi, kelas, komunitas, dan perjalanan di antaranya.`} action={<SiteLink className="library-text-link" href={fromMaker ? makerRouteHref(fromMaker) : "/?view=universe"} scroll={fromMaker ? false : undefined}><ArrowLeft size={18} />{fromMaker ? (isEn ? "Back to selected credentials" : "Kembali ke kredensial pilihan") : (isEn ? "Back to the universe" : "Kembali ke semesta")}</SiteLink>} />
     <p className="credential-public-note"><ShieldCheck size={17} />{isEn ? "Public copies are watermarked. Unmarked masters are kept privately." : "Salinan publik ber-watermark. Master tanpa watermark disimpan privat."}</p>
     <div className="library-controls credential-filters"><label className="library-search"><Search size={18} /><span className="sr-only">{isEn ? "Search credentials" : "Cari kredensial"}</span><input type="search" value={search} placeholder={isEn ? "Title or issuer" : "Judul atau penerbit"} onChange={event => updateQuery({ q: event.target.value || null }, true)} /></label><label>{isEn ? "Type" : "Jenis"}<select value={kind} onChange={event => updateQuery({ kind: event.target.value === "All" ? null : event.target.value })}>{certificateFilters.map(item => <option value={item} key={item}>{item === "All" ? (isEn ? "All types" : "Semua jenis") : item}</option>)}</select></label><label>{isEn ? "Issuer" : "Penerbit"}<select value={issuer} onChange={event => updateQuery({ issuer: event.target.value || null })}><option value="">{isEn ? "All issuers" : "Semua penerbit"}</option>{issuers.map(item => <option key={item}>{item}</option>)}</select></label></div>
     <div className="library-results" aria-live="polite"><span>{String(results.length).padStart(2, "0")} / {certificates.length} {isEn ? "records" : "dokumen"}</span>{(search || kind !== "All" || issuer) ? <button className="library-text-link" type="button" onClick={clear}><X size={14} />{isEn ? "Clear filters" : "Hapus filter"}</button> : <span>{isEn ? "Portfolio previews" : "Preview portofolio"}</span>}</div>
