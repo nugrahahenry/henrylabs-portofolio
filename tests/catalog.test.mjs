@@ -68,12 +68,25 @@ test("technology satellites retain factual ownership in all galaxies", () => {
   for (const tech of orbitTechNodes) assert.deepEqual(tech.projectIds, projectCatalog.filter(p => p.stack.includes(tech.label)).map(p => p.id));
   assert.deepEqual(orbitTechNodes.find(t => t.label === "n8n").projectIds, ["yventures"]);
 });
-test("26 original credentials have unique IDs, small previews, and preserved featured order", () => {
-  assert.equal(certificates.length, 26);
-  assert.equal(new Set(certificates.map(c => c.id)).size, 26);
+test("37 credentials have unique IDs, small previews, and preserved featured order", () => {
+  assert.equal(certificates.length, 37);
+  assert.equal(new Set(certificates.map(c => c.id)).size, 37);
   assert.equal(certificates[0].id, "google-student-ambassador");
   assert.equal(certificates.filter(c => c.featuredOrder !== null).length, 5);
   assert.equal(certificates.find(c => c.id === "dicoding-oop").title, "Belajar Prinsip Pemrograman SOLID");
   assert.ok(certificates.some(c => c.kind === "Completion badge"));
   for (const record of certificates) for (const file of [record.image, record.thumbnail, record.source].filter(Boolean)) assert.ok(existsSync(`public${file}`), file);
+});
+
+test("October import preserves badge types and only dates printed in the artwork", () => {
+  const added = certificates.slice(26);
+  assert.equal(added.length, 11);
+  for (const record of added) {
+    assert.equal(record.issuer, "Google Cloud");
+    assert.equal(record.kind, "Completion badge");
+    assert.equal(record.featuredOrder, null);
+    assert.equal(record.source, undefined, "image badges must not invent PDFs");
+  }
+  assert.equal(added.filter(record => record.date === "Date not shown").length, 8);
+  assert.equal(added.filter(record => record.date === "Sep 2026").length, 3);
 });

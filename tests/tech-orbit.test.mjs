@@ -56,6 +56,19 @@ test("back labels yield to opaque portrait pixels without hiding transparent-mar
   assert.equal(portraitCoversSatellite(mask, bounds, 28, 50, 10), false, "the visible crescent remains clickable");
 });
 
+test("foreground satellites and their shared tracks clear the portrait scan area", () => {
+  for (const width of [320, 390, 599, 1440]) {
+    const layout = { radius: Math.min(width * .39, 560), depthRadius: Math.min(width * .23, 190), verticalRadius: 125, verticalBias: -40, lanes: 3, faceHalfWidth: width * .16 + 60, faceFloorY: -50 };
+    for (let lane = 0; lane < 3; lane++) for (let step = 0; step < 360; step++) {
+      const p = makerOrbitPoint(step / 360 * Math.PI * 2, lane, layout, {});
+      const scale = 1200 / (1200 - p.z);
+      if (p.z > 0 && Math.abs(p.x * scale) <= layout.faceHalfWidth * .78) assert.ok(p.y * scale <= -50 + 1e-8);
+      const q = makerOrbitPoint((step + .001) / 360 * Math.PI * 2, lane, layout, {});
+      assert.ok(Math.abs(p.y - q.y) < .1, "no pop at the protected lane boundary");
+    }
+  }
+});
+
 test("maker reading positions preserve the chapter across spatial and linear layouts", () => {
   for (const [progress, group] of [[.06, 0], [.2, 1], [.35, 2], [.52, 3]]) {
     assert.equal(makerReadingProgress(progress, group, false), progress);

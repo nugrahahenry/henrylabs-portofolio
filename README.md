@@ -1,6 +1,6 @@
 <div align="center">
 
-# StarGod Portfolio v0.114.12
+# StarGod Portfolio v0.115.0
 
 **I build things I actually see.**
 
@@ -51,7 +51,9 @@ A continuous Three.js universe connects the journey, from distant stars and nebu
 
 Prefer a closer read? **Projects** opens a searchable catalog of all ten worlds, filtered by HenryLabs, University, or Client Work. Each planet and catalog record leads to the same project detail, with ownership, workflow, stack, and honest access boundaries. Continue to the previous or next project within the same galaxy or filtered selection, or return to the universe from that planet; its reading panel stays closed until requested.
 
-**Credentials** is a separate library of all 26 learning records. Filter by issuer or type, search a title, and open a full-size watermarked preview with zoom and available PDF previews. Browse the current selection without closing the viewer; Home keeps its gallery limited to the five featured records. Arrow keys move between documents at fitted size and pan the image when zoomed. A small preview remains visible while the full-size image loads, with a retry option on failure. English/Indonesian and motion choices travel with the internal links.
+Technology group buttons move to their matching scroll chapter instead of changing only the visible icons. Wheel, touch and keyboard input can interrupt the movement. Foreground orbit paths leave the face clear for scanning, and empty detail space no longer blocks the appearance controls.
+
+**Credentials** is a separate library of all 37 learning records. Filter by issuer or type, search a title, and open a full-size watermarked preview with zoom and available PDF previews. Browse the current selection without closing the viewer; Home keeps its gallery limited to the five featured records. Arrow keys move between documents at fitted size and pan the image when zoomed. A small preview remains visible while the full-size image loads, with a retry option on failure. English/Indonesian and motion choices travel with the internal links.
 
 The libraries stay inside the same volumetric nebula, with subtle cursor and scroll parallax behind a quieter reading surface. Project identities sit beside their names, with category counts following the search and artwork clearly labeled. Credentials separate issuer, record type, title and date; the full-preview control stays outside the document image. Both libraries offer a direct return to the universe. Reduced motion freezes the sky and loading indicators; interrupted graphics can recover without reloading the page. A missing thumbnail preserves its space and does not block project details or the full certificate viewer.
 
@@ -102,7 +104,7 @@ Three projects I built end to end, from the business flow to the interface and s
 
 ## Credentials
 
-The portfolio includes **26 original certificates, badges, and participation records**, with five featured records shown first. **Google Student Ambassador, Class of 2026** leads the selection, alongside Google/Gemini learning, Dicoding coursework, competitions, and workshops.
+The portfolio includes **37 certificates, badges, and participation records**, with five featured records shown first. **Google Student Ambassador, Class of 2026** leads the selection, alongside Google/Gemini learning, Dicoding coursework, competitions, and workshops. The latest additions cover cloud networking, data lakes, BigQuery, load balancing, Prometheus, machine learning APIs, and September 2026 Arcade activities. Records retain the type and date supported by their artwork; a skill badge is not presented as a professional certification.
 
 <p align="center">
   <a href="public/assets/certificates/source/google-student-ambassador.pdf">
@@ -149,7 +151,7 @@ This portfolio is **actively being developed**. Hosting is deferred. The project
 | `/` | The interactive three-galaxy journey |
 | `/projects` | Ten projects; category and text filters |
 | `/projects/[slug]` | A shared detail page for each project |
-| `/credentials` | Watermarked previews of all 26 learning records |
+| `/credentials` | Watermarked previews of all 37 learning records |
 
 Content lives in `content/`; catalog pages and orbital reading actions share those records. Reading pages share one quiet volumetric nebula and distant-star field, without the project-map or cinematic scenes. Home and library backgrounds use a bounded pixel budget, with two conservative resolution adjustments after sustained frame pressure. Project planets, the maker orbit, text and controls keep their own resolution. Motion pauses when hidden and stays still with reduced motion; a dark fallback keeps content readable without WebGL. The maker's small 3D scene exists only during its visible technology phase, with the upper galaxy animation paused; it releases its renderer before credentials and Contact. Shared typography roles keep reading sizes and spacing consistent.
 

@@ -5,8 +5,13 @@ import { chromium, expect } from "@playwright/test";
 const url = process.env.PORTFOLIO_URL ?? "http://localhost:3002/";
 const browser = await chromium.launch({ headless: true, executablePath: process.env.CHROME_PATH ?? "C:/Program Files/Google/Chrome/Application/chrome.exe" });
 mkdirSync("test-results/maker-continuity", { recursive: true });
+const settled = (page, progress) => expect.poll(() => page.locator(".maker-chapter").evaluate((node, target) => Math.abs(scrollY - Math.round(scrollY + node.getBoundingClientRect().top + (node.offsetHeight - innerHeight) * target)), progress)).toBeLessThanOrEqual(1);
 async function move(page, value) {
-  await page.locator(".maker-chapter").evaluate((node, value) => window.scrollTo({ top: scrollY + node.getBoundingClientRect().top + (node.offsetHeight - innerHeight) * value, behavior: "instant" }), value);
+  await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+  await page.locator(".maker-chapter").evaluate((node, value) => {
+    window.dispatchEvent(new Event("stargod:scroll-cancel"));
+    window.scrollTo({ top: scrollY + node.getBoundingClientRect().top + (node.offsetHeight - innerHeight) * value, behavior: "instant" });
+  }, value);
   await expect.poll(() => page.locator(".maker-chapter").evaluate(node => Number(node.style.getPropertyValue("--maker-progress")))).toBeCloseTo(value, 2);
 }
 async function inView(locator) {
@@ -30,10 +35,11 @@ try {
     }
     await move(page, .2);
     await page.locator(".maker-groups button").filter({ hasText: "All" }).click();
+    await settled(page, .52);
     await page.setViewportSize({ ...viewport, height: viewport.height - 44 });
     await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
     await expect(page.locator(".maker-groups [aria-pressed='true']")).toContainText("All");
-    await move(page, .21);
+    await move(page, .53);
     await expect(page.locator(".maker-groups [aria-pressed='true']")).toContainText("All");
     await move(page, .35);
     await expect(page.locator(".maker-groups [aria-pressed='true']")).toContainText("Systems");
@@ -91,12 +97,14 @@ try {
     await inView(card);
     await move(page, .2);
     await page.locator(".maker-groups button").filter({ hasText: "All" }).click();
+    await settled(page, .52);
     await page.setViewportSize({ width: 844, height: 390 });
     await inView(page.locator(".maker-groups"));
     await page.locator(".maker-groups button").filter({ hasText: "Build" }).click();
     await page.setViewportSize(viewport);
     await expect(page.locator(".maker-groups [aria-pressed='true']")).toContainText("Build");
     await expect.poll(() => page.locator(".maker-tools").evaluate(node => Number(getComputedStyle(node).opacity))).toBe(1);
+    await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
     await page.locator("#contact").scrollIntoViewIfNeeded();
     await page.evaluate(() => window.scrollTo({ top: document.documentElement.scrollHeight, behavior: "instant" }));
     await expect.poll(() => page.locator(".worldline-backdrop").getAttribute("data-hole-opacity").then(Number)).toBeGreaterThan(.9);

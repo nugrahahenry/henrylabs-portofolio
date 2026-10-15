@@ -123,8 +123,10 @@ export function MakerOrbitField({ items, nodes, paused, rotation, progress, sele
       const controlClearance = (silhouette.bottom + 12 - 70 - height / 2) / (1200 / (1200 - depthRadius)) - verticalBias;
       const verticalRadius = Math.max(25, Math.min(all ? 170 : width < 600 ? 70 : 125, height * .22, controlClearance));
       const lanes = all ? 3 : items.length > 8 ? 2 : 1;
-      Object.assign(layout, { radius, depthRadius, verticalRadius, verticalBias, lanes });
-      const nextTrackKey = `${radius},${depthRadius},${verticalRadius},${verticalBias},${lanes}`;
+      const faceHalfWidth = (silhouette.right - silhouette.left) * .35 + 60;
+      const faceFloorY = height / 2 - (silhouette.top + (silhouette.bottom - silhouette.top) * .54 + 38);
+      Object.assign(layout, { radius, depthRadius, verticalRadius, verticalBias, lanes, faceHalfWidth, faceFloorY });
+      const nextTrackKey = `${radius},${depthRadius},${verticalRadius},${verticalBias},${lanes},${faceHalfWidth},${faceFloorY}`;
       if (trackKey !== nextTrackKey) {
         trackKey = nextTrackKey;
         let offset = 0;
@@ -193,7 +195,8 @@ export function MakerOrbitField({ items, nodes, paused, rotation, progress, sele
     let pointer: { id: number; x: number; y: number; lastX: number; lastTime: number } | undefined;
     let suppressClick = false;
     const down = (event: PointerEvent) => {
-      if (event.button !== 0 || (event.target as Element).closest(".maker-tools-controls, .portrait-states, a")) return;
+      suppressClick = false;
+      if (event.button !== 0 || (event.target as Element).closest(".maker-tools-controls, .portrait-identity, a")) return;
       pointer = { id: event.pointerId, x: event.clientX, y: event.clientY, lastX: event.clientX, lastTime: event.timeStamp };
       suppressClick = false;
     };

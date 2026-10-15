@@ -1,5 +1,14 @@
 # Changelog
 
+## StarGod Portfolio v0.115.0 - 2026-10-15
+
+- Add eleven Google Cloud and Arcade badges to the credential library, bringing the catalog to 37 while retaining the same five Home highlights.
+- Publish baked-watermark previews and optimized thumbnails through a reviewed incremental importer; preserve private originals and all existing public exports.
+- Move the maker scroll position to the selected technology chapter, keeping All selected throughout its journey and allowing visitors to interrupt the movement.
+- Let portrait controls receive clicks through empty technology-detail space and keep portrait scanning separate from orbit dragging.
+- Curve foreground technology lanes below the face, with matching 3D tracks and click targets, so all groups leave room for portrait scanning.
+- Add real-input, responsive, scroll-continuity and new-credential preview regression coverage.
+
 ## StarGod Portfolio v0.114.12 - 2026-10-15
 
 - Cap Home and reading-library background buffers at 1.5 million pixels, retaining the existing detail on ordinary desktop and phone viewports.

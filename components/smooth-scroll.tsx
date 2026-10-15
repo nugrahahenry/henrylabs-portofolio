@@ -11,11 +11,13 @@ type SmoothScrollProps = {
 type ScrollRequest = {
   top: number;
   duration?: number;
+  interruptible?: boolean;
 };
 
 const SCROLL_EVENT = "stargod:scroll-to";
+const CANCEL_SCROLL_EVENT = "stargod:scroll-cancel";
 
-export function requestSmoothScroll(top: number, duration = 0.9) {
+export function requestSmoothScroll(top: number, duration = 0.9, interruptible = false) {
   if (typeof window === "undefined" || !Number.isFinite(top)) return;
 
   if (document.documentElement.dataset.scrollDriver !== "lenis-gsap") {
@@ -24,8 +26,13 @@ export function requestSmoothScroll(top: number, duration = 0.9) {
   }
 
   window.dispatchEvent(new CustomEvent<ScrollRequest>(SCROLL_EVENT, {
-    detail: { top, duration },
+    detail: { top, duration, interruptible },
   }));
+}
+
+export function cancelSmoothScroll() {
+  window.dispatchEvent(new Event(CANCEL_SCROLL_EVENT));
+  window.scrollTo({ top: window.scrollY, behavior: "instant" });
 }
 
 export function SmoothScroll({ enabled }: SmoothScrollProps) {
@@ -53,21 +60,24 @@ export function SmoothScroll({ enabled }: SmoothScrollProps) {
         duration: Math.min(1.2, Math.max(0.35, detail.duration ?? 0.9)),
         easing: (time) => 1 - Math.pow(1 - time, 4),
         force: true,
-        lock: true,
+        lock: !detail.interruptible,
       });
     };
+    const onCancelScroll = () => lenis.scrollTo(window.scrollY, { immediate: true, force: true });
 
     gsap.ticker.add(tick);
     gsap.ticker.lagSmoothing(0);
     document.documentElement.dataset.scrollDriver = "lenis-gsap";
     document.addEventListener("visibilitychange", onVisibilityChange);
     window.addEventListener(SCROLL_EVENT, onScrollRequest);
+    window.addEventListener(CANCEL_SCROLL_EVENT, onCancelScroll);
 
     return () => {
       gsap.ticker.remove(tick);
       document.documentElement.dataset.scrollDriver = "native";
       document.removeEventListener("visibilitychange", onVisibilityChange);
       window.removeEventListener(SCROLL_EVENT, onScrollRequest);
+      window.removeEventListener(CANCEL_SCROLL_EVENT, onCancelScroll);
       lenis.destroy();
     };
   }, [enabled]);

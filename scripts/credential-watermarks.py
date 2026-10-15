@@ -7,6 +7,7 @@ import argparse
 import hashlib
 import io
 import json
+import re
 import shutil
 import subprocess
 import tempfile
@@ -49,15 +50,75 @@ def stamp(image, font_path):
     return Image.alpha_composite(base, overlay)
 
 
+def add_images(batch_path, font_path):
+    """Import a reviewed local JSON list without ever exposing raw images in public/."""
+    batch = json.loads(Path(batch_path).read_text(encoding="utf-8"))
+    manifest = json.loads(MANIFEST.read_text(encoding="utf-8"))
+    checksums_path = MASTERS / "checksums.json"
+    checksums = json.loads(checksums_path.read_text(encoding="utf-8"))
+    assert manifest["watermark"] == TEXT
+    for name, expected in checksums.items():
+        assert digest(MASTERS / name) == expected, f"Master changed: {name}"
+    for name, record in manifest["files"].items():
+        assert digest(PUBLIC / name.lstrip("/")) == record["sha256"], f"Public export changed: {name}"
+    seen_ids, seen_hashes, pending = set(), set(checksums.values()), []
+    for item in batch:
+        slug, source = item["id"], Path(item["source"]).resolve()
+        assert re.fullmatch(r"[a-z0-9]+(?:-[a-z0-9]+)*", slug), "Invalid credential ID"
+        assert slug not in seen_ids, f"Duplicate ID: {slug}"
+        seen_ids.add(slug)
+        assert source.is_file() and source.suffix.lower() == ".png", "Image import accepts PNG masters only"
+        assert not source.is_relative_to(PUBLIC.resolve()), "Do not import public derivatives as masters"
+        name, fingerprint = f"previews/{slug}.png", digest(source)
+        if name in checksums:
+            assert checksums[name] == fingerprint, f"Master ID already used: {slug}"
+            assert f"/assets/certificates/{name}" in manifest["files"]
+            continue
+        assert fingerprint not in seen_hashes, f"Duplicate master: {slug}"
+        seen_hashes.add(fingerprint)
+        for target in [MASTERS / name, ASSETS / name, ASSETS / "thumbnails" / f"{slug}.webp"]:
+            assert not target.exists(), f"Refusing to overwrite: {target.name}"
+        pending.append((slug, source, name, fingerprint))
+    scratch = ROOT / "test-results"
+    scratch.mkdir(exist_ok=True)
+    with tempfile.TemporaryDirectory(prefix="credential-import-", dir=scratch) as tmp:
+        outputs = []
+        for slug, source, name, fingerprint in pending:
+            with Image.open(source) as original:
+                marked = stamp(original, font_path)
+            preview, thumb = Path(tmp) / f"{slug}.png", Path(tmp) / f"{slug}.webp"
+            marked.save(preview, optimize=True)
+            marked.thumbnail((720, 560), Image.Resampling.LANCZOS)
+            marked.save(thumb, quality=84, method=6)
+            outputs.extend([(preview, ASSETS / name), (thumb, ASSETS / "thumbnails" / thumb.name)])
+        for slug, source, name, fingerprint in pending:
+            master = MASTERS / name
+            master.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(source, master)
+            assert digest(master) == fingerprint
+            checksums[name] = fingerprint
+        for source, target in outputs:
+            target.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copyfile(source, target)
+            manifest["files"]["/" + target.relative_to(PUBLIC).as_posix()] = {"sha256": digest(target), "bytes": target.stat().st_size}
+    checksums_path.write_text(json.dumps(checksums, indent=2) + "\n", encoding="utf-8")
+    MANIFEST.write_text(json.dumps(manifest, ensure_ascii=True, indent=2) + "\n", encoding="utf-8")
+    print(f"Imported {len(pending)} images and stamped thumbnails; existing exports unchanged.")
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--initialize", action="store_true")
     parser.add_argument("--pdftoppm", default="pdftoppm")
     parser.add_argument("--font", default="C:/Windows/Fonts/arial.ttf")
+    parser.add_argument("--add-images", help="Reviewed private JSON batch: [{id, source}]")
     args = parser.parse_args()
-    sources = sorted((ASSETS / "previews").glob("*")) + sorted((ASSETS / "source").glob("*.pdf"))
-    assert len(sources) == 34, "Review the catalog before changing the public asset set"
     assert Path(args.font).is_file(), "Provide a local TrueType font with --font"
+    if args.add_images:
+        assert not args.initialize, "Import and initialization are separate operations"
+        add_images(args.add_images, args.font)
+        return
+    sources = sorted((ASSETS / "previews").glob("*")) + sorted((ASSETS / "source").glob("*.pdf"))
     if args.initialize:
         assert not MANIFEST.exists(), "Already initialized; refusing to copy stamped derivatives into masters"
         for source in sources:
@@ -69,6 +130,7 @@ def main():
                 shutil.copy2(source, target)
         (MASTERS / "checksums.json").write_text(json.dumps({str(p.relative_to(ASSETS)).replace('\\', '/'): digest(p) for p in sources}, indent=2))
     checksums = json.loads((MASTERS / "checksums.json").read_text())
+    assert {p.relative_to(ASSETS).as_posix() for p in sources} == set(checksums), "Review the catalog before changing the public asset set"
     for name, expected in checksums.items():
         assert digest(MASTERS / name) == expected, f"Master changed: {name}"
 
@@ -124,7 +186,7 @@ def main():
 
     records = {"/" + p.relative_to(PUBLIC).as_posix(): {"sha256": digest(p), "bytes": p.stat().st_size} for p in sorted(outputs)}
     MANIFEST.write_text(json.dumps({"version": 1, "watermark": TEXT, "files": records}, ensure_ascii=True, indent=2) + "\n", encoding="utf-8")
-    print(f"Published {len(outputs)} stamped files: 26 images, 26 thumbnails, 8 flattened PDFs, 3 README images. Private masters unchanged.")
+    print(f"Published {len(outputs)} stamped files. Private masters unchanged.")
 
 
 if __name__ == "__main__":

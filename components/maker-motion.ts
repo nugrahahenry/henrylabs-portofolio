@@ -21,7 +21,7 @@ export function makerReadingProgress(progress: number, group: number, proof: boo
 
 export type OrbitRotation = { angle: number; velocity: number; dragging: boolean };
 
-export type MakerOrbitLayout = { radius: number; depthRadius: number; verticalRadius: number; verticalBias: number; lanes: number };
+export type MakerOrbitLayout = { radius: number; depthRadius: number; verticalRadius: number; verticalBias: number; lanes: number; faceHalfWidth?: number; faceFloorY?: number };
 type OrbitPoint = { x: number; y: number; z: number };
 
 // Satellites and their tracks share one curve in the portrait's depth space.
@@ -33,6 +33,14 @@ export function makerOrbitPoint(theta: number, laneIndex: number, layout: MakerO
   out.x = Math.cos(theta) * layout.radius * lane;
   out.y = -layout.verticalBias - y;
   out.z = Math.sin(theta) * layout.depthRadius;
+  // Bend the foreground lanes below the face; tracks and hit targets use this same curve.
+  if (layout.faceHalfWidth && layout.faceFloorY !== undefined) {
+    const scale = 1200 / (1200 - out.z);
+    const edge = Math.min(1, Math.max(0, (Math.abs(out.x * scale) / layout.faceHalfWidth - .78) / .22));
+    const front = Math.min(1, Math.max(0, 1 + out.z / Math.max(1, layout.depthRadius * .25)));
+    const weight = (1 - edge * edge * (3 - 2 * edge)) * front * front * (3 - 2 * front);
+    out.y += Math.min(0, layout.faceFloorY / scale - out.y) * weight;
+  }
   return out;
 }
 

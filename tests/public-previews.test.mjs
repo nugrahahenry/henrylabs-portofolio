@@ -4,10 +4,10 @@ import { readFileSync, readdirSync } from "node:fs";
 import test from "node:test";
 import ts from "typescript";
 
-test("all 63 public credential copies match the reviewed baked-watermark exports", () => {
+test("all 85 public credential copies match the reviewed baked-watermark exports", () => {
   const manifest = JSON.parse(readFileSync("public/assets/certificates/watermarks.json", "utf8"));
   assert.equal(manifest.watermark, "Henry Nugraha \u2022 Portfolio Preview");
-  assert.equal(Object.keys(manifest.files).length, 63);
+  assert.equal(Object.keys(manifest.files).length, 85);
   for (const [path, record] of Object.entries(manifest.files)) {
     assert.ok(path.startsWith("/assets/certificates/") || path.startsWith("/assets/readme/"));
     assert.ok(!path.includes(".."));

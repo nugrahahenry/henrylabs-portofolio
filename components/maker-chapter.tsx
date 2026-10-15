@@ -11,7 +11,8 @@ import { SiteLink, useSitePreferences } from "./site-preferences";
 import { CredentialViewer } from "./credential-viewer";
 import { MakerOrbitField } from "./maker-orbit-field";
 import { useMakerReading } from "./use-maker-reading";
-import { makerGroupAt, makerEvidenceAt, MAKER_RETREAT_START, MAKER_PROOF_START, type OrbitRotation } from "./maker-motion";
+import { requestSmoothScroll, cancelSmoothScroll } from "./smooth-scroll";
+import { makerGroupAt, makerReadingProgress, makerEvidenceAt, MAKER_RETREAT_START, MAKER_PROOF_START, type OrbitRotation } from "./maker-motion";
 
 const featured = certificates.filter(record => record.featuredOrder !== null);
 const groups = [...stackGroups.map((group, i) => ({ label: group.label, items: orbitTechNodes.filter(tech => group.items.some(item => item[0] === tech.label) || i === 2 && !stackGroups.some(entry => entry.items.some(item => item[0] === tech.label))) })), { label: "All", items: orbitTechNodes }];
@@ -32,6 +33,7 @@ export function MakerChapter() {
   const paused = useRef(false);
   const rotation = useRef<OrbitRotation>({ angle: 0, velocity: 0, dragging: false });
   const scrollGroup = useRef(0);
+  const seeking = useRef<{ top: number } | null>(null);
   const [group, setGroup] = useState(0);
   const [selected, setSelected] = useState(orbitTechNodes[0]);
   const [record, setRecord] = useState<Credential | null>(null);
@@ -41,6 +43,28 @@ export function MakerChapter() {
   const visible = useInView(section, { margin: "120px" });
   const { scrollYProgress } = useScroll({ target: section, offset: ["start start", "end end"] });
   const items = groups[group].items;
+  const clearSeek = () => {
+    seeking.current = null;
+  };
+  const cancelSeek = () => {
+    if (!seeking.current) return;
+    clearSeek(); cancelSmoothScroll();
+    const next = makerGroupAt(scrollYProgress.get());
+    scrollGroup.current = next; setGroup(next); setSelected(groups[next].items[0]);
+  };
+  const chooseGroup = (index: number) => {
+    if (seeking.current) { clearSeek(); cancelSmoothScroll(); }
+    setGroup(index); setSelected(groups[index].items[0]);
+    const node = section.current;
+    if (!spatial || !node) return;
+    const progress = makerReadingProgress(NaN, index, false);
+    scrollGroup.current = index;
+    // The requested group stays selected while the camera crosses earlier chapters.
+    const top = Math.round(scrollY + node.getBoundingClientRect().top + Math.max(0, node.offsetHeight - innerHeight) * progress);
+    if (Math.abs(scrollY - top) <= 1) return;
+    seeking.current = { top };
+    requestSmoothScroll(top, .65, true);
+  };
   const restoring = useMakerReading(section, scrollYProgress, viewport, spatial, group, (next, evidence, progress) => {
     scrollGroup.current = makerGroupAt(progress);
     setGroup(next); setProof(evidence);
@@ -50,12 +74,32 @@ export function MakerChapter() {
     section.current?.style.setProperty("--tool-retreat", String(Math.min(1, Math.max(0, (value - MAKER_RETREAT_START) / (MAKER_PROOF_START - MAKER_RETREAT_START)))));
     if (restoring.current) return;
     setProof(value > MAKER_PROOF_START);
+    if (seeking.current) {
+      if (Math.abs(scrollY - seeking.current.top) > 1) return;
+      clearSeek(); cancelSmoothScroll();
+    }
     const next = makerGroupAt(value);
     if (spatial && next !== scrollGroup.current) {
       setGroup(next); setSelected(groups[next].items[0]);
     }
     scrollGroup.current = next;
   });
+
+  useEffect(() => {
+    const interrupt = (event: Event) => {
+      if (event instanceof KeyboardEvent && !["Escape", "ArrowUp", "ArrowDown", "PageUp", "PageDown", "Home", "End", " "].includes(event.key)) return;
+      cancelSeek();
+    };
+    const events = ["wheel", "touchstart", "pointerdown", "keydown", "resize", "pagehide"];
+    events.forEach(type => window.addEventListener(type, interrupt, { passive: true }));
+    const hidden = () => { if (document.hidden) cancelSeek(); };
+    document.addEventListener("visibilitychange", hidden);
+    return () => {
+      events.forEach(type => window.removeEventListener(type, interrupt));
+      document.removeEventListener("visibilitychange", hidden);
+      if (seeking.current) { clearSeek(); cancelSmoothScroll(); }
+    };
+  }, [spatial, scrollYProgress]);
 
   useEffect(() => {
     const sync = () => setViewport({ width: innerWidth, height: innerHeight });
@@ -83,7 +127,7 @@ export function MakerChapter() {
         {spatial && visible && !proof && <MakerOrbitField items={items} nodes={nodes} paused={paused} rotation={rotation} progress={scrollYProgress} selected={selected.label} />}
       <div className="maker-tools-controls" onPointerEnter={() => { paused.current = true; }} onPointerLeave={() => { paused.current = false; }}>
         <div role="group" aria-label={en ? "Technology group" : "Kelompok teknologi"} className="maker-groups">
-          {groups.map((entry, index) => <button key={entry.label} type="button" aria-pressed={index === group} onClick={() => { setGroup(index); setSelected(entry.items[0]); }}>{entry.label}<small>{entry.items.length}</small></button>)}
+          {groups.map((entry, index) => <button key={entry.label} type="button" aria-pressed={index === group} onClick={() => chooseGroup(index)}>{entry.label}<small>{entry.items.length}</small></button>)}
         </div>
         {spatial && <div className="maker-orbit-turn">
           <button type="button" title={en ? "Rotate technologies left" : "Putar teknologi ke kiri"} aria-label={en ? "Rotate technologies left" : "Putar teknologi ke kiri"} onClick={() => { rotation.current.velocity = -3.5; }}><ArrowLeft size={17} /></button>

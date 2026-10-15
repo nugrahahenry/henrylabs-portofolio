@@ -7,7 +7,11 @@ const browser = await chromium.launch({ headless: true, executablePath: process.
 const url = process.env.PORTFOLIO_URL ?? "http://localhost:3002/";
 const sizes = [{ width: 1440, height: 900 }, { width: 866, height: 900 }, { width: 768, height: 1024 }, { width: 390, height: 844 }, { width: 360, height: 800 }, { width: 844, height: 390 }];
 const targets = process.argv.includes("--small") ? [{ width: 320, height: 740 }, { width: 360, height: 640 }] : process.argv.includes("--fallback") ? [] : process.argv.includes("--phone") ? [sizes[3], sizes[4]] : process.argv.includes("--capture") ? [sizes[0], sizes[3]] : sizes;
-const move = (page, progress) => page.locator(".maker-chapter").evaluate((node, value) => window.scrollTo({ top: scrollY + node.getBoundingClientRect().top + Math.max(0, node.offsetHeight - innerHeight) * value, behavior: "instant" }), progress);
+const move = (page, progress) => page.locator(".maker-chapter").evaluate((node, value) => {
+  window.dispatchEvent(new Event("stargod:scroll-cancel"));
+  window.scrollTo({ top: scrollY + node.getBoundingClientRect().top + Math.max(0, node.offsetHeight - innerHeight) * value, behavior: "instant" });
+}, progress);
+const settled = (page, progress) => expect.poll(() => page.locator(".maker-chapter").evaluate((node, target) => Math.abs(scrollY - Math.round(scrollY + node.getBoundingClientRect().top + (node.offsetHeight - innerHeight) * target)), progress)).toBeLessThanOrEqual(1);
 mkdirSync("test-results/portrait", { recursive: true });
 try {
   for (const viewport of targets) {
@@ -65,10 +69,12 @@ try {
     assert.ok(await page.locator(".portrait-states button").evaluateAll(buttons => buttons.every(button => { const b = button.getBoundingClientRect(); return document.elementFromPoint(b.x+b.width/2,b.y+b.height/2)?.closest("button") === button; })), "all portrait controls remain unobstructed by satellites");
     for (const group of ["Build", "Interface", "Systems"]) {
       await page.locator(".maker-groups button").filter({ hasText: group }).click();
+      if (wide) await settled(page,{Build:.06,Interface:.2,Systems:.35}[group]);
       for (const label of await page.locator(".maker-tool").evaluateAll(nodes => nodes.map(node => node.getAttribute("aria-label")))) found.add(label);
     }
     assert.equal(found.size, 25);
     await page.locator(".maker-groups button").filter({ hasText: "Build" }).click();
+    if (wide) await settled(page,.06);
     if (wide) {
       const field = page.locator(".maker-orbit-field");
       const original = await field.locator("canvas").elementHandle();

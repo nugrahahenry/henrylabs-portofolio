@@ -253,6 +253,94 @@
     "/assets/readme/google-student-ambassador.webp": {
       "sha256": "49f5ce60c26edc93b5becafde758332f6936b0b4ed0a80aeb1c954e7a7dad3db",
       "bytes": 81350
+    },
+    "/assets/certificates/previews/google-skills-secure-cloud-network.png": {
+      "sha256": "e3c6d440f24b7da61bbe45fa5d946e9d7ef35004925646729eef5c6124b04b61",
+      "bytes": 103961
+    },
+    "/assets/certificates/thumbnails/google-skills-secure-cloud-network.webp": {
+      "sha256": "570860081693bcf59594479df255517976b01233b8b0f364da98ea5ceb446d33",
+      "bytes": 16696
+    },
+    "/assets/certificates/previews/google-skills-secure-data-lake.png": {
+      "sha256": "65f2f20bacefadcbe9887b664adee548c94fa50fee8f8c5a505fc591b6e0284c",
+      "bytes": 116473
+    },
+    "/assets/certificates/thumbnails/google-skills-secure-data-lake.webp": {
+      "sha256": "e501800311fbbc5d9a1e64045350fbec8a5f805caffe4ee449772e8514cb074f",
+      "bytes": 19060
+    },
+    "/assets/certificates/previews/google-skills-streaming-data-lake.png": {
+      "sha256": "491008cda78008aa57a5217518e235611dbcc1a46a2f35fcdec78fa310778e1d",
+      "bytes": 119265
+    },
+    "/assets/certificates/thumbnails/google-skills-streaming-data-lake.webp": {
+      "sha256": "59c0fdb3882bf681ed2238744a70940ad0d0746286255aa8c647d508a5407f2b",
+      "bytes": 19592
+    },
+    "/assets/certificates/previews/google-skills-bigquery-insights.png": {
+      "sha256": "29efb98b33bd61c2453a86d12f2e0cb1fb72790a4a62744c73ef022814fc4302",
+      "bytes": 107179
+    },
+    "/assets/certificates/thumbnails/google-skills-bigquery-insights.webp": {
+      "sha256": "fef26acb423d29c5ba8beb9dfe47fb6600578446e7fc5bcbe07e454be6c0504e",
+      "bytes": 17268
+    },
+    "/assets/certificates/previews/google-skills-cloud-load-balancing.png": {
+      "sha256": "bd10acf0085b9ea0f45bf63d03f5db223f408b88deadc827e59558f03b697fb9",
+      "bytes": 108606
+    },
+    "/assets/certificates/thumbnails/google-skills-cloud-load-balancing.webp": {
+      "sha256": "4cd83c49a632cc5aba2c17c51cb52fff50d01ab918dc820e22e290d059036397",
+      "bytes": 19510
+    },
+    "/assets/certificates/previews/google-skills-managed-prometheus.png": {
+      "sha256": "07bc33bb432dd209dfcf55e51b9838eb574e2ef20c2b5cc04c1f1340e4f0ef48",
+      "bytes": 115700
+    },
+    "/assets/certificates/thumbnails/google-skills-managed-prometheus.webp": {
+      "sha256": "ec7dbab3eda3af047580b01721e9c7858b16bafbc2df6a9f5c7592a81d2c6250",
+      "bytes": 19670
+    },
+    "/assets/certificates/previews/google-skills-predictive-bigquery.png": {
+      "sha256": "1ec5bb6386d0c8ced8a79b673da6f1b7831712f4eef995fd5007dd12947d79f8",
+      "bytes": 112494
+    },
+    "/assets/certificates/thumbnails/google-skills-predictive-bigquery.webp": {
+      "sha256": "a63421be89e20d6de438b386017926c39735dfd97cbbe26d1fcc9910bc05c053",
+      "bytes": 18566
+    },
+    "/assets/certificates/previews/google-skills-machine-learning-apis.png": {
+      "sha256": "35c291507b658565550251e769a7b915744c88825f761dedf57dd884792a048a",
+      "bytes": 111480
+    },
+    "/assets/certificates/thumbnails/google-skills-machine-learning-apis.webp": {
+      "sha256": "578b4727b057beb3091e62527563e997a23640a05d62501613a93ce7d6ce0417",
+      "bytes": 18786
+    },
+    "/assets/certificates/previews/google-skills-arcade-devops-engineer.png": {
+      "sha256": "a3cc122c16d8e69d0bf6186b1d1cf5bb955b3623315be61280d99d4afa3e5726",
+      "bytes": 1083386
+    },
+    "/assets/certificates/thumbnails/google-skills-arcade-devops-engineer.webp": {
+      "sha256": "122cfae36117b27af4cdf75e3f02fa85d9190174ae5051c0f179d4d8ed89a4fd",
+      "bytes": 69776
+    },
+    "/assets/certificates/previews/google-skills-arcade-pitch-perfect.png": {
+      "sha256": "a16664a7d5af5f3cb103fa778715d8f69f8f7b03d1e4fbf28ec769340d1945fa",
+      "bytes": 989246
+    },
+    "/assets/certificates/thumbnails/google-skills-arcade-pitch-perfect.webp": {
+      "sha256": "1dce98744ca48c0e7c9a6ae829e4276438d6b90bc350dbe9f9e3d4be9e333112",
+      "bytes": 64612
+    },
+    "/assets/certificates/previews/google-skills-arcade-trail.png": {
+      "sha256": "1c6bce8252832d08159e3b145e70aaf3d57a3f525b6be24ef6863d7e3addf7ae",
+      "bytes": 1196279
+    },
+    "/assets/certificates/thumbnails/google-skills-arcade-trail.webp": {
+      "sha256": "1158171efe38a2bbbefee619aa04bd8cac5c152208113f7693a22c56e69901b5",
+      "bytes": 57670
     }
   }
 }

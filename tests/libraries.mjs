@@ -94,7 +94,7 @@ try {
     await page.getByRole("link", { name: "All projects", exact: true }).click();
     await expect(page.locator(".project-record")).toHaveCount(3);
     await page.goto(`${base}/credentials`);
-    await expect(page.locator(".credential-record")).toHaveCount(26);
+    await expect(page.locator(".credential-record")).toHaveCount(37);
     await fits(page);
     await expect(page.locator(".credential-record").first()).toContainText("Google Student Ambassador");
     await expect(page.locator(".credential-record .library-thumbnail").first()).toHaveAttribute("data-image-state", "ready");
@@ -124,7 +124,7 @@ try {
     await dialog.getByRole("button", { name: "Next certificate", exact: true }).click();
     await expect(dialog.locator("h2")).toHaveText("Gemini Certified Educator");
     await expect(page).toHaveURL(/record=gemini-certified/);
-    await expect(dialog.locator(".credential-dialog-count")).toHaveText("02 / 26");
+    await expect(dialog.locator(".credential-dialog-count")).toHaveText("02 / 37");
     await page.keyboard.press("ArrowLeft");
     await expect(dialog.locator("h2")).toHaveText("Class of 2026 Graduation");
     await page.keyboard.press("ArrowRight");
@@ -159,7 +159,7 @@ try {
     await page.getByRole("searchbox").fill("zzzzzz");
     await expect(page.locator(".credential-record")).toHaveCount(0);
     await page.getByRole("button", { name: "Clear filters" }).first().click();
-    await expect(page.locator(".credential-record")).toHaveCount(26);
+    await expect(page.locator(".credential-record")).toHaveCount(37);
     assert.deepEqual(errors, []);
     await page.close();
     console.log(`Libraries, query return/reload, viewer/focus, overflow passed at ${viewport.width}x${viewport.height}`);
@@ -224,7 +224,7 @@ try {
   await page.keyboard.press("Enter");
   await expect(page.locator("#main-content")).toBeFocused();
   await page.goto(`${base}/credentials?kind=invalid&record=unknown`);
-  await expect(page.locator(".credential-record")).toHaveCount(26);
+  await expect(page.locator(".credential-record")).toHaveCount(37);
   await expect(page.getByRole("dialog")).toHaveCount(0);
   await page.goto(`${base}/projects?lang=id&motion=off`);
   await expect(page.locator("html")).toHaveAttribute("data-preferences-ready", "true");

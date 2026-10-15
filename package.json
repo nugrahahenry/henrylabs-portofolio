@@ -1,6 +1,6 @@
 {
   "name": "henrylabs-portfolio",
-  "version": "0.114.12",
+  "version": "0.115.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -13,6 +13,8 @@
     "test:browser": "node tests/browser.mjs",
     "test:maker": "node tests/maker.mjs",
     "test:maker-continuity": "node tests/maker-continuity.mjs",
+    "test:maker-input": "node tests/maker-input.mjs",
+    "test:credential-import": "node tests/credential-import.mjs",
     "test:background": "node tests/background.mjs",
     "test:sky-lighting": "node tests/sky-lighting.mjs",
     "test:passage": "node tests/camera-passage.mjs",
