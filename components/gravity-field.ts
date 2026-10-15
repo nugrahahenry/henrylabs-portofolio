@@ -40,9 +40,9 @@ export function gravityMaterial(target: THREE.Vector3, size: number, streak = fa
         viewSource *= position.z / viewSource.z;
         vec3 source = (uCameraWorld * vec4(viewSource, 1.0)).xyz;` : "vec3 source = (modelMatrix * vec4(position, 1.0)).xyz;"}
         float seed = ${stream ? "aSeed" : "fract(sin(dot(position.xy, vec2(12.9898, 78.233))) * 43758.5453)"};
-        float influence = smoothstep(.08, .24, seed);
         ${stream ? "float phase = fract(uTime * .05 + seed);" : ""}
-        float travel = ${stream ? `max(0.0, phase ${streak ? "- aTail * .014" : ""}) * uTravelScale` : `clamp(uPull * influence * (1.18 + seed * .12) - seed * .12 ${streak ? "- aTail * uPull * .012" : ""}, 0.0, 1.0)`};
+        // Seed staggers arrival, never the final capture distance. Distant stars use a separate material.
+        float travel = ${stream ? `max(0.0, phase ${streak ? "- aTail * .014" : ""}) * uTravelScale` : `clamp(uPull * (1.18 + seed * .12) - seed * .12 ${streak ? "- aTail * uPull * .012" : ""}, 0.0, 1.0)`};
         vec3 delta = source - uTarget;
         float contraction = pow(1.0 - travel, 1.35);
         float startAngle = atan(delta.y, delta.x);

@@ -1,5 +1,11 @@
 # Changelog
 
+## StarGod Portfolio v0.117.1 - 2026-10-16
+
+- Fix local stars and trails stopping short of the black hole by varying capture timing rather than their final travel distance.
+- Preserve continuous dust, independent distant stars, reversible scroll, planet arrival timing and the existing rendering budget.
+- Add a real-WebGL regression covering complete absorption, rest, reverse paths and the separate ambient layers.
+
 ## StarGod Portfolio v0.117.0 - 2026-10-16
 
 - Drag enlarged project artwork and certificate previews directly with a mouse or pen, with grab/grabbing feedback and bounded native scroll positions.

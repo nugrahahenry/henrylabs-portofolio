@@ -1,6 +1,6 @@
 <div align="center">
 
-# StarGod Portfolio v0.117.0
+# StarGod Portfolio v0.117.1
 
 **I build things I actually see.**
 
@@ -56,6 +56,8 @@ Technology group buttons move to their matching scroll chapter instead of changi
 The selected world continues into an unframed project preview, with original-proportion artwork and readable ownership, status and evidence. Translucent technology shells share the universe's depth while keeping each logo and its reading controls distinct.
 
 Near-camera stars continue through project reading, technologies and credentials. Scrolling carries them through depth around protected text and portrait areas, before they yield to the black hole's flow at Contact. Still mode keeps the reading experience quiet.
+
+Local stars caught by the black hole complete their spiral instead of lingering near its edge. Dust keeps circulating between planet arrivals, while the distant sky stays independent. Reversing the scroll restores the same local field.
 
 **Credentials** is a separate library of all 37 learning records. Filter by issuer or type, search a title, and open a full-size watermarked preview with zoom and available PDF previews. Browse the current selection without closing the viewer; Home keeps its gallery limited to the five featured records. Arrow keys move between documents at fitted size and pan the image when zoomed. A small preview remains visible while the full-size image loads, with a retry option on failure. English/Indonesian and motion choices travel with the internal links.
 
@@ -166,6 +168,8 @@ Certificate lists and viewers use permanently watermarked derivatives. `scripts/
 Published portrait derivatives live in `public/assets/portrait/`. `node scripts/portrait-exports.mjs` recreates them from four selected local masters in the Git-ignored `assets/henry/portraits/` folder. Source photographs and generation drafts are private and are not required to run the public clone.
 
 Route and accessibility checks: `npm run test:libraries`; entrance and exploration window: `npm run test:arrival`; galaxy integration: `npm run test:galaxies`; portrait choreography: `npm run test:maker`; rotation and reading continuity: `npm run test:maker-continuity`; background pixel budgets and controlled-load checks: `npm run test:sky-quality`.
+
+Local-star capture shaders: `npm run test:gravity-field` uses isolated real WebGL without a running site. Contact choreography: `npm run test:closing` checks the complete scene, recurring dust and planets, and scroll reversal against `PORTFOLIO_URL` (default `http://localhost:3002/`).
 
 <details>
 <summary>About the README visuals</summary>
