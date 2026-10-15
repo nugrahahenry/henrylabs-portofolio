@@ -22,6 +22,7 @@ export const projects: Array<{
   evidence: Record<Language, string>;
   next: Record<Language, string>;
   media?: string;
+  mediaSize?: readonly [number, number];
   mediaAlt?: string;
   mediaKind?: "artwork" | "concept";
   source?: string;
@@ -50,6 +51,7 @@ export const projects: Array<{
     evidence: { en: "Live product and open source repository", id: "Produk live dan repository open source" },
     next: { en: "Inspect the live interaction or read the source", id: "Coba interaksi live atau baca source" },
     media: "/assets/projects/catmoji-hero.png",
+    mediaSize: [1280, 400],
     mediaAlt: "Catmoji product artwork with the Moji mascot and gesture recognition concept",
     mediaKind: "artwork",
     source: "https://github.com/nugrahahenry/AI-Gesture-Cat",
@@ -78,6 +80,7 @@ export const projects: Array<{
     evidence: { en: "Public MVP with a grounded learning workflow", id: "MVP publik dengan workflow belajar yang grounded" },
     next: { en: "Open the MVP and follow the capture journey", id: "Buka MVP dan ikuti capture journey" },
     media: "/assets/projects/nalira-ambient.svg",
+    mediaSize: [640, 420],
     mediaAlt: "Nalira folded-light ambient artwork showing source fragments opening into a structured learning surface",
     mediaKind: "concept",
   },
@@ -153,6 +156,7 @@ export const projects: Array<{
     evidence: { en: "Live product and original product artwork", id: "Produk live dan artwork produk asli" },
     next: { en: "Try the live photobooth in your browser", id: "Coba photobooth live di browser" },
     media: "/assets/projects/polara-og.png",
+    mediaSize: [1200, 630],
     mediaAlt: "Polara product artwork with a photo strip and the original mascot",
     mediaKind: "artwork",
   },

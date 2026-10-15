@@ -27,6 +27,9 @@ html .contact-content h2 { font-size: 68px; line-height: 1.08; max-width: 12ch; 
 html .contact-copy > p { font-size: var(--type-body); line-height: 1.7; color: var(--text-reading); }
 html :is(.library-heading h1, .detail-identity h1) { font-size: var(--type-title); font-weight: 600; line-height: 1.08; }
 html .home-preview-heading h2 { font-size: var(--type-section); line-height: 1.12; }
+html :is(.home-project-preview, .home-preview-heading) * { letter-spacing: 0; }
+.home-preview-title { text-shadow: 0 -.5px .5px #ffffff33, 0 1px 1px #8198a8, 0 3px 2px #162d40, 0 8px 16px #03081580; }
+.home-project-preview .library-stack li { font: 13px/1.6 var(--display); color: #cbdde5; }
 html :is(.record-status, .record-ownership, .record-category, .detail-art figcaption, .credential-filters > label:not(.library-search)) { font-size: var(--type-label); line-height: 1.6; }
 html .project-record-system > div > span { font-size: 13px; line-height: 1.5; }
 html .project-record p { font-size: 16px; line-height: 1.7; }

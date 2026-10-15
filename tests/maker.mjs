@@ -17,6 +17,7 @@ try {
   for (const viewport of targets) {
     const page = await browser.newPage({ viewport });
     const errors = []; page.on("pageerror", e => errors.push(e.message));
+    page.on("console", message => { if (/Shader Error|THREE.WebGLProgram/.test(message.text())) errors.push(message.text()); });
     await page.addInitScript(() => sessionStorage.setItem("henrylabs-intro-seen", "1"));
     await page.goto(url, { waitUntil: "domcontentloaded" });
     await page.locator(".intro-loader").waitFor({ state: "hidden" });

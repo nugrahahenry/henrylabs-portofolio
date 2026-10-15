@@ -1,5 +1,13 @@
 # Changelog
 
+## StarGod Portfolio v0.115.1 - 2026-10-15
+
+- Continue the selected world into an unframed project preview, with one shared identity and artwork shown at its original aspect ratio.
+- Align project and maker text roles while retaining readable ownership, status, evidence and detail actions over the universe.
+- Give technology satellites translucent, rim-lit shells using their existing draw calls, preserving original logo colors, paths and face-clear controls.
+- Remove empty light backing around featured credential artwork and retain permanent watermarks and the full-size viewer.
+- Cover source dimensions, responsive reading, artwork inspection and shader compilation in focused regression tests.
+
 ## StarGod Portfolio v0.115.0 - 2026-10-15
 
 - Add eleven Google Cloud and Arcade badges to the credential library, bringing the catalog to 37 while retaining the same five Home highlights.

@@ -22,6 +22,14 @@ const { certificates } = loadContent("credentials");
 const { orbitTechNodes } = loadContent("technologies");
 const { projectWorkflowNotes } = loadContent("project-workflows");
 
+test("public project artwork dimensions reserve the actual source ratio", async () => {
+  const { default: sharp } = await import("sharp");
+  for (const project of projectCatalog.filter(project => project.media)) {
+    const metadata = await sharp(`public${project.media}`).metadata();
+    assert.deepEqual(project.mediaSize, [metadata.width, metadata.height], project.id);
+  }
+});
+
 test("each public project has three bilingual workflow explanations matching its ordered steps", () => {
   assert.deepEqual(Object.keys(projectWorkflowNotes).sort(), projectCatalog.map(p => p.id).sort());
   for (const project of projectCatalog) for (const language of ["en", "id"]) {

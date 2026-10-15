@@ -50,7 +50,17 @@ export function MakerOrbitField({ items, nodes, paused, rotation, progress, sele
     const cap = new THREE.SphereGeometry(1.008, 24, 16, Math.PI * .28, Math.PI * .44, Math.PI * .28, Math.PI * .44);
     const planets = orbitTechNodes.map(item => {
       const group = new THREE.Group();
-      const material = new THREE.MeshPhysicalMaterial({ color: `#${item.color}`, metalness: .4, roughness: .3, clearcoat: 1, transparent: true });
+      const tint = new THREE.Color(`#${item.color}`);
+      const material = new THREE.MeshPhysicalMaterial({ color: new THREE.Color("#172938").lerp(tint, .5), emissive: tint, emissiveIntensity: .1, metalness: .12, roughness: .24, clearcoat: 1, clearcoatRoughness: .12, transparent: true, depthWrite: false });
+      // A readable rim and translucent center share the existing body draw, not another shell.
+      material.onBeforeCompile = shader => {
+        shader.fragmentShader = shader.fragmentShader.replace("#include <dithering_fragment>", `
+          float shellEdge = pow(1.0 - abs(dot(normalize(normal), normalize(vViewPosition))), 2.4);
+          gl_FragColor.a *= 0.38 + 0.62 * shellEdge;
+          gl_FragColor.rgb += vec3(0.46, 0.65, 0.70) * shellEdge * 0.70;
+          #include <dithering_fragment>
+        `);
+      };
       const body = new THREE.Mesh(geometry, material);
       const surface = document.createElement("canvas"); surface.width = surface.height = 128;
       const ctx = surface.getContext("2d")!;
@@ -160,7 +170,8 @@ export function MakerOrbitField({ items, nodes, paused, rotation, progress, sele
         const size = (width < 600 ? 22 : 30) * (all ? .84 : 1) * (selected === planet.label ? 1.1 : 1);
         planet.group.scale.setScalar(size * planet.presence);
         planet.group.rotation.set(Math.sin(theta) * .08, Math.sin(theta + .4) * .25, Math.cos(theta) * .12);
-        planet.material.opacity = (1 - retreat) * planet.presence; planet.logoMaterial.opacity = planet.material.opacity;
+        planet.logoMaterial.opacity = (1 - retreat) * planet.presence;
+        planet.material.opacity = planet.logoMaterial.opacity * .9;
         projected.copy(planet.group.position).project(camera);
         const node = index >= 0 ? nodes.current[index] : null;
         if (node) {

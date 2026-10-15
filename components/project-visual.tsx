@@ -15,7 +15,7 @@ export function ProjectVisual({ project }: { project: CatalogProject }) {
   if (!project.media) return null;
   return <figure className="project-visual" data-project={project.id}>
     <button type="button" className="project-visual-open" onClick={() => setOpen(true)} disabled={failed} aria-label={`${en ? "Inspect artwork" : "Lihat artwork"}: ${project.name}`}>
-      {!failed && <img key={attempt} src={attempt ? `${project.media}?retry=${attempt}` : project.media} alt={project.mediaAlt ?? project.name} loading="lazy" onError={() => setFailed(true)} />}
+      {!failed && <img key={attempt} src={attempt ? `${project.media}?retry=${attempt}` : project.media} width={project.mediaSize?.[0]} height={project.mediaSize?.[1]} alt={project.mediaAlt ?? project.name} loading="lazy" onError={() => setFailed(true)} />}
       {!failed && <span className="project-visual-expand" aria-hidden="true"><Expand size={18} /></span>}
     </button>
     {failed && <div className="project-visual-error"><p role="status">{en ? "Artwork could not load." : "Artwork belum berhasil dimuat."}</p><button type="button" aria-label={en ? "Retry artwork" : "Coba muat artwork lagi"} title={en ? "Retry artwork" : "Coba muat artwork lagi"} onClick={() => { setAttempt(value => value + 1); setFailed(false); }}><RotateCcw size={18} /></button></div>}

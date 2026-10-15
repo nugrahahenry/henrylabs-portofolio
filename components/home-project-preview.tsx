@@ -25,18 +25,18 @@ export function HomeProjectPreview({ project, onRead }: { project: CatalogProjec
   return <>
     <motion.div ref={heading} className="home-preview-heading" style={motionOn ? { y: headingY } : undefined}>
       <div className="home-preview-heading-copy">
-        <span className="home-preview-kicker"><span className="live-pulse" /> {isEn ? "Selected world" : "Dunia terpilih"} / {categories[project.category][language]}</span>
-        <h2 id="work-title">{isEn ? "A world, closer." : "Satu dunia, lebih dekat."}</h2>
+        <h2 id="work-title"><span className="home-preview-title">{isEn ? "A world, closer." : "Satu dunia, lebih dekat."}</span></h2>
+        <span className="home-preview-context">{isEn ? "Selected world" : "Dunia terpilih"}<span aria-hidden="true">/</span>{categories[project.category][language]}</span>
       </div>
       <SiteLink href="/projects" className="library-text-link">{isEn ? "All 10 projects" : "Semua 10 proyek"}<ArrowRight size={18} /></SiteLink>
     </motion.div>
-    <article ref={article} className="home-project-preview" data-project={project.id} style={{ "--record-color": project.color } as CSSProperties}>
+    <article ref={article} className="home-project-preview" aria-labelledby="home-project-name" data-project={project.id} style={{ "--record-color": project.color, "--artwork-ratio": project.mediaSize?.join(" / ") } as CSSProperties}>
+      <div className="home-project-identity"><span className="home-project-emblem" aria-hidden="true"><ProjectMark project={project} /></span><h3 id="home-project-name">{project.name}</h3></div>
       <motion.div className="home-project-media" style={motionOn ? { y: mediaY, scale: mediaScale } : undefined}>
         {project.media ? <ProjectVisual key={project.id} project={project} /> : <div className="home-project-system"><span className="home-project-mark"><ProjectMark project={project} /></span><ol>{project.flow[language].map(step => <li key={step}>{step}</li>)}</ol></div>}
         <p className="home-project-evidence">{project.evidence[language]}</p>
       </motion.div>
       <motion.div className="home-project-copy" style={motionOn ? { y: copyY } : undefined}>
-        <div className="home-project-identity"><span className="home-project-emblem"><ProjectMark project={project} /></span><div><span className="record-status">{categories[project.category][language]}</span><h3>{project.name}</h3></div></div>
         <p className="home-project-summary">{project.summary[language]}</p>
         <dl className="home-project-facts"><div><dt>{isEn ? "Built by" : "Kontribusi"}</dt><dd>{project.ownership[language]}</dd></div><div><dt>{isEn ? "Build state" : "Status"}</dt><dd>{project.status[language]} / {project.access[language]}</dd></div></dl>
         <ul className="library-stack" aria-label={isEn ? "Technology stack" : "Teknologi proyek"}>{project.stack.map(tech => <li key={tech}>{tech}</li>)}</ul>
