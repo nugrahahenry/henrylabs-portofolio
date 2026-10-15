@@ -1,5 +1,12 @@
 # Changelog
 
+## StarGod Portfolio v0.116.0 - 2026-10-15
+
+- Extend the existing near-camera star field through project, technology and credential chapters, with local reading and portrait protection instead of whole-chapter suppression.
+- Add reversible scroll travel with invisible recycling edges and slow distant-star parallax, without another renderer or a larger particle budget.
+- Blend camera passages into Contact gravity as the horizon grows, restoring them smoothly on return; retain Still, hidden-tab and interactive-map protection.
+- Cover lower-chapter pixels, reading clearance, reversal and gravity handoff, and align the older scrim regression with the verified unframed layout.
+
 ## StarGod Portfolio v0.115.1 - 2026-10-15
 
 - Continue the selected world into an unframed project preview, with one shared identity and artwork shown at its original aspect ratio.

@@ -17,12 +17,21 @@ export function advancePassage(clock: PassageClock, delta: number, scrollDelta: 
   if (clock.opacity > .002) clock.distance += clock.speed * delta;
 }
 
-export function passagePoint(index: number, distance: number, aspect: number, out: THREE.Vector3) {
+export function passageVisibility(mapBlend: number, readingBlend: number, gravity: number) {
+  return (1 - THREE.MathUtils.clamp(mapBlend, 0, 1))
+    * THREE.MathUtils.lerp(1, .68, THREE.MathUtils.clamp(readingBlend, 0, 1))
+    * (1 - THREE.MathUtils.smoothstep(gravity, .15, .85));
+}
+
+export function passagePoint(index: number, distance: number, aspect: number, out: THREE.Vector3, travel = 0) {
   const phase = (spread(index, .618033989) + distance * (.78 + spread(index, .438579) * .4) / 26) % 1;
   const angle = index * 2.39996323;
   const radius = 1.3 + spread(index, .754877666) * 3.1;
-  out.set(Math.cos(angle) * radius * aspect, Math.sin(angle) * radius, -(27 - phase * 26));
-  return THREE.MathUtils.smoothstep(phase, .02, .14) * (1 - THREE.MathUtils.smoothstep(phase, .82, .97));
+  // Signed camera travel is reversible; both recycling edges fade before wrapping.
+  const y = THREE.MathUtils.euclideanModulo(Math.sin(angle) * radius + travel + 6, 12) - 6;
+  out.set(Math.cos(angle) * radius * aspect, y, -(27 - phase * 26));
+  return THREE.MathUtils.smoothstep(phase, .02, .14) * (1 - THREE.MathUtils.smoothstep(phase, .82, .97))
+    * (1 - THREE.MathUtils.smoothstep(Math.abs(y), 4.5, 5.9));
 }
 
 export function passageReadingGuard(x: number, y: number, rect: { left: number; top: number; right: number; bottom: number } | null) {

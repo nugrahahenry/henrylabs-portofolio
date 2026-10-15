@@ -27,7 +27,7 @@ const { infallPoint, gravityMaterial, dustWarmth } = await loadModule("gravity-f
 const { blackHoleFrame } = await loadModule("black-hole-frame");
 const { createSpacecraft, spacecraftPose, routeSpacecraft, flightPresence, pursuitPulse, pursuitShotTime, pursuitShotSide, pursuitMiss, createPursuitBolts, wormholePresence, createWormhole, clearShot, advancePursuit, pursuitEnd, pursuitPeriod, PURSUIT_DELAY, PURSUIT_REST, PURSUIT_SHOTS, PURSUIT_SHOT_SECONDS } = await loadModule("spacecraft");
 const { distantStarPoint, dustStreamSource, stellarTwinkle, createDistantStarMaterial, DISTANT_STAR_COUNT, COMPACT_STAR_COUNT, FEEDING_DUST_COUNT } = await loadModule("ambient-field");
-const { PASSAGE_COUNT, COMPACT_PASSAGE_COUNT, advancePassage, passagePoint, passageReadingGuard, createCameraPassage } = await loadModule("camera-passage");
+const { PASSAGE_COUNT, COMPACT_PASSAGE_COUNT, advancePassage, passagePoint, passageReadingGuard, passageVisibility, createCameraPassage } = await loadModule("camera-passage");
 
 test("maker tracks close around the portrait and match each satellite lane", () => {
   for (const lanes of [1, 2, 3]) {
@@ -154,6 +154,35 @@ test("passages protect copy and share one bounded point batch", () => {
   assert.equal(batch.material.depthWrite, false);
   assert.equal(batch.material.uniforms.uOpacity.value, 0);
   batch.geometry.dispose(); batch.material.dispose();
+});
+
+test("lower passages retain a quieter field and hand off continuously to gravity", () => {
+  assert.equal(passageVisibility(0, 0, 0), 1);
+  assert.equal(passageVisibility(0, 1, 0), .68);
+  assert.equal(passageVisibility(1, 1, 0), 0);
+  assert.equal(passageVisibility(0, 1, 1), 0);
+  let previous = .68;
+  for (let gravity = 0; gravity <= 1; gravity += .01) {
+    const current = passageVisibility(0, 1, gravity);
+    assert.ok(current <= previous && previous - current < .02);
+    previous = current;
+  }
+});
+
+test("scroll travel lifts stars, reverses exactly and fades at vertical recycling", () => {
+  const a = new THREE.Vector3(), b = new THREE.Vector3(), returned = new THREE.Vector3();
+  for (let i = 0; i < PASSAGE_COUNT; i++) {
+    passagePoint(i, 7, 1.6, a, 0);
+    passagePoint(i, 7, 1.6, b, .2);
+    assert.ok(Math.abs(b.y - a.y - .2) < 1e-10);
+    passagePoint(i, 7, 1.6, returned, 0);
+    assert.deepEqual(returned, a);
+    for (let travel = -15; travel < 15; travel += .03) {
+      const before = passagePoint(i, 7, 1.6, a, travel);
+      const after = passagePoint(i, 7, 1.6, b, travel + .03);
+      if (b.y < a.y) assert.ok(before < .001 && after < .001);
+    }
+  }
 });
 
 test("galaxy approach centers first and reveals the local system without a visibility jump", () => {

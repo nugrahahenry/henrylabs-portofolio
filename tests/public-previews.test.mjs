@@ -70,7 +70,7 @@ test("project reading retains full text opacity and settles its media before the
   assert.ok(scrim);
   assert.match(scrim, /animation: none/);
   assert.match(scrim, /transform: none/);
-  assert.match(scrim, /inset: 0 0 -64px/);
+  assert.match(scrim, /inset: 0;/, "the feather finishes inside the clipped section without a hard lower edge");
 });
 
 test("opening lighting is bounded, reversible and absent from intro and reading chapters", () => {

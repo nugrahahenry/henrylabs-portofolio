@@ -16,7 +16,7 @@ import { arrivalBridge } from "./arrival-field";
 import { universeLighting, universeHeroOpacity } from "./universe-chapter";
 import { createSpacecraft, spacecraftPose, routeSpacecraft, flightPresence, createPursuitBolts, pursuitPulse, pursuitShotSide, pursuitMiss, clearShot, createWormhole, wormholePresence, advancePursuit, pursuitEnd, WORMHOLE_X, FLIGHT_START_X, PURSUIT_DELAY, COMPACT_PURSUIT_DELAY, PURSUIT_REST, PURSUIT_SHOTS, PURSUIT_SHOT_SECONDS } from "./spacecraft";
 import { COMPACT_STAR_COUNT, DISTANT_STAR_COUNT, FEEDING_DUST_COUNT, createDistantStarMaterial, distantStarPoint, dustStreamSource } from "./ambient-field";
-import { PASSAGE_COUNT, COMPACT_PASSAGE_COUNT, createCameraPassage, advancePassage, passagePoint, passageReadingGuard } from "./camera-passage";
+import { PASSAGE_COUNT, COMPACT_PASSAGE_COUNT, createCameraPassage, advancePassage, passagePoint, passageReadingGuard, passageVisibility } from "./camera-passage";
 import { createSkyQuality, resetSkySample, sampleSkyQuality, skyPixelRatio, skyQualityNames } from "./sky-quality";
 
 function createBlackHole() {
@@ -185,6 +185,7 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, heroProgress, 
     const passagePosition = new THREE.Vector3();
     const passageProbes = Array.from({ length: PASSAGE_COUNT }, (_, index) => ({ index, x: 0, y: 0, z: 0, opacity: 0, size: 0 }));
     let passageScroll = window.scrollY;
+    let passageTravel = progress.get() * 9;
     scene.add(passage.points);
     const flights = [createSpacecraft(), createSpacecraft("scout")].map((model) => ({ model, pose: spacecraftPose(0, false, model.kind), safe: { x: 0, y: .65, visible: false, clearance: 0 }, candidate: { x: 0, y: .65, visible: false, clearance: 0 }, velocity: new THREE.Vector2(), heading: 0, radius: 0, presence: 0, retired: false, portalEntry: null as boolean | null, cycle: -1 }));
     flights.forEach(({ model }) => { model.group.traverse(object => object.layers.set(1)); scene.add(model.group); });
@@ -211,10 +212,10 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, heroProgress, 
     const celestialObstacles = flightObstacles.slice(0, craftObstacle);
     const flightWorld = new THREE.Vector3(), flightView = new THREE.Vector3();
     const heroCopy = document.querySelector<HTMLElement>(".hero-copy");
-    const passageCopy = heroCopy ? Array.from(heroCopy.children) : [];
     const openingCopy = heroCopy ? Array.from(heroCopy.querySelectorAll<HTMLElement>("h1, .hero-body, .hero-actions")) : [];
     const openingReading: ReadingRect[] = [];
-    const passageReading = { left: 0, top: 0, right: 0, bottom: 0 };
+    const passageReading: ReadingRect[] = [];
+    const passageCopySelector = ".hero-copy > *, .home-preview-heading, .home-project-identity, .home-project-media, .home-project-copy, .maker-heading, .portrait-identity, .maker-tools-controls, .maker-tool-detail, .maker-proof-heading, .maker-evidence-card, .contact-content > *, .site-footer";
     const heroKicker = document.querySelector<HTMLElement>(".hero-kicker");
     const heroNote = document.querySelector<HTMLElement>(".hero-note");
     const contactCopy = document.querySelector<HTMLElement>(".contact-copy");
@@ -581,7 +582,8 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, heroProgress, 
       displayedIntroProgress = introMode ? THREE.MathUtils.damp(displayedIntroProgress, state.current.introProgress, 14, dt) : 100;
       const bridge = arrivalBridge(displayedIntroProgress / 100);
       const introReveal = introMode ? bridge.nebula : 1;
-      starField.rotation.y = drift * .004 + scroll * .08;
+      starField.rotation.y = drift * .004 + scroll * .14;
+      starField.rotation.x = scroll * .035;
       stars.rotation.z = Math.sin(drift * .02) * .018;
       galaxyDust.rotation.y = drift * .006 + scroll * .035;
       galaxyDust.rotation.z = Math.sin(drift * .012) * .018;
@@ -672,41 +674,43 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, heroProgress, 
       // Screen-space anchoring keeps the terminal landmark out of the hero and reading center.
       const width = host.clientWidth;
       const height = host.clientHeight;
-      const passageProtected = state.current.introActive || state.current.mapActive || readingChapter || state.current.contactVisible || holeOpacity > .001;
-      advancePassage(passageClock, delta, window.scrollY - passageScroll, height, state.current.motionOn, passageProtected, 1 - mapBlend);
+      const contactActive = state.current.motionOn && state.current.contactVisible && holeStrength > .05 && !closing.returning && closing.presence === 1;
+      birthAge = advanceGravityAge(birthAge, delta, contactActive);
+      const birth = state.current.motionOn ? gravityBirth(birthAge) : { growth: 1, ready: true };
+      const holeGrowth = birth.growth * retreat.growth;
+      const passageProtected = state.current.introActive || state.current.mapActive;
+      const passageVisibilityTarget = passageVisibility(mapBlend, readingBlend, holeOpacity * holeGrowth);
+      advancePassage(passageClock, delta, window.scrollY - passageScroll, height, state.current.motionOn, passageProtected, passageVisibilityTarget);
       passageScroll = window.scrollY;
+      if (state.current.motionOn && delta > 0 && delta <= .25) passageTravel = THREE.MathUtils.damp(passageTravel, scroll * 9, 5, delta);
       passage.points.position.copy(camera.position);
       passage.points.quaternion.copy(camera.quaternion);
       passage.points.visible = passageClock.opacity > .002;
       passage.material.uniforms.uOpacity.value = passageClock.opacity;
       passage.material.uniforms.uScale.value = height * renderer.getPixelRatio();
-      // The hero wrapper fills the viewport; protect its content, not its empty space.
-      passageReading.left = width; passageReading.top = height;
-      passageReading.right = 0; passageReading.bottom = 0;
-      for (const element of passageCopy) {
+      // Read live chapter bounds: project selection, portrait phases and resize can change them.
+      passageReading.length = 0;
+      if (passage.points.visible) for (const element of document.querySelectorAll<HTMLElement>(passageCopySelector)) {
         const rect = element.getBoundingClientRect();
-        passageReading.left = Math.min(passageReading.left, rect.left);
-        passageReading.top = Math.min(passageReading.top, rect.top);
-        passageReading.right = Math.max(passageReading.right, rect.right);
-        passageReading.bottom = Math.max(passageReading.bottom, rect.bottom);
+        if (rect.width <= 0 || rect.height <= 0 || rect.bottom < -48 || rect.top > height + 48) continue;
+        const style = getComputedStyle(element);
+        if (style.visibility === "hidden" || Number(style.opacity) < .05) continue;
+        passageReading.push(rect);
       }
-      const passageRect = passageCopy.length ? passageReading : null;
       const passageTangent = Math.tan(THREE.MathUtils.degToRad(camera.fov / 2));
       const passageCount = passage.geometry.drawRange.count;
       for (let index = 0; index < passageCount; index++) {
-        const presence = passagePoint(index, passageClock.distance, camera.aspect, passagePosition);
+        const presence = passagePoint(index, passageClock.distance, camera.aspect, passagePosition, passageTravel);
         passagePosition.toArray(passage.positions, index * 3);
         const x = (.5 + passagePosition.x / (-passagePosition.z * passageTangent * camera.aspect) * .5) * width;
         const y = (.5 - passagePosition.y / (-passagePosition.z * passageTangent) * .5) * height;
-        passage.opacity[index] = presence * passageReadingGuard(x, y, passageRect);
+        let clearance = 1;
+        for (const rect of passageReading) clearance = Math.min(clearance, passageReadingGuard(x, y, rect));
+        passage.opacity[index] = presence * clearance;
         Object.assign(passageProbes[index], { x, y, z: passagePosition.z, opacity: passage.opacity[index] * passageClock.opacity, size: THREE.MathUtils.clamp(passage.sizes[index] * height / -passagePosition.z, 1.5, 6) });
       }
       passage.geometry.attributes.position.needsUpdate = true;
       passage.geometry.attributes.aOpacity.needsUpdate = true;
-      const contactActive = state.current.motionOn && state.current.contactVisible && holeStrength > .05 && !closing.returning && closing.presence === 1;
-      birthAge = advanceGravityAge(birthAge, delta, contactActive);
-      const birth = state.current.motionOn ? gravityBirth(birthAge) : { growth: 1, ready: true };
-      const holeGrowth = birth.growth * retreat.growth;
       const { x: holeX, y: holeY, diameter, scale: holeScale } = blackHoleFrame(width, height, holeGrowth);
       holeRay.set(holeX * 2 - 1, 1 - holeY * 2, .5).unproject(camera).sub(camera.position).normalize();
       blackHole.group.position.copy(camera.position).addScaledVector(holeRay, (-4.8 - camera.position.z) / holeRay.z);
@@ -1204,6 +1208,9 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, heroProgress, 
       host.dataset.passageSpeed = passageClock.speed.toFixed(3);
       host.dataset.passageDistance = passageClock.distance.toFixed(4);
       host.dataset.passageProtected = String(passageProtected);
+      host.dataset.passageTravel = passageTravel.toFixed(4);
+      host.dataset.passageTarget = passageVisibilityTarget.toFixed(4);
+      host.dataset.passageReading = JSON.stringify(passageReading.map(({ left, top, right, bottom }) => ({ left, top, right, bottom })));
       host.dataset.passageProbes = JSON.stringify(passageProbes.slice(0, passageCount));
       host.dataset.starTwinkle = distantMaterial.uniforms.uMotion.value ? "on" : "off";
       host.dataset.dustStreaks = String(upperStreakCount);

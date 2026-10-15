@@ -1,6 +1,6 @@
 <div align="center">
 
-# StarGod Portfolio v0.115.1
+# StarGod Portfolio v0.116.0
 
 **I build things I actually see.**
 
@@ -54,6 +54,8 @@ Prefer a closer read? **Projects** opens a searchable catalog of all ten worlds,
 Technology group buttons move to their matching scroll chapter instead of changing only the visible icons. Wheel, touch and keyboard input can interrupt the movement. Foreground orbit paths leave the face clear for scanning, and empty detail space no longer blocks the appearance controls.
 
 The selected world continues into an unframed project preview, with original-proportion artwork and readable ownership, status and evidence. Translucent technology shells share the universe's depth while keeping each logo and its reading controls distinct.
+
+Near-camera stars continue through project reading, technologies and credentials. Scrolling carries them through depth around protected text and portrait areas, before they yield to the black hole's flow at Contact. Still mode keeps the reading experience quiet.
 
 **Credentials** is a separate library of all 37 learning records. Filter by issuer or type, search a title, and open a full-size watermarked preview with zoom and available PDF previews. Browse the current selection without closing the viewer; Home keeps its gallery limited to the five featured records. Arrow keys move between documents at fitted size and pan the image when zoomed. A small preview remains visible while the full-size image loads, with a retry option on failure. English/Indonesian and motion choices travel with the internal links.
 
