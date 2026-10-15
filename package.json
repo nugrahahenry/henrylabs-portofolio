@@ -1,6 +1,6 @@
 {
   "name": "henrylabs-portfolio",
-  "version": "0.114.10",
+  "version": "0.114.11",
   "private": true,
   "scripts": {
     "dev": "next dev",

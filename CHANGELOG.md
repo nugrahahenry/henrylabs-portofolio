@@ -1,5 +1,12 @@
 # Changelog
 
+## StarGod Portfolio v0.114.11 - 2026-10-15
+
+- Replace the maker's flat decorative ellipses with depth-tested tracks sharing the same curves as the technology planets, including portrait occlusion and the reversible retreat.
+- Hide rear technology labels over opaque portrait pixels while preserving visible satellite hit targets and keyboard access.
+- Enlarge phone credential captions, add a dark reading surface, clear portrait controls, and keep technology selectors and project links touch-sized.
+- Preserve the anchored portrait, four technology groups, watermarked viewer, reading continuity and all opening/background choreography.
+
 ## StarGod Portfolio v0.114.10 - 2026-10-15
 
 - Refine hero-to-map lighting with less sampling grain, clearer nebula emission and depth-weighted distant stars, using the existing 3D volume and particle counts.

@@ -21,6 +21,21 @@ export function makerReadingProgress(progress: number, group: number, proof: boo
 
 export type OrbitRotation = { angle: number; velocity: number; dragging: boolean };
 
+export type MakerOrbitLayout = { radius: number; depthRadius: number; verticalRadius: number; verticalBias: number; lanes: number };
+type OrbitPoint = { x: number; y: number; z: number };
+
+// Satellites and their tracks share one curve in the portrait's depth space.
+export function makerOrbitPoint(theta: number, laneIndex: number, layout: MakerOrbitLayout, out: OrbitPoint) {
+  const lane = layout.lanes === 3 ? 1 - laneIndex * .1 : laneIndex ? .79 : 1;
+  const y = layout.lanes === 3
+    ? Math.sin(theta) * layout.verticalRadius * .38 + (laneIndex - 1) * layout.verticalRadius * .6
+    : Math.sin(theta) * layout.verticalRadius * lane;
+  out.x = Math.cos(theta) * layout.radius * lane;
+  out.y = -layout.verticalBias - y;
+  out.z = Math.sin(theta) * layout.depthRadius;
+  return out;
+}
+
 export function advanceMakerRotation(rotation: OrbitRotation, delta: number, paused: boolean) {
   const dt = Math.min(.05, Math.max(0, delta));
   if (rotation.dragging) return;
@@ -45,4 +60,13 @@ export function portraitCoversSatellite(mask: PortraitAlpha | undefined, bounds:
     if (alpha < 26) return false;
   }
   return true;
+}
+
+const labelSamples = [[0, 0], [-.4, -.4], [.4, -.4], [-.4, .4], [.4, .4]] as const;
+
+export function portraitOverlapsLabel(mask: PortraitAlpha | undefined, bounds: PortraitBounds, x: number, y: number, width: number, height: number) {
+  for (const [dx, dy] of labelSamples) {
+    if (portraitCoversSatellite(mask, bounds, x + width * dx, y + height * dy, 0)) return true;
+  }
+  return false;
 }

@@ -22,12 +22,39 @@ const { sampleOrbit, orbitalSpeed } = await loadModule("orbital-path");
 const { createStellarCore } = await loadModule("stellar-core");
 const { advanceGalaxyFlight, sampleGalaxyFlight } = await loadModule("galaxy-flight");
 const { createDeepSpace } = await loadModule("deep-space");
-const { makerGroupAt, makerEvidenceAt, makerReadingProgress, advanceMakerRotation, portraitCoversSatellite, MAKER_RETREAT_START, MAKER_PROOF_START } = await loadModule("maker-motion");
+const { makerGroupAt, makerEvidenceAt, makerReadingProgress, makerOrbitPoint, advanceMakerRotation, portraitCoversSatellite, portraitOverlapsLabel, MAKER_RETREAT_START, MAKER_PROOF_START } = await loadModule("maker-motion");
 const { infallPoint, gravityMaterial, dustWarmth } = await loadModule("gravity-field");
 const { blackHoleFrame } = await loadModule("black-hole-frame");
 const { createSpacecraft, spacecraftPose, routeSpacecraft, flightPresence, pursuitPulse, pursuitShotTime, pursuitShotSide, pursuitMiss, createPursuitBolts, wormholePresence, createWormhole, clearShot, advancePursuit, pursuitEnd, pursuitPeriod, PURSUIT_DELAY, PURSUIT_REST, PURSUIT_SHOTS, PURSUIT_SHOT_SECONDS } = await loadModule("spacecraft");
 const { distantStarPoint, dustStreamSource, stellarTwinkle, createDistantStarMaterial, DISTANT_STAR_COUNT, COMPACT_STAR_COUNT, FEEDING_DUST_COUNT } = await loadModule("ambient-field");
 const { PASSAGE_COUNT, COMPACT_PASSAGE_COUNT, advancePassage, passagePoint, passageReadingGuard, createCameraPassage } = await loadModule("camera-passage");
+
+test("maker tracks close around the portrait and match each satellite lane", () => {
+  for (const lanes of [1, 2, 3]) {
+    const layout = { radius: 500, depthRadius: 190, verticalRadius: 125, verticalBias: 30, lanes };
+    for (let lane = 0; lane < lanes; lane++) {
+      const first = makerOrbitPoint(0, lane, layout, {}), last = makerOrbitPoint(Math.PI * 2, lane, layout, {});
+      for (const axis of ["x", "y", "z"]) assert.ok(Math.abs(first[axis] - last[axis]) < 1e-8);
+      const front = makerOrbitPoint(Math.PI / 2, lane, layout, {}), back = makerOrbitPoint(Math.PI * 1.5, lane, layout, {});
+      assert.equal(front.z, 190); assert.equal(back.z, -190);
+      const target = {};
+      assert.equal(makerOrbitPoint(.7, lane, layout, target), target, "reuse the supplied point without allocations");
+      assert.ok(Math.abs(target.x) <= 500 && Math.abs(target.y) <= 155);
+      const scale = lanes === 3 ? 1 - lane * .1 : lane ? .79 : 1;
+      assert.equal(first.x, 500 * scale);
+    }
+  }
+});
+
+test("back labels yield to opaque portrait pixels without hiding transparent-margin targets", () => {
+  const data = new Uint8ClampedArray(10 * 10 * 4), bounds = { left: 0, right: 100, top: 0, bottom: 100 };
+  for (let y = 2; y < 8; y++) for (let x = 3; x < 7; x++) data[(y * 10 + x) * 4 + 3] = 255;
+  const mask = { data, width: 10, height: 10 };
+  assert.equal(portraitOverlapsLabel(mask, bounds, 50, 50, 30, 20), true);
+  assert.equal(portraitOverlapsLabel(mask, bounds, 15, 50, 10, 20), false);
+  assert.equal(portraitOverlapsLabel(undefined, bounds, 50, 50, 30, 20), false);
+  assert.equal(portraitCoversSatellite(mask, bounds, 28, 50, 10), false, "the visible crescent remains clickable");
+});
 
 test("maker reading positions preserve the chapter across spatial and linear layouts", () => {
   for (const [progress, group] of [[.06, 0], [.2, 1], [.35, 2], [.52, 3]]) {

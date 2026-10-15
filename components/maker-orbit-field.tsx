@@ -5,7 +5,7 @@ import type { MotionValue } from "motion/react";
 import * as THREE from "three";
 import type { TechOrbitItem } from "./cosmic-canvas";
 import { orbitTechNodes } from "@/content/technologies";
-import { advanceMakerRotation, portraitCoversSatellite, MAKER_RETREAT_START, MAKER_PROOF_START, type OrbitRotation, type PortraitAlpha } from "./maker-motion";
+import { advanceMakerRotation, makerOrbitPoint, portraitCoversSatellite, portraitOverlapsLabel, MAKER_RETREAT_START, MAKER_PROOF_START, type MakerOrbitLayout, type OrbitRotation, type PortraitAlpha } from "./maker-motion";
 
 type Props = {
   items: readonly TechOrbitItem[];
@@ -78,6 +78,24 @@ export function MakerOrbitField({ items, nodes, paused, rotation, progress, sele
       alphaMask = { data: ctx.getImageData(0, 0, sample.width, sample.height).data, width: sample.width, height: sample.height };
     }); textures.push(mask);
     const projected = new THREE.Vector3();
+    const orbitPoint = new THREE.Vector3();
+    const layout: MakerOrbitLayout = { radius: 0, depthRadius: 0, verticalRadius: 0, verticalBias: 0, lanes: 1 };
+    const trackSteps = 128;
+    const trackPositions = new Float32Array(3 * trackSteps * 2 * 3);
+    const trackGeometry = new THREE.BufferGeometry();
+    trackGeometry.setAttribute("position", new THREE.BufferAttribute(trackPositions, 3));
+    const trackMaterial = new THREE.LineBasicMaterial({ color: 0x8fbed3, transparent: true, opacity: .2, depthWrite: false });
+    const tracks = new THREE.LineSegments(trackGeometry, trackMaterial); scene.add(tracks);
+    let trackKey = "", measuredItems: readonly TechOrbitItem[] | undefined;
+    const labelSizes = new Map<string, { width: number; height: number; buttonHeight: number }>();
+    const measureLabels = () => {
+      labelSizes.clear();
+      state.current.items.forEach((item, index) => {
+        const button = nodes.current[index], label = button?.lastElementChild as HTMLElement | null;
+        if (button && label) labelSizes.set(item.label, { width: label.offsetWidth, height: label.offsetHeight, buttonHeight: button.offsetHeight });
+      });
+      measuredItems = state.current.items;
+    };
     const resize = () => {
       const box = parent.getBoundingClientRect(), figure = portrait.getBoundingClientRect();
       width = box.width; height = box.height;
@@ -88,6 +106,7 @@ export function MakerOrbitField({ items, nodes, paused, rotation, progress, sele
       matte.scale.set(figure.width, figure.height, 1);
       silhouette.left = figure.left - box.left; silhouette.right = silhouette.left + figure.width;
       silhouette.top = figure.top - box.top; silhouette.bottom = silhouette.top + figure.height;
+      measureLabels();
     };
     const render = (time: number) => {
       frame = 0;
@@ -96,30 +115,46 @@ export function MakerOrbitField({ items, nodes, paused, rotation, progress, sele
       const retreat = THREE.MathUtils.smoothstep(progress.get(), MAKER_RETREAT_START, MAKER_PROOF_START);
       if (retreat < 1) advanceMakerRotation(rotation.current, dt, paused.current);
       const { items, selected } = state.current;
+      if (measuredItems !== items) measureLabels();
       const all = items.length > 16;
       const radius = Math.min(width * .39, width / 2 - 38, 560);
       const depthRadius = Math.min(190, width * .23);
       const verticalBias = height * (all ? -.065 : width < 600 ? .01 : .045);
       const controlClearance = (silhouette.bottom + 12 - 70 - height / 2) / (1200 / (1200 - depthRadius)) - verticalBias;
       const verticalRadius = Math.max(25, Math.min(all ? 170 : width < 600 ? 70 : 125, height * .22, controlClearance));
+      const lanes = all ? 3 : items.length > 8 ? 2 : 1;
+      Object.assign(layout, { radius, depthRadius, verticalRadius, verticalBias, lanes });
+      const nextTrackKey = `${radius},${depthRadius},${verticalRadius},${verticalBias},${lanes}`;
+      if (trackKey !== nextTrackKey) {
+        trackKey = nextTrackKey;
+        let offset = 0;
+        for (let lane = 0; lane < lanes; lane++) for (let step = 0; step < trackSteps; step++) for (let end = 0; end < 2; end++) {
+          makerOrbitPoint((step + end) / trackSteps * Math.PI * 2, lane, layout, orbitPoint);
+          trackPositions[offset++] = orbitPoint.x; trackPositions[offset++] = orbitPoint.y; trackPositions[offset++] = orbitPoint.z;
+        }
+        trackGeometry.setDrawRange(0, lanes * trackSteps * 2);
+        trackGeometry.attributes.position.needsUpdate = true;
+        trackGeometry.computeBoundingSphere();
+      }
+      tracks.scale.x = 1 + retreat * .55; tracks.position.z = -retreat * 300;
+      trackMaterial.opacity = (1 - retreat) * (all ? .13 : .2);
       let front = 0, back = 0;
       planets.forEach(planet => {
         const index = items.findIndex(item => item.label === planet.label);
         planet.presence = THREE.MathUtils.damp(planet.presence, index < 0 ? 0 : 1, 12, dt);
         planet.group.visible = planet.presence > .01;
         if (!planet.group.visible) return;
-        const laneIndex = all ? Math.max(0, index) % 3 : 0;
-        const lane = all ? 1 - laneIndex * .10 : items.length > 8 && index % 2 ? .79 : 1;
+        const laneIndex = all ? Math.max(0, index) % 3 : lanes === 2 ? Math.max(0, index) % 2 : 0;
         if (index >= 0) {
           const count = all ? Math.ceil((items.length - laneIndex) / 3) : items.length;
           const slot = all ? Math.floor(index / 3) : index;
-          const target = slot / count * Math.PI * 2 + laneIndex * .6;
+          const target = slot / count * Math.PI * 2 + (all ? laneIndex * .6 : 0);
           planet.theta += Math.atan2(Math.sin(target - planet.theta), Math.cos(target - planet.theta)) * (1 - Math.exp(-dt * 9));
         }
         const theta = planet.theta + rotation.current.angle;
-        const depth = Math.sin(theta) * depthRadius;
-        const orbitY = all ? Math.sin(theta) * verticalRadius * .38 + (laneIndex - 1) * verticalRadius * .6 : Math.sin(theta) * verticalRadius * lane;
-        planet.group.position.set(Math.cos(theta) * radius * lane * (1 + retreat * .55), -verticalBias - orbitY, depth - retreat * 300);
+        makerOrbitPoint(theta, laneIndex, layout, orbitPoint);
+        const depth = orbitPoint.z;
+        planet.group.position.set(orbitPoint.x * (1 + retreat * .55), orbitPoint.y, depth - retreat * 300);
         const size = (width < 600 ? 22 : 30) * (all ? .84 : 1) * (selected === planet.label ? 1.1 : 1);
         planet.group.scale.setScalar(size * planet.presence);
         planet.group.rotation.set(Math.sin(theta) * .08, Math.sin(theta + .4) * .25, Math.cos(theta) * .12);
@@ -133,6 +168,8 @@ export function MakerOrbitField({ items, nodes, paused, rotation, progress, sele
           node.dataset.side = depth > 0 ? "front" : "back";
           node.style.zIndex = String(Math.round(depth + depthRadius));
           node.dataset.occluded = String(depth < 0 && portraitCoversSatellite(alphaMask, silhouette, x, y, size * 1200 / (1200 - depth)));
+          const label = labelSizes.get(planet.label), scale = 1200 / (1200 - planet.group.position.z);
+          node.dataset.labelOccluded = String(depth < 0 && !!label && portraitOverlapsLabel(alphaMask, silhouette, x, y + (label.buttonHeight + label.height) * scale / 2, label.width * scale, label.height * scale));
         }
         if (depth > 0) front++; else back++;
       });
@@ -143,6 +180,7 @@ export function MakerOrbitField({ items, nodes, paused, rotation, progress, sele
       element.dataset.velocity = rotation.current.velocity.toFixed(3);
       element.dataset.front = String(front); element.dataset.back = String(back);
       element.dataset.drawCalls = String(renderer?.info.render.calls ?? 0);
+      element.dataset.trackCount = String(lanes);
       element.dataset.retreat = retreat.toFixed(3);
       if (retreat < 1) frame = requestAnimationFrame(render);
     };
@@ -203,10 +241,11 @@ export function MakerOrbitField({ items, nodes, paused, rotation, progress, sele
       sources.forEach(image => { image.onload = null; });
       planets.forEach(planet => { planet.material.dispose(); planet.logoMaterial.dispose(); });
       geometry.dispose(); cap.dispose(); matte.geometry.dispose(); matteMaterial.dispose(); textures.forEach(texture => texture.dispose());
+      trackGeometry.dispose(); trackMaterial.dispose();
       if (renderer) { renderer.dispose(); renderer.forceContextLoss(); }
       canvas.remove();
       delete parent.dataset.webgl;
-      nodes.current.forEach(node => { if (node) { delete node.dataset.occluded; delete node.dataset.side; node.style.removeProperty("transform"); node.style.removeProperty("z-index"); } });
+      nodes.current.forEach(node => { if (node) { delete node.dataset.occluded; delete node.dataset.labelOccluded; delete node.dataset.side; node.style.removeProperty("transform"); node.style.removeProperty("z-index"); } });
     };
   }, [nodes, paused, rotation, progress]);
   return <div ref={host} className="maker-orbit-field" aria-hidden="true" />;

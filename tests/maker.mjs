@@ -6,13 +6,14 @@ import sharp from "sharp";
 const browser = await chromium.launch({ headless: true, executablePath: process.env.CHROME_PATH ?? "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe" });
 const url = process.env.PORTFOLIO_URL ?? "http://localhost:3002/";
 const sizes = [{ width: 1440, height: 900 }, { width: 866, height: 900 }, { width: 768, height: 1024 }, { width: 390, height: 844 }, { width: 360, height: 800 }, { width: 844, height: 390 }];
-const targets = process.argv.includes("--fallback") ? [] : process.argv.includes("--phone") ? [sizes[3], sizes[4]] : process.argv.includes("--capture") ? [sizes[0], sizes[3]] : sizes;
+const targets = process.argv.includes("--small") ? [{ width: 320, height: 740 }, { width: 360, height: 640 }] : process.argv.includes("--fallback") ? [] : process.argv.includes("--phone") ? [sizes[3], sizes[4]] : process.argv.includes("--capture") ? [sizes[0], sizes[3]] : sizes;
 const move = (page, progress) => page.locator(".maker-chapter").evaluate((node, value) => window.scrollTo({ top: scrollY + node.getBoundingClientRect().top + Math.max(0, node.offsetHeight - innerHeight) * value, behavior: "instant" }), progress);
 mkdirSync("test-results/portrait", { recursive: true });
 try {
   for (const viewport of targets) {
     const page = await browser.newPage({ viewport });
     const errors = []; page.on("pageerror", e => errors.push(e.message));
+    await page.addInitScript(() => sessionStorage.setItem("henrylabs-intro-seen", "1"));
     await page.goto(url, { waitUntil: "domcontentloaded" });
     await page.locator(".intro-loader").waitFor({ state: "hidden" });
     await move(page, .06);
@@ -27,7 +28,10 @@ try {
       await expect(page.locator(".maker-orbit-field")).toHaveAttribute("data-ready", "true");
       await expect(page.locator(".maker-scene")).toHaveAttribute("data-webgl", "true");
       await expect(page.locator(".cosmic-canvas")).toHaveAttribute("data-intersecting", "false");
-      assert.ok(Number(await page.locator(".maker-orbit-field").getAttribute("data-draw-calls")) <= 51);
+      assert.ok(Number(await page.locator(".maker-orbit-field").getAttribute("data-draw-calls")) <= 52);
+      await expect(page.locator(".maker-orbit-field")).toHaveAttribute("data-track-count", "1");
+      assert.ok(await page.locator(".maker-groups button").evaluateAll(buttons => buttons.every(button => { const box = button.getBoundingClientRect(); return box.width >= 43.99 && box.height >= 43.99; })), "technology selectors retain touch-sized targets");
+      assert.equal(await page.locator(".maker-orbit-field").evaluate(node => getComputedStyle(node, "::before").content), "none", "no flat ellipse remains over the portrait");
       assert.ok(Number(await page.locator(".maker-orbit-field").getAttribute("data-front")) > 0);
       assert.ok(Number(await page.locator(".maker-orbit-field").getAttribute("data-back")) > 0);
       const phase = Number(await page.locator(".maker-orbit-field").getAttribute("data-phase"));
@@ -72,6 +76,7 @@ try {
         await move(page, progress);
         await expect(page.locator(".maker-groups button[aria-pressed='true']")).toContainText(group);
         await expect(page.locator(".maker-tool")).toHaveCount(count);
+        await expect(field).toHaveAttribute("data-track-count", String(count > 16 ? 3 : count > 8 ? 2 : 1));
         assert.equal(await original.evaluate(node => node.isConnected),true,"group changes reuse the same renderer");
       }
       await page.getByRole("button", {name:"Rotate technologies right",exact:true}).click();
@@ -91,11 +96,13 @@ try {
       await page.mouse.move(5,80);
       await page.waitForTimeout(400);
       await page.screenshot({path:`test-results/portrait/${viewport.width}-all.png`});
-      assert.ok(Number(await field.getAttribute("data-draw-calls"))<=51);
-      const visibleBack = await page.locator(".maker-tool[data-side='back'][data-occluded='false']").evaluateAll(buttons => buttons.map(button => {
+      assert.ok(Number(await field.getAttribute("data-draw-calls"))<=52);
+      const visibleBackAt = () => page.locator(".maker-tool[data-side='back'][data-occluded='false']").evaluateAll(buttons => buttons.map(button => {
         const b = button.getBoundingClientRect(), x=b.x+b.width/2, y=b.y+b.height/2;
         return document.elementFromPoint(x,y)?.closest("button") === button ? button.getAttribute("aria-label") : null;
       }).find(Boolean));
+      await expect.poll(visibleBackAt, { timeout: 7000 }).toBeTruthy();
+      const visibleBack = await visibleBackAt();
       assert.ok(visibleBack,"a visible satellite behind the transparent portrait margin remains clickable");
       const backButton=page.getByRole("button",{name:visibleBack,exact:true});
       await backButton.focus(); await page.keyboard.press("Enter");
@@ -113,7 +120,12 @@ try {
         const bounds = await card.boundingBox();
         assert.ok(bounds.y >= 64 && bounds.y + bounds.height <= viewport.height, "complete credential and caption fit the viewport");
         assert.ok(bounds.x >= 0 && bounds.x + bounds.width <= viewport.width, "credential edges remain inside narrow viewports");
+        assert.ok(await card.locator("strong").evaluate(node => parseFloat(getComputedStyle(node).fontSize)) >= 12, "credential titles remain readable on phones");
       }
+      assert.ok(await page.locator(".maker-evidence-card").evaluateAll(cards => {
+        const controls = Array.from(document.querySelectorAll(".portrait-states button"), button => button.getBoundingClientRect());
+        return cards.every(card => { const c = card.getBoundingClientRect(); return controls.every(b => c.right <= b.left || c.left >= b.right || c.bottom <= b.top || c.top >= b.bottom); });
+      }), "complete credential captions must clear portrait controls");
     } else await page.locator(".maker-proof-heading").scrollIntoViewIfNeeded();
     await page.screenshot({ path: `test-results/portrait/${viewport.width}-proof.png` });
     const card = page.locator(".maker-evidence-card").first();
@@ -137,8 +149,9 @@ try {
     assert.equal(overflow, false); assert.deepEqual(errors, []);
     await page.close(); console.log(`PASS maker ${viewport.width}x${viewport.height}`);
   }
-  if (!process.argv.includes("--capture")) {
+  if (!process.argv.includes("--capture") && !process.argv.includes("--small")) {
     const reduced = await browser.newPage({ viewport: sizes[0], reducedMotion: "reduce" });
+    await reduced.addInitScript(() => sessionStorage.setItem("henrylabs-intro-seen", "1"));
     await reduced.goto(url, { waitUntil: "domcontentloaded" });
     await reduced.locator(".maker-groups button").filter({hasText:"All"}).click();
     await expect(reduced.locator(".maker-tool")).toHaveCount(25);
@@ -150,6 +163,7 @@ try {
     await expect(reduced.locator(".portrait-reveal")).toHaveAttribute("data-portrait-mode", "human");
     await reduced.close();
     const failed = await browser.newPage({ viewport: sizes[3] });
+    await failed.addInitScript(() => sessionStorage.setItem("henrylabs-intro-seen", "1"));
     await failed.route("**/assets/portrait/*cosmic*", route => route.abort());
     await failed.route("https://cdn.simpleicons.org/**", route => route.abort());
     await failed.goto(url, { waitUntil: "domcontentloaded" });
@@ -161,6 +175,7 @@ try {
     await expect(failed.locator(".maker-tool-icon small")).toHaveCount(6);
     await failed.close();
     const touch = await browser.newPage({ viewport: sizes[3], hasTouch: true, isMobile: true });
+    await touch.addInitScript(() => sessionStorage.setItem("henrylabs-intro-seen", "1"));
     await touch.goto(url, { waitUntil: "domcontentloaded" });
     await touch.locator(".intro-loader").waitFor({ state: "hidden" });
     await move(touch,.06);
@@ -188,6 +203,7 @@ try {
     await expect.poll(() => touch.locator(".portrait-reveal").evaluate(node => Number(node.style.getPropertyValue("--reveal-strength")))).toBeLessThan(.02);
     await touch.close(); console.log("PASS reduced motion, failed portrait/icons, and native touch reveal");
     const noGL = await browser.newPage({ viewport: sizes[3] });
+    await noGL.addInitScript(() => sessionStorage.setItem("henrylabs-intro-seen", "1"));
     await noGL.addInitScript(() => { const original = HTMLCanvasElement.prototype.getContext; HTMLCanvasElement.prototype.getContext = function(type, ...args) { return type.startsWith("webgl") ? null : original.call(this, type, ...args); }; });
     await noGL.goto(url, { waitUntil: "domcontentloaded" });
     await noGL.locator(".intro-loader").waitFor({ state: "hidden" });
