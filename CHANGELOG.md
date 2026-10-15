@@ -1,5 +1,12 @@
 # Changelog
 
+## StarGod Portfolio v0.117.2 - 2026-10-16
+
+- Move keyboard focus into Contact after arriving from a library or project detail, once the intro gate releases the section.
+- Keep same-page and direct Contact links keyboard-accessible without adding scroll movement or interrupting an already changed focus.
+- Remove duplicate header offsets from smooth fragment navigation so Contact's heading stays visible in short landscape layouts.
+- Add responsive navigation regression coverage for catalog/detail entry, browser Back, repeated links, direct fragments, language and reduced motion.
+
 ## StarGod Portfolio v0.117.1 - 2026-10-16
 
 - Fix local stars and trails stopping short of the black hole by varying capture timing rather than their final travel distance.

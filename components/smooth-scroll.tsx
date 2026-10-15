@@ -41,7 +41,8 @@ export function SmoothScroll({ enabled }: SmoothScrollProps) {
 
     const lenis = new Lenis({
       autoRaf: false,
-      anchors: { offset: -84, duration: 0.78 },
+      // Lenis already includes the document's CSS scroll padding and target margin.
+      anchors: { duration: 0.78 },
       lerp: 0.085,
       prevent: (node) => Boolean(node.closest("[data-lenis-prevent]")),
       smoothWheel: true,

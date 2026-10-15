@@ -1,6 +1,6 @@
 <div align="center">
 
-# StarGod Portfolio v0.117.1
+# StarGod Portfolio v0.117.2
 
 **I build things I actually see.**
 
@@ -170,6 +170,8 @@ Published portrait derivatives live in `public/assets/portrait/`. `node scripts/
 Route and accessibility checks: `npm run test:libraries`; entrance and exploration window: `npm run test:arrival`; galaxy integration: `npm run test:galaxies`; portrait choreography: `npm run test:maker`; rotation and reading continuity: `npm run test:maker-continuity`; background pixel budgets and controlled-load checks: `npm run test:sky-quality`.
 
 Local-star capture shaders: `npm run test:gravity-field` uses isolated real WebGL without a running site. Contact choreography: `npm run test:closing` checks the complete scene, recurring dust and planets, and scroll reversal against `PORTFOLIO_URL` (default `http://localhost:3002/`).
+
+Contact navigation: `npm run test:contact-path` checks arrivals from catalogs and project details, repeated Home links, direct fragments, browser Back and the WhatsApp-to-Email keyboard order across responsive layouts and motion preferences.
 
 <details>
 <summary>About the README visuals</summary>

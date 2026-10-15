@@ -404,7 +404,7 @@ html[data-cursor="quiet"] .cursor-guide { opacity: 0; }
 .world-chain-node b { font-weight: 500; }
 .world-chain-note { display: block; margin-top: 18px; color: rgba(244,245,239,.3); text-align: right; }
 .content-section { width: min(1180px, calc(100% - 46px)); margin: 0 auto; padding: 130px 0; }
-.signal-chapter, .work-section, #stack, #academic, #client-work, #proof, #contact { scroll-margin-top: 84px; }
+.signal-chapter, .work-section, #stack, #academic, #client-work, #proof { scroll-margin-top: 84px; }
 .section-heading { display: grid; grid-template-columns: minmax(280px, .9fr) minmax(260px, .8fr); align-items: flex-end; gap: 70px; margin-bottom: 59px; }
 .section-heading h2 { max-width: 8ch; margin: 0; font-size: clamp(3.1rem, 6vw, 6.2rem); font-weight: 600; letter-spacing: -.085em; line-height: .87; text-wrap: balance; }
 .section-heading > p { max-width: 46ch; margin: 0; color: var(--muted); font-size: 1.07rem; line-height: 1.63; }

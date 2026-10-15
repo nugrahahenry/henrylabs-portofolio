@@ -282,6 +282,17 @@ export function PortfolioExperience() {
   }, [introDone, motionReady]);
 
   useEffect(() => {
+    if (!introDone || !motionReady || window.location.hash !== "#contact") return;
+    const opener = document.activeElement;
+    // Cross-page fragment navigation can arrive while Contact is still inert.
+    const frame = requestAnimationFrame(() => {
+      const focusMoved = document.activeElement !== opener && document.activeElement !== document.body;
+      if (!focusMoved && window.location.hash === "#contact") contactRef.current?.focus({ preventScroll: true });
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [introDone, motionReady]);
+
+  useEffect(() => {
     if (!motionReady || introDone) return;
     introStopRef.current = true;
     let introSeen = false;
@@ -539,7 +550,7 @@ export function PortfolioExperience() {
       <MakerChapter ready={introDone && motionReady} />
       </div>
 
-      <section ref={contactRef} className="contact-section" id="contact" aria-labelledby="contact-title" inert={!introDone}><div className="content-section contact-content"><div><p className="section-kicker section-kicker-dark">Make the next useful thing</p><h2 id="contact-title">{t.contact.title}</h2></div><div className="contact-copy"><p>{t.contact.body}</p><div className="contact-actions"><a className="button button-bright" href="https://wa.me/6289513559554" target="_blank" rel="noreferrer"><MessageCircle size={18} /> WhatsApp <ArrowUpRight size={16} /></a><a className="button button-outline" href="mailto:henrynugraha1210@gmail.com"><Mail size={18} /> Email <ArrowUpRight size={16} /></a></div><div className="social-links"><a href="https://github.com/nugrahahenry" target="_blank" rel="noreferrer"><Github size={19} /> GitHub</a><a href="https://www.linkedin.com/in/nugrahahenry/" target="_blank" rel="noreferrer"><Linkedin size={19} /> LinkedIn</a><a href="https://instagram.com/hnry.dev" target="_blank" rel="noreferrer"><Instagram size={19} /> @hnry.dev</a></div></div></div></section>
+      <section ref={contactRef} className="contact-section" id="contact" tabIndex={-1} aria-labelledby="contact-title" inert={!introDone}><div className="content-section contact-content"><div><p className="section-kicker section-kicker-dark">Make the next useful thing</p><h2 id="contact-title">{t.contact.title}</h2></div><div className="contact-copy"><p>{t.contact.body}</p><div className="contact-actions"><a className="button button-bright" href="https://wa.me/6289513559554" target="_blank" rel="noreferrer"><MessageCircle size={18} /> WhatsApp <ArrowUpRight size={16} /></a><a className="button button-outline" href="mailto:henrynugraha1210@gmail.com"><Mail size={18} /> Email <ArrowUpRight size={16} /></a></div><div className="social-links"><a href="https://github.com/nugrahahenry" target="_blank" rel="noreferrer"><Github size={19} /> GitHub</a><a href="https://www.linkedin.com/in/nugrahahenry/" target="_blank" rel="noreferrer"><Linkedin size={19} /> LinkedIn</a><a href="https://instagram.com/hnry.dev" target="_blank" rel="noreferrer"><Instagram size={19} /> @hnry.dev</a></div></div></div></section>
 
       <footer className="site-footer" inert={!introDone}><a className="brand" href="#top"><span className="brand-mark"><StarGodMark /></span><span>StarGod</span></a><span>{t.footer}</span><span>© 2026</span></footer>
     </main>
