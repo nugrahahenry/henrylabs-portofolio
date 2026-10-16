@@ -18,7 +18,7 @@ async function loadModule(name) {
 const { techOrbitRadius, sampleTechOrbit, resolveTechOwner, techOrbitMotion } = await loadModule("tech-orbit");
 const { companionCounts, createCompanionOrbit, sampleCompanionOrbit, advanceCompanionTime } = await loadModule("companion-orbit");
 const { createProjectSculpture } = await loadModule("project-sculptures");
-const { sampleOrbit, orbitalSpeed } = await loadModule("orbital-path");
+const { sampleOrbit, orbitalSpeed, orbitFrameDistance } = await loadModule("orbital-path");
 const { createStellarCore } = await loadModule("stellar-core");
 const { advanceGalaxyFlight, sampleGalaxyFlight } = await loadModule("galaxy-flight");
 const { createDeepSpace } = await loadModule("deep-space");
@@ -28,6 +28,70 @@ const { blackHoleFrame } = await loadModule("black-hole-frame");
 const { createSpacecraft, spacecraftPose, routeSpacecraft, flightPresence, pursuitPulse, pursuitShotTime, pursuitShotSide, pursuitMiss, createPursuitBolts, wormholePresence, createWormhole, clearShot, advancePursuit, pursuitEnd, pursuitPeriod, PURSUIT_DELAY, PURSUIT_REST, PURSUIT_SHOTS, PURSUIT_SHOT_SECONDS } = await loadModule("spacecraft");
 const { distantStarPoint, dustStreamSource, stellarTwinkle, createDistantStarMaterial, DISTANT_STAR_COUNT, COMPACT_STAR_COUNT, FEEDING_DUST_COUNT } = await loadModule("ambient-field");
 const { PASSAGE_COUNT, COMPACT_PASSAGE_COUNT, advancePassage, passagePoint, passageReadingGuard, passageVisibility, createCameraPassage } = await loadModule("camera-passage");
+
+function projectFrameBodies(count, active, portrait, focus, scale = 1) {
+  return Array.from({ length: count }, (_, index) => {
+    const rank = (index - active + count) % count - 1;
+    const orbitRadius = index === active ? 0 : ((portrait ? 1.98 : 2.35) + Math.max(0, rank) * (portrait ? .31 : .37)) * scale;
+    const eccentricity = .06 + index * .012;
+    return {
+      orbitRadius, eccentricity,
+      radius: (.37 + index * .02) * 1.55 * (index === active ? 2.25 : .94),
+      position: sampleOrbit(orbitRadius, index, eccentricity).add(focus),
+    };
+  });
+}
+
+function orbitFrustum(width, height, distance) {
+  const camera = new THREE.PerspectiveCamera(40, width / height, .1, 100);
+  camera.position.set(0, .05, distance);
+  camera.updateMatrixWorld(true);
+  return new THREE.Frustum().setFromProjectionMatrix(new THREE.Matrix4().multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse));
+}
+
+test("project camera contains every complete orbit and halo at maximum zoom across devices", () => {
+  const point = new THREE.Vector3();
+  for (const [width, height] of [[1180, 758], [950, 930], [768, 882], [390, 576], [320, 472], [844, 160]]) {
+    for (const count of [5, 3, 2]) for (let active = 0; active < count; active++) {
+      for (const pitch of [0, .6, 1.5, Math.PI, 5.5]) for (const reading of [false, true]) {
+        const focus = new THREE.Vector3(reading ? -1.4 : 0, .15, 2.1);
+        const rotation = new THREE.Euler(pitch, .08, 0);
+        const bodies = projectFrameBodies(count, active, width / height < .9, focus, reading ? .72 : 1);
+        const distance = orbitFrameDistance(bodies, focus, rotation, 40, width, height);
+        const frustum = orbitFrustum(width, height, distance);
+        for (const body of bodies) for (let step = 0; step < 72; step++) {
+          sampleOrbit(body.orbitRadius, step / 72 * Math.PI * 2, body.eccentricity, point).add(focus).applyEuler(rotation);
+          for (const plane of frustum.planes) assert.ok(plane.distanceToPoint(point) >= body.radius - 1e-7, `${width}x${height}, ${count} worlds, selected ${active}, pitch ${pitch}`);
+        }
+      }
+    }
+  }
+});
+
+test("the old width-only camera crops Polara while the swept frame stays stable through a full orbit", () => {
+  const focus = new THREE.Vector3(0, .15, 2.1), rotation = new THREE.Euler(0, .08, 0);
+  const bodies = projectFrameBodies(5, 0, false, focus);
+  const old = orbitFrustum(950, 930, 4.7 / (Math.tan(THREE.MathUtils.degToRad(20)) * (950 / 930)) - .45 * 2.7);
+  const distance = orbitFrameDistance(bodies, focus, rotation, 40, 950, 930);
+  let clipped = false;
+  for (let step = 0; step < 72; step++) {
+    bodies.forEach(body => sampleOrbit(body.orbitRadius, step / 72 * Math.PI * 2, body.eccentricity, body.position).add(focus));
+    const polara = bodies[4].position.clone().applyEuler(rotation);
+    clipped ||= old.planes.some(plane => plane.distanceToPoint(polara) < bodies[4].radius);
+    assert.ok(Math.abs(orbitFrameDistance(bodies, focus, rotation, 40, 950, 930) - distance) < 1e-8, "no camera pumping as worlds orbit");
+  }
+  assert.ok(clipped, "reproduce the reported clipping instead of only testing safe inputs");
+});
+
+test("camera also contains the in-flight selected planet before it reaches its new orbit", () => {
+  const focus = new THREE.Vector3(0, .15, 2.1), rotation = new THREE.Euler(.8, -.08, 0);
+  const bodies = projectFrameBodies(5, 4, false, focus);
+  bodies[4].position.copy(sampleOrbit(3.46, Math.PI / 2, .108)).add(focus);
+  const distance = orbitFrameDistance(bodies, focus, rotation, 40, 1180, 758);
+  const frustum = orbitFrustum(1180, 758, distance);
+  const center = bodies[4].position.clone().applyEuler(rotation);
+  assert.ok(frustum.planes.every(plane => plane.distanceToPoint(center) >= bodies[4].radius - 1e-7));
+});
 
 test("maker tracks close around the portrait and match each satellite lane", () => {
   for (const lanes of [1, 2, 3]) {

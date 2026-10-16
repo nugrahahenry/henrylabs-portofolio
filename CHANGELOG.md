@@ -1,5 +1,11 @@
 # Changelog
 
+## StarGod Portfolio v0.123.1 - 2026-10-17
+
+- Keep Polara and the other project planets inside the orbit camera frame, including their halos, full orbital paths, and selection handoffs.
+- Fit both screen dimensions and orbital depth while preserving zoom, full vertical rotation, the galaxy approach, and reduced-motion controls.
+- Add regression coverage for all three galaxies, every selected world, six canvas shapes, inspection layouts, and changing orbit angles without camera pumping.
+
 ## StarGod Portfolio v0.123.0 - 2026-10-16
 
 - Add an opt-in Cloudflare Pages static build without changing the existing local development/server workflow. Require a valid public HTTPS origin before exporting canonical URLs and metadata.

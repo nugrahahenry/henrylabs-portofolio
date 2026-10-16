@@ -9,7 +9,7 @@ import { advanceGalaxyFlight, sampleGalaxyFlight } from "./galaxy-flight";
 import { createPlanetMaps, removeEdgeMatte } from "./planet-materials";
 import { createProjectSculpture } from "./project-sculptures";
 import { resolveTechOwner, sampleTechOrbit, techOrbitRadius, techOrbitMotion } from "./tech-orbit";
-import { orbitGeometry, orbitalSpeed, sampleOrbit } from "./orbital-path";
+import { orbitFrameDistance, orbitGeometry, orbitalSpeed, sampleOrbit } from "./orbital-path";
 import { createStellarAura } from "./stellar-core";
 import { UNIVERSE_CHAPTER as chapter } from "./universe-chapter";
 import { galaxyLetterScale } from "./spatial-type";
@@ -323,7 +323,8 @@ export function CosmicCanvas({ activeId, onSelect, onPrevious, onNext, motionOn,
         });
       }
       system.add(group);
-      return { group, sphere, atmosphere, aura, logoHalo, focusRing, sculpture, radius, orbitBlend: 1, orbitFrom: new THREE.Vector3() };
+      const frame = { position: group.position, radius: radius * 1.55, orbitRadius: 0, eccentricity: .06 + index * .012 };
+      return { group, sphere, atmosphere, aura, logoHalo, focusRing, sculpture, radius, frame, orbitBlend: 1, orbitFrom: new THREE.Vector3() };
     });
     const sectorPlanets = {
       main: allPlanets.slice(0, mainCount),
@@ -334,6 +335,11 @@ export function CosmicCanvas({ activeId, onSelect, onPrevious, onNext, motionOn,
       main: sectorPlanets.main.map(({ group }) => group),
       university: sectorPlanets.university.map(({ group }) => group),
       client: sectorPlanets.client.map(({ group }) => group),
+    };
+    const sectorFrames = {
+      main: sectorPlanets.main.map(planet => planet.frame),
+      university: sectorPlanets.university.map(planet => planet.frame),
+      client: sectorPlanets.client.map(planet => planet.frame),
     };
     const techTextures: THREE.Texture[] = [];
     const techSystem = new THREE.Group();
@@ -496,17 +502,6 @@ export function CosmicCanvas({ activeId, onSelect, onPrevious, onNext, motionOn,
       } else {
         focusPosition.lerp(focus, state.current.motionOn ? 1 - Math.exp(-dt * 8) : 1);
       }
-      const halfWidth = portrait ? 3.8 : 4.7;
-      const fittedDistance = Math.max(10.5, halfWidth / (Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) * camera.aspect));
-      const overviewDistance = Math.max(14.5, 4.3 / (Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) * camera.aspect));
-      camera.position.set(focusPosition.x * flightPose.pan, .05 + focusPosition.y * flightPose.pan, THREE.MathUtils.lerp(overviewDistance + (1 - zoom) * 3, focusPosition.z + fittedDistance - state.current.viewZoom * 2.7, flightPose.approach));
-      const arcDirection = sector === "university" ? -1 : 1;
-      camera.position.x += flightPose.arc * arcDirection * (portrait ? .65 : 1.4);
-      camera.position.y += flightPose.arc * .3;
-      camera.position.z += departure * departure * 26;
-      cameraTarget.set(focusPosition.x * flightPose.pan, focusPosition.y * flightPose.pan, focusPosition.z * flightPose.pan);
-      camera.lookAt(cameraTarget);
-      camera.rotateZ(flightPose.arc * arcDirection * -.025);
       system.position.copy(focusPosition);
       system.scale.setScalar(Math.max(.0001, flightPose.orbitScale));
       system.visible = flightPose.orbitScale > .0001;
@@ -545,6 +540,8 @@ export function CosmicCanvas({ activeId, onSelect, onPrevious, onNext, motionOn,
         group.scale.setScalar(state.current.motionOn && !restoring ? THREE.MathUtils.damp(group.scale.x, scale, 7, dt) : scale);
         const rank = (index - activeIndex + worlds.length) % worlds.length - 1;
         const orbitRadius = ((portrait ? 1.98 : 2.35) + Math.max(0, rank) * (portrait ? .31 : .37)) * orbitLayoutScale;
+        planet.frame.orbitRadius = selected ? 0 : orbitRadius;
+        planet.frame.radius = planet.radius * 1.55 * group.scale.x;
         const phase = (sector === "main" ? orbitPhases[index] : index * Math.PI * 2 / worlds.length + .8) + angle + elapsed * orbitalSpeed(orbitRadius) * .45;
         const line = projectOrbits[index];
         line.position.copy(focusAnchor);
@@ -572,6 +569,19 @@ export function CosmicCanvas({ activeId, onSelect, onPrevious, onNext, motionOn,
         focusRing.rotation.z = elapsed * (state.current.motionOn ? (selected ? .18 : -.035) : 0);
         focusRing.scale.setScalar(state.current.motionOn && selected ? 1 + Math.sin(elapsed * 2.4 + index) * .045 : 1);
       });
+      const halfWidth = portrait ? 3.8 : 4.7;
+      const safeDistance = orbitFrameDistance(sectorFrames[sector], focusAnchor, system.rotation, camera.fov, host.clientWidth, host.clientHeight);
+      // Reserve the complete zoom range above the safe frame instead of clipping at maximum zoom.
+      const fittedDistance = Math.max(10.5, safeDistance + .45 * 2.7, halfWidth / (Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) * camera.aspect));
+      const overviewDistance = Math.max(14.5, 4.3 / (Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) * camera.aspect));
+      camera.position.set(focusPosition.x * flightPose.pan, .05 + focusPosition.y * flightPose.pan, THREE.MathUtils.lerp(overviewDistance + (1 - zoom) * 3, focusPosition.z + fittedDistance - state.current.viewZoom * 2.7, flightPose.approach));
+      const arcDirection = sector === "university" ? -1 : 1;
+      camera.position.x += flightPose.arc * arcDirection * (portrait ? .65 : 1.4);
+      camera.position.y += flightPose.arc * .3;
+      camera.position.z += departure * departure * 26;
+      cameraTarget.set(focusPosition.x * flightPose.pan, .05 + focusPosition.y * flightPose.pan, focusPosition.z * flightPose.pan);
+      camera.lookAt(cameraTarget);
+      camera.rotateZ(flightPose.arc * arcDirection * -.025);
       const selectedProjectIndex = allWorlds.findIndex((world) => world.id === state.current.activeId);
       const availableOwners = sectorOwnerIndexes[sector];
       let visibleTechCount = 0;
