@@ -98,7 +98,7 @@ try {
   await page.locator(".detail-route a").click();
   await expect(page.locator("#project-card-polara")).toBeFocused();
   await expect(page.locator(".project-record")).toHaveCount(1);
-  await page.goto(`${base}/projects/catmoji?motion=off`);
+  await page.goto(`${base}/projects/nalira?motion=off`);
   await expect(page.locator(".polara-story")).toHaveCount(0);
   await page.locator(".project-visual-open").click();
   await expect(page.getByRole("dialog")).toContainText("Original artwork, not an application screenshot.");

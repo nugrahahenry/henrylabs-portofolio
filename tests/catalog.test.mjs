@@ -22,6 +22,7 @@ const { certificates } = loadContent("credentials");
 const { orbitTechNodes } = loadContent("technologies");
 const { projectWorkflowNotes } = loadContent("project-workflows");
 const { polaraStory } = loadContent("polara-story");
+const { catmojiStory } = loadContent("catmoji-story");
 const { projectContactLinks } = loadContent("project-contact");
 const { makerGroups, readMakerRoute, makerRouteHref, makerRouteQuery } = loadContent("../components/maker-route");
 
@@ -46,6 +47,37 @@ test("Polara evidence has bilingual stories and small, traceable actual product 
     assert.ok(polaraStory.problem[lang] && polaraStory.result[lang] && polaraStory.limit[lang]);
     assert.ok(polaraStory.decisions.every(item => item.title[lang] && item.body[lang]));
   }
+});
+
+test("Catmoji uses traceable camera-free UI captures and explicit product boundaries", async () => {
+  const { default: sharp } = await import("sharp");
+  const capture = JSON.parse(readFileSync("public/assets/projects/catmoji/capture.json", "utf8"));
+  assert.equal(capture.version, "1.9.1");
+  assert.match(capture.revision, /^[a-f0-9]{40}$/);
+  assert.match(capture.origin, /Camera off.*no gesture recognition/);
+  assert.equal(capture.captures.length, catmojiStory.captures.length);
+  assert.equal(findWorld("catmoji").mediaKind, "artwork", "Home/catalog keep their original labeled artwork");
+  assert.equal(findWorld("catmoji").media, "/assets/projects/catmoji-hero.png");
+  let total = 0;
+  for (const shot of catmojiStory.captures) {
+    const bytes = readFileSync(`public${shot.src}`);
+    const metadata = await sharp(bytes).metadata();
+    assert.deepEqual([metadata.width, metadata.height], shot.size);
+    const source = capture.captures.find(item => shot.src.endsWith(item.file));
+    assert.deepEqual(source.size, shot.size);
+    assert.equal(source.crop, "#panel");
+    assert.match(readFileSync(`public${shot.src}.json`, "utf8"), /not generated/);
+    total += bytes.length;
+  }
+  assert.ok(total < 100_000);
+  for (const lang of ["en", "id"]) {
+    for (const key of ["intro", "problem", "captureNote", "distinction", "result", "limit"]) assert.ok(catmojiStory[key][lang]);
+    assert.ok(catmojiStory.decisions.every(item => item.title[lang] && item.body[lang]));
+    assert.ok(catmojiStory.pipeline.every(item => item.title[lang] && item.body[lang]));
+  }
+  assert.match(catmojiStory.distinction.en, /not a measurement/);
+  assert.match(catmojiStory.limit.en, /real-camera recording is not included yet/);
+  assert.match(catmojiStory.decisions[2].body.en, /server proxy/);
 });
 
 test("public contact destinations use Henry's confirmed WhatsApp number", () => {

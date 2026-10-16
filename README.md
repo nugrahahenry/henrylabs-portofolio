@@ -1,6 +1,6 @@
 <div align="center">
 
-# StarGod Portfolio v0.119.0
+# StarGod Portfolio v0.120.0
 
 **I build things I actually see.**
 
@@ -93,6 +93,24 @@ Original project marks become transparent three-dimensional identities. Select a
 | <img src="public/assets/brand/polara.png" width="28" alt="" /> **Polara** | A browser photobooth where the interface becomes part of the memory. | [Live product](https://polara.vercel.app/) |
 
 These are solo product and system builds. Public repositories are linked where available; private work is represented through sanitized evidence and focused walkthroughs.
+
+### Inside Catmoji
+
+Catmoji's project page follows the gesture from hand landmarks to a smoothed
+classification and a Moji response. Normal and Challenge previews are actual
+application panels, with keyboard-accessible tabs and full-size inspection.
+The case study explains the 2,460-sample kNN model, Challenge timing, browser
+vision and separate voice path, without claiming measured emotion or accuracy.
+
+<img src="public/assets/projects/catmoji/challenge-panel.webp" alt="Actual Catmoji Challenge panel: gesture guide, three lives and start action, captured without camera input" width="280" />
+
+These are cropped Catmoji v1.9.1 screenshots with the camera off, not generated
+mockups or recognition results. A real-camera recording is not included yet.
+The three optimized WebPs total less than 60 KB; their source revision and crop
+are recorded in `public/assets/projects/catmoji/capture.json`. The optional
+`scripts/capture-catmoji.mjs` reads a clean sibling checkout, uses the product's
+camera-free preview and never calls the voice service. No sibling checkout,
+camera, model or third-party service is loaded by the portfolio page.
 
 ### Inside Polara
 

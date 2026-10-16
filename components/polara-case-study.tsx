@@ -14,7 +14,7 @@ export function PolaraCaseStudy({ project }: { project: CatalogProject }) {
   const [attempt, setAttempt] = useState(0);
   const screenshot = (index: number) => {
     const shot = polaraStory.captures[index];
-    return <ProjectVisual project={{ ...project, media: shot.src, mediaSize: shot.size, mediaAlt: shot.alt[language] }} captureTitle={shot.title[language]} />;
+    return <ProjectVisual project={{ ...project, media: shot.src, mediaSize: shot.size, mediaAlt: shot.alt[language] }} captureTitle={shot.title[language]} captureNote={en ? "Actual application in Demo mode. Fictional sample photos, not camera captures." : "Aplikasi asli dalam mode Demo. Foto contoh fiktif, bukan hasil kamera."} />;
   };
   return <article className="polara-story" aria-label={en ? "Polara case study" : "Studi kasus Polara"}>
     <figure className="polara-demo">

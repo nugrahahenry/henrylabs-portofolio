@@ -1,0 +1,41 @@
+{
+  "product": "Catmoji",
+  "version": "1.9.1",
+  "revision": "a7f5419785955d80f70c7211ec384c6b103e70a8",
+  "captured": "2026-10-16",
+  "origin": "Actual local product UI using built-in ?nocam. Camera off; no gesture recognition, injected predictions, personal data or live TTS calls.",
+  "viewport": [
+    1280,
+    960
+  ],
+  "mobileViewport": [
+    390,
+    844
+  ],
+  "captures": [
+    {
+      "file": "normal-panel.webp",
+      "size": [
+        378,
+        677
+      ],
+      "crop": "#panel"
+    },
+    {
+      "file": "challenge-panel.webp",
+      "size": [
+        378,
+        496
+      ],
+      "crop": "#panel"
+    },
+    {
+      "file": "challenge-mobile.webp",
+      "size": [
+        358,
+        495
+      ],
+      "crop": "#panel"
+    }
+  ]
+}

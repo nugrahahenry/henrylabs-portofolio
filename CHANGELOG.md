@@ -1,5 +1,13 @@
 # Changelog
 
+## StarGod Portfolio v0.120.0 - 2026-10-16
+
+- Give Catmoji an English/Indonesian case study with actual Normal and Challenge panel captures, a gesture-to-response explanation, grounded implementation decisions and explicit camera/network limitations.
+- Add keyboard/touch screenshot tabs with intrinsic height reservation, full-size zoom/pan and mobile evidence. Original artwork remains unchanged in Home and the project catalog.
+- Capture three optimized WebPs from Catmoji v1.9.1's camera-free preview, with source/crop provenance. No injected predictions, personal photos, voice-service calls or live-camera recording.
+- Make screenshot disclosure specific to each project while retaining Polara's fictional-photo notice. Recover images that fail before hydration, with a visible retry action.
+- Preserve project/maker/universe returns, live/source links, contextual WhatsApp/email inquiries, credentials and the established nebula. Add Catmoji responsive, accessibility, privacy and failure regressions.
+
 ## StarGod Portfolio v0.119.0 - 2026-10-16
 
 - Add a compact discussion section after each project story, with WhatsApp and email drafts naming the current project in English or Indonesian.

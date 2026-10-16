@@ -28,7 +28,7 @@ try {
     const errors = []; page.on("pageerror", error => errors.push(error.message));
     const en = language === "en";
     for (const kind of ["artwork", "credential"]) {
-      await page.goto(`${base}/${kind === "artwork" ? "projects/catmoji" : "credentials"}?motion=off&lang=${language}`);
+      await page.goto(`${base}/${kind === "artwork" ? "projects/nalira" : "credentials"}?motion=off&lang=${language}`);
       const opener = page.locator(kind === "artwork" ? ".project-visual-open" : ".credential-record-preview").first();
       await opener.click();
       const dialog = page.getByRole("dialog");
