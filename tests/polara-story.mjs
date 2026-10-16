@@ -30,6 +30,30 @@ try {
     });
     assert.ok(pixels > 1000, "real decoded product video is not blank");
     await video.evaluate(v => v.pause());
+    for (const fraction of [0.25, 0.5, 0.75, 0.95, 0.995]) {
+      const framing = await video.evaluate(async (v, fraction) => {
+        const seeked = new Promise(resolve => v.addEventListener("seeked", resolve, { once: true }));
+        v.currentTime = Math.min(v.duration - .08, v.duration * fraction);
+        await seeked;
+        const canvas = document.createElement("canvas"); canvas.width = 144; canvas.height = 100;
+        const ctx = canvas.getContext("2d"); ctx.drawImage(v, 0, 0, 144, 100);
+        // A viewport resize used to leave most of the recording as uniform gray padding.
+        const data = ctx.getImageData(65, 10, 70, 75).data;
+        let gray = 0, light = 0;
+        for (let i = 0; i < data.length; i += 4) {
+          if ([data[i], data[i + 1], data[i + 2]].every(value => Math.abs(value - 128) < 5)) gray++;
+          if (Math.min(data[i], data[i + 1], data[i + 2]) > 180) light++;
+        }
+        return { gray: gray / (data.length / 4), light: light / (data.length / 4) };
+      }, fraction);
+      assert.ok(framing.gray < .05 && framing.light > .5, `desktop UI fills the recording at ${fraction * 100}%: ${JSON.stringify(framing)}`);
+    }
+    await page.screenshot({ path: `test-results/polara-story/${width}-video-ending.png` });
+    await video.evaluate(v => v.play());
+    await expect.poll(() => video.evaluate(v => v.ended)).toBe(true);
+    await video.evaluate(v => { v.currentTime = 0; return v.play(); });
+    await expect.poll(() => video.evaluate(v => v.currentTime)).toBeGreaterThan(.2);
+    await video.evaluate(v => v.pause());
     await page.locator(".polara-transcript summary").click();
     await expect(page.locator(".polara-transcript")).toHaveAttribute("open", "");
     for (const opener of await page.locator(".polara-story .project-visual-open").all()) {
@@ -65,7 +89,7 @@ try {
     await page.screenshot({ path: `test-results/polara-story/${width}-page.png`, fullPage: true });
     assert.deepEqual(errors, []);
     await page.close();
-    console.log(`PASS Polara ${width}x${height} ${lang}: video, screenshots, zoom, keyboard, focus, layout`);
+    console.log(`PASS Polara ${width}x${height} ${lang}: video framing through ending/replay, screenshots, zoom, keyboard, focus, layout`);
   }
   const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
   await page.goto(`${base}/projects?q=polara&motion=off`);

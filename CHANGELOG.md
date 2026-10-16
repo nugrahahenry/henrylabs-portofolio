@@ -1,5 +1,11 @@
 # Changelog
 
+## StarGod Portfolio v0.118.1 - 2026-10-16
+
+- Fix the Polara recording shrinking into a phone viewport with gray padding at the end. Capture mobile screenshots in a separate unrecorded session.
+- Keep the full desktop result visible for a three-second closing hold after saving the PNG.
+- Check decoded video framing through the final frame, completion and replay across desktop, tablet and phone layouts.
+
 ## StarGod Portfolio v0.118.0 - 2026-10-16
 
 - Replace Polara's generic detail body with a bilingual product story: the problem, three implementation decisions, and the working result with honest privacy and device boundaries.

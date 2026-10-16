@@ -12,9 +12,15 @@
     390,
     844
   ],
+  "mobileCapture": "Separate unrecorded browser context",
   "video": {
-    "durationSeconds": 12.4,
+    "durationSeconds": 13.9,
     "audio": false,
+    "fixedViewport": [
+      1440,
+      1000
+    ],
+    "finalHoldSeconds": 3,
     "sequence": [
       "Select a frame",
       "Adjust photo fit",

@@ -31,12 +31,8 @@ const server = createServer(async (req, res) => {
 await new Promise(resolve => server.listen(0, "127.0.0.1", resolve));
 let browser;
 const errors = [];
-try {
-  browser = await chromium.launch({ headless: true, executablePath: process.env.CHROME_PATH ?? "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe" });
-  const context = await browser.newContext({ viewport: { width: 1440, height: 1000 }, recordVideo: { dir: temporary, size: { width: 1440, height: 1000 } }, acceptDownloads: true });
-  const page = await context.newPage();
+const enterDemo = async page => {
   page.on("pageerror", error => errors.push(error.message));
-  const recordingStart = Date.now();
   await page.goto(`http://127.0.0.1:${server.address().port}`);
   await page.evaluate(() => document.fonts.ready);
   await page.locator("#primaryBtn").click();
@@ -47,47 +43,64 @@ try {
     await page.waitForFunction(() => !document.querySelector('[data-panel="review"]').hidden || (!document.querySelector("#primaryBtn").disabled && document.querySelector("#primaryBtn").textContent.trim() === "Take photo"));
   }
   await expect(page.locator('[data-panel="review"]')).toBeVisible();
-  const capture = async name => {
-    await page.evaluate(() => window.scrollTo({ top: 0, behavior: "instant" }));
-    await page.waitForTimeout(600);
-    await sharp(await page.screenshot()).webp({ quality: 86 }).toFile(path.join(output, `${name}.webp`));
-  };
-  await capture("review");
+};
+const capture = async (page, name) => {
+  await page.evaluate(() => window.scrollTo({ top: 0, behavior: "instant" }));
+  await page.waitForTimeout(600);
+  await sharp(await page.screenshot()).webp({ quality: 86 }).toFile(path.join(output, `${name}.webp`));
+};
+const revealStrip = async (page, pause = 0) => {
+  await expect(page.locator('[data-panel="frame"]')).toBeVisible();
+  await page.locator("#templateList .tpl-btn").nth(1).click();
+  await page.waitForTimeout(pause);
+  await page.locator("#photoSlotTabs .slot-tab").nth(1).click();
+  await page.locator("#fitContainBtn").click();
+  await page.waitForTimeout(pause);
+  await page.locator("#primaryBtn").click();
+  await expect(page.locator('[data-panel="decorate"]')).toBeVisible();
+  await page.waitForTimeout(pause);
+  await page.locator("#primaryBtn").click();
+  await expect(page.locator("#revealTitle")).toHaveText("Proof approved.", { timeout: 40000 });
+};
+try {
+  browser = await chromium.launch({ headless: true, executablePath: process.env.CHROME_PATH ?? "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe" });
+  const context = await browser.newContext({ viewport: { width: 1440, height: 1000 }, recordVideo: { dir: temporary, size: { width: 1440, height: 1000 } }, acceptDownloads: true });
+  const page = await context.newPage();
+  await enterDemo(page);
+  await capture(page, "review");
   await page.locator("#primaryBtn").click();
   await expect(page.locator('[data-panel="frame"]')).toBeVisible();
   await expect(page.locator("#primaryBtn")).toBeEnabled();
   await page.waitForTimeout(1200);
-  const start = (Date.now() - recordingStart) / 1000;
-  await capture("frames");
+  const start = Date.now();
+  await capture(page, "frames");
   await page.waitForTimeout(1200);
-  await page.locator("#templateList .tpl-btn").nth(1).click();
-  await page.waitForTimeout(1400);
-  await page.locator("#photoSlotTabs .slot-tab").nth(1).click();
-  await page.locator("#fitContainBtn").click();
-  await page.waitForTimeout(1400);
-  await page.locator("#primaryBtn").click();
-  await expect(page.locator('[data-panel="decorate"]')).toBeVisible();
-  await page.waitForTimeout(1400);
-  await page.locator("#primaryBtn").click();
-  await expect(page.locator("#revealTitle")).toHaveText("Proof approved.", { timeout: 40000 });
+  await revealStrip(page, 1400);
   await page.waitForTimeout(1800);
   const download = page.waitForEvent("download");
   await page.getByRole("button", { name: "Save PNG", exact: true }).click();
   await (await download).saveAs(path.join(temporary, "demo-strip.png"));
   const png = await readFile(path.join(temporary, "demo-strip.png"));
   assert.deepEqual([png.readUInt32BE(16), png.readUInt32BE(20)], [720, 1800]);
-  await page.waitForTimeout(1400);
-  const duration = (Date.now() - recordingStart) / 1000 - start;
-  await page.setViewportSize({ width: 390, height: 844 });
-  await page.evaluate(() => window.scrollTo(0, 0));
-  await capture("reveal-mobile");
+  await page.mouse.move(10, 990);
+  await page.waitForTimeout(3000);
+  await page.screenshot({ path: path.join(temporary, "desktop-ending.png") });
+  const duration = (Date.now() - start) / 1000;
   const video = page.video();
+  // End the desktop recording before any mobile work, not by a guessed trim offset.
   await context.close();
   const source = await video.path();
   const ffmpeg = process.env.FFMPEG_PATH ?? path.join(process.env.LOCALAPPDATA, "ms-playwright/ffmpeg-1011/ffmpeg-win64.exe");
-  execFileSync(ffmpeg, ["-y", "-ss", String(start), "-i", source, "-t", String(duration), "-an", "-c:v", "libvpx", "-b:v", "600k", "-crf", "18", path.join(output, "walkthrough.webm")], { stdio: "pipe", windowsHide: true });
+  execFileSync(ffmpeg, ["-y", "-sseof", String(-duration), "-i", source, "-an", "-c:v", "libvpx", "-b:v", "600k", "-crf", "18", path.join(output, "walkthrough.webm")], { stdio: "pipe", windowsHide: true });
+  const mobileContext = await browser.newContext({ viewport: { width: 390, height: 844 } });
+  const mobilePage = await mobileContext.newPage();
+  await enterDemo(mobilePage);
+  await mobilePage.locator("#primaryBtn").click();
+  await revealStrip(mobilePage);
+  await capture(mobilePage, "reveal-mobile");
+  await mobileContext.close();
   assert.deepEqual(errors, []);
-  await writeFile(path.join(output, "capture.json"), JSON.stringify({ product: "Polara", version, revision, captured: new Date().toISOString().slice(0, 10), origin: "Actual local product UI, explicit Demo mode with fictional sample photos; no live camera or private photos.", viewport: [1440, 1000], mobileViewport: [390, 844], video: { durationSeconds: Math.round(duration * 10) / 10, audio: false, sequence: ["Select a frame", "Adjust photo fit", "Continue without stickers", "Reveal", "Save PNG"] }, files: ["review.webp", "frames.webp", "reveal-mobile.webp", "walkthrough.webm"] }, null, 2) + "\n");
+  await writeFile(path.join(output, "capture.json"), JSON.stringify({ product: "Polara", version, revision, captured: new Date().toISOString().slice(0, 10), origin: "Actual local product UI, explicit Demo mode with fictional sample photos; no live camera or private photos.", viewport: [1440, 1000], mobileViewport: [390, 844], mobileCapture: "Separate unrecorded browser context", video: { durationSeconds: Math.round(duration * 10) / 10, audio: false, fixedViewport: [1440, 1000], finalHoldSeconds: 3, sequence: ["Select a frame", "Adjust photo fit", "Continue without stickers", "Reveal", "Save PNG"] }, files: ["review.webp", "frames.webp", "reveal-mobile.webp", "walkthrough.webm"] }, null, 2) + "\n");
   console.log(`Captured Polara ${version} (${revision.slice(0, 7)}): three images and ${duration.toFixed(1)}s actual UI recording.`);
 } finally {
   await browser?.close();

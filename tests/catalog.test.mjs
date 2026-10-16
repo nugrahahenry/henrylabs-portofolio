@@ -30,6 +30,9 @@ test("Polara evidence has bilingual stories and small, traceable actual product 
   assert.match(capture.revision, /^[a-f0-9]{40}$/);
   assert.match(capture.origin, /Demo mode.*fictional/);
   assert.equal(capture.video.audio, false);
+  assert.deepEqual(capture.video.fixedViewport, [1440, 1000]);
+  assert.equal(capture.video.finalHoldSeconds, 3);
+  assert.equal(capture.mobileCapture, "Separate unrecorded browser context");
   assert.ok(capture.video.durationSeconds > 5 && capture.video.durationSeconds < 25);
   assert.equal(polaraStory.captures.length, 3);
   for (const shot of polaraStory.captures) {

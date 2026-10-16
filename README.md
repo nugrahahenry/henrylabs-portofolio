@@ -1,6 +1,6 @@
 <div align="center">
 
-# StarGod Portfolio v0.118.0
+# StarGod Portfolio v0.118.1
 
 **I build things I actually see.**
 
@@ -104,6 +104,10 @@ v1.1.3's explicit Demo mode with fictional sample photos, not a visitor's camera
 The recording loads only when played; a text walkthrough and screenshots remain
 available without playback. Artwork on the Home preview and catalog stays labeled
 as artwork.
+
+The video keeps its desktop framing through the final saved result, with a short
+closing hold. Mobile screenshots are captured separately, never by resizing the
+recorded session.
 
 Capture provenance lives alongside the public media in
 [`capture.json`](public/assets/projects/polara/capture.json). The optional
