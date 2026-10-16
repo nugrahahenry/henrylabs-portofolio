@@ -413,16 +413,17 @@ body:has(.arrival-intro:not(.intro-loader--done)) > .site-header { visibility: h
 .credential-dialog button { display: grid; place-items: center; flex: none; width: 44px; height: 44px; border: 1px solid #667581; border-radius: 50%; background: transparent; color: #f0f5f7; }
 .credential-dialog button:hover:not(:disabled) { background: #263440; }
 .credential-dialog button:disabled { opacity: .4; cursor: not-allowed; }
-.credential-dialog-stage { position: relative; display: grid; min-height: 0; }
-.credential-dialog-image { overflow: auto; min-height: 0; padding: 20px; display: grid; background: #080d12; overscroll-behavior: contain; scrollbar-color: #687e8e #101922; }
+.credential-dialog-stage { position: relative; display: grid; grid-template-rows: auto minmax(0, 1fr); min-height: 0; }
+.credential-zoom-tools { display: flex; justify-content: center; align-items: center; gap: 8px; padding: 6px 12px; border-bottom: 1px solid #394753; }
+.credential-zoom-tools output { min-width: 56px; text-align: center; color: #d5e0e8; font: 13px var(--mono); font-variant-numeric: tabular-nums; }
+.credential-dialog-image { overflow: auto; min-height: 0; min-width: 0; padding: 0; display: block; background: #080d12; overscroll-behavior: contain; scrollbar-color: #687e8e #101922; scrollbar-gutter: stable; touch-action: manipulation; }
 .credential-dialog-image:focus-visible { outline: 2px solid var(--cyan); outline-offset: -4px; }
 .credential-dialog-sheet { position: relative; min-height: 0; }
+.credential-dialog-document { position: absolute; }
 .credential-dialog-image img { display: block; object-fit: contain; width: 100%; height: 100%; min-height: 0; }
 .credential-dialog-image .credential-dialog-preview { position: absolute; inset: 0; }
 .credential-dialog-stage:not([data-image-state="ready"]) .credential-dialog-original { visibility: hidden; }
-.credential-dialog-image.is-zoomed { display: block; }
-.credential-dialog-image.is-zoomed .credential-dialog-sheet { width: 160%; }
-.credential-dialog-image.is-zoomed img { max-width: none; height: auto; }
+.credential-dialog-image img { max-width: none; }
 .credential-image-notice { position: absolute; bottom: 16px; left: 50%; transform: translateX(-50%); display: flex; align-items: center; gap: 12px; width: max-content; max-width: calc(100% - 32px); padding: 10px 14px; border: 1px solid #485763; border-radius: 4px; background: #0f171f; }
 .credential-image-notice p { display: flex; align-items: center; gap: 10px; font-size: 13px; line-height: 1.5; margin: 0; }
 .credential-image-notice svg { flex: none; }
@@ -487,16 +488,15 @@ html[data-motion="on"] :is(.project-library-grid, .credential-library-grid) { an
   .credential-dialog-navigation { grid-column: 1 / -1; grid-row: 2; }
   .credential-dialog-count { margin-right: auto; }
   .credential-dialog h2 { font-size: 17px; }
-  .credential-dialog-image { padding: 8px; }
   .credential-dialog-foot { padding: 12px 16px; gap: 8px 16px; flex-wrap: wrap; font-size: 12px; }
-  .credential-dialog-foot > span { width: calc(100% - 70px); }
+  .credential-dialog-foot > span { width: 100%; }
   .library-footer { margin-top: 48px; }
 }
 @media (min-width: 641px) and (max-height: 480px) {
   .credential-dialog-bar { padding: 10px 16px; }
   .credential-dialog h2 { font-size: 16px; margin-top: 4px; }
   .credential-dialog-bar small { font-size: 11px; }
-  .credential-dialog-image { padding: 8px; }
+  .credential-zoom-tools { padding-block: 2px; }
   .credential-dialog-foot { padding: 8px 16px; }
 }
 @media (prefers-reduced-motion: reduce) { .library-page *, .credential-dialog * { animation: none !important; transition: none !important; } }

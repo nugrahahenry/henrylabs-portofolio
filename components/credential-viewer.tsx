@@ -1,10 +1,12 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ArrowUpRight, ChevronLeft, ChevronRight, LoaderCircle, RotateCcw, X, ZoomIn, ZoomOut } from "lucide-react";
+import { ArrowUpRight, ChevronLeft, ChevronRight, LoaderCircle, RotateCcw, Scan, X, ZoomIn, ZoomOut } from "lucide-react";
 import type { Credential } from "@/content/credentials";
 import { useSitePreferences } from "./site-preferences";
 import { useImagePan } from "./use-image-pan";
+import { useCertificateZoom } from "./use-certificate-zoom";
+import { certificateZoomSteps } from "./image-zoom";
 
 type ViewerProps = {
   record: Credential | null;
@@ -72,19 +74,19 @@ function CertificateDialog({ record, collection, onSelect, onClose }: ViewerProp
 }
 
 function CertificateDocument({ record }: { record: Credential }) {
-  const imageArea = useRef<HTMLDivElement>(null);
-  const [zoomed, setZoomed] = useState(false);
+  const { area: imageArea, zoom, layout, changeZoom, imageReady } = useCertificateZoom();
+  const zoomed = zoom > 1;
   const [status, setStatus] = useState<"loading" | "ready" | "error">("loading");
   const [attempt, setAttempt] = useState(0);
   const [previewAvailable, setPreviewAvailable] = useState(true);
   const pan = useImagePan(zoomed && status === "ready");
   const { language } = useSitePreferences();
   const isEn = language === "en";
-  const zoomLabel = zoomed ? (isEn ? "Fit certificate" : "Sesuaikan sertifikat") : (isEn ? "Zoom certificate" : "Perbesar sertifikat");
-  useEffect(() => {
-    imageArea.current?.scrollTo(0, 0);
-    if (zoomed) imageArea.current?.focus({ preventScroll: true });
-  }, [zoomed]);
+  const ready = useCallback((image: HTMLImageElement) => { imageReady(image); setStatus("ready"); }, [imageReady]);
+  const attach = useCallback((image: HTMLImageElement | null) => {
+    if (image?.complete) { if (image.naturalWidth) ready(image); else setStatus("error"); }
+  }, [ready]);
+  const step = certificateZoomSteps.indexOf(zoom as typeof certificateZoomSteps[number]);
   const retry = () => {
     imageArea.current?.closest("dialog")?.querySelector<HTMLButtonElement>(".credential-dialog-close")?.focus();
     setStatus("loading");
@@ -92,10 +94,22 @@ function CertificateDocument({ record }: { record: Credential }) {
   };
   return <>
       <div className="credential-dialog-stage" data-image-state={status}>
-        <div ref={imageArea} {...pan} className={`credential-dialog-image${zoomed ? " is-zoomed" : ""}`} role="region" aria-label={isEn ? "Certificate image" : "Gambar sertifikat"} aria-busy={status === "loading"} tabIndex={zoomed ? 0 : -1}>
-          <div className="credential-dialog-sheet">
+        <div className="credential-zoom-tools" role="group" aria-label={isEn ? "Certificate zoom" : "Pembesaran sertifikat"}>
+          <button type="button" disabled={status !== "ready" || step === 0} onClick={() => changeZoom(certificateZoomSteps[step - 1])} aria-label={isEn ? "Zoom out certificate" : "Perkecil sertifikat"} title={isEn ? "Zoom out certificate" : "Perkecil sertifikat"}><ZoomOut size={18} /></button>
+          <output aria-live="polite" aria-label={isEn ? "Magnification" : "Pembesaran"}>{zoom === 1 ? (isEn ? "Fit" : "Pas") : `${zoom * 100}%`}</output>
+          <button type="button" disabled={status !== "ready" || step === certificateZoomSteps.length - 1} onClick={() => changeZoom(certificateZoomSteps[step + 1])} aria-label={isEn ? "Zoom certificate" : "Perbesar sertifikat"} title={isEn ? "Zoom certificate" : "Perbesar sertifikat"}><ZoomIn size={18} /></button>
+          <button type="button" disabled={status !== "ready" || !zoomed} onClick={() => changeZoom(1)} aria-label={isEn ? "Fit certificate" : "Sesuaikan sertifikat"} title={isEn ? "Fit certificate" : "Sesuaikan sertifikat"}><Scan size={18} /></button>
+        </div>
+        <div ref={imageArea} {...pan} data-zoom={zoom} className={`credential-dialog-image${zoomed ? " is-zoomed" : ""}`} role="region" aria-label={isEn ? "Certificate image" : "Gambar sertifikat"} aria-busy={status === "loading"} tabIndex={status === "ready" ? 0 : -1} onDoubleClick={event => {
+          if (status !== "ready") return;
+          const bounds = event.currentTarget.getBoundingClientRect();
+          changeZoom(zoomed ? 1 : 2, { x: event.clientX - bounds.left, y: event.clientY - bounds.top });
+        }}>
+          <div className="credential-dialog-sheet" style={{ width: layout.sheetWidth, height: layout.sheetHeight }}>
+            <div className="credential-dialog-document" style={{ width: layout.width, height: layout.height, left: layout.x, top: layout.y }}>
             {status !== "ready" && previewAvailable && <img className="credential-dialog-preview" src={record.thumbnail} alt="" aria-hidden="true" onError={() => setPreviewAvailable(false)} />}
-            <img key={attempt} draggable={false} data-credential-original className="credential-dialog-original" src={attempt ? `${record.image}?retry=${attempt}` : record.image} alt={record.alt} onLoad={() => setStatus("ready")} onError={() => setStatus("error")} />
+            <img ref={attach} key={attempt} draggable={false} decoding="async" data-credential-original className="credential-dialog-original" src={attempt ? `${record.image}?retry=${attempt}` : record.image} alt={record.alt} onLoad={event => ready(event.currentTarget)} onError={() => setStatus("error")} />
+            </div>
           </div>
         </div>
         {status !== "ready" && <div className="credential-image-notice">
@@ -103,6 +117,6 @@ function CertificateDocument({ record }: { record: Credential }) {
           {status === "error" && <button type="button" onClick={retry} aria-label={isEn ? "Retry image" : "Coba muat lagi"} title={isEn ? "Retry image" : "Coba muat lagi"}><RotateCcw size={18} /></button>}
         </div>}
       </div>
-      <div className="credential-dialog-foot"><span>{record.kind} / {record.date === "Date not shown" && !isEn ? "Tanggal tidak tercantum" : record.date}<br />{isEn ? "Watermarked portfolio copy" : "Salinan portofolio ber-watermark"}</span><button type="button" disabled={status !== "ready"} onClick={() => setZoomed(value => !value)} aria-pressed={zoomed} aria-label={zoomLabel} title={zoomLabel}>{zoomed ? <ZoomOut size={18} /> : <ZoomIn size={18} />}</button>{record.source && <a href={record.source} target="_blank" rel="noreferrer">{isEn ? "PDF preview" : "Preview PDF"}<ArrowUpRight size={16} /></a>}<a href={record.image} target="_blank" rel="noreferrer">{isEn ? "Full-size preview" : "Preview ukuran penuh"}<ArrowUpRight size={16} /></a></div>
+      <div className="credential-dialog-foot"><span>{record.kind} / {record.date === "Date not shown" && !isEn ? "Tanggal tidak tercantum" : record.date}<br />{isEn ? "Watermarked portfolio copy" : "Salinan portofolio ber-watermark"}</span>{record.source && <a href={record.source} target="_blank" rel="noreferrer">{isEn ? "PDF preview" : "Preview PDF"}<ArrowUpRight size={16} /></a>}<a href={record.image} target="_blank" rel="noreferrer">{isEn ? "Full-size preview" : "Preview ukuran penuh"}<ArrowUpRight size={16} /></a></div>
   </>;
 }

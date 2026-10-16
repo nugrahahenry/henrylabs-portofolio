@@ -1,6 +1,6 @@
 {
   "name": "henrylabs-portfolio",
-  "version": "0.123.3",
+  "version": "0.123.4",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -10,7 +10,7 @@
     "test:pages": "node tests/pages-export.mjs",
     "start": "next start",
     "typecheck": "tsc --noEmit",
-    "test": "node --test tests/content.test.mjs tests/catalog.test.mjs tests/gravity-sequence.test.mjs tests/planet-materials.test.mjs tests/tech-orbit.test.mjs tests/public-previews.test.mjs tests/header-scroll.test.mjs tests/arrival-field.test.mjs tests/spatial-type.test.mjs tests/orbit-bookmark.test.mjs tests/sky-quality.test.mjs tests/pages-config.test.mjs",
+    "test": "node --test tests/content.test.mjs tests/catalog.test.mjs tests/gravity-sequence.test.mjs tests/planet-materials.test.mjs tests/tech-orbit.test.mjs tests/public-previews.test.mjs tests/header-scroll.test.mjs tests/arrival-field.test.mjs tests/spatial-type.test.mjs tests/orbit-bookmark.test.mjs tests/sky-quality.test.mjs tests/pages-config.test.mjs tests/image-zoom.test.mjs",
     "test:sky-quality": "node tests/sky-quality.mjs",
     "test:libraries": "node tests/libraries.mjs",
     "test:browser": "node tests/browser.mjs",

@@ -134,7 +134,7 @@ try {
     await expect(dialog.locator(".credential-dialog-stage")).toHaveAttribute("data-image-state", "ready");
     await dialog.getByRole("button", { name: "Zoom certificate", exact: true }).click();
     await expect(dialog.getByRole("region", { name: "Certificate image" })).toBeFocused();
-    assert.ok(await dialog.locator(".credential-dialog-image").evaluate(el => el.scrollWidth > el.clientWidth), "Zoomed image can be panned");
+    assert.ok(await dialog.locator(".credential-dialog-image").evaluate(el => el.scrollWidth > el.clientWidth || el.scrollHeight > el.clientHeight), "Zoomed image can be panned without distorting its aspect ratio");
     await page.keyboard.press("ArrowRight");
     await expect(dialog.locator("h2")).toHaveText("Gemini Certified Educator");
     await dialog.getByRole("button", { name: "Next certificate", exact: true }).click();

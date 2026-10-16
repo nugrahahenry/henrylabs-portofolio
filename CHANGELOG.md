@@ -1,5 +1,11 @@
 # Changelog
 
+## StarGod Portfolio v0.123.4 - 2026-10-17
+
+- Keep certificate zoom controls outside the moving image, with Fit, 150%, 200%, and 300% steps on Home and in the credential library.
+- Preserve document proportions and the current reading point when zooming or rotating the screen, bounded by the image edges. Double-click to enlarge the pointed area; switch records to return to Fit.
+- Keep native touch scrolling and browser pinch zoom, keyboard panning, focus return, and existing permanent watermarks. Add focused geometry and interaction-contract regressions.
+
 ## StarGod Portfolio v0.123.3 - 2026-10-17
 
 - Remove nested mobile map scrolling; keep zoom controls inside the viewport and confine independent scrolling to the optional Active World readout.
