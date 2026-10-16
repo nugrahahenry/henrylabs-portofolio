@@ -4,6 +4,8 @@
 
 **I build things I actually see.**
 
+[Explore StarGod](https://henry-nugraha.pages.dev/) · [Project library](https://henry-nugraha.pages.dev/projects) · [Credential library](https://henry-nugraha.pages.dev/credentials)
+
 <picture>
   <source media="(prefers-reduced-motion: reduce)" srcset="public/assets/readme/universe-poster.webp" />
   <source type="image/webp" srcset="public/assets/readme/living-universe.webp" />
@@ -71,7 +73,7 @@ Navigation steps out of view as you scroll down, leaving more room for the unive
 
 The nebula is a sampled 3D density field with illuminated filaments and darker rifts, accompanied by fine stars and occasional brighter glints. At Contact, a dark void interrupts the sky, framed by a flowing accretion disk and bent far-side light. Feeding grains and wisps arrive from above, below, left, and right. Their winding paths contract through several sides of the black-hole horizon rather than streaming toward one visible entry point. Scroll back to retrace the encounter; distant stars stay beyond the pull. These are authored visual interpretations, not a scientific gravity simulation or photographic astronomy assets.
 
-The animation above is a short recording of the actual portfolio, not a concept render. It focuses on the orbit experience and predates the StarGod naming and dedicated reading libraries. The live experience is interactive; the README is a preview. Public hosting is still deferred.
+The animation above is a short recording of the actual portfolio, not a concept render. It focuses on the orbit experience and predates the StarGod naming and dedicated reading libraries. The live experience is interactive; the README is a preview. Explore the current version at [henry-nugraha.pages.dev](https://henry-nugraha.pages.dev/).
 
 ## The Worlds
 
@@ -234,7 +236,7 @@ npm run dev
 
 Open the local address printed by Next.js. For verification: `npm test`, `npm run typecheck`, and `npm run build`. Browser checks live in `tests/`; `npm run test:spacecraft-entry` checks the first UFO/scout encounter after arrival, Skip Intro, session return, and re-enabling motion.
 
-This portfolio is **actively being developed**. A locally verified static build is available for Cloudflare Pages; the first deployment is still pending. The project and credential libraries, four-state personal portrait, and technology-to-credentials scroll chapter are available. Home uses selected previews instead of repeated project lists or a full credential archive. The portrait choreography and StarGod identity remain open to refinement.
+This portfolio is **live and actively being developed** at [henry-nugraha.pages.dev](https://henry-nugraha.pages.dev/), hosted on Cloudflare Pages. The project and credential libraries, four-state personal portrait, and technology-to-credentials scroll chapter are available. Home uses selected previews instead of repeated project lists or a full credential archive. The portrait choreography and StarGod identity remain open to refinement.
 
 ### Cloudflare Pages
 
@@ -243,7 +245,10 @@ Its interactive scenes run in the browser; all ten project details, the librarie
 404 page, sitemap, robots file and social-preview image are exported at build time.
 Normal `npm run build` / `npm start` remain available for server-based local QA.
 
-Use these settings when the first deployment is explicitly approved:
+Production builds automatically from pushes to this repository's `main` branch.
+The Cloudflare GitHub installation is limited to this portfolio repository.
+Automatic preview deployments from other branches are disabled.
+The first production deployment was verified on 16 October 2026 with these settings:
 
 | Setting | Value |
 | :-- | :-- |
@@ -252,18 +257,19 @@ Use these settings when the first deployment is explicitly approved:
 | Root directory | Repository root |
 | Build command | `npm run build:pages` |
 | Output directory | `out` |
-| `NEXT_PUBLIC_SITE_URL` | The confirmed public HTTPS origin, such as the assigned `https://your-project.pages.dev` |
+| `NEXT_PUBLIC_SITE_URL` | `https://henry-nugraha.pages.dev` |
+| `NODE_VERSION` | `24.15.0` |
 
 Set the public origin for both production and preview build environments. Preview
 builds should still use the production origin for canonical URLs. The build refuses
-missing, localhost, HTTP and path/query-based origins. No Pages project name or
-domain has been reserved by this repository. Local verification used the reserved
-example address `https://stargod.example`, not a published site.
+missing, localhost, HTTP and path/query-based origins. The Pages project is
+`henry-nugraha`; no purchased domain or paid hosting is required. Earlier local
+verification used `https://stargod.example`; never upload that test-origin output.
 
-To verify an export locally in PowerShell, substitute the confirmed public address:
+To verify an export locally in PowerShell:
 
 ```powershell
-$env:NEXT_PUBLIC_SITE_URL = "https://your-project.pages.dev"
+$env:NEXT_PUBLIC_SITE_URL = "https://henry-nugraha.pages.dev"
 npm run build:pages
 npm run test:pages -- --regression
 ```
@@ -272,7 +278,13 @@ The browser checks use installed Chrome in an isolated context (`CHROME_PATH` ca
 override its location). They start and close a loopback-only static file server;
 they do not deploy, contact Cloudflare or send messages. This approximates static
 routing and media serving, not Cloudflare's edge runtime. Repeat the URL, video,
-preview-image and 404 checks on the actual host after the first deployment.
+preview-image and 404 checks on the actual host after deployment.
+
+Cloudflare Pages currently sends the complete file with HTTP 200 for range
+requests, rather than HTTP 206, as documented in [Serving Pages](https://developers.cloudflare.com/pages/configuration/serving-pages/#behavior).
+The current Polara clip is approximately 629 KiB and was played through its ending
+on the public host. The local test server's range support is not a claim about the
+CDN; reconsider media delivery before adding long or large recordings.
 
 The export check enforces the current Pages Free limits of 20,000 files and 25 MiB
 per file, verifies copied public assets and all 85 watermarked derivatives, and
@@ -342,4 +354,4 @@ The capture uses the installed Playwright package and an isolated Chrome instanc
 
 ---
 
-Internal planning, credential masters, and runtime data stay private. Project artwork and watermarked credential previews are included for portfolio presentation. Set `NEXT_PUBLIC_SITE_URL` when choosing the final public host.
+Internal planning, credential masters, and runtime data stay private. Project artwork and watermarked credential previews are included for portfolio presentation. Keep `NEXT_PUBLIC_SITE_URL` aligned with the production origin when changing hosts.

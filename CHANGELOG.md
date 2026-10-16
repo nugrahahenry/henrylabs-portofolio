@@ -6,7 +6,8 @@
 - Prerender all project details and metadata endpoints; preserve real 404 handling, query-based preferences, project returns and watermarked credential inspection without a Next.js server.
 - Restore social-preview images on project and credential routes, and explicitly serve the extensionless preview as PNG on Pages.
 - Verify output size, file count, public-asset integrity and watermarked copies. Add bounded Windows segment-name compatibility without modifying installed Next.js code.
-- Add static-host browser coverage for direct routes, metadata, filters, language, history, previews, video byte ranges and interactive 3D, with optional case-study/contact regressions. Document hosting settings; no deployment or public domain is claimed.
+- Add static-host browser coverage for direct routes, metadata, filters, language, history, previews, video byte ranges and interactive 3D, with optional case-study/contact regressions.
+- Publish the verified static build at https://henry-nugraha.pages.dev with approved automatic deployments from portfolio `main` and repository-scoped GitHub access. Verify all 13 public content routes and 85 watermarked credential files on the actual host. Document the CDN's full-file HTTP 200 range behavior separately from local-server tests.
 
 ## StarGod Portfolio v0.122.0 - 2026-10-16
 
