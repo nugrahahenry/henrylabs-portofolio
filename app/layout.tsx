@@ -7,6 +7,7 @@ import "./world-inspector.css";
 import { SitePreferences } from "@/components/site-preferences";
 import { SiteHeader } from "@/components/site-header";
 import { ReadingSky } from "@/components/reading-sky";
+import { sharedOpenGraph, sharedTwitter } from "@/content/social-metadata";
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
 
@@ -20,18 +21,15 @@ export const metadata: Metadata = {
   category: "technology",
   alternates: { canonical: "/" },
   openGraph: {
+    ...sharedOpenGraph,
     title: "StarGod - Henry Nugraha's Universe",
     description: "A living constellation of products, systems, and experiments by Henry Nugraha.",
-    type: "website",
-    siteName: "StarGod",
     url: "/",
-    images: [{ url: "/opengraph-image", width: 1200, height: 630, alt: "StarGod - Henry Nugraha's Universe" }],
   },
   twitter: {
-    card: "summary_large_image",
+    ...sharedTwitter,
     title: "StarGod - Henry Nugraha's Universe",
     description: "A living constellation of products, systems, and experiments by Henry Nugraha.",
-    images: ["/opengraph-image"],
   },
   robots: { index: true, follow: true },
 };

@@ -1,5 +1,13 @@
 # Changelog
 
+## StarGod Portfolio v0.123.0 - 2026-10-16
+
+- Add an opt-in Cloudflare Pages static build without changing the existing local development/server workflow. Require a valid public HTTPS origin before exporting canonical URLs and metadata.
+- Prerender all project details and metadata endpoints; preserve real 404 handling, query-based preferences, project returns and watermarked credential inspection without a Next.js server.
+- Restore social-preview images on project and credential routes, and explicitly serve the extensionless preview as PNG on Pages.
+- Verify output size, file count, public-asset integrity and watermarked copies. Add bounded Windows segment-name compatibility without modifying installed Next.js code.
+- Add static-host browser coverage for direct routes, metadata, filters, language, history, previews, video byte ranges and interactive 3D, with optional case-study/contact regressions. Document hosting settings; no deployment or public domain is claimed.
+
 ## StarGod Portfolio v0.122.0 - 2026-10-16
 
 - Develop RentalMobil.SG into an English/Indonesian case study with original catalog, rental-history and administrator screenshots, keyboard/touch tabs, and full-size inspection.

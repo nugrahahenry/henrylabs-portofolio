@@ -1,6 +1,6 @@
 <div align="center">
 
-# StarGod Portfolio v0.122.0
+# StarGod Portfolio v0.123.0
 
 **I build things I actually see.**
 
@@ -234,7 +234,63 @@ npm run dev
 
 Open the local address printed by Next.js. For verification: `npm test`, `npm run typecheck`, and `npm run build`. Browser checks live in `tests/`; `npm run test:spacecraft-entry` checks the first UFO/scout encounter after arrival, Skip Intro, session return, and re-enabling motion.
 
-This portfolio is **actively being developed**. Hosting is deferred. The project and credential libraries, four-state personal portrait, and technology-to-credentials scroll chapter are available. Home uses selected previews instead of repeated project lists or a full credential archive. The portrait choreography and StarGod identity remain open to refinement.
+This portfolio is **actively being developed**. A locally verified static build is available for Cloudflare Pages; the first deployment is still pending. The project and credential libraries, four-state personal portrait, and technology-to-credentials scroll chapter are available. Home uses selected previews instead of repeated project lists or a full credential archive. The portrait choreography and StarGod identity remain open to refinement.
+
+### Cloudflare Pages
+
+The site does not need a Next.js server, Workers adapter, database or image service.
+Its interactive scenes run in the browser; all ten project details, the libraries,
+404 page, sitemap, robots file and social-preview image are exported at build time.
+Normal `npm run build` / `npm start` remain available for server-based local QA.
+
+Use these settings when the first deployment is explicitly approved:
+
+| Setting | Value |
+| :-- | :-- |
+| Framework preset | Next.js (Static HTML Export) |
+| Production branch | `main` |
+| Root directory | Repository root |
+| Build command | `npm run build:pages` |
+| Output directory | `out` |
+| `NEXT_PUBLIC_SITE_URL` | The confirmed public HTTPS origin, such as the assigned `https://your-project.pages.dev` |
+
+Set the public origin for both production and preview build environments. Preview
+builds should still use the production origin for canonical URLs. The build refuses
+missing, localhost, HTTP and path/query-based origins. No Pages project name or
+domain has been reserved by this repository. Local verification used the reserved
+example address `https://stargod.example`, not a published site.
+
+To verify an export locally in PowerShell, substitute the confirmed public address:
+
+```powershell
+$env:NEXT_PUBLIC_SITE_URL = "https://your-project.pages.dev"
+npm run build:pages
+npm run test:pages -- --regression
+```
+
+The browser checks use installed Chrome in an isolated context (`CHROME_PATH` can
+override its location). They start and close a loopback-only static file server;
+they do not deploy, contact Cloudflare or send messages. This approximates static
+routing and media serving, not Cloudflare's edge runtime. Repeat the URL, video,
+preview-image and 404 checks on the actual host after the first deployment.
+
+The export check enforces the current Pages Free limits of 20,000 files and 25 MiB
+per file, verifies copied public assets and all 85 watermarked derivatives, and
+rejects private/runtime folders. The current output is about 45 MiB overall; its
+largest file is a 6.9 MiB full-size certificate, loaded on inspection rather than
+as a catalog thumbnail. `npm run check:pages` repeats this audit without building.
+
+The wrapper also supplies verified dot-separated navigation aliases for Next
+16.3.6's Windows segment-export naming. This is a no-op for already-correct Linux
+output; it never modifies Next's installed code. Keep using the wrapper rather than
+calling `next build` directly for Pages, and reevaluate this compatibility step when
+upgrading Next. `_headers` gives the extensionless social image its PNG media type.
+Keep `404.html`; do not add an SPA catch-all redirect or publish anything except
+`out`. Public credential copies stay watermarked; private masters are not needed.
+
+Hosting references: [Next.js static exports on Pages](https://developers.cloudflare.com/pages/framework-guides/nextjs/deploy-a-static-nextjs-site/),
+[Pages limits](https://developers.cloudflare.com/pages/platform/limits/), and
+[static routing](https://developers.cloudflare.com/pages/configuration/serving-pages/).
 
 ### Reading Routes
 
