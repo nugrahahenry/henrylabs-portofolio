@@ -1,6 +1,6 @@
 <div align="center">
 
-# StarGod Portfolio v0.118.1
+# StarGod Portfolio v0.119.0
 
 **I build things I actually see.**
 
@@ -195,6 +195,13 @@ Route and accessibility checks: `npm run test:libraries`; entrance and explorati
 Local-star capture shaders: `npm run test:gravity-field` uses isolated real WebGL without a running site. Contact choreography: `npm run test:closing` checks the complete scene, recurring dust and planets, and scroll reversal against `PORTFOLIO_URL` (default `http://localhost:3002/`).
 
 Contact navigation: `npm run test:contact-path` checks arrivals from catalogs and project details, repeated Home links, direct fragments, browser Back and the WhatsApp-to-Email keyboard order across responsive layouts and motion preferences.
+
+Each project detail ends with WhatsApp and email actions for discussing a similar
+project. Drafts name the project and follow the selected language; visitors review
+and send them themselves. Existing private-demo requests also carry context, while
+live-product and repository links remain unchanged. No form submission, message
+storage or automatic sending is involved. `npm run test:project-contact` tests
+these paths with external WhatsApp navigation intercepted locally.
 
 <details>
 <summary>About the README visuals</summary>

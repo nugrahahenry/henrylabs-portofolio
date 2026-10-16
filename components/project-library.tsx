@@ -1,10 +1,11 @@
 "use client";
 
 import { useEffect, type CSSProperties } from "react";
-import { ArrowLeft, ArrowRight, ArrowUpRight, BriefcaseBusiness, CarFront, Code2, FlaskConical, GraduationCap, Grid2X2, Instagram, LockKeyhole, MessageCircle, Orbit, Search, ShoppingCart, X } from "lucide-react";
+import { ArrowLeft, ArrowRight, ArrowUpRight, BriefcaseBusiness, CarFront, Code2, FlaskConical, GraduationCap, Grid2X2, Instagram, LockKeyhole, Mail, MessageCircle, Orbit, Search, ShoppingCart, X } from "lucide-react";
 import { categories, filterProjects, normalizeCategory, type CatalogProject } from "@/content/catalog";
 import { projectWorkflowNotes } from "@/content/project-workflows";
 import { polaraStory } from "@/content/polara-story";
+import { projectContactLinks } from "@/content/project-contact";
 import { SiteLink, updateQuery, useQuery, useSitePreferences } from "./site-preferences";
 import { ProjectVisual } from "./project-visual";
 import { PolaraCaseStudy } from "./polara-case-study";
@@ -94,7 +95,8 @@ export function ProjectDetail({ project }: { project: CatalogProject }) {
   const detailQuery = fromMaker ? makerRouteQuery(fromMaker) : fromOrbit ? new URLSearchParams({ from: "universe" }) : backQuery;
   const detailHref = (item: CatalogProject) => `/projects/${item.slug}${detailQuery.size ? `?${detailQuery}` : ""}`;
   const collectionLabel = categories[fromOrbit ? project.category : category][language];
-  const externalLink = project.link ?? (project.source ? undefined : "mailto:henrynugraha1210@gmail.com");
+  const contact = projectContactLinks(project, language);
+  const externalLink = contact.primary;
   const workflowNotes = projectWorkflowNotes[project.id]?.[language];
   return <main className="library-page project-detail" data-story={project.id === "polara" ? "polara" : undefined} style={{ "--record-color": project.color } as CSSProperties} id="main-content" tabIndex={-1}>
     <div className="detail-route"><SiteLink href={back} scroll={fromMaker ? false : undefined} className="library-back"><ArrowLeft size={17} />{fromMaker ? (isEn ? "Back to technologies" : "Kembali ke teknologi") : fromOrbit ? (isEn ? "Back to the universe" : "Kembali ke semesta") : (isEn ? "All projects" : "Semua proyek")}</SiteLink>{index >= 0 && <span>{collectionLabel} / {String(index + 1).padStart(2, "0")} <span>{isEn ? "of" : "dari"} {String(collection.length).padStart(2, "0")}</span></span>}</div>
@@ -126,6 +128,13 @@ export function ProjectDetail({ project }: { project: CatalogProject }) {
     </div>
     <section className="detail-evidence"><h2>{isEn ? "What you can inspect." : "Yang bisa ditinjau."}</h2><div><p className="detail-evidence-summary">{project.evidence[language]}</p><p>{project.next[language]}</p>{!project.source && project.category !== "henrylabs" && <p className="privacy-note"><LockKeyhole size={16} />{isEn ? "No private source, client data, or internal screenshots are published here." : "Source privat, data klien, dan screenshot internal tidak dipublikasikan di sini."}</p>}</div></section>
     </>}
+    <section className="detail-contact" aria-labelledby="detail-contact-title">
+      <div><h2 id="detail-contact-title">{isEn ? "Have something similar in mind?" : "Punya ide proyek serupa?"}</h2><p>{isEn ? `Let's start with the problem you want to solve. ${project.name} can be our starting point.` : `Mulai dari masalah yang ingin kamu selesaikan. ${project.name} bisa jadi awal obrolan kita.`}</p></div>
+      <div className="detail-contact-actions">
+        <a className="library-action" href={contact.whatsapp} target="_blank" rel="noreferrer"><MessageCircle size={18} aria-hidden="true" />{isEn ? "Discuss on WhatsApp" : "Diskusi via WhatsApp"}<ArrowUpRight size={17} aria-hidden="true" /></a>
+        <a className="library-text-link" href={contact.email}><Mail size={17} aria-hidden="true" />{isEn ? "Send an email" : "Kirim email"}<ArrowUpRight size={16} aria-hidden="true" /></a>
+      </div>
+    </section>
     {(previous || next) && <nav className="detail-continuation" aria-label={isEn ? "More projects" : "Proyek lainnya"}>
       {[previous, next].map((item, position) => item ? <SiteLink key={item.id} href={detailHref(item)} className={`detail-neighbor${position === 1 ? " detail-neighbor--next" : ""}`} style={{ "--record-color": item.color } as CSSProperties}>
         <small>{position === 0 ? (isEn ? "Previous project" : "Proyek sebelumnya") : (isEn ? "Next project" : "Proyek berikutnya")}{position === 0 ? <ArrowLeft size={18} /> : <ArrowRight size={18} />}</small>

@@ -1,5 +1,12 @@
 # Changelog
 
+## StarGod Portfolio v0.119.0 - 2026-10-16
+
+- Add a compact discussion section after each project story, with WhatsApp and email drafts naming the current project in English or Indonesian.
+- Add context to existing demo and walkthrough requests without changing live-product or repository destinations.
+- Keep drafts free of visitor search terms, return routes and local URLs. Messages are never sent automatically; no contact data is stored.
+- Add responsive keyboard/touch, language, neighboring-project and browser-return coverage, intercepting external navigation during QA.
+
 ## StarGod Portfolio v0.118.1 - 2026-10-16
 
 - Fix the Polara recording shrinking into a phone viewport with gray padding at the end. Capture mobile screenshots in a separate unrecorded session.

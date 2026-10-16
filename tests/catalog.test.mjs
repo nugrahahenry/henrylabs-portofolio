@@ -22,6 +22,7 @@ const { certificates } = loadContent("credentials");
 const { orbitTechNodes } = loadContent("technologies");
 const { projectWorkflowNotes } = loadContent("project-workflows");
 const { polaraStory } = loadContent("polara-story");
+const { projectContactLinks } = loadContent("project-contact");
 const { makerGroups, readMakerRoute, makerRouteHref, makerRouteQuery } = loadContent("../components/maker-route");
 
 test("Polara evidence has bilingual stories and small, traceable actual product captures", () => {
@@ -53,6 +54,45 @@ test("public contact destinations use Henry's confirmed WhatsApp number", () => 
     assert.ok(!source.includes("6289513559554"), file);
     assert.ok(source.includes("https://wa.me/6289513595554"), file);
   }
+});
+
+test("every project drafts a localized message to Henry without adding visitor data", () => {
+  for (const project of projectCatalog) for (const language of ["en", "id"]) {
+    const links = projectContactLinks(project, language);
+    const wa = new URL(links.whatsapp), email = new URL(links.email);
+    assert.equal(wa.origin, "https://wa.me");
+    assert.equal(wa.pathname, "/6289513595554");
+    assert.deepEqual([...wa.searchParams.keys()], ["text"]);
+    assert.match(wa.searchParams.get("text"), language === "en" ? /^Hi Henry,/ : /^Halo Henry,/);
+    assert.ok(wa.searchParams.get("text").includes(project.name));
+    assert.equal(email.protocol, "mailto:");
+    assert.equal(email.pathname, "henrynugraha1210@gmail.com");
+    assert.equal(email.searchParams.get("body"), wa.searchParams.get("text"));
+    assert.ok(email.searchParams.get("subject").includes(project.name));
+    assert.doesNotMatch(links.whatsapp + links.email, /localhost|127\.0\.0\.1|utm_|returnTo/);
+  }
+});
+
+test("contextual contact preserves live products, sources, and private walkthrough intent", () => {
+  for (const id of ["catmoji", "polara", "nalira"]) assert.equal(projectContactLinks(findWorld(id), "en").primary, findWorld(id).link);
+  for (const id of ["pos", "labq"]) assert.equal(projectContactLinks(findWorld(id), "en").primary, undefined);
+  for (const id of ["canox", "rental", "yventures", "soreva"]) {
+    const primary = new URL(projectContactLinks(findWorld(id), "id").primary);
+    assert.match(primary.searchParams.get(primary.protocol === "mailto:" ? "body" : "text"), /minta walkthrough/);
+  }
+  assert.equal(new URL(projectContactLinks(findWorld("hengs"), "en").primary).pathname, "henrynugraha1210@gmail.com");
+});
+
+test("project drafts encode punctuation without creating extra recipients or parameters", () => {
+  const name = "R&D / A+B #2? to=someone@example.com";
+  const links = projectContactLinks({ name }, "en");
+  const wa = new URL(links.whatsapp), email = new URL(links.email);
+  assert.ok(wa.searchParams.get("text").includes(name));
+  assert.ok(email.searchParams.get("subject").includes(name));
+  assert.ok(email.searchParams.get("body").includes(name));
+  assert.deepEqual([...email.searchParams.keys()], ["subject", "body"]);
+  assert.equal(email.pathname, "henrynugraha1210@gmail.com");
+  assert.equal(wa.hash, "");
 });
 
 test("maker return routes preserve every technology, owner group, All, and selected world", () => {
