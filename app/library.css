@@ -152,6 +152,41 @@ html[data-motion="off"] .site-header { transition: none; }
 .library-action { display: inline-flex; align-items: center; justify-content: center; gap: 12px; padding: 12px 16px; min-height: 48px; background: #1a252c; border: 1px solid #526169; border-radius: 4px; font-size: 14px; }
 .library-action:hover { background: #24323a; border-color: var(--cyan); }
 .detail-art { margin: 0; max-width: 1100px; }
+.polara-story h2 { font-size: 32px; line-height: 1.2; font-weight: 600; text-wrap: balance; }
+.polara-story p { color: var(--library-muted); font-size: 17px; line-height: 1.75; max-width: 66ch; }
+.polara-story-heading { max-width: 800px; margin-block: 44px 28px; }
+.polara-story-heading p { margin-top: 18px; }
+.polara-demo { margin: 0; }
+.polara-demo video { display: block; width: 100%; height: auto; aspect-ratio: 36 / 25; background: #0b141e; border-radius: 4px; }
+.polara-demo figcaption { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px 24px; padding-block: 16px; color: var(--library-muted); font-size: 12px; line-height: 1.6; }
+.polara-video-error { display: flex; align-items: center; gap: 20px; padding-block: 16px; }
+.polara-video-error button { display: grid; place-items: center; width: 44px; height: 44px; flex: none; color: var(--cyan); border: 1px solid var(--library-line); border-radius: 4px; background: #15252d; }
+.polara-transcript { border-bottom: 1px solid var(--library-line); padding-bottom: 20px; }
+.polara-transcript summary { width: fit-content; padding: 12px 0; min-height: 44px; cursor: pointer; color: var(--cyan); font-size: 14px; }
+.polara-transcript p { font-size: 15px; padding-top: 6px; }
+.polara-story :is(video, summary, button):focus-visible { outline: 2px solid var(--cyan); outline-offset: 4px; }
+.polara-decisions { display: grid; grid-template-columns: minmax(0, .8fr) minmax(0, 1.2fr); gap: 48px; margin-block: 64px 40px; }
+.polara-decisions > div { display: grid; gap: 32px; }
+.polara-decisions h3 { font-size: 21px; line-height: 1.4; font-weight: 600; margin-bottom: 10px; }
+.polara-captures { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 28px; }
+.polara-captures .project-visual-open { aspect-ratio: 36 / 25; }
+.polara-result { display: grid; grid-template-columns: minmax(0, 1fr) minmax(240px, .65fr); gap: 64px; align-items: center; border-top: 1px solid var(--library-line); padding-top: 56px; margin-top: 64px; }
+.polara-result p { margin-top: 24px; }
+.polara-result .polara-boundary { font-size: 14px; color: #bccbd6; }
+.polara-result .library-text-link { margin-top: 24px; }
+.polara-mobile-proof { width: min(100%, 320px); justify-self: center; }
+.polara-mobile-proof .project-visual-open { aspect-ratio: 390 / 844; max-height: none; }
+@media (max-width: 760px) {
+  .project-detail[data-story="polara"] .detail-route { margin-bottom: 22px; }
+  .project-detail[data-story="polara"] .detail-heading { padding-bottom: 24px; }
+  .project-detail[data-story="polara"] .detail-heading > p { font-size: 17px; line-height: 1.6; margin-top: 18px; }
+  .project-detail[data-story="polara"] .detail-actions { margin-top: 20px; }
+  .project-detail[data-story="polara"] .detail-overview { padding-block: 16px; gap: 12px; margin-bottom: 24px; }
+  .polara-story h2 { font-size: 27px; }
+  .polara-decisions { grid-template-columns: minmax(0, 1fr); gap: 28px; margin-block: 44px 32px; }
+  .polara-captures { grid-template-columns: minmax(0, 1fr); gap: 24px; }
+  .polara-result { grid-template-columns: minmax(0, 1fr); gap: 32px; margin-top: 44px; padding-top: 36px; }
+}
 .project-visual { margin: 0; position: relative; width: 100%; min-width: 0; }
 .project-visual-open { position: relative; display: grid; place-items: center; width: 100%; aspect-ratio: 16 / 10; max-height: 620px; padding: 0; background: #090e1680; cursor: zoom-in; overflow: hidden; }
 .project-visual-open img { display: block; width: 100%; height: 100%; min-height: 0; object-fit: contain; }

@@ -1,0 +1,32 @@
+{
+  "product": "Polara",
+  "version": "1.1.3",
+  "revision": "b1f03eb78b310de52de2b5519bc6c5465eac742e",
+  "captured": "2026-10-16",
+  "origin": "Actual local product UI, explicit Demo mode with fictional sample photos; no live camera or private photos.",
+  "viewport": [
+    1440,
+    1000
+  ],
+  "mobileViewport": [
+    390,
+    844
+  ],
+  "video": {
+    "durationSeconds": 12.4,
+    "audio": false,
+    "sequence": [
+      "Select a frame",
+      "Adjust photo fit",
+      "Continue without stickers",
+      "Reveal",
+      "Save PNG"
+    ]
+  },
+  "files": [
+    "review.webp",
+    "frames.webp",
+    "reveal-mobile.webp",
+    "walkthrough.webm"
+  ]
+}

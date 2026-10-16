@@ -21,7 +21,36 @@ const { projectCatalog, findProject, findWorld, filterProjects, normalizeCategor
 const { certificates } = loadContent("credentials");
 const { orbitTechNodes } = loadContent("technologies");
 const { projectWorkflowNotes } = loadContent("project-workflows");
+const { polaraStory } = loadContent("polara-story");
 const { makerGroups, readMakerRoute, makerRouteHref, makerRouteQuery } = loadContent("../components/maker-route");
+
+test("Polara evidence has bilingual stories and small, traceable actual product captures", () => {
+  const capture = JSON.parse(readFileSync("public/assets/projects/polara/capture.json", "utf8"));
+  assert.equal(capture.version, "1.1.3");
+  assert.match(capture.revision, /^[a-f0-9]{40}$/);
+  assert.match(capture.origin, /Demo mode.*fictional/);
+  assert.equal(capture.video.audio, false);
+  assert.ok(capture.video.durationSeconds > 5 && capture.video.durationSeconds < 25);
+  assert.equal(polaraStory.captures.length, 3);
+  for (const shot of polaraStory.captures) {
+    assert.ok(readFileSync(`public${shot.src}`).length < 200_000);
+    assert.equal(shot.size.length, 2);
+    for (const lang of ["en", "id"]) assert.ok(shot.title[lang] && shot.alt[lang]);
+  }
+  assert.ok(readFileSync("public/assets/projects/polara/walkthrough.webm").length < 1_500_000);
+  for (const lang of ["en", "id"]) {
+    assert.ok(polaraStory.problem[lang] && polaraStory.result[lang] && polaraStory.limit[lang]);
+    assert.ok(polaraStory.decisions.every(item => item.title[lang] && item.body[lang]));
+  }
+});
+
+test("public contact destinations use Henry's confirmed WhatsApp number", () => {
+  for (const file of ["components/portfolio-experience.tsx", "content/projects.ts", "README.md"]) {
+    const source = readFileSync(file, "utf8");
+    assert.ok(!source.includes("6289513559554"), file);
+    assert.ok(source.includes("https://wa.me/6289513595554"), file);
+  }
+});
 
 test("maker return routes preserve every technology, owner group, All, and selected world", () => {
   assert.deepEqual(makerGroups.map(group => group.items.length), [6, 6, 13, 25]);
@@ -86,7 +115,7 @@ test("Polara live status, public access, and destination agree in both languages
   assert.deepEqual(polara.access, { en: "Public product", id: "Produk publik" });
   assert.equal(polara.link, "https://polara.vercel.app/");
   assert.deepEqual(polara.linkLabel, { en: "Open live product", id: "Buka produk live" });
-  assert.deepEqual(polara.evidence, { en: "Live product and original product artwork", id: "Produk live dan artwork produk asli" });
+  assert.deepEqual(polara.evidence, { en: "Live product, recorded demo workflow, and application screenshots", id: "Produk live, rekaman alur demo, dan screenshot aplikasi" });
   assert.deepEqual(polara.next, { en: "Try the live photobooth in your browser", id: "Coba photobooth live di browser" });
   assert.equal(polara.media, "/assets/projects/polara-og.png");
   assert.equal(polara.mediaKind, "artwork");

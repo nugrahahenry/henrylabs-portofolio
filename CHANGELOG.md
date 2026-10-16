@@ -1,5 +1,13 @@
 # Changelog
 
+## StarGod Portfolio v0.118.0 - 2026-10-16
+
+- Replace Polara's generic detail body with a bilingual product story: the problem, three implementation decisions, and the working result with honest privacy and device boundaries.
+- Add a user-played recording and three enlargeable screenshots from the actual Polara v1.1.3 Demo workflow, with fictional sample photos and traceable capture provenance. No camera permission or private photos are used.
+- Reuse the image inspection viewer for screenshots, preserving artwork labels, zoom, keyboard controls, panning and focus return. Keep the original artwork on Home and in the catalog.
+- Preserve the current nebula reading design and return context. Add video/image retry states, a text walkthrough, responsive regression coverage and no eager video download.
+- Correct the portfolio's WhatsApp destinations to Henry's confirmed number. No hosting configuration or deployment is included.
+
 ## StarGod Portfolio v0.117.2 - 2026-10-16
 
 - Move keyboard focus into Contact after arriving from a library or project detail, once the intro gate releases the section.

@@ -1,6 +1,6 @@
 <div align="center">
 
-# StarGod Portfolio v0.117.2
+# StarGod Portfolio v0.118.0
 
 **I build things I actually see.**
 
@@ -93,6 +93,25 @@ Original project marks become transparent three-dimensional identities. Select a
 | <img src="public/assets/brand/polara.png" width="28" alt="" /> **Polara** | A browser photobooth where the interface becomes part of the memory. | [Live product](https://polara.vercel.app/) |
 
 These are solo product and system builds. Public repositories are linked where available; private work is represented through sanitized evidence and focused walkthroughs.
+
+### Inside Polara
+
+Polara's project detail pairs a short recording of the actual application with
+enlargeable desktop and mobile screenshots. The story follows three decisions:
+keep photos in the browser session, make retakes and framing reversible, and use
+the same geometry in the preview and exported PNG. The captures use Polara
+v1.1.3's explicit Demo mode with fictional sample photos, not a visitor's camera.
+The recording loads only when played; a text walkthrough and screenshots remain
+available without playback. Artwork on the Home preview and catalog stays labeled
+as artwork.
+
+Capture provenance lives alongside the public media in
+[`capture.json`](public/assets/projects/polara/capture.json). The optional
+[`capture-polara.mjs`](scripts/capture-polara.mjs) script records a clean local
+Polara checkout using Playwright/Chrome and FFmpeg; it never grants camera access
+or changes that checkout. Set `POLARA_ROOT`, `CHROME_PATH`, and `FFMPEG_PATH` for
+your local tools. Screenshot export uses the Sharp dependency included with Next.
+The portfolio itself does not need the Polara repository to build or run.
 
 ## University
 
@@ -191,7 +210,7 @@ The capture uses the installed Playwright package and an isolated Chrome instanc
 
 ## Contact
 
-[LinkedIn](https://www.linkedin.com/in/nugrahahenry/) · [GitHub](https://github.com/nugrahahenry) · [Instagram](https://instagram.com/hnry.dev) · [Email](mailto:henrynugraha1210@gmail.com) · [Start a Project](https://wa.me/6289513559554)
+[LinkedIn](https://www.linkedin.com/in/nugrahahenry/) · [GitHub](https://github.com/nugrahahenry) · [Instagram](https://instagram.com/hnry.dev) · [Email](mailto:henrynugraha1210@gmail.com) · [Start a Project](https://wa.me/6289513595554)
 
 ---
 

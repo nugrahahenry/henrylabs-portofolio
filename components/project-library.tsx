@@ -4,8 +4,10 @@ import { useEffect, type CSSProperties } from "react";
 import { ArrowLeft, ArrowRight, ArrowUpRight, BriefcaseBusiness, CarFront, Code2, FlaskConical, GraduationCap, Grid2X2, Instagram, LockKeyhole, MessageCircle, Orbit, Search, ShoppingCart, X } from "lucide-react";
 import { categories, filterProjects, normalizeCategory, type CatalogProject } from "@/content/catalog";
 import { projectWorkflowNotes } from "@/content/project-workflows";
+import { polaraStory } from "@/content/polara-story";
 import { SiteLink, updateQuery, useQuery, useSitePreferences } from "./site-preferences";
 import { ProjectVisual } from "./project-visual";
+import { PolaraCaseStudy } from "./polara-case-study";
 import { LibraryMasthead } from "./library-masthead";
 import { LibraryThumbnail } from "./library-thumbnail";
 import { makerRouteHref, makerRouteQuery, readMakerRoute } from "./maker-route";
@@ -94,11 +96,11 @@ export function ProjectDetail({ project }: { project: CatalogProject }) {
   const collectionLabel = categories[fromOrbit ? project.category : category][language];
   const externalLink = project.link ?? (project.source ? undefined : "mailto:henrynugraha1210@gmail.com");
   const workflowNotes = projectWorkflowNotes[project.id]?.[language];
-  return <main className="library-page project-detail" style={{ "--record-color": project.color } as CSSProperties} id="main-content" tabIndex={-1}>
+  return <main className="library-page project-detail" data-story={project.id === "polara" ? "polara" : undefined} style={{ "--record-color": project.color } as CSSProperties} id="main-content" tabIndex={-1}>
     <div className="detail-route"><SiteLink href={back} scroll={fromMaker ? false : undefined} className="library-back"><ArrowLeft size={17} />{fromMaker ? (isEn ? "Back to technologies" : "Kembali ke teknologi") : fromOrbit ? (isEn ? "Back to the universe" : "Kembali ke semesta") : (isEn ? "All projects" : "Semua proyek")}</SiteLink>{index >= 0 && <span>{collectionLabel} / {String(index + 1).padStart(2, "0")} <span>{isEn ? "of" : "dari"} {String(collection.length).padStart(2, "0")}</span></span>}</div>
     <header className="detail-heading">
       <div className="detail-identity"><span className="detail-mark"><ProjectMark project={project} /></span><h1>{project.name}</h1></div>
-      <p>{project.summary[language]}</p>
+      <p>{project.id === "polara" ? polaraStory.intro[language] : project.summary[language]}</p>
       <div className="detail-actions">
         {externalLink && <a className="library-action" href={externalLink} target={externalLink.startsWith("https:") ? "_blank" : undefined} rel={externalLink.startsWith("https:") ? "noreferrer" : undefined}>{project.linkLabel?.[language] ?? (isEn ? "Request a walkthrough" : "Minta walkthrough")}<ArrowUpRight size={17} /></a>}
         {project.source && <a className="library-action" href={project.source} target="_blank" rel="noreferrer"><Code2 size={17} />{isEn ? "Read source" : "Baca source"}<ArrowUpRight size={17} /></a>}
@@ -110,6 +112,7 @@ export function ProjectDetail({ project }: { project: CatalogProject }) {
       <div><dt>{isEn ? "Ownership" : "Kontribusi"}</dt><dd>{project.ownership[language]}</dd></div>
       <div><dt>{isEn ? "Access" : "Akses"}</dt><dd>{project.access[language]}</dd></div>
     </dl>
+    {project.id === "polara" ? <PolaraCaseStudy project={project} /> : <>
     {project.media && <div className="detail-art"><ProjectVisual key={project.id} project={project} /></div>}
     <div className="detail-content">
       <section aria-labelledby="detail-flow">
@@ -122,6 +125,7 @@ export function ProjectDetail({ project }: { project: CatalogProject }) {
       </dl></aside>
     </div>
     <section className="detail-evidence"><h2>{isEn ? "What you can inspect." : "Yang bisa ditinjau."}</h2><div><p className="detail-evidence-summary">{project.evidence[language]}</p><p>{project.next[language]}</p>{!project.source && project.category !== "henrylabs" && <p className="privacy-note"><LockKeyhole size={16} />{isEn ? "No private source, client data, or internal screenshots are published here." : "Source privat, data klien, dan screenshot internal tidak dipublikasikan di sini."}</p>}</div></section>
+    </>}
     {(previous || next) && <nav className="detail-continuation" aria-label={isEn ? "More projects" : "Proyek lainnya"}>
       {[previous, next].map((item, position) => item ? <SiteLink key={item.id} href={detailHref(item)} className={`detail-neighbor${position === 1 ? " detail-neighbor--next" : ""}`} style={{ "--record-color": item.color } as CSSProperties}>
         <small>{position === 0 ? (isEn ? "Previous project" : "Proyek sebelumnya") : (isEn ? "Next project" : "Proyek berikutnya")}{position === 0 ? <ArrowLeft size={18} /> : <ArrowRight size={18} />}</small>
