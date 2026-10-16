@@ -17,7 +17,7 @@ async function loadModule(name) {
 }
 const { techOrbitRadius, sampleTechOrbit, resolveTechOwner, techOrbitMotion } = await loadModule("tech-orbit");
 const { companionCounts, createCompanionOrbit, sampleCompanionOrbit, advanceCompanionTime } = await loadModule("companion-orbit");
-const { createProjectSculpture } = await loadModule("project-sculptures");
+const { createProjectSculpture, batchProjectSculpture } = await loadModule("project-sculptures");
 const { sampleOrbit, orbitalSpeed, orbitFrameDistance } = await loadModule("orbital-path");
 const { createStellarCore } = await loadModule("stellar-core");
 const { advanceGalaxyFlight, sampleGalaxyFlight } = await loadModule("galaxy-flight");
@@ -379,6 +379,77 @@ test("all ten worlds have bounded dimensional identity sculptures", () => {
     assert.ok(Math.max(size.x, size.y, size.z) < 2.2, `${id} must fit its shell`);
     root.traverse((object) => { object.geometry?.dispose(); object.material?.dispose(); });
   }
+});
+
+test("rigid project parts batch by material without changing triangles, normals, UVs or root pose", () => {
+  const ids = ["catmoji", "nalira", "canox", "hengs", "polara", "rental", "pos", "labq", "yventures", "soreva"];
+  const triangles = root => {
+    const result = new Map();
+    root.updateMatrixWorld(true);
+    for (const mesh of root.children) {
+      const geometry = mesh.geometry;
+      const points = geometry.getAttribute("position"), normals = geometry.getAttribute("normal"), uvs = geometry.getAttribute("uv");
+      const normalMatrix = new THREE.Matrix3().getNormalMatrix(mesh.matrixWorld);
+      const list = result.get(mesh.material) ?? [];
+      const count = geometry.index?.count ?? points.count;
+      for (let i = 0; i < count; i += 3) {
+        const vertices = [];
+        for (let j = 0; j < 3; j++) {
+          const index = geometry.index ? geometry.index.getX(i + j) : i + j;
+          const point = new THREE.Vector3().fromBufferAttribute(points, index).applyMatrix4(mesh.matrixWorld);
+          const normal = new THREE.Vector3().fromBufferAttribute(normals, index).applyNormalMatrix(normalMatrix);
+          vertices.push(...point.toArray(), ...normal.toArray(), ...(uvs ? [uvs.getX(index), uvs.getY(index)] : []));
+        }
+        list.push(vertices);
+      }
+      result.set(mesh.material, list);
+    }
+    return result;
+  };
+  const counts = [];
+  for (const id of ids) {
+    const root = createProjectSculpture(id);
+    const before = triangles(root), parts = root.children.length;
+    const pose = root.matrix.toArray();
+    const transparent = root.children.filter(mesh => mesh.material.transparent);
+    const originalParts = [...root.children], disposed = new Set();
+    originalParts.forEach(part => part.geometry.addEventListener("dispose", () => disposed.add(part)));
+    const center = new THREE.Box3().setFromObject(root).getCenter(new THREE.Vector3());
+    const rays = Array.from({ length: 12 }, (_, i) => {
+      const direction = new THREE.Vector3(Math.sin(i), Math.cos(i * 2), Math.cos(i)).normalize();
+      return new THREE.Raycaster(center.clone().addScaledVector(direction, 6), direction.negate());
+    });
+    const hits = rays.map(ray => ray.intersectObject(root, true)[0]);
+    batchProjectSculpture(root);
+    const after = triangles(root);
+    rays.forEach((ray, index) => {
+      const hit = ray.intersectObject(root, true)[0], previous = hits[index];
+      assert.equal(Boolean(hit), Boolean(previous), `${id}: hit targets survive`);
+      if (hit && previous) {
+        assert.ok(hit.point.distanceTo(previous.point) < 1e-5, `${id}: nearest hit stays in place`);
+        assert.equal(hit.object.material, previous.object.material);
+      }
+    });
+    for (const part of originalParts) assert.equal(disposed.has(part), !root.children.includes(part), "only replaced geometry is disposed");
+    assert.deepEqual(root.matrix.toArray(), pose);
+    assert.deepEqual(root.children.filter(mesh => mesh.material.transparent), transparent);
+    assert.equal(after.size, before.size);
+    for (const [material, list] of before) {
+      const actual = after.get(material);
+      assert.equal(actual.length, list.length, `${id}: all triangles survive`);
+      for (let i = 0; i < list.length; i++) for (let j = 0; j < list[i].length; j++) {
+        assert.ok(Math.abs(actual[i][j] - list[i][j]) < 1e-5, `${id}: transformed geometry changes at ${i}/${j}`);
+      }
+    }
+    assert.equal(root.children.length, before.size, `${id}: one submission per authored material`);
+    assert.ok(root.children.length <= parts, `${id}: never add draw submissions`);
+    const batched = root.children.length;
+    batchProjectSculpture(root);
+    assert.equal(root.children.length, batched, "batching is idempotent");
+    counts.push(`${id}:${parts}->${batched}`);
+    root.traverse(object => { object.geometry?.dispose(); object.material?.dispose(); });
+  }
+  console.log(`Project mesh submissions ${counts.join(", ")}`);
 });
 
 test("focus-centered elliptical paths close and have real depth at every radius", () => {

@@ -1,5 +1,10 @@
 # Changelog
 
+## StarGod Portfolio v0.123.5 - 2026-10-17
+
+- Batch rigid, opaque parts of each project sculpture by their shared material, reducing draw submissions without simplifying the shapes, changing colors, or removing planets.
+- Keep transparent parts separate and preserve existing fitting, orbit motion, selection, and zoom. Add regressions for transformed triangles, normals, UVs, raycast hits, and geometry disposal across all ten project identities.
+
 ## StarGod Portfolio v0.123.4 - 2026-10-17
 
 - Keep certificate zoom controls outside the moving image, with Fit, 150%, 200%, and 300% steps on Home and in the credential library.

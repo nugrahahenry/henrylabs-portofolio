@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { mergeGeometries } from "three/addons/utils/BufferGeometryUtils.js";
 
 type World = "catmoji" | "polara" | "hengs" | "nalira" | "canox" | "rental" | "pos" | "labq" | "yventures" | "soreva";
 
@@ -155,6 +156,35 @@ export function createProjectSculpture(id: World) {
     root.add(paper);
     line([[-.55,-.52,-.08],[-.36,-.34,-.09],[-.17,-.26,-.09]], "#e3a6ff", .016);
     for (const [x,y,z,s] of [[-.6,-.55,-.12,.06],[-.34,-.65,.02,.04],[.45,.52,-.1,.05]]) ball("#ffe7a6",x,y,z,s);
+  }
+  return root;
+}
+
+// Authored parts are rigid children. Keep glass separate so transparency still sorts correctly.
+export function batchProjectSculpture(root: THREE.Group) {
+  const batches = new Map<THREE.Material, THREE.Mesh[]>();
+  for (const child of root.children) {
+    if (!(child instanceof THREE.Mesh) || Array.isArray(child.material) || child.material.transparent || child.children.length) continue;
+    const parts = batches.get(child.material) ?? [];
+    parts.push(child);
+    batches.set(child.material, parts);
+  }
+  for (const [material, parts] of batches) {
+    if (parts.length < 2) continue;
+    const geometries = parts.map(part => {
+      part.updateMatrix();
+      const geometry = part.geometry.clone().applyMatrix4(part.matrix);
+      // Extrusions and spheres use different indexing; keep shared sphere vertices intact.
+      if (!geometry.index) geometry.setIndex(Array.from({ length: geometry.getAttribute("position").count }, (_, index) => index));
+      return geometry;
+    });
+    const merged = mergeGeometries(geometries);
+    geometries.forEach(geometry => geometry.dispose());
+    if (!merged) continue;
+    const mesh = new THREE.Mesh(merged, material);
+    mesh.name = `${root.name}-batch-${material.uuid}`;
+    root.add(mesh);
+    for (const part of parts) { root.remove(part); part.geometry.dispose(); }
   }
   return root;
 }

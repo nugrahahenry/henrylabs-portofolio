@@ -7,7 +7,7 @@ import * as THREE from "three";
 import { createGalaxySystem, galaxies, type GalaxyId } from "./galaxy-system";
 import { advanceGalaxyFlight, sampleGalaxyFlight } from "./galaxy-flight";
 import { createPlanetMaps, removeEdgeMatte } from "./planet-materials";
-import { createProjectSculpture } from "./project-sculptures";
+import { batchProjectSculpture, createProjectSculpture } from "./project-sculptures";
 import { resolveTechOwner, sampleTechOrbit, techOrbitRadius, techOrbitMotion } from "./tech-orbit";
 import { orbitFrameDistance, orbitGeometry, orbitalSpeed, sampleOrbit } from "./orbital-path";
 import { createStellarAura } from "./stellar-core";
@@ -317,6 +317,7 @@ export function CosmicCanvas({ activeId, onSelect, onPrevious, onNext, motionOn,
         sculpture.scale.multiplyScalar(fit);
         sculpture.position.copy(bounds.getCenter(new THREE.Vector3())).multiplyScalar(-fit);
       }
+      batchProjectSculpture(sculpture);
       group.add(sphere, atmosphere, logoHalo, focusRing, sculpture);
       if (world.logo) {
         const logoTexture = loader.load(`/assets/brand/${world.logo}`, (loaded) => {

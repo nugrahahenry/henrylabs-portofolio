@@ -1,6 +1,6 @@
 <div align="center">
 
-# StarGod Portfolio v0.123.4
+# StarGod Portfolio v0.123.5
 
 **I build things I actually see.**
 
@@ -83,6 +83,8 @@ The animation above is a short recording of the actual portfolio, not a concept 
 <img src="public/assets/readme/project-orbits.webp" alt="Catmoji at the center of the HenryLabs orbit, surrounded by Nalira, Canox, Hengs, Polara, and their technology satellites. The reading panel is closed." width="960" />
 
 Original project marks become transparent three-dimensional identities. Select a world to bring it into focus, follow its technology satellites, and open its context when you want to read.
+
+Rigid logo parts sharing an opaque material are drawn together, keeping their complete geometry and colors while reducing rendering submissions. Transparent details remain separate, and the orbit, selection, and zoom behavior stay unchanged.
 
 </details>
 
