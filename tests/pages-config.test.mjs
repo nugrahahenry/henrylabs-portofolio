@@ -6,6 +6,16 @@ import ts from "typescript";
 import { segmentAlias } from "../scripts/pages-segments.mjs";
 
 const require = createRequire(import.meta.url);
+
+test("Pages caches only fingerprinted Next assets without freezing public content", () => {
+  const rules = readFileSync("public/_headers", "utf8").trim().split(/\r?\n\s*\r?\n/)
+    .map(block => block.split(/\r?\n/).map(line => line.trim()));
+  assert.deepEqual(rules.filter(rule => rule.some(line => /^Cache-Control:/i.test(line))), [
+    ["/_next/static/*", "Cache-Control: public, max-age=31536000, immutable"],
+  ]);
+  assert.ok(rules.some(rule => rule[0] === "/opengraph-image" && rule.includes("Content-Type: image/png")));
+});
+
 const config = ts.transpileModule(readFileSync("next.config.ts", "utf8"), {
   compilerOptions: { module: ts.ModuleKind.CommonJS },
 }).outputText;

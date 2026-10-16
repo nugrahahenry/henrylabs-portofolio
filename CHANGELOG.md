@@ -1,5 +1,10 @@
 # Changelog
 
+## StarGod Portfolio v0.123.2 - 2026-10-17
+
+- Cache fingerprinted Next.js bundles for one year on Cloudflare Pages, avoiding unnecessary repeat-visit revalidation without changing the universe or its effects.
+- Keep HTML, navigation payloads, watermarked credentials and replaceable public media on their existing revalidation policy. Add a regression guarding the cache boundary and social-image media type.
+
 ## StarGod Portfolio v0.123.1 - 2026-10-17
 
 - Keep Polara and the other project planets inside the orbit camera frame, including their halos, full orbital paths, and selection handoffs.

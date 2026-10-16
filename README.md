@@ -1,6 +1,6 @@
 <div align="center">
 
-# StarGod Portfolio v0.123.1
+# StarGod Portfolio v0.123.2
 
 **I build things I actually see.**
 
@@ -297,6 +297,10 @@ The wrapper also supplies verified dot-separated navigation aliases for Next
 output; it never modifies Next's installed code. Keep using the wrapper rather than
 calling `next build` directly for Pages, and reevaluate this compatibility step when
 upgrading Next. `_headers` gives the extensionless social image its PNG media type.
+Only fingerprinted `/_next/static/*` files receive a one-year immutable browser
+cache, following [Pages' cache guidance](https://developers.cloudflare.com/pages/configuration/headers/#configure-custom-browser-cache-behavior).
+HTML, navigation payloads, certificates, portraits and other public assets retain
+normal revalidation so replacing a file does not leave visitors with a stale copy.
 Keep `404.html`; do not add an SPA catch-all redirect or publish anything except
 `out`. Public credential copies stay watermarked; private masters are not needed.
 
