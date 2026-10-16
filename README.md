@@ -1,6 +1,6 @@
 <div align="center">
 
-# StarGod Portfolio v0.123.2
+# StarGod Portfolio v0.123.3
 
 **I build things I actually see.**
 
@@ -309,6 +309,18 @@ Hosting references: [Next.js static exports on Pages](https://developers.cloudfl
 [static routing](https://developers.cloudflare.com/pages/configuration/serving-pages/).
 
 ### Reading Routes
+
+The mobile universe uses a single page-scroll surface, native vertical swipes and
+browser pinch zoom. The optional Active World panel scrolls independently only
+while open. The sky fills Chrome's changing viewport without a light strip below.
+Living Map uses bounded adaptive resolution and a 30fps paint target on compact
+screens; background animation pauses during full document inspection. This is a
+rendering budget, not a guarantee of 30fps on every device.
+
+Project list artwork and 2D identity marks use locally generated WebP previews.
+Regenerate them with `node scripts/project-previews.mjs` after updating the approved
+sources. Original artwork, 3D identity textures and full-size inspection stay
+unchanged; no image provider or private credential master is required.
 
 | Route | Contents |
 | :-- | :-- |

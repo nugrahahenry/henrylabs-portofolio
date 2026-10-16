@@ -15,6 +15,7 @@ import { UNIVERSE_CHAPTER as chapter } from "./universe-chapter";
 import { galaxyLetterScale } from "./spatial-type";
 import type { OrbitBookmark, OrbitHandle } from "./orbit-bookmark";
 import { placeOrbitLabel, type OrbitLabelBox } from "./orbit-labels";
+import { createPaintClock, paintDue, createSkyQuality, resetSkySample, sampleSkyQuality, skyPixelRatio, skyQualityNames } from "./sky-quality";
 
 export type ProjectId = "catmoji" | "nalira" | "canox" | "hengs" | "polara";
 export type SatelliteId = "rental" | "pos" | "labq" | "yventures" | "soreva";
@@ -239,7 +240,16 @@ export function CosmicCanvas({ activeId, onSelect, onPrevious, onNext, motionOn,
       setFallback(true);
       return;
     }
-    renderer.setPixelRatio(Math.min(devicePixelRatio, 1.6));
+    const quality = createSkyQuality();
+    const paintClock = createPaintClock();
+    let viewWidth = 1, viewHeight = 1;
+    const updateResolution = () => {
+      const cap = viewWidth < 900 ? 1.25 : 1.6;
+      renderer.setPixelRatio(skyPixelRatio(viewWidth, viewHeight, devicePixelRatio, cap, quality.tier));
+      renderer.setSize(viewWidth, viewHeight, false);
+      host.dataset.skyQuality = skyQualityNames[quality.tier];
+      host.dataset.skyPixelRatio = renderer.getPixelRatio().toFixed(4);
+    };
     host.dataset.rendererEpoch = String(++rendererEpoch.current);
     setFallback(false);
     renderer.outputColorSpace = THREE.SRGBColorSpace;
@@ -463,7 +473,17 @@ export function CosmicCanvas({ activeId, onSelect, onPrevious, onNext, motionOn,
     };
     const render = (time: number) => {
       frame = 0;
-      if (disposed || !visible || document.hidden) return;
+      if (disposed || !visible || document.hidden) { resetSkySample(quality); paintClock.last = -1; lastTime = 0; return; }
+      if (sampleSkyQuality(quality, time, state.current.motionOn)) updateResolution();
+      const frameLimit = viewWidth < 900 || quality.tier > 0 ? 30 : 60;
+      if (!paintDue(paintClock, time, frameLimit, !state.current.motionOn)) {
+        frame = requestAnimationFrame(render);
+        return;
+      }
+      host.dataset.frameLimit = String(frameLimit);
+      // Read label layout together, before any per-frame style or dataset writes.
+      const galaxySizes = galaxyLabels.current.map(label => ({ width: label?.clientWidth ?? 0, height: label?.clientHeight ?? 0 }));
+      const labelSizes = labels.current.map(label => ({ width: label?.clientWidth ?? 0, height: label?.clientHeight ?? 0 }));
       const bookmark = restoreRef.current;
       const restoring = bookmark && bookmark !== appliedRestore && bookmark.world === state.current.activeId && state.current.view === "orbit";
       if (restoring) {
@@ -477,7 +497,7 @@ export function CosmicCanvas({ activeId, onSelect, onPrevious, onNext, motionOn,
         appliedRestore = bookmark;
         lastTime = time;
       }
-      const dt = Math.min((time - lastTime) / 1000 || 0, .04);
+      const dt = lastTime ? Math.min((time - lastTime) / 1000, .05) : 0;
       lastTime = time;
       if (state.current.motionOn) elapsed += dt;
       const sector = state.current.sector;
@@ -495,6 +515,7 @@ export function CosmicCanvas({ activeId, onSelect, onPrevious, onNext, motionOn,
       if (state.current.motionOn && flightReady && state.current.view === "universe" && !dragging && galaxyHover.current < 0 && !galaxyFocused) universeAngle += dt * .025;
       universe.layout(portrait, universeAngle);
       universe.center.material.opacity = .42 * (1 - viewBlend);
+      universe.center.visible = viewBlend < 1;
       const focus = universe.clusters.find((galaxy) => galaxy.id === sector)!.cluster.position;
       if (!focusReady) {
         focusPosition.copy(focus);
@@ -511,6 +532,7 @@ export function CosmicCanvas({ activeId, onSelect, onPrevious, onNext, motionOn,
         const emphasis = galaxyEmphasis[index] = state.current.motionOn ? THREE.MathUtils.damp(galaxyEmphasis[index], highlighted ? 1 : 0, 8, dt) : highlighted ? 1 : 0;
         disk.rotation.y = -.15 + index * .23 + elapsed * (.018 + index * .005);
         const visibility = id === sector ? flightPose.selectedVisibility : flightPose.otherVisibility;
+        disk.visible = id === sector || visibility > .001;
         material.opacity = (id === sector ? .07 + visibility * .88 : .85 * visibility) + emphasis * .12 * visibility;
         nucleus.material.opacity = (.72 + emphasis * .25) * visibility;
         cloud.material.opacity = (.025 + emphasis * .02) * visibility;
@@ -570,7 +592,7 @@ export function CosmicCanvas({ activeId, onSelect, onPrevious, onNext, motionOn,
         focusRing.scale.setScalar(state.current.motionOn && selected ? 1 + Math.sin(elapsed * 2.4 + index) * .045 : 1);
       });
       const halfWidth = portrait ? 3.8 : 4.7;
-      const safeDistance = orbitFrameDistance(sectorFrames[sector], focusAnchor, system.rotation, camera.fov, host.clientWidth, host.clientHeight);
+      const safeDistance = orbitFrameDistance(sectorFrames[sector], focusAnchor, system.rotation, camera.fov, viewWidth, viewHeight);
       // Reserve the complete zoom range above the safe frame instead of clipping at maximum zoom.
       const fittedDistance = Math.max(10.5, safeDistance + .45 * 2.7, halfWidth / (Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) * camera.aspect));
       const overviewDistance = Math.max(14.5, 4.3 / (Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) * camera.aspect));
@@ -658,17 +680,17 @@ export function CosmicCanvas({ activeId, onSelect, onPrevious, onNext, motionOn,
         projected.project(camera);
         const label = galaxyLabels.current[index];
         if (label) {
-          const x = (projected.x * .5 + .5) * host.clientWidth;
-          const y = (-projected.y * .5 + .5) * host.clientHeight;
-          const offset = host.clientHeight < 250 ? 14 : portrait ? 26 : 55;
+          const x = (projected.x * .5 + .5) * viewWidth;
+          const y = (-projected.y * .5 + .5) * viewHeight;
+          const offset = viewHeight < 250 ? 14 : portrait ? 26 : 55;
           label.dataset.coreX = x.toFixed(1);
           label.dataset.coreY = y.toFixed(1);
           label.dataset.selected = String(sector === galaxies[index].id);
           const scale = galaxyLetterScale(overviewDistance, depth, galaxyEmphasis[index], state.current.motionOn);
           label.style.setProperty("--letter-scale", scale.toFixed(4));
-          const halfLabel = label.clientWidth * 1.06 / 2 + 8;
-          const labelHeight = label.clientHeight * 1.06 + 8;
-          label.style.transform = `translate(-50%, 0) translate(${Math.max(halfLabel, Math.min(host.clientWidth - halfLabel, x))}px, ${Math.max(4, Math.min(host.clientHeight - labelHeight, y + offset))}px)`;
+          const halfLabel = galaxySizes[index].width * 1.06 / 2 + 8;
+          const labelHeight = galaxySizes[index].height * 1.06 + 8;
+          label.style.transform = `translate(-50%, 0) translate(${Math.max(halfLabel, Math.min(viewWidth - halfLabel, x))}px, ${Math.max(4, Math.min(viewHeight - labelHeight, y + offset))}px)`;
         }
       });
       placedLabels.length = 0;
@@ -679,21 +701,21 @@ export function CosmicCanvas({ activeId, onSelect, onPrevious, onNext, motionOn,
         const depth = Math.max(.1, projected.distanceTo(camera.position));
         projected.project(camera);
         const label = labels.current[index];
-        const radiusPixels = (.37 + index * .02) * group.scale.x * host.clientHeight / (2 * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) * depth);
+        const radiusPixels = (.37 + index * .02) * group.scale.x * viewHeight / (2 * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) * depth);
         if (label) {
           const focused = labels.current[index] === document.activeElement;
           label.dataset.highlighted = String(planetHover.current === index || focused);
           label.dataset.selected = String(worlds[index].id === state.current.activeId);
           label.dataset.depth = (camera.position.z - group.position.z).toFixed(3);
-          const x = (projected.x * .5 + .5) * host.clientWidth;
-          const y = (-projected.y * .5 + .5) * host.clientHeight + radiusPixels + 8;
-          if (host.clientHeight < 300) {
-            const box = placeOrbitLabel(x - label.clientWidth / 2, y, label.clientWidth, label.clientHeight, host.clientWidth, host.clientHeight, placedLabels);
+          const x = (projected.x * .5 + .5) * viewWidth;
+          const y = (-projected.y * .5 + .5) * viewHeight + radiusPixels + 8;
+          if (viewHeight < 300) {
+            const box = placeOrbitLabel(x - labelSizes[index].width / 2, y, labelSizes[index].width, labelSizes[index].height, viewWidth, viewHeight, placedLabels);
             placedLabels.push(box);
             label.style.transform = `translate(${box.x}px, ${box.y}px)`;
           } else {
-            const halfWidth = label.clientWidth / 2 + 4;
-            label.style.transform = `translate(-50%, 0) translate(${Math.max(halfWidth, Math.min(host.clientWidth - halfWidth, x))}px, ${Math.max(4, Math.min(host.clientHeight - label.clientHeight - 4, y))}px)`;
+            const halfWidth = labelSizes[index].width / 2 + 4;
+            label.style.transform = `translate(-50%, 0) translate(${Math.max(halfWidth, Math.min(viewWidth - halfWidth, x))}px, ${Math.max(4, Math.min(viewHeight - labelSizes[index].height - 4, y))}px)`;
           }
         }
       }
@@ -742,9 +764,12 @@ export function CosmicCanvas({ activeId, onSelect, onPrevious, onNext, motionOn,
     wakeRef.current = wake;
     const resize = () => {
       const { clientWidth: width, clientHeight: height } = host;
+      viewWidth = Math.max(1, width); viewHeight = Math.max(1, height);
       camera.aspect = width / Math.max(1, height);
       camera.updateProjectionMatrix();
-      renderer.setSize(width, height, false);
+      updateResolution();
+      resetSkySample(quality);
+      paintClock.last = -1;
       wake();
     };
     const down = (event: PointerEvent) => {
@@ -758,7 +783,7 @@ export function CosmicCanvas({ activeId, onSelect, onPrevious, onNext, motionOn,
       lastY = event.clientY;
       startX = event.clientX;
       startY = event.clientY;
-      canvas.setPointerCapture(event.pointerId);
+      if (event.pointerType !== "touch") canvas.setPointerCapture(event.pointerId);
     };
     const move = (event: PointerEvent) => {
       if (!dragging) {
@@ -772,6 +797,12 @@ export function CosmicCanvas({ activeId, onSelect, onPrevious, onNext, motionOn,
         canvas.style.cursor = galaxyHover.current >= 0 || planetHover.current >= 0 ? "pointer" : "";
         wake();
         return;
+      }
+      if (event.pointerType === "touch" && !pointerMoved) {
+        const dx = event.clientX - startX, dy = event.clientY - startY;
+        if (Math.abs(dy) > 8 && Math.abs(dy) >= Math.abs(dx)) { dragging = false; pressedPlanet = -1; return; }
+        if (Math.abs(dx) < 8) return;
+        canvas.setPointerCapture(event.pointerId);
       }
       if (Math.hypot(event.clientX - startX, event.clientY - startY) > 6) pointerMoved = true;
       angle += (event.clientX - lastX) * .006;

@@ -17,7 +17,7 @@ import { universeLighting, universeHeroOpacity } from "./universe-chapter";
 import { createSpacecraft, spacecraftPose, routeSpacecraft, flightPresence, createPursuitBolts, pursuitPulse, pursuitShotSide, pursuitMiss, clearShot, createWormhole, wormholePresence, advancePursuit, pursuitEnd, WORMHOLE_X, FLIGHT_START_X, PURSUIT_DELAY, COMPACT_PURSUIT_DELAY, PURSUIT_REST, PURSUIT_SHOTS, PURSUIT_SHOT_SECONDS } from "./spacecraft";
 import { COMPACT_STAR_COUNT, DISTANT_STAR_COUNT, FEEDING_DUST_COUNT, createDistantStarMaterial, distantStarPoint, dustStreamSource } from "./ambient-field";
 import { PASSAGE_COUNT, COMPACT_PASSAGE_COUNT, createCameraPassage, advancePassage, passagePoint, passageReadingGuard, passageVisibility } from "./camera-passage";
-import { createSkyQuality, resetSkySample, sampleSkyQuality, skyPixelRatio, skyQualityNames } from "./sky-quality";
+import { createPaintClock, paintDue, createSkyQuality, resetSkySample, sampleSkyQuality, skyPixelRatio, skyQualityNames } from "./sky-quality";
 
 function createBlackHole() {
   const group = new THREE.Group();
@@ -524,6 +524,7 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, heroProgress, 
     let visible = true;
     let frame = 0;
     let lastTime = 0;
+    const paintClock = createPaintClock();
     let elapsed = 0;
     let companionAge = 0;
     const pursuit = { age: 0, cycle: 0, delay: PURSUIT_DELAY, interrupted: false };
@@ -554,8 +555,16 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, heroProgress, 
     };
     const render = (time: number) => {
       frame = 0;
-      if (!visible || document.hidden || !enhanced) { resetSkySample(quality); lastTime = 0; return; }
+      if (!visible || document.hidden || !enhanced) { resetSkySample(quality); paintClock.last = -1; lastTime = 0; return; }
+      if (state.current.motionOn && document.querySelector("dialog[open]")) {
+        resetSkySample(quality); paintClock.last = -1; lastTime = 0;
+        frame = requestAnimationFrame(render);
+        return;
+      }
       if (sampleSkyQuality(quality, time, state.current.motionOn && !state.current.introActive)) updateResolution();
+      const frameLimit = state.current.mapActive ? 30 : 60;
+      if (!paintDue(paintClock, time, frameLimit, !state.current.motionOn)) { frame = requestAnimationFrame(render); return; }
+      host.dataset.frameLimit = String(frameLimit);
       const delta = lastTime ? Math.max(0, (time - lastTime) / 1000) : 0;
       const dt = Math.min(delta, .04);
       lastTime = time;

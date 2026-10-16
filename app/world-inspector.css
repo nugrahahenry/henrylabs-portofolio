@@ -48,7 +48,7 @@
   .project-showcase.world-inspector { bottom: 52px; max-height: none; }
 }
 @media (max-width: 640px) {
-  .project-showcase.world-inspector { margin: 10px 20px 20px; padding: 0 4px 14px; }
+  .project-showcase.world-inspector { position: absolute; z-index: 12; inset: auto 12px 42px; width: auto; max-height: min(420px, 60svh); margin: 0; padding: 14px; overflow-y: auto; background: #0b121bee; border: 1px solid #526572; border-radius: 4px; }
   .hero-stage:has(.universe-return) .frame-topline span:first-child { visibility: hidden; }
 }
 @media (orientation: landscape) and (max-height: 620px) {

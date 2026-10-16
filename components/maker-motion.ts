@@ -1,6 +1,12 @@
 export const MAKER_RETREAT_START = .62;
 export const MAKER_PROOF_START = .71;
 
+export function makerLayoutNeedsRestore(previous: { width: number; height: number; spatial: boolean }, next: { width: number; height: number; spatial: boolean }, touch: boolean) {
+  if (previous.width !== next.width || previous.spatial !== next.spatial) return true;
+  // Mobile browser chrome changes height during the user's swipe, not the reading layout.
+  return !touch && previous.height !== next.height;
+}
+
 export function makerEvidenceAt(progress: number, index: number) {
   const travel = Math.min(1, Math.max(0, (progress - MAKER_PROOF_START - .005 - index * .012) / .105));
   return { travel, eased: 1 - Math.pow(1 - travel, 3), arrived: travel >= .95 };

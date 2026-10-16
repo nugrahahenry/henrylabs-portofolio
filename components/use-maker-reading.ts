@@ -2,7 +2,7 @@
 
 import { useEffect, useLayoutEffect, useRef, type RefObject } from "react";
 import type { MotionValue } from "motion/react";
-import { makerReadingProgress, MAKER_PROOF_START } from "./maker-motion";
+import { makerLayoutNeedsRestore, makerReadingProgress, MAKER_PROOF_START } from "./maker-motion";
 
 type Reading = { active: boolean; proof: boolean; progress: number; group: number; card: number; focus: HTMLElement | null };
 
@@ -50,7 +50,7 @@ export function useMakerReading(section: RefObject<HTMLElement | null>, progress
   useLayoutEffect(() => {
     const node = section.current, previous = layout.current, saved = reading.current;
     if (!node || !viewport.width) return;
-    const changed = previous.width !== viewport.width || previous.height !== viewport.height || previous.spatial !== spatial;
+    const changed = makerLayoutNeedsRestore(previous, { ...viewport, spatial }, window.matchMedia("(pointer: coarse)").matches);
     layout.current = { ...viewport, spatial };
     if (!changed || !saved?.active) { captureRef.current(); return; }
     restoring.current = true;

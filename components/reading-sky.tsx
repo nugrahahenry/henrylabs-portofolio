@@ -66,6 +66,11 @@ function ReadingField() {
       const render = (now: number) => {
         frame = 0;
         if (disposed || lost || document.hidden) { last = 0; resetSkySample(quality); return; }
+        if (moving.current && document.querySelector("dialog[open]")) {
+          last = 0; resetSkySample(quality);
+          frame = requestAnimationFrame(render);
+          return;
+        }
         const resized = sampleSkyQuality(quality, now, moving.current);
         if (resized) updateResolution();
         if (resized || !moving.current || now - lastPaint >= 1000 / 24) {

@@ -8,10 +8,10 @@
 .maker-heading h2 span { color: var(--cyan); }
 .maker-heading p { margin: 18px 0; color: #cad6df; font-size: 16px; }
 .maker-principles { display: flex; flex-wrap: wrap; gap: 12px; font-size: 13px; color: #b5c8d5; }
-.maker-scene { position: absolute; inset: 0; touch-action: pan-y; }
+.maker-scene { position: absolute; inset: 0; touch-action: pan-y pinch-zoom; }
 .maker-scene[data-dragging="true"], .maker-scene[data-dragging="true"] .maker-tool { cursor: grabbing; user-select: none; }
 .portrait-identity { position: absolute; z-index: 4; top: 50%; left: 50%; width: min(46%, 520px, calc((100svh - 230px) * .8)); transform: translate(-50%, -43%); }
-.portrait-reveal { position: relative; width: 100%; aspect-ratio: 1122 / 1402; --reveal-x: 50%; --reveal-y: 35%; --reveal-strength: 0; --clear-opacity: 0; --human-opacity: 0; touch-action: pan-y; mask-image: linear-gradient(#000 89%, transparent 100%); }
+.portrait-reveal { position: relative; width: 100%; aspect-ratio: 1122 / 1402; --reveal-x: 50%; --reveal-y: 35%; --reveal-strength: 0; --clear-opacity: 0; --human-opacity: 0; touch-action: pan-y pinch-zoom; mask-image: linear-gradient(#000 89%, transparent 100%); }
 .portrait-reveal img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; user-select: none; pointer-events: none; opacity: 0; }
 .portrait-reveal[data-portrait-mode="cosmic"] [data-portrait-layer="cosmic"], .portrait-reveal[data-portrait-mode="sunglasses"] [data-portrait-layer="sunglasses"], .portrait-reveal[data-portrait-mode="glasses"] [data-portrait-layer="glasses"], .portrait-reveal[data-portrait-mode="human"] [data-portrait-layer="human"] { opacity: 1; }
 .portrait-reveal[data-portrait-mode="cosmic"][data-interactive="true"] [data-portrait-layer="cosmic"] { mask-image: radial-gradient(circle at var(--reveal-x) var(--reveal-y), transparent calc(var(--reveal-strength) * 19%), #000 calc(var(--reveal-strength) * 27%)); }

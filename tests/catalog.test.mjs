@@ -27,6 +27,36 @@ const { posStory } = loadContent("pos-story");
 const { rentalStory } = loadContent("rental-story");
 const { projectContactLinks } = loadContent("project-contact");
 const { makerGroups, readMakerRoute, makerRouteHref, makerRouteQuery } = loadContent("../components/maker-route");
+const { projectPreview, projectPreviewSources } = loadContent("project-previews");
+
+test("project thumbnails preserve source framing and alpha within a small byte budget", async () => {
+  const sharp = (await import("sharp")).default;
+  let originals = 0, previews = 0;
+  for (const [source, record] of Object.entries(projectPreviewSources)) {
+    const sourceBytes = readFileSync(path.join("public", source));
+    const original = await sharp(sourceBytes).metadata();
+    originals += sourceBytes.length;
+    for (const width of record.widths) {
+      const bytes = readFileSync(path.join("public", `${record.target}-${width}.webp`));
+      const result = await sharp(bytes).metadata();
+      assert.equal(result.format, "webp");
+      assert.equal(result.width, width);
+      assert.equal(result.height, Math.round(original.height * width / original.width));
+      const expectedAlpha = await sharp(sourceBytes).resize({ width }).ensureAlpha().extractChannel(3).raw().toBuffer();
+      const actualAlpha = await sharp(bytes).ensureAlpha().extractChannel(3).raw().toBuffer();
+      assert.deepEqual(actualAlpha, expectedAlpha, `${source}: preserve transparency, including fully opaque alpha channels`);
+      assert.ok(width <= original.width);
+      assert.ok(bytes.length < 60_000);
+    }
+    previews += readFileSync(path.join("public", projectPreview(source).src)).length;
+  }
+  assert.ok(previews < originals * .05, `${previews} versus ${originals}`);
+  assert.deepEqual(projectPreview("/assets/brand/nalira.svg"), { src: "/assets/brand/nalira.svg" });
+  assert.equal(projectCatalog.find(project => project.id === "polara").media, "/assets/projects/polara-og.png");
+  const component = readFileSync("components/project-library.tsx", "utf8");
+  assert.match(component, /projectPreview\(project\.media\)/);
+  assert.match(component, /projectPreview\(project\.logo\)/);
+});
 
 test("Polara evidence has bilingual stories and small, traceable actual product captures", () => {
   const capture = JSON.parse(readFileSync("public/assets/projects/polara/capture.json", "utf8"));

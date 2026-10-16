@@ -2,6 +2,20 @@ export const SKY_PIXEL_BUDGET = 1_500_000;
 const scales = [1, .85, .7] as const;
 export const skyQualityNames = ["full", "balanced", "economy"] as const;
 
+export function createPaintClock() { return { last: -1 }; }
+
+// Carry the fractional remainder so a 30fps scene does not slip to 20fps on 60Hz screens.
+// Quality sampling must happen before this gate, against the browser's actual RAF cadence.
+export function paintDue(clock: ReturnType<typeof createPaintClock>, now: number, fps: number, force = false) {
+  const interval = 1000 / fps;
+  const delta = now - clock.last;
+  if (force || clock.last < 0 || delta < 0 || delta > 250) { clock.last = now; return true; }
+  if (delta < interval - .5) return false;
+  clock.last = now - Math.max(0, delta % interval);
+  if (delta < interval) clock.last = now;
+  return true;
+}
+
 export function skyPixelRatio(width: number, height: number, dpr: number, cap: number, tier = 0) {
   const positive = (value: number) => Number.isFinite(value) && value > 0 ? value : 1;
   const pixels = positive(width) * positive(height);

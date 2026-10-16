@@ -22,7 +22,17 @@ const { sampleOrbit, orbitalSpeed, orbitFrameDistance } = await loadModule("orbi
 const { createStellarCore } = await loadModule("stellar-core");
 const { advanceGalaxyFlight, sampleGalaxyFlight } = await loadModule("galaxy-flight");
 const { createDeepSpace } = await loadModule("deep-space");
-const { makerGroupAt, makerEvidenceAt, makerReadingProgress, makerOrbitPoint, advanceMakerRotation, portraitCoversSatellite, portraitOverlapsLabel, MAKER_RETREAT_START, MAKER_PROOF_START } = await loadModule("maker-motion");
+const { makerLayoutNeedsRestore, makerGroupAt, makerEvidenceAt, makerReadingProgress, makerOrbitPoint, advanceMakerRotation, portraitCoversSatellite, portraitOverlapsLabel, MAKER_RETREAT_START, MAKER_PROOF_START } = await loadModule("maker-motion");
+
+test("mobile address-bar resizing never restores against a live swipe, but orientation and layout changes do", () => {
+  const before = { width: 390, height: 740, spatial: true };
+  assert.equal(makerLayoutNeedsRestore(before, { ...before, height: 844 }, true), false);
+  assert.equal(makerLayoutNeedsRestore(before, { ...before, height: 650 }, true), false);
+  assert.equal(makerLayoutNeedsRestore(before, { ...before, height: 844 }, false), true);
+  assert.equal(makerLayoutNeedsRestore(before, { width: 844, height: 390, spatial: false }, true), true);
+  assert.equal(makerLayoutNeedsRestore(before, { ...before, spatial: false }, true), true);
+  assert.equal(makerLayoutNeedsRestore(before, before, false), false);
+});
 const { infallPoint, gravityMaterial, dustWarmth } = await loadModule("gravity-field");
 const { blackHoleFrame } = await loadModule("black-hole-frame");
 const { createSpacecraft, spacecraftPose, routeSpacecraft, flightPresence, pursuitPulse, pursuitShotTime, pursuitShotSide, pursuitMiss, createPursuitBolts, wormholePresence, createWormhole, clearShot, advancePursuit, pursuitEnd, pursuitPeriod, PURSUIT_DELAY, PURSUIT_REST, PURSUIT_SHOTS, PURSUIT_SHOT_SECONDS } = await loadModule("spacecraft");

@@ -9,6 +9,7 @@ import { catmojiStory } from "@/content/catmoji-story";
 import { posStory } from "@/content/pos-story";
 import { rentalStory } from "@/content/rental-story";
 import { projectContactLinks } from "@/content/project-contact";
+import { projectPreview } from "@/content/project-previews";
 import { SiteLink, updateQuery, useQuery, useSitePreferences } from "./site-preferences";
 import { ProjectVisual } from "./project-visual";
 import { PolaraCaseStudy } from "./polara-case-study";
@@ -23,7 +24,7 @@ const categoryIcons = { all: Grid2X2, henrylabs: Orbit, university: GraduationCa
 
 export function ProjectMark({ project }: { project: CatalogProject }) {
   const Icon = ({ rental: CarFront, pos: ShoppingCart, labq: FlaskConical, yventures: MessageCircle, soreva: Instagram })[project.id] ?? Code2;
-  return project.logo ? <img src={project.logo} alt="" /> : <Icon aria-hidden="true" size={32} strokeWidth={1.4} />;
+  return project.logo ? <img {...projectPreview(project.logo)} alt="" decoding="async" /> : <Icon aria-hidden="true" size={32} strokeWidth={1.4} />;
 }
 
 export function LibraryFooter() {
@@ -71,7 +72,7 @@ export function ProjectLibrary() {
     <div className="project-library-grid">{results.map((project, index) => <article className="project-record" key={project.id} style={{ "--record-color": project.color } as CSSProperties}>
       <SiteLink id={`project-card-${project.id}`} className="project-record-link" aria-labelledby={`project-title-${project.id}`} href={`/projects/${project.slug}${returnQuery.size ? `?${returnQuery}` : ""}`} onNavigate={() => rememberCard(project.id)}>
       <div className="project-record-visual">
-        {project.media ? <LibraryThumbnail className="project-record-art" src={project.media} alt={project.mediaAlt ?? project.name} eager={index < 2} /> : <div className="project-record-system"><span className="project-record-mark"><ProjectMark project={project} /></span><div>{project.flow[language].map((step, i) => <span key={step}><small>{String(i + 1).padStart(2, "0")}</small>{step}</span>)}</div></div>}
+        {project.media ? <LibraryThumbnail className="project-record-art" {...projectPreview(project.media)} sizes="(max-width: 640px) calc(100vw - 40px), (max-width: 1268px) calc(50vw - 38px), 596px" alt={project.mediaAlt ?? project.name} eager={index < 2} /> : <div className="project-record-system"><span className="project-record-mark"><ProjectMark project={project} /></span><div>{project.flow[language].map((step, i) => <span key={step}><small>{String(i + 1).padStart(2, "0")}</small>{step}</span>)}</div></div>}
       </div>
       <div className="project-record-caption"><span className="record-category">{categories[project.category][language]}</span><span>{project.media ? (project.mediaKind === "concept" ? (isEn ? "Concept artwork" : "Artwork konsep") : (isEn ? "Product artwork" : "Artwork produk")) : (isEn ? "System workflow" : "Alur sistem")}</span></div>
       <div className="project-record-body"><div className="project-record-heading"><span className="project-record-emblem" aria-hidden="true"><ProjectMark project={project} /></span><div><h2 id={`project-title-${project.id}`}>{project.name}</h2><span className="record-status">{project.status[language]} / {project.access[language]}</span></div></div><p>{project.summary[language]}</p><ul className="library-stack" aria-label={isEn ? "Technology stack" : "Teknologi proyek"}>{project.stack.map(tech => <li key={tech}>{tech}</li>)}</ul><span className="record-ownership"><span>{project.ownership[language]}</span><ArrowUpRight className="project-record-arrow" size={20} aria-hidden="true" /></span></div>

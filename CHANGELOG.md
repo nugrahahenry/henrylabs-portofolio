@@ -1,5 +1,12 @@
 # Changelog
 
+## StarGod Portfolio v0.123.3 - 2026-10-17
+
+- Remove nested mobile map scrolling; keep zoom controls inside the viewport and confine independent scrolling to the optional Active World readout.
+- Fill the dynamic mobile viewport with the sky and use a dark document base, preventing light gaps when Chrome's toolbar collapses. Restore native pinch zoom around the map and portrait; do not reset maker reading position on touch-device height-only changes.
+- Bound Living Map resolution and compact paint cadence, batch label measurements, and stop drawing fully faded neighboring galaxies. Pause background rendering while a full-size document viewer is open.
+- Serve smaller local project artwork and 2D identity previews while retaining original source media, 3D textures, full-size evidence and permanent certificate watermarks.
+
 ## StarGod Portfolio v0.123.2 - 2026-10-17
 
 - Cache fingerprinted Next.js bundles for one year on Cloudflare Pages, avoiding unnecessary repeat-visit revalidation without changing the universe or its effects.
