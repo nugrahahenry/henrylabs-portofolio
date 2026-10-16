@@ -1,5 +1,13 @@
 # Changelog
 
+## StarGod Portfolio v0.121.0 - 2026-10-16
+
+- Develop POS Z Shoes into an English/Indonesian case study with archived stock, sales and reporting screenshots, original-ratio inspection and stable keyboard/touch tabs.
+- Explain size-aware cart checks, refund/exchange paths and role-specific workspaces with explicit academic Windows-build limitations, not commercial or audited-security claims.
+- Label all captured records as simulated coursework data, approved by Henry. Credit Henry's independent application implementation and classmates' sample-data help separately.
+- Export three optimized WebPs with source hashes and provenance. Keep the full report, student IDs, account lists, database and private source out of the portfolio.
+- Preserve the nebula, public source destination, contextual contact and catalog/maker/universe return paths. Add responsive, failure-recovery and content regressions.
+
 ## StarGod Portfolio v0.120.0 - 2026-10-16
 
 - Give Catmoji an English/Indonesian case study with actual Normal and Challenge panel captures, a gesture-to-response explanation, grounded implementation decisions and explicit camera/network limitations.

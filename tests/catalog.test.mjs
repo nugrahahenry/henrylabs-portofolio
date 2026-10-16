@@ -23,6 +23,7 @@ const { orbitTechNodes } = loadContent("technologies");
 const { projectWorkflowNotes } = loadContent("project-workflows");
 const { polaraStory } = loadContent("polara-story");
 const { catmojiStory } = loadContent("catmoji-story");
+const { posStory } = loadContent("pos-story");
 const { projectContactLinks } = loadContent("project-contact");
 const { makerGroups, readMakerRoute, makerRouteHref, makerRouteQuery } = loadContent("../components/maker-route");
 
@@ -125,6 +126,33 @@ test("project drafts encode punctuation without creating extra recipients or par
   assert.deepEqual([...email.searchParams.keys()], ["subject", "body"]);
   assert.equal(email.pathname, "henrynugraha1210@gmail.com");
   assert.equal(wa.hash, "");
+});
+
+test("POS evidence retains original report framing and honest desktop boundaries", async () => {
+  const { default: sharp } = await import("sharp");
+  const capture = JSON.parse(readFileSync("public/assets/projects/pos-z-shoes/capture.json", "utf8"));
+  assert.equal(capture.captures.length, 3);
+  assert.match(capture.origin, /Archived.*course report/);
+  assert.match(capture.data, /Simulated coursework data.*approved/);
+  assert.match(capture.contribution, /classmates helped prepare sample data/);
+  assert.match(posStory.captureNote.en, /Simulated data, not actual sales/);
+  assert.match(posStory.result.en, /built the application independently; classmates helped prepare/);
+  assert.equal(findWorld("pos").source, "https://github.com/nugrahahenry/POS_APBDS");
+  assert.equal(findWorld("pos").link, undefined, "no invented hosted demo");
+  let total = 0;
+  for (const [i, shot] of posStory.captures.entries()) {
+    const bytes = readFileSync(`public${shot.src}`);
+    total += bytes.length;
+    const metadata = await sharp(bytes).metadata();
+    assert.deepEqual(shot.size, [metadata.width, metadata.height]);
+    assert.match(capture.captures[i].sourceSha256, /^[a-f0-9]{64}$/);
+    for (const lang of ["en", "id"]) for (const key of ["tab", "title", "alt", "heading", "body"]) assert.ok(shot[key][lang]);
+    assert.ok(existsSync(`public${shot.src}.json`));
+  }
+  assert.ok(total < 400_000);
+  assert.match(posStory.limit.en, /academic Windows desktop.*not a hosted web demo/);
+  assert.match(posStory.limit.en, /does not rerun the POS database/);
+  for (const lang of ["en", "id"]) assert.ok(posStory.decisions.every(item => item.title[lang] && item.body[lang]));
 });
 
 test("maker return routes preserve every technology, owner group, All, and selected world", () => {

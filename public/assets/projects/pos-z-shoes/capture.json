@@ -1,0 +1,32 @@
+{
+  "origin": "Archived application screenshots from the POS Z Shoes course report; not a newly recorded runtime session.",
+  "data": "Simulated coursework data. Henry confirmed and approved these screenshots for portfolio display on 2026-10-16.",
+  "contribution": "Application built independently by Henry; classmates helped prepare sample data.",
+  "processing": "WebP quality 88. Original framing and content retained. Product-photo placeholders retained as captured.",
+  "captures": [
+    {
+      "file": "products.webp",
+      "source": "image62.jpeg",
+      "sourceSha256": "317a6a876ecd6a9ca2dca16aec1cc0e367041c166ef9043ee346097feef8bd44",
+      "width": 1443,
+      "height": 1027,
+      "bytes": 54476
+    },
+    {
+      "file": "transactions.webp",
+      "source": "image65.jpeg",
+      "sourceSha256": "b3e6dca538125b5248a2983cfead30ddb6fad564d54d83872779ef385a477194",
+      "width": 1442,
+      "height": 1026,
+      "bytes": 181952
+    },
+    {
+      "file": "reports.webp",
+      "source": "image72.jpeg",
+      "sourceSha256": "5afdef0b11a554f14195c6ac6936502f9049511ee04590e6243165a85e6dbaf1",
+      "width": 1444,
+      "height": 1026,
+      "bytes": 75644
+    }
+  ]
+}

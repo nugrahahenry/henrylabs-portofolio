@@ -1,6 +1,6 @@
 <div align="center">
 
-# StarGod Portfolio v0.120.0
+# StarGod Portfolio v0.121.0
 
 **I build things I actually see.**
 
@@ -144,6 +144,27 @@ Three projects I built end to end, from the business flow to the interface and s
 | **RentalMobil.SG** | Semester 2, Object-Oriented Programming | Car rental workflows with PHP and MySQL. |
 | **POS Z Shoes** | Semester 3, Business Process Analysis and System Design | Point-of-sale workflows with C# and WinForms. |
 | **LabQ** | Semester 4, Mobile and Web Programming | Health laboratory workflows across Android and web, using Java, Laravel, and PostgreSQL. |
+
+### Inside POS Z Shoes
+
+The POS case study follows stock, sales and reporting through three inspectable
+desktop screenshots. It explains size-aware stock checks, refunds versus
+exchanges, and role-specific workspaces in the C# WinForms course build.
+
+<img src="public/assets/projects/pos-z-shoes/reports.webp" alt="Archived POS Z Shoes report screen with simulated coursework sales and period-comparison charts, not real business revenue" width="800" />
+
+I built the application independently; classmates helped prepare the sample
+data. These are archived screenshots from the course report with simulated
+records, approved for portfolio display. The original product-photo placeholders
+remain visible; this is not a new runtime recording, hosted demo or claim of
+commercial use. The full report, student IDs, account lists and database stay
+outside the portfolio.
+
+The three WebPs total about 305 KiB. Their source hashes and processing are in
+[`capture.json`](public/assets/projects/pos-z-shoes/capture.json). The optional
+[`prepare-pos-captures.mjs`](scripts/prepare-pos-captures.mjs) converts only three
+selected report images, after explicit simulated-data confirmation. Building
+the portfolio does not require the original report or POS installation.
 
 ## Client Work
 
