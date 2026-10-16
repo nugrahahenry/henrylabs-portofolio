@@ -7,12 +7,14 @@ import { projectWorkflowNotes } from "@/content/project-workflows";
 import { polaraStory } from "@/content/polara-story";
 import { catmojiStory } from "@/content/catmoji-story";
 import { posStory } from "@/content/pos-story";
+import { rentalStory } from "@/content/rental-story";
 import { projectContactLinks } from "@/content/project-contact";
 import { SiteLink, updateQuery, useQuery, useSitePreferences } from "./site-preferences";
 import { ProjectVisual } from "./project-visual";
 import { PolaraCaseStudy } from "./polara-case-study";
 import { CatmojiCaseStudy } from "./catmoji-case-study";
 import { PosCaseStudy } from "./pos-case-study";
+import { RentalCaseStudy } from "./rental-case-study";
 import { LibraryMasthead } from "./library-masthead";
 import { LibraryThumbnail } from "./library-thumbnail";
 import { makerRouteHref, makerRouteQuery, readMakerRoute } from "./maker-route";
@@ -102,7 +104,7 @@ export function ProjectDetail({ project }: { project: CatalogProject }) {
   const contact = projectContactLinks(project, language);
   const externalLink = contact.primary;
   const workflowNotes = projectWorkflowNotes[project.id]?.[language];
-  const story = project.id === "polara" ? polaraStory : project.id === "catmoji" ? catmojiStory : project.id === "pos" ? posStory : null;
+  const story = project.id === "polara" ? polaraStory : project.id === "catmoji" ? catmojiStory : project.id === "pos" ? posStory : project.id === "rental" ? rentalStory : null;
   return <main className="library-page project-detail" data-story={story ? project.id : undefined} style={{ "--record-color": project.color } as CSSProperties} id="main-content" tabIndex={-1}>
     <div className="detail-route"><SiteLink href={back} scroll={fromMaker ? false : undefined} className="library-back"><ArrowLeft size={17} />{fromMaker ? (isEn ? "Back to technologies" : "Kembali ke teknologi") : fromOrbit ? (isEn ? "Back to the universe" : "Kembali ke semesta") : (isEn ? "All projects" : "Semua proyek")}</SiteLink>{index >= 0 && <span>{collectionLabel} / {String(index + 1).padStart(2, "0")} <span>{isEn ? "of" : "dari"} {String(collection.length).padStart(2, "0")}</span></span>}</div>
     <header className="detail-heading">
@@ -119,7 +121,7 @@ export function ProjectDetail({ project }: { project: CatalogProject }) {
       <div><dt>{isEn ? "Ownership" : "Kontribusi"}</dt><dd>{project.ownership[language]}</dd></div>
       <div><dt>{isEn ? "Access" : "Akses"}</dt><dd>{project.access[language]}</dd></div>
     </dl>
-    {project.id === "polara" ? <PolaraCaseStudy project={project} /> : project.id === "catmoji" ? <CatmojiCaseStudy project={project} /> : project.id === "pos" ? <PosCaseStudy project={project} /> : <>
+    {project.id === "polara" ? <PolaraCaseStudy project={project} /> : project.id === "catmoji" ? <CatmojiCaseStudy project={project} /> : project.id === "pos" ? <PosCaseStudy project={project} /> : project.id === "rental" ? <RentalCaseStudy project={project} /> : <>
     {project.media && <div className="detail-art"><ProjectVisual key={project.id} project={project} /></div>}
     <div className="detail-content">
       <section aria-labelledby="detail-flow">

@@ -225,11 +225,48 @@ html[data-motion="off"] .site-header { transition: none; }
 .pos-result { display: grid; grid-template-columns: minmax(0, 1fr) minmax(240px, .65fr); gap: 64px; align-items: start; margin-top: 64px; padding-top: 48px; border-top: 1px solid var(--library-line); }
 .pos-result > div > p { margin-top: 20px; }
 .pos-story .pos-boundary { font-size: 14px; }
+.project-detail[data-story="rental"] .detail-heading { padding-bottom: 24px; }
+.project-detail[data-story="rental"] .detail-heading > p { max-width: 62ch; font-size: 19px; line-height: 1.6; margin-top: 20px; }
+.project-detail[data-story="rental"] .detail-actions { margin-top: 24px; }
+.project-detail[data-story="rental"] .detail-overview { padding-block: 16px; margin-bottom: 28px; }
+.rental-story h2 { font-size: 32px; line-height: 1.2; font-weight: 600; text-wrap: balance; }
+.rental-story p { color: var(--library-muted); font-size: 17px; line-height: 1.75; max-width: 66ch; }
+.rental-tabs { display: flex; gap: 8px; padding-bottom: 20px; }
+.rental-tabs button { display: inline-flex; gap: 10px; align-items: center; justify-content: center; min-height: 48px; padding: 10px 20px; border-bottom: 2px solid transparent; color: var(--library-muted); background: transparent; font-size: 15px; }
+.rental-tabs button[aria-selected="true"] { border-color: var(--record-color); color: #fff; }
+.rental-tabs button:hover { color: #fff; background: #ffffff08; }
+.rental-tabs button:focus-visible { outline: 2px solid var(--cyan); outline-offset: 3px; }
+.rental-panels { display: grid; }
+.rental-panel { grid-area: 1 / 1; min-width: 0; display: grid; grid-template-columns: minmax(0, 2.2fr) minmax(240px, 1fr); align-items: start; gap: 32px; }
+.rental-panel[aria-hidden="true"] { visibility: hidden; }
+.rental-panel .project-visual-open { aspect-ratio: 977 / 605; max-height: none; background: transparent; align-items: start; }
+.rental-panel .project-visual-open img { object-position: top; }
+.rental-panel[data-capture="admin"] .project-visual-open { aspect-ratio: 1349 / 581; }
+.rental-panel[data-capture="rentals"] .project-visual-open { aspect-ratio: 1340 / 608; }
+.rental-panel-copy { padding-top: 8px; }
+.rental-story .rental-panel-copy h2 { font-size: 26px; }
+.rental-panel-copy p { margin-top: 18px; }
+.rental-story .rental-capture-note { font-size: 12px; line-height: 1.6; margin-top: 12px; }
+.rental-context { display: grid; grid-template-columns: minmax(0, .8fr) minmax(0, 1.2fr); gap: 48px; padding-top: 48px; margin-top: 48px; border-top: 1px solid var(--library-line); }
+.rental-decisions { display: grid; grid-template-columns: minmax(0, .8fr) minmax(0, 1.2fr); gap: 48px; margin-block: 64px 40px; }
+.rental-decisions > div { display: grid; gap: 32px; }
+.rental-decisions h3 { font-size: 21px; line-height: 1.4; font-weight: 600; margin-bottom: 10px; }
+.rental-result { display: grid; grid-template-columns: minmax(0, 1fr) minmax(240px, .65fr); gap: 64px; align-items: start; margin-top: 64px; padding-top: 48px; border-top: 1px solid var(--library-line); }
+.rental-result > div > p { margin-top: 20px; }
+.rental-story .rental-boundary { font-size: 14px; }
 @media (max-width: 1000px) {
+  .rental-panel { grid-template-columns: minmax(0, 1fr); gap: 20px; }
+  .rental-panel-copy { padding-top: 0; }
   .pos-panel { grid-template-columns: minmax(0, 1fr); gap: 20px; }
   .pos-panel-copy { padding-top: 0; }
 }
 @media (max-width: 760px) {
+  .rental-story h2 { font-size: 27px; }
+  .rental-tabs { gap: 4px; }
+  .rental-tabs button { flex: 1; min-width: 0; gap: 7px; padding-inline: 4px; font-size: 14px; }
+  .rental-tabs svg { flex: none; }
+  .rental-decisions { grid-template-columns: minmax(0, 1fr); gap: 28px; margin-block: 44px 32px; }
+  .rental-context, .rental-result { grid-template-columns: minmax(0, 1fr); gap: 24px; margin-top: 36px; padding-top: 32px; }
   .project-detail[data-story] .detail-route { margin-bottom: 22px; }
   .project-detail[data-story] .detail-heading { padding-bottom: 24px; }
   .project-detail[data-story] .detail-heading > p { font-size: 17px; line-height: 1.6; margin-top: 18px; }
@@ -247,6 +284,11 @@ html[data-motion="off"] .site-header { transition: none; }
   .pos-context, .pos-result { grid-template-columns: minmax(0, 1fr); gap: 24px; margin-top: 36px; padding-top: 32px; }
 }
 @media (max-width: 400px) {
+  .project-detail[data-story="rental"] .detail-route { margin-bottom: 16px; }
+  .project-detail[data-story="rental"] .detail-heading > p { font-size: 16px; line-height: 1.5; margin-top: 16px; }
+  .project-detail[data-story="rental"] .detail-heading { padding-bottom: 16px; }
+  .project-detail[data-story="rental"] .detail-actions { margin-top: 16px; gap: 10px; }
+  .project-detail[data-story="rental"] .detail-overview { margin-bottom: 16px; gap: 6px; padding-block: 12px; }
   .project-detail[data-story="pos"] .detail-route { margin-bottom: 16px; }
   .project-detail[data-story="pos"] .detail-heading > p { font-size: 16px; line-height: 1.5; margin-top: 16px; }
   .project-detail[data-story="pos"] .detail-heading { padding-bottom: 16px; }

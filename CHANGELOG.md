@@ -1,5 +1,12 @@
 # Changelog
 
+## StarGod Portfolio v0.122.0 - 2026-10-16
+
+- Develop RentalMobil.SG into an English/Indonesian case study with original catalog, rental-history and administrator screenshots, keyboard/touch tabs, and full-size inspection.
+- Explain date-based pricing, manual payment review and vehicle availability with explicit archived academic-build limitations, not a live rental service or audited production system.
+- Label captured records as simulated coursework data, explicitly confirmed and approved by Henry. Export three optimized WebPs with pinned source hashes and provenance; keep uploaded receipts, accounts, contacts, the full report and database private.
+- Preserve the nebula, contextual walkthrough/contact actions and catalog/maker/universe return paths. Add responsive, failure-recovery and content regression checks.
+
 ## StarGod Portfolio v0.121.0 - 2026-10-16
 
 - Develop POS Z Shoes into an English/Indonesian case study with archived stock, sales and reporting screenshots, original-ratio inspection and stable keyboard/touch tabs.

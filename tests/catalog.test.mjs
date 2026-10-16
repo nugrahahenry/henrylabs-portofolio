@@ -24,6 +24,7 @@ const { projectWorkflowNotes } = loadContent("project-workflows");
 const { polaraStory } = loadContent("polara-story");
 const { catmojiStory } = loadContent("catmoji-story");
 const { posStory } = loadContent("pos-story");
+const { rentalStory } = loadContent("rental-story");
 const { projectContactLinks } = loadContent("project-contact");
 const { makerGroups, readMakerRoute, makerRouteHref, makerRouteQuery } = loadContent("../components/maker-route");
 
@@ -153,6 +154,34 @@ test("POS evidence retains original report framing and honest desktop boundaries
   assert.match(posStory.limit.en, /academic Windows desktop.*not a hosted web demo/);
   assert.match(posStory.limit.en, /does not rerun the POS database/);
   for (const lang of ["en", "id"]) assert.ok(posStory.decisions.every(item => item.title[lang] && item.body[lang]));
+});
+
+test("RentalMobil.SG keeps traceable coursework evidence and manual-payment boundaries", async () => {
+  const { default: sharp } = await import("sharp");
+  const capture = JSON.parse(readFileSync("public/assets/projects/rentalmobil-sg/capture.json", "utf8"));
+  assert.equal(capture.captures.length, rentalStory.captures.length);
+  assert.match(capture.origin, /Archived.*course report/);
+  assert.match(capture.data, /Simulated coursework data.*approved/);
+  assert.match(rentalStory.captureNote.en, /Simulated coursework data, not real bookings/);
+  assert.equal(capture.captures.length, 3);
+  assert.match(rentalStory.limit.en, /original application and database were not rerun/);
+  assert.equal(findWorld("rental").link, undefined, "no invented live rental service");
+  assert.equal(findWorld("rental").source, undefined, "private PHP source stays private");
+  let total = 0;
+  for (const [i, shot] of rentalStory.captures.entries()) {
+    const bytes = readFileSync(`public${shot.src}`);
+    total += bytes.length;
+    const metadata = await sharp(bytes).metadata();
+    assert.deepEqual(shot.size, [metadata.width, metadata.height]);
+    assert.match(capture.captures[i].sourceSha256, /^[a-f0-9]{64}$/);
+    assert.match(readFileSync(`public${shot.src}.json`, "utf8"), /Not generated/);
+    for (const lang of ["en", "id"]) for (const key of ["tab", "title", "alt", "heading", "body"]) assert.ok(shot[key][lang]);
+  }
+  assert.ok(total < 300_000);
+  for (const lang of ["en", "id"]) {
+    for (const key of ["intro", "problem", "captureNote", "result", "limit"]) assert.ok(rentalStory[key][lang]);
+    assert.ok(rentalStory.decisions.every(item => item.title[lang] && item.body[lang]));
+  }
 });
 
 test("maker return routes preserve every technology, owner group, All, and selected world", () => {

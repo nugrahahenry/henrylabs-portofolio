@@ -1,6 +1,6 @@
 {
   "name": "henrylabs-portfolio",
-  "version": "0.121.0",
+  "version": "0.122.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -37,6 +37,7 @@
     "test:home-continuation": "node tests/home-continuation.mjs",
     "test:project-path": "node tests/project-path.mjs",
     "test:polara-story": "node tests/polara-story.mjs",
+    "test:rental-story": "node tests/rental-story.mjs",
     "test:project-contact": "node tests/project-contact.mjs",
     "test:orbit-return": "node tests/orbit-return.mjs",
     "test:galaxies": "node tests/galaxies.mjs",

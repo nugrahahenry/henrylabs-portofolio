@@ -1,0 +1,84 @@
+import assert from "node:assert/strict";
+import { mkdirSync } from "node:fs";
+import { chromium, expect } from "@playwright/test";
+
+const base = process.env.PORTFOLIO_URL ?? "http://localhost:3002";
+const browser = await chromium.launch({ headless: true, executablePath: process.env.CHROME_PATH ?? "C:/Program Files/Google/Chrome/Application/chrome.exe" });
+mkdirSync("test-results/rental-story", { recursive: true });
+try {
+  for (const [width, height, lang] of [[1440, 900, "en"], [768, 1024, "en"], [390, 844, "id"], [320, 740, "en"], [844, 390, "id"]]) {
+    const page = await browser.newPage({ viewport: { width, height }, hasTouch: width < 500, reducedMotion: width === 320 ? "reduce" : "no-preference" });
+    const errors = [];
+    page.on("pageerror", error => errors.push(error.message));
+    await page.goto(`${base}/projects/rentalmobil-sg?from=universe&lang=${lang}`);
+    await expect(page.locator("html")).toHaveAttribute("data-preferences-ready", "true");
+    await expect(page.locator("h1")).toHaveText("RentalMobil.SG");
+    const tabs = page.getByRole("tab"), panel = page.getByRole("tabpanel");
+    await expect(tabs).toHaveCount(3);
+    await expect(tabs.first()).toHaveAttribute("aria-selected", "true");
+    await expect.poll(() => panel.locator("img").evaluate(img => img.complete && img.naturalWidth > 0)).toBe(true);
+    const box = await panel.locator(".project-visual-open").boundingBox();
+    if (height > 600) assert.ok(box.y < height - 60, `evidence enters first viewport at ${box.y}`);
+    await page.screenshot({ path: `test-results/rental-story/${width}-opening.png` });
+    const reserved = (await page.locator(".rental-panels").boundingBox()).height;
+    await tabs.first().focus();
+    await page.keyboard.press("ArrowLeft");
+    await expect(tabs.nth(2)).toBeFocused();
+    await expect(tabs.nth(2)).toHaveAttribute("aria-selected", "true");
+    await page.keyboard.press("Home");
+    await expect(tabs.first()).toBeFocused();
+    for (const [index, name] of ["catalog", "rentals", "admin"].entries()) {
+      if (width < 500) await tabs.nth(index).tap(); else await tabs.nth(index).click();
+      await expect(panel.locator("img")).toHaveAttribute("src", new RegExp(`${name}\\.webp`));
+      assert.ok(Math.abs((await page.locator(".rental-panels").boundingBox()).height - reserved) < 1, "tabs preserve gallery height");
+      const opener = panel.locator(".project-visual-open");
+      await opener.click();
+      const dialog = page.getByRole("dialog");
+      await expect(dialog).toContainText(lang === "en" ? "course report" : "laporan kuliah");
+      await expect(dialog).toContainText(lang === "en" ? "Simulated coursework data" : "Data simulasi tugas");
+      await dialog.getByRole("button", { name: lang === "en" ? "Zoom screenshot" : "Perbesar screenshot", exact: true }).click();
+      await expect(dialog.locator(".project-art-stage")).toBeFocused();
+      await page.keyboard.press("ArrowRight");
+      await expect.poll(() => dialog.locator(".project-art-stage").evaluate(n => n.scrollLeft)).toBeGreaterThan(0);
+      await page.keyboard.press("Escape");
+      await expect(opener).toBeFocused();
+    }
+    await page.locator(".rental-gallery").scrollIntoViewIfNeeded();
+    await page.screenshot({ path: `test-results/rental-story/${width}-gallery.png` });
+    await page.locator(".rental-result").scrollIntoViewIfNeeded();
+    await page.screenshot({ path: `test-results/rental-story/${width}-result.png` });
+    assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
+    for (const text of await page.locator(".rental-story h2, .rental-story h3, .rental-story p").all()) assert.ok(await text.evaluate(n => n.scrollWidth <= n.clientWidth + 1), "copy fits");
+    await expect(page.locator(".detail-route a")).toHaveAttribute("href", /world=rental/);
+    await expect(page.locator('.detail-actions a[href*="github.com"]')).toHaveCount(0);
+    await expect(page.locator('.detail-actions a[href^="mailto:henrynugraha1210@gmail.com"]')).toHaveCount(1);
+    await expect(page.locator(".detail-contact")).toBeVisible();
+    await expect(page.locator(".rental-story video")).toHaveCount(0);
+    assert.deepEqual(errors, []);
+    await page.close();
+    console.log(`PASS Rental ${width}x${height} ${lang}: tabs, viewer/pan, focus, layout and archived-app scope`);
+  }
+  const page = await browser.newPage();
+  await page.goto(`${base}/projects?category=university&q=rentalmobil&lang=id&motion=off`);
+  await expect(page.locator(".project-record")).toHaveCount(1);
+  await page.locator("#project-card-rental").click();
+  await expect(page.locator(".rental-story")).toBeVisible();
+  await page.locator(".detail-route a").click();
+  await expect(page.locator("#project-card-rental")).toBeFocused();
+  await expect(page.locator(".project-record")).toHaveCount(1);
+  let fail = true;
+  await page.route("**/assets/projects/rentalmobil-sg/catalog.webp*", route => fail ? route.abort() : route.continue());
+  await page.goto(`${base}/projects/rentalmobil-sg?lang=en&motion=off&chapter=tools&tool=php&group=build`);
+  await expect(page.locator(".detail-route a")).toHaveAttribute("href", /chapter=tools.*tool=php/);
+  const retry = page.getByRole("button", { name: "Retry screenshot", exact: true });
+  await page.locator(".rental-gallery").scrollIntoViewIfNeeded();
+  await expect(retry).toBeVisible();
+  fail = false;
+  await retry.click();
+  await expect(page.getByRole("tabpanel").locator(".project-visual-open")).toBeEnabled();
+  await page.getByRole("tabpanel").locator(".project-visual-open").click();
+  await expect(page.getByRole("button", { name: "Zoom screenshot", exact: true })).toBeEnabled();
+  await page.keyboard.press("Escape");
+  console.log("PASS Rental filtered/maker returns and failed-image recovery");
+  await page.close();
+} finally { await browser.close(); }

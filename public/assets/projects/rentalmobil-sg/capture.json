@@ -1,0 +1,31 @@
+{
+  "origin": "Archived application screenshots from the RentalMobil.SG course report; not a newly recorded runtime session.",
+  "data": "Simulated coursework data confirmed by Henry and approved for portfolio display on 2026-10-16. No accounts, contacts, uploaded receipts or database are published.",
+  "processing": "WebP quality 88. Original framing and content retained, including the open catalog filter and partial page captures.",
+  "captures": [
+    {
+      "file": "catalog.webp",
+      "source": "image4.jpeg",
+      "sourceSha256": "d2c4f4e0d257dab297a335342619325c81d43186daa5629a6daa18b79df53acf",
+      "width": 977,
+      "height": 605,
+      "bytes": 41958
+    },
+    {
+      "file": "rentals.webp",
+      "source": "image5.png",
+      "sourceSha256": "ec94eeb0b2c87643eadf1e18137494f005cb0d5a4977f516f395299c019ee47f",
+      "width": 1340,
+      "height": 608,
+      "bytes": 35426
+    },
+    {
+      "file": "admin.webp",
+      "source": "image3.png",
+      "sourceSha256": "d4f423a2db0f4a201c1c2705b7e62bb14947c6fa69a14ea183fcf3a1c3e7027a",
+      "width": 1349,
+      "height": 581,
+      "bytes": 35014
+    }
+  ]
+}

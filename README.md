@@ -1,6 +1,6 @@
 <div align="center">
 
-# StarGod Portfolio v0.121.0
+# StarGod Portfolio v0.122.0
 
 **I build things I actually see.**
 
@@ -144,6 +144,28 @@ Three projects I built end to end, from the business flow to the interface and s
 | **RentalMobil.SG** | Semester 2, Object-Oriented Programming | Car rental workflows with PHP and MySQL. |
 | **POS Z Shoes** | Semester 3, Business Process Analysis and System Design | Point-of-sale workflows with C# and WinForms. |
 | **LabQ** | Semester 4, Mobile and Web Programming | Health laboratory workflows across Android and web, using Java, Laravel, and PostgreSQL. |
+
+### Inside RentalMobil.SG
+
+The rental case study connects choosing a car and dates to manual payment review
+and administration. Inspectable catalog, rental-history and dashboard captures come from the
+original semester-two course report, with English and Indonesian explanations.
+
+<img src="public/assets/projects/rentalmobil-sg/catalog.webp" alt="Original RentalMobil.SG coursework catalog showing vehicle details, daily prices and availability filters" width="800" />
+
+This is an archived PHP and MySQL academic build, not a live rental service.
+The source review informs the story; the original application and database were
+not rerun. Henry confirmed the captured records are simulated coursework data
+and approved their display. Uploaded receipts, accounts, contacts, the database
+and full report stay private. A walkthrough request stays available without
+inventing a live demo.
+
+The three WebPs total about 110 KiB, with unchanged framing and source hashes in
+[`capture.json`](public/assets/projects/rentalmobil-sg/capture.json). The optional
+[`prepare-rental-captures.mjs`](scripts/prepare-rental-captures.mjs) only accepts
+those exact reviewed images and requires explicit simulated-data confirmation;
+private source inputs are not required to run this
+portfolio.
 
 ### Inside POS Z Shoes
 
