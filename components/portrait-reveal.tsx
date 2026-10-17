@@ -8,7 +8,7 @@ const states = ["cosmic", "sunglasses", "glasses", "human"] as const;
 type PortraitState = typeof states[number];
 const icons = [Eclipse, Sun, Glasses, ScanFace];
 
-export function PortraitReveal() {
+export function PortraitReveal({ paused = false }: { paused?: boolean }) {
   const { language, motionOn } = useSitePreferences();
   const [mode, setMode] = useState<PortraitState>("cosmic");
   const [failed, setFailed] = useState<PortraitState[]>([]);
@@ -31,7 +31,7 @@ export function PortraitReveal() {
   }, []);
   useEffect(() => {
     const element = host.current;
-    if (!element) return;
+    if (!element || paused) return;
     let frame = 0, previous = 0, visible = false;
     const paint = (time: number) => {
       const dt = Math.min(.05, (time - (previous || time)) / 1000);
@@ -59,7 +59,7 @@ export function PortraitReveal() {
     document.addEventListener("visibilitychange", wake);
     wake();
     return () => { observer.disconnect(); cancelAnimationFrame(frame); element.removeEventListener("pointermove", wake); element.removeEventListener("pointerdown", wake); element.removeEventListener("pointerleave", wake); document.removeEventListener("visibilitychange", wake); };
-  }, [motionOn, mode, failed.length, ready.length]);
+  }, [motionOn, mode, failed.length, ready.length, paused]);
   const update = (event: React.PointerEvent<HTMLDivElement>) => {
     if (event.pointerType === "touch" && event.type === "pointermove") return;
     const box = event.currentTarget.getBoundingClientRect();

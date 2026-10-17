@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState, type CSSProperties } from "react";
-import { ArrowLeft, ArrowRight, ArrowUpRight, Maximize2 } from "lucide-react";
-import { motion, useInView, useMotionValueEvent, useScroll } from "motion/react";
+import { ArrowLeft, ArrowRight, ArrowUpRight, FileImage, Maximize2 } from "lucide-react";
+import { useInView, useMotionValueEvent, useScroll } from "motion/react";
 import { certificates, type Credential } from "@/content/credentials";
 import { orbitTechNodes } from "@/content/technologies";
 import { findWorld } from "@/content/catalog";
@@ -177,7 +177,7 @@ export function MakerChapter({ ready = true }: { ready?: boolean }) {
         <div className="maker-principles"><span>{en ? "Notice." : "Amati."}</span><span>{en ? "Shape." : "Bentuk."}</span><span>{en ? "Build." : "Bangun."}</span></div>
       </div>
       <div ref={stage} className="maker-scene" data-all={group === 3} aria-label={en ? "Henry and his technology orbit" : "Henry dan orbit teknologinya"}>
-        <PortraitReveal />
+        <PortraitReveal paused={Boolean(record)} />
         {spatial && visible && !proof && <MakerOrbitField items={items} nodes={nodes} paused={paused} rotation={rotation} progress={scrollYProgress} selected={selected.label} />}
       <div className="maker-tools-controls" onPointerEnter={() => { paused.current = true; }} onPointerLeave={() => { paused.current = false; }}>
         <div role="group" aria-label={en ? "Technology group" : "Kelompok teknologi"} className="maker-groups">
@@ -210,13 +210,16 @@ export function MakerChapter({ ready = true }: { ready?: boolean }) {
 
 function Evidence({ record, index, spatial, language, progress, onOpen }: { record: Credential; index: number; spatial: boolean; language: string; progress: ReturnType<typeof useScroll>["scrollYProgress"]; onOpen: () => void }) {
   const element = useRef<HTMLButtonElement>(null);
+  const thumbnail = useRef<HTMLImageElement>(null);
+  const [failed, setFailed] = useState(false);
+  useEffect(() => { if (thumbnail.current?.complete && !thumbnail.current.naturalWidth) setFailed(true); }, []);
   const update = (value: number) => {
     const node = element.current;
     if (!node) return;
     const { travel: t, eased, arrived } = makerEvidenceAt(spatial ? value : 1, index);
     node.style.setProperty("--evidence-rise", `${(1 - eased) * 85}svh`);
     node.style.setProperty("--evidence-turn", `${(1 - eased) * (index % 2 ? -22 : 22)}deg`);
-    node.style.setProperty("--evidence-drift", `${Math.sin(value * Math.PI * 2 + index * 1.8) * 9}px`);
+    node.style.setProperty("--evidence-drift", `${Math.sin(value * Math.PI * 2 + index * 1.8) * 3}px`);
     node.style.setProperty("--evidence-opacity", String(Math.min(1, t * 4)));
     node.dataset.arrived = String(arrived);
     node.inert = !arrived;
@@ -228,8 +231,11 @@ function Evidence({ record, index, spatial, language, progress, onOpen }: { reco
     window.addEventListener("resize", sync);
     return () => window.removeEventListener("resize", sync);
   }, [spatial]); // Scroll, not a timer, owns the reversible throw.
-  return <motion.button ref={element} type="button" className={`maker-evidence-card maker-evidence-card--${index}`} onClick={onOpen} aria-label={`${language === "en" ? "Inspect" : "Lihat"} ${record.title} certificate`} whileHover={spatial ? { scale: 1.035, rotate: 0 } : undefined} style={{ "--evidence-rise": "85svh", "--evidence-opacity": 0 } as CSSProperties}>
-    <img src={record.thumbnail} alt={record.alt} width="720" height="510" loading="lazy" />
-    <span><span><small>{record.issuer}</small><strong>{record.title}</strong></span><Maximize2 size={16} aria-hidden="true" /></span>
-  </motion.button>;
+  return <button ref={element} type="button" className={`maker-evidence-card maker-evidence-card--${index}`} onClick={onOpen} aria-label={`${language === "en" ? "Inspect" : "Lihat"} ${record.title} certificate`} style={{ "--evidence-rise": "85svh", "--evidence-opacity": 0 } as CSSProperties}>
+    <span className="maker-evidence-media" data-failed={failed}>
+      {failed ? <FileImage size={28} aria-hidden="true" /> : <img ref={thumbnail} src={record.thumbnail} alt={record.alt} width="720" height="510" loading="lazy" onError={() => setFailed(true)} />}
+      <span className="maker-evidence-zoom" aria-hidden="true"><Maximize2 size={14} /></span>
+    </span>
+    <span className="maker-evidence-caption"><small>{record.issuer}</small><strong>{record.title}</strong></span>
+  </button>;
 }

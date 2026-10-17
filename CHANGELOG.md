@@ -1,5 +1,11 @@
 # Changelog
 
+## StarGod Portfolio v0.123.6 - 2026-10-17
+
+- Arrange Home's five featured credentials in bounded, staggered lanes that leave the face, appearance controls, heading, and neighboring cards clear on small and short screens.
+- Give full titles a steady reading surface, move the expand cue onto the preview, and keep hover from enlarging cards into nearby controls. Retain the reversible scroll arrival and readable Still/landscape layouts.
+- Pause the portrait reveal behind the certificate viewer and keep a named, working inspection target when a thumbnail fails. Preserve all 37 records, public watermarks, and existing reader zoom behavior.
+
 ## StarGod Portfolio v0.123.5 - 2026-10-17
 
 - Batch rigid, opaque parts of each project sculpture by their shared material, reducing draw submissions without simplifying the shapes, changing colors, or removing planets.

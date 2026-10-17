@@ -1,6 +1,6 @@
 <div align="center">
 
-# StarGod Portfolio v0.123.5
+# StarGod Portfolio v0.123.6
 
 **I build things I actually see.**
 
@@ -64,6 +64,8 @@ Local stars caught by the black hole complete their spiral instead of lingering 
 **Credentials** is a separate library of all 37 learning records. Filter by issuer or type, search a title, and open a full-size watermarked preview with zoom and available PDF previews. Browse the current selection without closing the viewer; Home keeps its gallery limited to the five featured records. Arrow keys move between documents at fitted size and pan the image when zoomed. A small preview remains visible while the full-size image loads, with a retry option on failure. English/Indonesian and motion choices travel with the internal links.
 
 Certificates have a fixed toolbar with Fit, 150%, 200%, and 300% magnification relative to their fitted size. Zoom keeps the current reading position and original proportions; double-clicking enlarges the pointed area. Changing certificates starts again at Fit. Zoomed artwork and certificates can be dragged directly with a mouse or pen. Touch retains native scrolling and browser pinch zoom; keyboard panning, Fit, Escape, and focus return remain available. Inspection never moves the universe behind the viewer, and certificate watermarks stay embedded in the public images.
+
+Home's five featured credentials settle into two staggered lanes, keeping Henry's face, appearance controls, and section heading clear. Full titles sit on steady reading surfaces, while the entire card opens its preview. Small screens use a compact two-row appearance control; short landscape screens and Still mode keep a normal reading list. The portrait reveal pauses behind an open certificate, and a missing thumbnail does not block inspection.
 
 The libraries stay inside the same volumetric nebula, with subtle cursor and scroll parallax behind a quieter reading surface. Project identities sit beside their names, with category counts following the search and artwork clearly labeled. Credentials separate issuer, record type, title and date; the full-preview control stays outside the document image. Reading links remember their origin: a project opened from a technology returns to that selected tool and group, the credential library returns to Home's featured credentials, and catalog details return to their filtered project card. Browser Back follows the same reading context. Direct library visits still offer the universe. Reduced motion freezes the sky and loading indicators; interrupted graphics can recover without reloading the page. A missing thumbnail preserves its space and does not block project details or the full certificate viewer.
 

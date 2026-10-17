@@ -17,6 +17,17 @@ async function move(page, value) {
 async function inView(locator) {
   await expect.poll(() => locator.evaluate(node => { const r = node.getBoundingClientRect(); return r.y >= 0 && r.bottom <= innerHeight && r.x >= 0 && r.right <= innerWidth; })).toBe(true);
 }
+async function proofLayout(page) {
+  const result = await page.evaluate(() => {
+    const overlap = (a, b) => Math.min(a.right, b.right) > Math.max(a.left, b.left) && Math.min(a.bottom, b.bottom) > Math.max(a.top, b.top);
+    const cards = [...document.querySelectorAll(".maker-evidence-card")].map(node => node.getBoundingClientRect());
+    const portrait = document.querySelector(".portrait-reveal").getBoundingClientRect();
+    const face = { left: portrait.x + portrait.width * .29, right: portrait.x + portrait.width * .72, top: portrait.y + portrait.height * .26, bottom: portrait.y + portrait.height * .51 };
+    const protectedRects = [face, document.querySelector(".maker-proof-heading").getBoundingClientRect(), ...[...document.querySelectorAll(".portrait-states button")].map(node => node.getBoundingClientRect())];
+    return cards.length === 5 && cards.every((rect, index) => rect.width >= 44 && rect.height >= 44 && rect.x >= 0 && rect.right <= innerWidth && rect.y >= 0 && rect.bottom <= innerHeight && !protectedRects.some(other => overlap(rect, other)) && !cards.slice(index + 1).some(other => overlap(rect, other)));
+  });
+  assert.equal(result, true, "five readable targets clear the face, portrait controls, heading and one another");
+}
 try {
   for (const viewport of [{ width: 390, height: 844 }, { width: 1440, height: 900 }]) {
     const page = await browser.newPage({ viewport });
@@ -48,6 +59,16 @@ try {
     await move(page, .87);
     const card = page.locator(".maker-evidence-card").first();
     await expect(page.locator(".maker-evidence-card[data-arrived='true']")).toHaveCount(5);
+    await proofLayout(page);
+    if (viewport.width === 390) {
+      for (const [width, height] of [[320, 568], [768, 1024], [1024, 600]]) {
+        await page.setViewportSize({ width, height });
+        await settled(page, .87);
+        await proofLayout(page);
+      }
+      await page.setViewportSize(viewport);
+      await settled(page, .87);
+    }
     await card.click();
     await expect(page.locator(".credential-dialog-stage")).toHaveAttribute("data-image-state", "ready");
     const y = await page.evaluate(() => scrollY);
