@@ -7,8 +7,9 @@ const require = createRequire(import.meta.url);
 const send = require("next/dist/compiled/send");
 
 // A local static-file host, not Next's request handler or a Cloudflare emulator.
-export async function startPagesPreview() {
+export async function startPagesPreview({ failures = {} } = {}) {
   const root = path.resolve("out");
+  const remainingFailures = new Map(Object.entries(failures));
   const headers = new Map();
   let rule;
   for (const line of readFileSync(path.join(root, "_headers"), "utf8").split(/\r?\n/)) {
@@ -30,6 +31,12 @@ export async function startPagesPreview() {
       route = decodeURIComponent(url.pathname);
       if (route.includes("\\") || route.includes("\0") || route.split("/").some(part => part.startsWith("."))) throw new Error("Invalid path");
     } catch { response.writeHead(400).end(); return; }
+    const failuresLeft = remainingFailures.get(route) ?? 0;
+    if (failuresLeft > 0) {
+      remainingFailures.set(route, failuresLeft - 1);
+      response.writeHead(503, { "Cache-Control": "no-store" }).end();
+      return;
+    }
     if (route.endsWith(".html") && isFile(route) && route !== "/404.html") {
       response.writeHead(308, { Location: `${route.replace(/(?:\/index)?\.html$/, "") || "/"}${url.search}` }).end();
       return;

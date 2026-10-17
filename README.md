@@ -1,6 +1,6 @@
 <div align="center">
 
-# StarGod Portfolio v0.123.6
+# StarGod Portfolio v0.123.7
 
 **I build things I actually see.**
 
@@ -64,6 +64,8 @@ Local stars caught by the black hole complete their spiral instead of lingering 
 **Credentials** is a separate library of all 37 learning records. Filter by issuer or type, search a title, and open a full-size watermarked preview with zoom and available PDF previews. Browse the current selection without closing the viewer; Home keeps its gallery limited to the five featured records. Arrow keys move between documents at fitted size and pan the image when zoomed. A small preview remains visible while the full-size image loads, with a retry option on failure. English/Indonesian and motion choices travel with the internal links.
 
 Certificates have a fixed toolbar with Fit, 150%, 200%, and 300% magnification relative to their fitted size. Zoom keeps the current reading position and original proportions; double-clicking enlarges the pointed area. Changing certificates starts again at Fit. Zoomed artwork and certificates can be dragged directly with a mouse or pen. Touch retains native scrolling and browser pinch zoom; keyboard panning, Fit, Escape, and focus return remain available. Inspection never moves the universe behind the viewer, and certificate watermarks stay embedded in the public images.
+
+The reader uses smaller lossless copies where they preserve every decoded pixel, including the watermark. It falls back to the existing full-size image if the lighter copy cannot load. Full-size image and PDF links remain unchanged.
 
 Home's five featured credentials settle into two staggered lanes, keeping Henry's face, appearance controls, and section heading clear. Full titles sit on steady reading surfaces, while the entire card opens its preview. Small screens use a compact two-row appearance control; short landscape screens and Still mode keep a normal reading list. The portrait reveal pauses behind an open certificate, and a missing thumbnail does not block inspection.
 
@@ -291,7 +293,7 @@ on the public host. The local test server's range support is not a claim about t
 CDN; reconsider media delivery before adding long or large recordings.
 
 The export check enforces the current Pages Free limits of 20,000 files and 25 MiB
-per file, verifies copied public assets and all 85 watermarked derivatives, and
+per file, verifies copied public assets and every registered watermarked derivative, and
 rejects private/runtime folders. The current output is about 45 MiB overall; its
 largest file is a 6.9 MiB full-size certificate, loaded on inspection rather than
 as a catalog thumbnail. `npm run check:pages` repeats this audit without building.
@@ -336,6 +338,8 @@ unchanged; no image provider or private credential master is required.
 Content lives in `content/`; catalog pages and orbital reading actions share those records. Reading pages share one quiet volumetric nebula and distant-star field, without the project-map or cinematic scenes. Home and library backgrounds use a bounded pixel budget, with two conservative resolution adjustments after sustained frame pressure. Project planets, the maker orbit, text and controls keep their own resolution. Motion pauses when hidden and stays still with reduced motion; a dark fallback keeps content readable without WebGL. The maker's small 3D scene exists only during its visible technology phase, with the upper galaxy animation paused; it releases its renderer before credentials and Contact. Shared typography roles keep reading sizes and spacing consistent.
 
 Certificate lists and viewers use permanently watermarked derivatives. `scripts/credential-watermarks.py` exports images, thumbnails, flattened PDF previews and README copies from private local masters, using Pillow, pypdf, ReportLab and Poppler. Regeneration requires those private masters; they are intentionally absent from a public clone. `node scripts/credential-thumbnails.mjs` can resize verified public copies, refusing changed/unreviewed input. The public checksum manifest and unit checks guard against accidentally replacing marked files. These checks ensure consistency, not copy protection.
+
+`node scripts/credential-delivery.mjs` creates lossless reader variants from those verified public images, never from private masters. Variants must save at least 10% and 8 KB and preserve dimensions and decoded RGBA pixels exactly. The generation script and tests check this equivalence; files that fail stay on their canonical image. Existing PNG/JPEG and PDF copies remain available, so smaller reader transfers do not imply a smaller deployment archive.
 
 Published portrait derivatives live in `public/assets/portrait/`. `node scripts/portrait-exports.mjs` recreates them from four selected local masters in the Git-ignored `assets/henry/portraits/` folder. Source photographs and generation drafts are private and are not required to run the public clone.
 

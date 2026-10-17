@@ -1,5 +1,11 @@
 # Changelog
 
+## StarGod Portfolio v0.123.7 - 2026-10-17
+
+- Serve smaller lossless certificate images inside the shared reader without changing resolution, text, or embedded watermarks. Keep existing full-size image/PDF links and all 37 records.
+- Fall back automatically to the canonical public image when a lighter copy fails, then retain the existing retry control if both fail.
+- Audit each variant against its reviewed source, including exact decoded pixels, dimensions, transfer savings, and public-export checksums. Keep badge inputs that cannot round-trip exactly unchanged.
+
 ## StarGod Portfolio v0.123.6 - 2026-10-17
 
 - Arrange Home's five featured credentials in bounded, staggered lanes that leave the face, appearance controls, heading, and neighboring cards clear on small and short screens.

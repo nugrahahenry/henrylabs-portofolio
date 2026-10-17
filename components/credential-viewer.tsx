@@ -3,10 +3,13 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ArrowUpRight, ChevronLeft, ChevronRight, LoaderCircle, RotateCcw, Scan, X, ZoomIn, ZoomOut } from "lucide-react";
 import type { Credential } from "@/content/credentials";
+import deliveryImages from "@/content/credential-delivery.json";
 import { useSitePreferences } from "./site-preferences";
 import { useImagePan } from "./use-image-pan";
 import { useCertificateZoom } from "./use-certificate-zoom";
 import { certificateZoomSteps } from "./image-zoom";
+
+const readingImages: Record<string, string | undefined> = deliveryImages;
 
 type ViewerProps = {
   record: Credential | null;
@@ -78,14 +81,19 @@ function CertificateDocument({ record }: { record: Credential }) {
   const zoomed = zoom > 1;
   const [status, setStatus] = useState<"loading" | "ready" | "error">("loading");
   const [attempt, setAttempt] = useState(0);
+  const [source, setSource] = useState(() => readingImages[record.image] ?? record.image);
   const [previewAvailable, setPreviewAvailable] = useState(true);
   const pan = useImagePan(zoomed && status === "ready");
   const { language } = useSitePreferences();
   const isEn = language === "en";
   const ready = useCallback((image: HTMLImageElement) => { imageReady(image); setStatus("ready"); }, [imageReady]);
+  const failed = useCallback(() => {
+    if (source !== record.image) { setSource(record.image); setStatus("loading"); }
+    else setStatus("error");
+  }, [source, record.image]);
   const attach = useCallback((image: HTMLImageElement | null) => {
-    if (image?.complete) { if (image.naturalWidth) ready(image); else setStatus("error"); }
-  }, [ready]);
+    if (image?.complete) { if (image.naturalWidth) ready(image); else failed(); }
+  }, [ready, failed]);
   const step = certificateZoomSteps.indexOf(zoom as typeof certificateZoomSteps[number]);
   const retry = () => {
     imageArea.current?.closest("dialog")?.querySelector<HTMLButtonElement>(".credential-dialog-close")?.focus();
@@ -108,7 +116,7 @@ function CertificateDocument({ record }: { record: Credential }) {
           <div className="credential-dialog-sheet" style={{ width: layout.sheetWidth, height: layout.sheetHeight }}>
             <div className="credential-dialog-document" style={{ width: layout.width, height: layout.height, left: layout.x, top: layout.y }}>
             {status !== "ready" && previewAvailable && <img className="credential-dialog-preview" src={record.thumbnail} alt="" aria-hidden="true" onError={() => setPreviewAvailable(false)} />}
-            <img ref={attach} key={attempt} draggable={false} decoding="async" data-credential-original className="credential-dialog-original" src={attempt ? `${record.image}?retry=${attempt}` : record.image} alt={record.alt} onLoad={event => ready(event.currentTarget)} onError={() => setStatus("error")} />
+            <img ref={attach} key={`${source}:${attempt}`} draggable={false} decoding="async" data-credential-original className="credential-dialog-original" src={attempt ? `${source}?retry=${attempt}` : source} alt={record.alt} onLoad={event => ready(event.currentTarget)} onError={failed} />
             </div>
           </div>
         </div>
