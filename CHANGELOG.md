@@ -1,5 +1,10 @@
 # Changelog
 
+## StarGod Portfolio v0.123.9 - 2026-10-31
+
+- Reduce first-load WebGL pressure on compact screens by lowering the Living Map pixel cap and disabling background antialiasing on phone-sized viewports.
+- Preserve the existing adaptive quality fallback, planet count, orbit geometry, visual identity, and interaction targets.
+
 ## StarGod Portfolio v0.123.8 - 2026-10-31
 
 - Make featured credential cards interactive once their content is fully readable, before the final fraction of the entrance motion settles.

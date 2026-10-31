@@ -164,7 +164,8 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, heroProgress, 
 
     let renderer: THREE.WebGLRenderer;
     try {
-      renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true, preserveDrawingBuffer: true, powerPreference: "low-power" });
+      const compactDevice = window.innerWidth < 700;
+      renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: !compactDevice, preserveDrawingBuffer: true, powerPreference: "low-power" });
     } catch {
       host.dataset.fallback = "true";
       const fallbackResize = new ResizeObserver(updateChapter);
@@ -542,7 +543,7 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, heroProgress, 
     const moonWorldPoint = new THREE.Vector3();
     const updateResolution = () => {
       const width = host.clientWidth, height = Math.max(1, host.clientHeight);
-      const ratio = skyPixelRatio(width, height, window.devicePixelRatio, 1, quality.tier);
+      const ratio = skyPixelRatio(width, height, window.devicePixelRatio, width < 700 ? .9 : 1, quality.tier);
       if (renderer.getPixelRatio() !== ratio) renderer.setPixelRatio(ratio);
       renderer.setSize(width, height, false);
       deepSpace.material.uniforms.uResolution.value.set(canvas.width, canvas.height);
