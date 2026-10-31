@@ -244,9 +244,9 @@ export function CosmicCanvas({ activeId, onSelect, onPrevious, onNext, motionOn,
     const paintClock = createPaintClock();
     let viewWidth = 1, viewHeight = 1;
     const updateResolution = () => {
-      // A phone should spend its first frame budget on motion and hit targets, not surplus pixels.
+      // Keep the interactive map a little sharper than the passive nebula on phones.
       // The adaptive tier can still step down further when the device reports sustained pressure.
-      const cap = viewWidth < 700 ? 1 : viewWidth < 900 ? 1.15 : 1.6;
+      const cap = viewWidth < 700 ? 1.1 : viewWidth < 900 ? 1.15 : 1.6;
       renderer.setPixelRatio(skyPixelRatio(viewWidth, viewHeight, devicePixelRatio, cap, quality.tier));
       renderer.setSize(viewWidth, viewHeight, false);
       host.dataset.skyQuality = skyQualityNames[quality.tier];

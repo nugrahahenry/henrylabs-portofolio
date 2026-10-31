@@ -1,6 +1,6 @@
 <div align="center">
 
-# StarGod Portfolio v0.123.9
+# StarGod Portfolio v0.123.10
 
 **I build things I actually see.**
 

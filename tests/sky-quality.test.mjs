@@ -89,10 +89,10 @@ test("mobile universe bounds rendering and leaves vertical scroll and browser pi
   const canvas = readFileSync(new URL("../components/cosmic-canvas.tsx", import.meta.url), "utf8");
   assert.ok(canvas.indexOf("sampleSkyQuality(quality, time") < canvas.indexOf("if (!paintDue("));
   assert.match(canvas, /skyPixelRatio\(viewWidth, viewHeight/);
-  assert.match(canvas, /viewWidth < 700 \? 1 : viewWidth < 900 \? 1\.15 : 1\.6/);
+  assert.match(canvas, /viewWidth < 700 \? 1\.1 : viewWidth < 900 \? 1\.15 : 1\.6/);
   const backdropSource = readFileSync(new URL("../components/worldline-backdrop.tsx", import.meta.url), "utf8");
   assert.match(backdropSource, /antialias: !compactDevice/);
-  assert.match(backdropSource, /width < 700 \? \.9 : 1/);
+  assert.match(backdropSource, /width < 700 \? \.8 : 1/);
   assert.match(canvas, /Math\.abs\(dy\) > 8 && Math\.abs\(dy\) >= Math\.abs\(dx\)/);
   const page = readFileSync(new URL("../components/portfolio-experience.tsx", import.meta.url), "utf8");
   assert.doesNotMatch(page, /className="cosmic-frame-wrap"[^>]*data-lenis-prevent/);

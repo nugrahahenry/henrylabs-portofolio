@@ -543,7 +543,7 @@ export function WorldlineBackdrop({ activeId, motionOn, progress, heroProgress, 
     const moonWorldPoint = new THREE.Vector3();
     const updateResolution = () => {
       const width = host.clientWidth, height = Math.max(1, host.clientHeight);
-      const ratio = skyPixelRatio(width, height, window.devicePixelRatio, width < 700 ? .9 : 1, quality.tier);
+      const ratio = skyPixelRatio(width, height, window.devicePixelRatio, width < 700 ? .8 : 1, quality.tier);
       if (renderer.getPixelRatio() !== ratio) renderer.setPixelRatio(ratio);
       renderer.setSize(width, height, false);
       deepSpace.material.uniforms.uResolution.value.set(canvas.width, canvas.height);

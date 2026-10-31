@@ -1,5 +1,10 @@
 # Changelog
 
+## StarGod Portfolio v0.123.10 - 2026-10-31
+
+- Rebalance compact-screen rendering toward the interactive Living Map: keep project planets and orbit targets at a 1.1 cap while the passive nebula uses .8.
+- Preserve the lower combined pixel budget, adaptive quality fallback, world count, orbit geometry and reduced-motion behavior.
+
 ## StarGod Portfolio v0.123.9 - 2026-10-31
 
 - Reduce first-load WebGL pressure on compact screens by lowering the Living Map pixel cap and disabling background antialiasing on phone-sized viewports.
