@@ -1,5 +1,6 @@
 export const MAKER_RETREAT_START = .62;
 export const MAKER_PROOF_START = .71;
+export const MAKER_PROOF_INTERACTIVE = .6;
 
 export function makerLayoutNeedsRestore(previous: { width: number; height: number; spatial: boolean }, next: { width: number; height: number; spatial: boolean }, touch: boolean) {
   if (previous.width !== next.width || previous.spatial !== next.spatial) return true;
@@ -9,7 +10,12 @@ export function makerLayoutNeedsRestore(previous: { width: number; height: numbe
 
 export function makerEvidenceAt(progress: number, index: number) {
   const travel = Math.min(1, Math.max(0, (progress - MAKER_PROOF_START - .005 - index * .012) / .105));
-  return { travel, eased: 1 - Math.pow(1 - travel, 3), arrived: travel >= .95 };
+  return {
+    travel,
+    eased: 1 - Math.pow(1 - travel, 3),
+    interactive: travel >= MAKER_PROOF_INTERACTIVE,
+    arrived: travel >= .95,
+  };
 }
 
 export function makerGroupAt(progress: number) {

@@ -216,13 +216,15 @@ function Evidence({ record, index, spatial, language, progress, onOpen }: { reco
   const update = (value: number) => {
     const node = element.current;
     if (!node) return;
-    const { travel: t, eased, arrived } = makerEvidenceAt(spatial ? value : 1, index);
+    const { travel: t, eased, interactive, arrived } = makerEvidenceAt(spatial ? value : 1, index);
     node.style.setProperty("--evidence-rise", `${(1 - eased) * 85}svh`);
     node.style.setProperty("--evidence-turn", `${(1 - eased) * (index % 2 ? -22 : 22)}deg`);
     node.style.setProperty("--evidence-drift", `${Math.sin(value * Math.PI * 2 + index * 1.8) * 3}px`);
     node.style.setProperty("--evidence-opacity", String(Math.min(1, t * 4)));
+    node.dataset.interactive = String(interactive);
     node.dataset.arrived = String(arrived);
-    node.inert = !arrived;
+    // Let a fully readable card open before the last pixels of its throw settle.
+    node.inert = !interactive;
   };
   useMotionValueEvent(progress, "change", update);
   useEffect(() => {

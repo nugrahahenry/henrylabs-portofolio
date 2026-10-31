@@ -502,15 +502,19 @@ test("maker scroll has four reversible tech chapters followed by a separate proo
   assert.ok(MAKER_RETREAT_START > .6 && MAKER_PROOF_START > MAKER_RETREAT_START);
 });
 
-test("proof cards arrive together early enough for a reading hold, and reverse on the same path", () => {
+test("proof cards become readable before the throw fully settles, then reverse on the same path", () => {
   for (let index = 0; index < 5; index++) {
     assert.equal(makerEvidenceAt(MAKER_PROOF_START, index).travel, 0);
+    const interactiveAt = MAKER_PROOF_START + .005 + index * .012 + .105 * .6;
+    assert.equal(makerEvidenceAt(interactiveAt, index).interactive, true);
+    assert.equal(makerEvidenceAt(interactiveAt - .001, index).interactive, false);
     assert.equal(makerEvidenceAt(.87, index).arrived, true);
     let last = 0;
     const trace = [];
     for (let step = 0; step <= 100; step++) {
       const state = makerEvidenceAt(step / 100, index);
       assert.ok(state.eased >= last && state.eased <= 1);
+      assert.equal(state.interactive, state.travel >= .6);
       assert.equal(state.arrived, state.travel >= .95);
       trace.push(state); last = state.eased;
     }

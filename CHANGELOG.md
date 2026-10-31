@@ -1,5 +1,10 @@
 # Changelog
 
+## StarGod Portfolio v0.123.8 - 2026-10-31
+
+- Make featured credential cards interactive once their content is fully readable, before the final fraction of the entrance motion settles.
+- Keep the existing throw, opacity, reverse-scroll behavior, focus flow, and final settled state unchanged.
+
 ## StarGod Portfolio v0.123.7 - 2026-10-17
 
 - Serve smaller lossless certificate images inside the shared reader without changing resolution, text, or embedded watermarks. Keep existing full-size image/PDF links and all 37 records.
