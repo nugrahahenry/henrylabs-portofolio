@@ -841,9 +841,11 @@ test("distant stars shimmer gently without gravity or a reduced-motion brightnes
   const material = createDistantStarMaterial();
   assert.doesNotMatch(material.vertexShader, /uPull|uTarget|spiral/);
   assert.match(material.vertexShader, /uMotion \* \.08/);
+  assert.match(material.vertexShader, /vNear/);
+  assert.match(material.vertexShader, /nearScale/);
   assert.equal(material.uniforms.uPixelRatio.value, 1);
   assert.match(material.vertexShader, /uPixelRatio, 3\.0 \* uPixelRatio/);
-  assert.match(material.vertexShader, /vGiant \* 7\.0 \* uPixelRatio/);
+  assert.match(material.vertexShader, /vGiant \* \(7\.0 \+ vNear \* 1\.4\) \* uPixelRatio/);
   assert.equal(material.depthWrite, false);
   material.dispose();
 });

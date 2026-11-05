@@ -133,6 +133,7 @@ test("portfolio surface keeps its core experience contracts", () => {
   assert.match(experience, /soreva: \["Node.js", "Next.js", "React", "TypeScript"\]/);
   assert.match(backdrop, /createSpacecraft/);
   assert.match(read("components/gravity-field.ts"), /horizonFade/);
+  assert.match(read("components/deep-space.ts"), /foregroundVeil/);
   assert.match(canvas, /linkedProjectIndexes/);
   assert.match(canvas, /selectedProjectIndex/);
   assert.doesNotMatch(canvas, /safeOrbitX/);

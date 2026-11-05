@@ -82,11 +82,14 @@ export function createDeepSpace(size = 64) {
           float opticalDepth = dust * .36 * stepSize;
           float extinction = mix(opticalDepth, 1.0 - exp(-opticalDepth), uOpening);
           float depthTint = smoothstep(-29.0, -7.0, p.z);
+          // A restrained foreground veil makes the volume feel deep without adding another pass.
+          float foregroundVeil = smoothstep(-20.0, -5.0, p.z) * (1.0 - smoothstep(.58, .98, abs(ray.z)));
           vec3 emission = mix(vec3(.004,.038,.14), vec3(.12,.01,.10), smoothstep(-6.0, 8.0, p.x));
           vec3 ionized = mix(vec3(.018,.30,.60), vec3(.62,.045,.22), smoothstep(-5.0, 7.0, p.x + p.y * .8));
           vec3 warm = mix(vec3(.86,.17,.045), vec3(1.0,.72,.32), depthTint);
           emission += ionized * filaments * mix(1.46, 2.05, uOpening);
           emission += warm * pow(sheet, 2.4) * mix(.58, .24, uOpening);
+          emission += vec3(.025, .12, .24) * filaments * foregroundVeil * mix(.16, .28, uOpening);
           emission *= 1.0 - darkLane * .92;
           light += emission * extinction * (1.0 - alpha);
           alpha += extinction * (1.0 - alpha);

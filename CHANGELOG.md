@@ -1,5 +1,10 @@
 # Changelog
 
+## StarGod Portfolio v0.123.11 - 2026-11-05
+
+- Deepen the procedural sky with a restrained foreground nebula veil so the volumetric backdrop reads as layered space instead of a flat color field.
+- Give distant stars a subtle depth response: nearer stars carry a slightly larger core and halo while the existing count, motion clock, mobile budget, and reduced-motion behavior stay unchanged.
+
 ## StarGod Portfolio v0.123.10 - 2026-10-31
 
 - Rebalance compact-screen rendering toward the interactive Living Map: keep project planets and orbit targets at a 1.1 cap while the passive nebula uses .8.
